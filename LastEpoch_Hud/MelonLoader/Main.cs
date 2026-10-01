@@ -402,11 +402,17 @@ namespace LastEpoch_Hud
         }
         public static Sprite GetItemIcon(ItemDataUnpacked item)
         {
+#if COMPAT15_MINIMAL
+            // Last Epoch 1.5 moved this path to SoftRef<Sprite>/Addressables.
+            // Custom item/icon features are intentionally quarantined in exp1.
+            return null;
+#else
             Sprite result = null; // new Sprite();
             try { result = UITooltipItem.GetItemSprite(item, ItemUIContext.Default); }
             catch { Main.logger_instance?.Error("Error GetItemIcon"); }
 
             return result;
+#endif
         }
         public static bool CheckClass(int classe, ItemList.ClassRequirement req)
         {
