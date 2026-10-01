@@ -50,7 +50,9 @@ namespace LastEpoch_Hud.Scripts
         public static CharacterMutator character_mutator = null;
         public static UsingAbilityPlayer using_ability_player = null;
         public static SummonTracker summon_tracker = null;
+#if !COMPAT15_MINIMAL
         public static MapPanel map_panel = null;
+#endif
         public static StashPanelUI stash_panel_ui = null;
 
         const int InitRetryEveryNFrames = 60;
@@ -157,7 +159,9 @@ namespace LastEpoch_Hud.Scripts
                 if (player_golbal_data_tracker.IsNullOrDestroyed()) { player_golbal_data_tracker = PlayerFinder.getGlobalDataTracker(); }                                                           //AutoPickupItems
                 if ((filter_manager.IsNullOrDestroyed()) && (!ItemFilterManager.Instance.IsNullOrDestroyed())) { filter_manager = ItemFilterManager.Instance; }                                     //AutoPickupItems, MinimapIcons
                 if ((camera_manager.IsNullOrDestroyed()) && (!CameraManager.instance.IsNullOrDestroyed())) { camera_manager = CameraManager.instance; }                                             //CameraOverride
+#if !COMPAT15_MINIMAL
                 if (map_panel.IsNullOrDestroyed() && (!MapPanel.instance.IsNullOrDestroyed())) { map_panel = MapPanel.instance; }                                                                   //MainQuest, TpSafe
+#endif
 
                 if (!refsReadyFired
                     && !player_actor.IsNullOrDestroyed()
@@ -176,7 +180,9 @@ namespace LastEpoch_Hud.Scripts
             else
             {
                 if (!player_data.IsNullOrDestroyed()) { player_data = null; }
-                if (!map_panel.IsNullOrDestroyed()) {  map_panel = null; }
+#if !COMPAT15_MINIMAL
+                if (!map_panel.IsNullOrDestroyed()) { map_panel = null; }
+#endif
                 refsReadyFired = false;
                 pendingReady.Clear();
             }
