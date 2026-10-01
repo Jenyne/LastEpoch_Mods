@@ -6,17 +6,22 @@
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <BaseOutputPath>..\Build</BaseOutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-    <Configurations>Keyboard;WinGamepad</Configurations>
-    <Configuration Condition="'$(Configuration)' != 'WinGamepad'">Keyboard</Configuration>
+    <Configurations>Keyboard;WinGamepad;Compat15</Configurations>
+    <Configuration Condition="'$(Configuration)' == ''">Keyboard</Configuration>
     <ProduceReferenceAssembly>False</ProduceReferenceAssembly>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)' != 'WinGamepad'">
+  <PropertyGroup Condition="'$(Configuration)' == 'Keyboard'">
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <DefineConstants>KEYBOARD</DefineConstants>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)' == 'WinGamepad'">
     <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
     <DefineConstants>WINGAMEPAD</DefineConstants>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)' == 'Compat15'">
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <DefineConstants>KEYBOARD;COMPAT15_MINIMAL</DefineConstants>
+    <DebugType>portable</DebugType>
   </PropertyGroup>
   <PropertyGroup
     Condition="'$(Configuration)|$(TargetFramework)|$(Platform)'=='Keyboard|net6.0|AnyCPU'">
