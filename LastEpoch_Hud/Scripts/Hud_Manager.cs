@@ -6795,6 +6795,10 @@ namespace LastEpoch_Hud.Scripts
                 }
                 public static void InitializeShardsView()
                 {
+                #if COMPAT15_MINIMAL
+                    shard_initialized = true;
+                    return;
+                #else
                     RemoveShardsInView();
                     bool filter_by_type = false;                    
                     AffixList.AffixType wanted_type = AffixList.AffixType.PREFIX;
@@ -6862,6 +6866,8 @@ namespace LastEpoch_Hud.Scripts
                         }
                     }
                     shard_initialized = true;
+                
+                #endif
                 }
                 public static void RemoveShardsInView()
                 {
@@ -6924,6 +6930,9 @@ namespace LastEpoch_Hud.Scripts
                 }
                 public static ItemAffix MakeAffix(int id, byte tier, byte roll, bool seal)
                 {
+                #if COMPAT15_MINIMAL
+                    return null;
+                #else
                     //ItemAffix a = new ItemAffix();
                     //a.IsSealedCorrupted
 
@@ -6972,6 +6981,8 @@ namespace LastEpoch_Hud.Scripts
                     }
 
                     return new_affix;
+                
+                #endif
                 }
 
                 public static void UpdateUI()
@@ -7817,6 +7828,10 @@ namespace LastEpoch_Hud.Scripts
                 }
                 public static void GetAbility(Dropdown dropdown, string tags, bool mjolnir, bool herald)
                 {
+                #if COMPAT15_MINIMAL
+                    if (!dropdown.IsNullOrDestroyed()) { dropdown.options.Clear(); }
+                    return;
+                #else
                     if (!dropdown.IsNullOrDestroyed())
                     {
                         dropdown.options.Clear();
@@ -7847,6 +7862,8 @@ namespace LastEpoch_Hud.Scripts
                         names.Sort();
                         foreach (string name in names) { dropdown.options.Add(new Dropdown.OptionData(name)); }
                     }
+                
+                #endif
                 }
                 public static void Set_Events()
                 {
