@@ -59,6 +59,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Shrines
             else { return false; }
         }
 
+#if !COMPAT15_MINIMAL
         [HarmonyPatch(typeof(ShrinePlacementManager), "PlaceNewShrine", new System.Type[] { typeof(GameObject), typeof(Vector3) })]
         public class ShrinePlacementManager_PlaceNewShrine
         {
@@ -72,5 +73,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Shrines
                 }
             }
         }
+#endif
     }
 }
