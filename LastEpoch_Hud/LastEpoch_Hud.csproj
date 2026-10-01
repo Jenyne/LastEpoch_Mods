@@ -88,6 +88,10 @@
       <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\Il2CppLE.Core.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="Il2CppLE.Addressables">
+      <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\Il2CppLE.Addressables.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="MelonLoader">
       <HintPath>$(LastEpochPath)\MelonLoader\net6\MelonLoader.dll</HintPath>
       <Private>False</Private>
@@ -133,8 +137,7 @@
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine">
-      <HintPath>
-        $(LastEpochPath)\MelonLoader\Dependencies\Il2CppAssemblyGenerator\UnityDependencies\UnityEngine.dll</HintPath>
+      <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\UnityEngine.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
@@ -169,6 +172,15 @@
       <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\UnityEngine.UIModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+  <ItemGroup Condition="'$(Configuration)' == 'Compat15'">
+    <Compile Remove="Scripts\Mods\Craft\Craft_MaxTier.cs" />
+    <Compile Remove="Scripts\Mods\Fixs\Fix_Items.cs" />
+    <Compile Remove="Scripts\Mods\UI\DamageMeter.cs" />
+    <Compile Remove="Scripts\Mods\NewItems\Items_ArakaalisFang.cs" />
+    <Compile Remove="Scripts\Mods\Shrines\Shrines_ClickUnlimited.cs" />
+    <Compile Remove="Scripts\Mods\Minimap\Minimap_Icons.cs" />
+    <Compile Remove="Scripts\Mods\Monoliths\Monoliths_CompleteObjective.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.3.1.1" />
