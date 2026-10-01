@@ -17,14 +17,40 @@ namespace LastEpoch_Hud
         public const string company_name = "Eleventh Hour Games";
         public const string game_name = "Last Epoch";
         public const string mod_name = "LastEpoch_Hud";
+        #if COMPAT15_MINIMAL
+        public const string mod_version = "4.4.7-LE1.5-exp1";
+#else
         public const string mod_version = "4.4.7"; //LastEpoch 1.3
+#endif
         public static bool debug = false;
 
         public override void OnInitializeMelon()
         {
             logger_instance = LoggerInstance;
+#if COMPAT15_MINIMAL
+            Main.logger_instance?.Msg("[Compat15:LOAD] Experimental Last Epoch 1.5 minimal mode");
+            PatchCompat15<Scripts.Mods.Character.Character_Experience_Multiplier.ExperienceTracker_GainExp>("Character XP");
+            PatchCompat15<Scripts.Mods.Character.Character_Ability_Experience_Multiplier.ExperienceTracker_GainExp>("Skill XP");
+            PatchCompat15<Scripts.Mods.Character.Character_Favor_Experience_Multiplier.ExperienceTracker_GainExp>("Favor XP");
+            PatchCompat15<Scripts.Mods.Items.Items_AutoPickup_Items.GroundItemManager_dropItemForPlayer>("Basic Auto Pickup");
+#else
             Scripts.Mods.Localization.LocalizationOverride.RegisterAll();
+#endif
         }
+#if COMPAT15_MINIMAL
+        private void PatchCompat15<T>(string name)
+        {
+            try
+            {
+                HarmonyInstance.CreateClassProcessor(typeof(T)).Patch();
+                Main.logger_instance?.Msg("[Compat15:PATCH] OK " + name);
+            }
+            catch (System.Exception ex)
+            {
+                Main.logger_instance?.Error("[Compat15:PATCH] FAIL " + name + ": " + ex);
+            }
+        }
+#endif
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             Scenes.SceneName = SceneManager.GetActiveScene().name;
@@ -128,17 +154,46 @@ namespace LastEpoch_Hud
 
         public static void Init()
         {
+            if (Initializing || Initialized) { return; }
             Initializing = true;
-            GameObject base_object = Object.Instantiate(new GameObject(name: base_object_name), Vector3.zero, Quaternion.identity);
-            Object.DontDestroyOnLoad(base_object);
-            base_object.AddComponent<Scripts.Refs_Manager>();
-            base_object.AddComponent<Scripts.Save_Manager>();
-            base_object.AddComponent<Scripts.Hud_Manager>();
-            base_object.AddComponent<Scripts.ModUI.SaveManager>();
-            base_object.AddComponent<Scripts.Mods_Manager>();
-            base_object.AddComponent<Scripts.VirtualKeyboard>();
-            Initialized = true;
-            Initializing = false;
+            try
+            {
+                Main.logger_instance?.Msg("[Compat15:BOOT] Creating BaseHud");
+                GameObject base_object = Object.Instantiate(new GameObject(name: base_object_name), Vector3.zero, Quaternion.identity);
+                Object.DontDestroyOnLoad(base_object);
+
+                TryAdd<Scripts.Refs_Manager>(base_object, "Refs_Manager");
+                TryAdd<Scripts.Save_Manager>(base_object, "Save_Manager");
+                TryAdd<Scripts.Hud_Manager>(base_object, "Hud_Manager");
+                TryAdd<Scripts.ModUI.SaveManager>(base_object, "ModUI.SaveManager");
+                TryAdd<Scripts.Mods_Manager>(base_object, "Mods_Manager");
+#if !COMPAT15_MINIMAL
+                TryAdd<Scripts.VirtualKeyboard>(base_object, "VirtualKeyboard");
+#endif
+                Initialized = true;
+                Main.logger_instance?.Msg("[Compat15:BOOT] BaseHud initialized");
+            }
+            catch (System.Exception ex)
+            {
+                Main.logger_instance?.Error("[Compat15:BOOT] Base initialization failed: " + ex);
+            }
+            finally
+            {
+                Initializing = false;
+            }
+        }
+
+        private static void TryAdd<T>(GameObject target, string name) where T : Component
+        {
+            try
+            {
+                target.AddComponent<T>();
+                Main.logger_instance?.Msg("[Compat15:BOOT] OK " + name);
+            }
+            catch (System.Exception ex)
+            {
+                Main.logger_instance?.Error("[Compat15:BOOT] FAIL " + name + ": " + ex);
+            }
         }
     }
     public class Scenes
