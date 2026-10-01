@@ -47,6 +47,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Maxroll
             public static ItemData MakeItem(int item_type, int sub_type, System.Collections.Generic.List<double?> implicits, System.Collections.Generic.List<Data.Json.Affix> affixs,
                 Data.Json.Affix sealed_affix, Data.Json.Affix primordial_affix, int? unique_id, System.Collections.Generic.List<double?> unique_rolls, bool corrupted, System.Collections.Generic.List<Data.Json.Affix> corrupted_affixes)
             {
+            #if COMPAT15_MINIMAL
+                return null;
+            #else
                 byte[] implicitRolls = new byte[3] { 255, 255, 255 };
 
                 // Generate implicit rolls
@@ -226,6 +229,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Maxroll
                 }
 
                 return item;
+            
+            #endif
             }
 
             public static void DropItem(ItemData item)
@@ -440,6 +445,10 @@ namespace LastEpoch_Hud.Scripts.Mods.Maxroll
             }
             public static void Update()
             {
+            #if COMPAT15_MINIMAL
+                updating = false;
+                return;
+            #else
                 updating = true;
                 profile_names = Get.Profile_Names();
                 build_name = Get.Build_Name();
@@ -521,6 +530,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Maxroll
                 }
                 Hud_Manager.Content.Maxroll.Show();
                 updating = false;
+            
+            #endif
             }
 
             public static void Load_AllEquipments()
