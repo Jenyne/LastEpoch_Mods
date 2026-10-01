@@ -136,10 +136,6 @@
       <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\Unity.TextMeshPro.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="UnityEngine">
-      <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\UnityEngine.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="UnityEngine.AssetBundleModule">
       <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\UnityEngine.AssetBundleModule.dll</HintPath>
       <Private>False</Private>
@@ -179,6 +175,7 @@
     <Compile Remove="Scripts\Mods\UI\DamageMeter.cs" />
     <Compile Remove="Scripts\Mods\NewItems\Items_ArakaalisFang.cs" />
     <Compile Remove="Scripts\Mods\Shrines\Shrines_ClickUnlimited.cs" />
+    <Compile Remove="Scripts\Mods\Shrines\Shrines_Override.cs" />
     <Compile Remove="Scripts\Mods\Minimap\Minimap_Icons.cs" />
     <Compile Remove="Scripts\Mods\Monoliths\Monoliths_CompleteObjective.cs" />
   </ItemGroup>
