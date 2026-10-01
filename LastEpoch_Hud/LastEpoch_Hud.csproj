@@ -64,11 +64,6 @@
       <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\Il2CppSystem.IO.Compression.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="Il2CppSystem.IO.Compression.FileSystem">
-      <HintPath>
-        $(LastEpochPath)\MelonLoader\Il2CppAssemblies\Il2CppSystem.IO.Compression.FileSystem.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="Il2CppSystem.Numerics">
       <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\Il2CppSystem.Numerics.dll</HintPath>
       <Private>False</Private>
