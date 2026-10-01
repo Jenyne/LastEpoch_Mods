@@ -120,8 +120,10 @@ namespace LastEpoch_Hud.Scripts
 
             if ((game_uibase.IsNullOrDestroyed()) && (!UIBase.instance.IsNullOrDestroyed())) { game_uibase = UIBase.instance; }
             if ((epoch_input_manager.IsNullOrDestroyed()) && (!EpochInputManager.instance.IsNullOrDestroyed())) { epoch_input_manager = EpochInputManager.instance; }                               //Used to block input
+#if !COMPAT15_MINIMAL
             if ((character_class_list.IsNullOrDestroyed()) && (!CharacterClassList.instance.IsNullOrDestroyed())) { character_class_list = CharacterClassList.instance; }                           //Hud, Maxroll
             if ((item_list.IsNullOrDestroyed()) && (!ItemList.instance.IsNullOrDestroyed())) { item_list = ItemList.instance; }                                                                     //Hud, Blessings, Materials, Req, Sockets, NewItems
+#endif
             if (unique_list.IsNullOrDestroyed())
             {
                 if (UniqueList.instance.IsNullOrDestroyed()) { UniqueList.getUnique(0); }                                                                                                           //Force initialize Unique list
@@ -134,11 +136,15 @@ namespace LastEpoch_Hud.Scripts
             if (Scenes.IsGameScene())
             {
                 if (player_spawn_manager.IsNullOrDestroyed()) { player_spawn_manager = PlayerSpawnManager.instance; }                                                                                             //
+#if !COMPAT15_MINIMAL
                 if ((quest_list.IsNullOrDestroyed()) && (!QuestList.instance.IsNullOrDestroyed())) { quest_list = QuestList.instance; }                                                             //Complete MainQuest
+#endif
                 if ((scene_list.IsNullOrDestroyed()) && (!SceneList.instance.IsNullOrDestroyed())) { scene_list = SceneList.instance; }                                                             //Complete MainQuest
                 //craft_materials_holder //Need to fix for LE 1.4
+#if !COMPAT15_MINIMAL
                 if ((InventoryPanelUI.IsNullOrDestroyed()) && (!InventoryPanelUI.instance.IsNullOrDestroyed())) { InventoryPanelUI = InventoryPanelUI.instance; }                                   //AutoStore
                 if ((BlessingsPanel.IsNullOrDestroyed()) && (!InventoryPanelUI.IsNullOrDestroyed())) { BlessingsPanel = InventoryPanelUI.blessingPanel; }                                           //Blessings
+#endif
                 if ((ground_item_manager.IsNullOrDestroyed()) && (!GroundItemManager.instance.IsNullOrDestroyed())) { ground_item_manager = GroundItemManager.instance; }                           //Hud
                 if ((item_containers_manager.IsNullOrDestroyed()) && (!ItemContainersManager.Instance.IsNullOrDestroyed())) { item_containers_manager = ItemContainersManager.Instance; }           //Unlock Idols, Items Update
                 if (player_actor.IsNullOrDestroyed()) { player_actor = PlayerFinder.getPlayerActor(); }                                                                                             //Hud, MainQuest, Materials, MemoryAmber, PermanentBuffs, AutoPickup, RangePickup, Maxroll, MinimapIcons, Monolith options, NewsItems, TimeBeast, DamageMeter
