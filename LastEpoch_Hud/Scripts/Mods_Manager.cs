@@ -73,8 +73,7 @@ namespace LastEpoch_Hud.Scripts
             initialized = true;
             enable = true;
             Main.logger_instance?.Msg("[Compat15:FEATURE] Minimal modules initialized");
-            return;
-#endif
+#else
 
             //Fix
             bool enable_fix_lowfps = false;
@@ -238,6 +237,7 @@ namespace LastEpoch_Hud.Scripts
 
             initialized = true;
             Main.logger_instance?.Msg("Mods Manager : Mods initialized");
+#endif
         }
         private void TryCreate<T>(string objectName, Il2CppSystem.Collections.Generic.List<GameObject> objects, ref GameObject storage) where T : Component
         {
@@ -274,8 +274,7 @@ namespace LastEpoch_Hud.Scripts
         {
 #if COMPAT15_MINIMAL
             enable = initialized;
-            return;
-#endif
+#else
             if (initialized)
             {
                 enable = true;
@@ -285,6 +284,7 @@ namespace LastEpoch_Hud.Scripts
                 items_autosell_timer_obj.SetActive(Save_Manager.instance.data.Items.Pickup.Enable_AutoStore_Timer);
                 Mods.Items.Items_Update.Reqs(); //Used to update item req
             }
+#endif
         }
     }
 }
