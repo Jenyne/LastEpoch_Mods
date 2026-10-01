@@ -323,6 +323,9 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
 
                 public static void GetAbility()
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!Initialize_ability)
                     {
                         Initialize_ability = true;
@@ -359,9 +362,14 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                         }
                         Initialize_ability = false;
                     }
+                
+                #endif
                 }
                 public static void GetPrefab()
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!Initialize_prefab)
                     {
                         Initialize_prefab = true;
@@ -383,6 +391,8 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                         }
                         Initialize_prefab = false;
                     }
+                
+                #endif
                 }
                 public static string Get_Unique_Name()
                 {
@@ -450,6 +460,9 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                 }                
                 public static void Launch(GameObject actor, Actor target)
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!ability.IsNullOrDestroyed() && (!target.IsNullOrDestroyed()) && (!prefab_obj.IsNullOrDestroyed()))
                     {
                         SetDamage(prefab_obj, AT.Cold, target.health.maxHealth);
@@ -460,6 +473,8 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                             ability.CastAfterDelay(actor.GetComponent<AbilityObjectConstructor>(), target.position(), target.position(), 0f);
                         }
                     }
+                
+                #endif
                 }
                 public static void Update_LegendaryType(bool weaverwill)
                 {
@@ -533,6 +548,9 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
 
                 public static void GetAbility()
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!Initialize_ability)
                     {
                         Initialize_ability = true;
@@ -569,9 +587,14 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                         }
                         Initialize_ability = false;
                     }
+                
+                #endif
                 }
                 public static void GetPrefab()
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!Initialize_prefab)
                     {
                         Initialize_prefab = true;
@@ -593,6 +616,8 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                         }
                         Initialize_prefab = false;
                     }
+                
+                #endif
                 }
                 public static string Get_Unique_Name()
                 {
@@ -660,6 +685,9 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                 }
                 public static void Launch(GameObject actor, Actor target)
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!ability.IsNullOrDestroyed() && (!target.IsNullOrDestroyed()) && (!prefab_obj.IsNullOrDestroyed()))
                     {
                         SetDamage(prefab_obj, AT.Fire, target.health.maxHealth);
@@ -670,6 +698,8 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                             ability.CastAfterDelay(actor.GetComponent<AbilityObjectConstructor>(), target.position(), target.position(), 0f);
                         }
                     }
+                
+                #endif
                 }
                 public static void Update_LegendaryType(bool weaverwill)
                 {
@@ -743,6 +773,9 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
 
                 public static void GetAbility()
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!Initialize_ability)
                     {
                         Initialize_ability = true;
@@ -779,9 +812,14 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                         }
                         Initialize_ability = false;
                     }
+                
+                #endif
                 }
                 public static void GetPrefab()
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!Initialize_prefab)
                     {
                         Initialize_prefab = true;
@@ -803,6 +841,8 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                         }
                         Initialize_prefab = false;
                     }
+                
+                #endif
                 }
                 public static string Get_Unique_Name()
                 {
@@ -870,6 +910,9 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                 }
                 public static void Launch(GameObject actor, Actor target)
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!ability.IsNullOrDestroyed() && (!target.IsNullOrDestroyed()) && (!prefab_obj.IsNullOrDestroyed()))
                     {
                         SetDamage(prefab_obj, AT.Lightning, target.health.maxHealth);
@@ -880,6 +923,8 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                             ability.CastAfterDelay(actor.GetComponent<AbilityObjectConstructor>(), target.position(), target.position(), 0f);
                         }
                     }
+                
+                #endif
                 }
                 public static void Update_LegendaryType(bool weaverwill)
                 {
@@ -953,6 +998,9 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
 
                 public static void GetAbility()
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!Initialize_ability)
                     {
                         Initialize_ability = true;
@@ -989,9 +1037,14 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                         }
                         Initialize_ability = false;
                     }
+                
+                #endif
                 }
                 public static void GetPrefab()
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!Initialize_prefab)
                     {
                         Initialize_prefab = true;
@@ -1013,6 +1066,8 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                         }
                         Initialize_prefab = false;
                     }
+                
+                #endif
                 }
                 public static string Get_Unique_Name()
                 {
@@ -1080,6 +1135,9 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                 }
                 public static void Launch(GameObject actor, Actor target)
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!ability.IsNullOrDestroyed() && (!target.IsNullOrDestroyed()) && (!prefab_obj.IsNullOrDestroyed()))
                     {
                         SetDamage(prefab_obj, AT.Poison, target.health.maxHealth);
@@ -1090,6 +1148,8 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                             ability.CastAfterDelay(actor.GetComponent<AbilityObjectConstructor>(), target.position(), target.position(), 0f);
                         }
                     }
+                
+                #endif
                 }
                 public static void Update_LegendaryType(bool weaverwill)
                 {
@@ -1163,6 +1223,9 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
 
                 public static void GetAbility()
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!Initialize_ability)
                     {
                         Initialize_ability = true;
@@ -1199,9 +1262,14 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                         }
                         Initialize_ability = false;
                     }
+                
+                #endif
                 }
                 public static void GetPrefab()
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!Initialize_prefab)
                     {
                         Initialize_prefab = true;
@@ -1223,6 +1291,8 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                         }
                         Initialize_prefab = false;
                     }
+                
+                #endif
                 }
                 public static string Get_Unique_Name()
                 {
@@ -1290,6 +1360,9 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                 }
                 public static void Launch(GameObject actor, Actor target)
                 {
+                #if COMPAT15_MINIMAL
+                        return;
+                #else
                     if (!ability.IsNullOrDestroyed() && (!target.IsNullOrDestroyed()) && (!prefab_obj.IsNullOrDestroyed()))
                     {
                         SetDamage(prefab_obj, AT.Physical, target.health.maxHealth);
@@ -1300,6 +1373,8 @@ namespace LastEpoch_Hud.Scripts.Mods.NewItems
                             ability.CastAfterDelay(actor.GetComponent<AbilityObjectConstructor>(), target.position(), target.position(), 0f);
                         }
                     }
+                
+                #endif
                 }
                 public static void Update_LegendaryType(bool weaverwill)
                 {
