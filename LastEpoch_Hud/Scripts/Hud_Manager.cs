@@ -59,10 +59,27 @@ namespace LastEpoch_Hud.Scripts
         {
             instance = this;
             enable = true;
-            AssetBundleCreateRequest bundleLoadRequest = AssetBundle.LoadFromFileAsync(Path.Combine(asset_path, asset_bundle_name));
-            asset_bundle = bundleLoadRequest.assetBundle;
-            if (asset_bundle == null) { Main.logger_instance.Error("AssetBundle Error"); }
-            else { Object.DontDestroyOnLoad(asset_bundle); }            
+            string bundlePath = Path.Combine(asset_path, asset_bundle_name);
+            try
+            {
+#if COMPAT15_MINIMAL
+                Main.logger_instance?.Msg("[Compat15:HUD] Loading AssetBundle: " + bundlePath);
+                asset_bundle = AssetBundle.LoadFromFile(bundlePath);
+#else
+                AssetBundleCreateRequest bundleLoadRequest = AssetBundle.LoadFromFileAsync(bundlePath);
+                asset_bundle = bundleLoadRequest.assetBundle;
+#endif
+                if (asset_bundle == null) { Main.logger_instance?.Error("[Compat15:HUD] AssetBundle load failed: " + bundlePath); }
+                else
+                {
+                    Object.DontDestroyOnLoad(asset_bundle);
+                    Main.logger_instance?.Msg("[Compat15:HUD] AssetBundle loaded");
+                }
+            }
+            catch (System.Exception ex)
+            {
+                Main.logger_instance?.Error("[Compat15:HUD] AssetBundle exception: " + ex);
+            }
         }
         void Update()
         {
