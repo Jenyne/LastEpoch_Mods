@@ -65,6 +65,17 @@ namespace LastEpoch_Hud.Scripts
             Main.logger_instance?.Msg("Mods Manager : Initialize");
             Il2CppSystem.Collections.Generic.List<GameObject> Mods_Objects = new Il2CppSystem.Collections.Generic.List<GameObject>();
 
+#if COMPAT15_MINIMAL
+            Main.logger_instance?.Msg("[Compat15:FEATURE] Minimal Mods_Manager mode");
+            TryCreate<Mods.Items.Items_AutoPickup_Items>("Mod_Items_AutoPickupItems", Mods_Objects, ref items_autopickup_obj);
+            foreach (GameObject mod in Mods_Objects) { Object.DontDestroyOnLoad(mod); }
+            Mods_Objects.Clear();
+            initialized = true;
+            enable = true;
+            Main.logger_instance?.Msg("[Compat15:FEATURE] Minimal modules initialized");
+            return;
+#endif
+
             //Fix
             bool enable_fix_lowfps = false;
             if (enable_fix_lowfps)
@@ -228,6 +239,23 @@ namespace LastEpoch_Hud.Scripts
             initialized = true;
             Main.logger_instance?.Msg("Mods Manager : Mods initialized");
         }
+        private void TryCreate<T>(string objectName, Il2CppSystem.Collections.Generic.List<GameObject> objects, ref GameObject storage) where T : Component
+        {
+            try
+            {
+                storage = Object.Instantiate(new GameObject { name = objectName }, Vector3.zero, Quaternion.identity);
+                storage.AddComponent<T>();
+                objects.Add(storage);
+                Main.logger_instance?.Msg("[Compat15:FEATURE] OK " + objectName);
+            }
+            catch (System.Exception ex)
+            {
+                Main.logger_instance?.Error("[Compat15:FEATURE] FAIL " + objectName + ": " + ex);
+                if (!storage.IsNullOrDestroyed()) { Object.Destroy(storage); }
+                storage = null;
+            }
+        }
+
         void Update() //This function will be removed soon (when i have time to do it ^^)
         {
             if (!Save_Manager.instance.IsNullOrDestroyed())
@@ -244,6 +272,10 @@ namespace LastEpoch_Hud.Scripts
         }
         void Enable() //This function will be removed soon (when i have time to do it ^^)
         {
+#if COMPAT15_MINIMAL
+            enable = initialized;
+            return;
+#endif
             if (initialized)
             {
                 enable = true;
