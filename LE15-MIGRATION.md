@@ -58,6 +58,46 @@ tree, and normal/comparison Temporalis tooltips followed by ordinary item toolti
 Check for late icon loads replacing the custom image. Temporalis component
 initialization is commented out in the donor Mods_Manager; this patch does not
 enable that unfinished feature. Its icon must be initialized to test rendering.
-Other runtime targets reported in the supplied log remain outside this first
-batch: Memory Amber, minimap icons, legendary potential, faction UI, Quad Stash,
-and Headhunter assets.
+## Second runtime repair batch
+
+Quad Stash now leaves ordinary stash occupancy to the game. Its quad-only cache
+is keyed by container identity, rebuilt from existing contents when absent, and
+cleared on container reset. Slot updates return success and reject out-of-range
+coordinates. New-tab resizing only applies to actual stash containers. Tab UI
+refresh runs after native tab selection. Configuration uses OnModalOpen and
+HandleConfigureTabResult, saves after the game processes the result, and refuses
+size changes on nonempty tabs. Existing quad status survives a rename even when
+an unsafe size change is rejected. This remains the donor's name-based settings
+format; duplicate tab names are not independently configurable.
+
+Memory Amber patches now target the typed pickup-set overload and only affect
+MemoryAmber for the local player. Multiplication saturates at uint.MaxValue.
+Auto-pickup records the next ID before creation and collects only that newly
+created pickup, without changing the collection during enumeration.
+
+Minimap initialization includes GroundItemRarityVisualsV2. Legendary Potential
+uses RollLegendaryPotential's current signature and a postfix so the game's
+out-parameter and side effects execute. The configured range is inclusive and
+clamped to 0..4. Woven points refresh after OnPanelOpen.
+
+Headhunter's optional unfinished page is looked up without throwing missing-child
+errors; its button is only wired when both button and content exist. Missing
+content hides the button. This does not create the absent page or replace assets.
+
+Validation: restricted net6.0 build passes (0 errors, 1 NU1900 audit connectivity
+warning); 13 game API signature checks pass; all 16 compiled runtime patch targets
+resolve uniquely with matching injected argument/result types. The 18 managed
+occupancy regression checks pass. Tests use the real hook bodies with small
+managed stand-ins and do not exercise native persistence or UI.
+
+```powershell
+./tools/Test-QuadStashSlots.ps1
+./tools/Validate-RuntimePatchBindings.ps1 -LastEpochPath 'D:\SteamLibrary\steamapps\common\Last Epoch' -ModAssembly ./Build/Release/net6.0/LastEpoch_Hud.dll -HarmonyDirectory "$env:USERPROFILE/.nuget/packages/lib.harmony/2.3.1.1/lib/net6.0"
+```
+
+Still required: a complete build and an in-game test of normal/quad tab switching,
+moving/removing/sorting items, tab configuration/renaming, rejection of resizing
+nonempty tabs, and save/reload. Verify modal child layout on the actual game UI.
+Test Memory Amber with multiplier and auto-pickup separately and together; other
+pickup types should remain unchanged. Test minimap cleanup on pickup, LP bounds,
+and Woven panel reopen. These fixes have not been installed into the game.

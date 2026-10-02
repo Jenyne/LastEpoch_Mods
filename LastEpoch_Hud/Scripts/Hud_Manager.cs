@@ -1430,7 +1430,22 @@ namespace LastEpoch_Hud.Scripts
                     Events.Set_Base_Button_Event(hud_object, "Menu", "Btn_Menu_Scenes", Scenes_OnClick_Action);
                     Events.Set_Base_Button_Event(hud_object, "Menu", "Btn_Menu_TreeSkills", Skills_OnClick_Action);
                     Events.Set_Base_Button_Event(hud_object, "Menu", "Btn_Menu_ForceDrop", OldForceDrop_OnClick_Action);
-                    Events.Set_Base_Button_Event(hud_object, "Menu", "Btn_Menu_Headhunter", Headhunter_OnClick_Action);
+                    // The donor bundle may omit this unfinished, optional page.
+                    var headhunterButton = Functions.FindDescendant(hud_object, "Btn_Menu_Headhunter");
+                    var headhunterContent = Functions.FindDescendant(hud_object, "Headhunter_Content");
+                    if (!headhunterButton.IsNullOrDestroyed())
+                    {
+                        headhunterButton.SetActive(!headhunterContent.IsNullOrDestroyed());
+                        if (!headhunterContent.IsNullOrDestroyed())
+                        {
+                            var button = headhunterButton.GetComponent<Button>();
+                            if (!button.IsNullOrDestroyed())
+                            {
+                                button.onClick = new Button.ButtonClickedEvent();
+                                button.onClick.AddListener(Headhunter_OnClick_Action);
+                            }
+                        }
+                    }
                 }
             }
             
@@ -6326,7 +6341,7 @@ namespace LastEpoch_Hud.Scripts
 
                 public static void Get_Refs()
                 {
-                    content_obj = Functions.GetChild(Content.content_obj, "Headhunter_Content");
+                    content_obj = Functions.FindDescendant(Content.content_obj, "Headhunter_Content");
                 }
                 public static void Set_Active(bool show)
                 {

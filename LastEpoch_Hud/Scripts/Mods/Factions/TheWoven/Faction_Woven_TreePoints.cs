@@ -9,16 +9,16 @@ namespace LastEpoch_Hud.Scripts.Mods.Factions.TheWoven
         {
             if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()))
             {
-                return Save_Manager.instance.data.Factions.TheWoven.Enable_TreePoints;
+                return !Save_Manager.instance.data.IsNullOrDestroyed() && Save_Manager.instance.data.Factions.TheWoven.Enable_TreePoints;
             }
             else { return false; }
         }
 
-        [HarmonyPatch(typeof(FactionRankUIWeaver), "OnEnable")]
-        public class FactionRankUIWeaver_OnEnable
+        [HarmonyPatch(typeof(FactionRankUIWeaver), "OnPanelOpen", new System.Type[] { })]
+        public class FactionRankUIWeaver_OnPanelOpen
         {
-            [HarmonyPrefix]
-            static void Prefix(ref FactionRankUIWeaver __instance)
+            [HarmonyPostfix]
+            static void Postfix(FactionRankUIWeaver __instance)
             {
                 if (!CanRun() || Refs_Manager.player_treedata.IsNullOrDestroyed() || Refs_Manager.player_treedata.weaverTree == null)
                 {

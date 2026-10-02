@@ -26,14 +26,14 @@ namespace LastEpoch_Hud.Scripts.Mods.Bank
         public static StashItemContainer stash_item_container = null;
         public static StashItemContainerUI stash_item_container_ui = null;
         public static Image stash_grid_image = null;
-        public static System.Collections.Generic.List<bool[]> occupied_slots = null;
+        private static readonly System.Collections.Generic.Dictionary<System.IntPtr, bool[]> occupied_slots = new System.Collections.Generic.Dictionary<System.IntPtr, bool[]>();
         public static ItemContainersManager item_contenairs_manager = null;
 
         //configure
         public static ConfigureTabUI configure_tab_ui = null;
         public static GameObject QuadStash_obj = null;
         public static string toggle_str = "Quad Stash";
-        public static string toggle_explain_str = "ReOpen this tab to take effect";
+        public static string toggle_explain_str = "Empty the tab before changing its size. Reopen to refresh.";
         public static Toggle configure_stash_toggle = null;
         public static TextMeshProUGUI configure_stash_toggle_title = null;
         public static TextMeshProUGUI configure_stash_toggle_explanation = null;
@@ -153,7 +153,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Bank
                                 backup_active_tab = stash_item_container.CurrentlyActiveTab;
                                 if (!stash_grid_image.IsNullOrDestroyed())
                                 {
-                                    if (Get.IsQuadStash()) { stash_grid_image.sprite = quad_grid; }
+                                    if (Get.IsQuadStash() && !quad_grid.IsNullOrDestroyed()) { stash_grid_image.sprite = quad_grid; }
                                     else { stash_grid_image.sprite = default_grid; }
                                 }
                             }
@@ -190,6 +190,37 @@ namespace LastEpoch_Hud.Scripts.Mods.Bank
             }
         }
 
+        private static bool IsQuadContainer(ItemContainer container)
+        {
+            return !container.IsNullOrDestroyed() && container.id == ContainerID.STASH && container.size == quad_size;
+        }
+
+        private static bool Fits(Vector2Int position, Vector2Int size, Vector2Int bounds)
+        {
+            return position.x >= 0 && position.y >= 0 && size.x > 0 && size.y > 0 &&
+                size.x <= bounds.x && size.y <= bounds.y &&
+                position.x <= bounds.x - size.x && position.y <= bounds.y - size.y;
+        }
+
+        private static bool[] GetOccupiedSlots(ItemContainer container)
+        {
+            if (occupied_slots.TryGetValue(container.Pointer, out var slots)) { return slots; }
+            slots = new bool[quad_size.x * quad_size.y];
+            // A tab may already contain items when it first becomes quad. Reconstruct
+            // occupancy instead of assuming a missing cache means an empty tab.
+            foreach (var entry in container.content)
+            {
+                if (!Fits(entry.Position, entry.size, quad_size))
+                {
+                    // Preserve invalid/out-of-range contents; never permit overlapping writes.
+                    System.Array.Fill(slots, true);
+                    break;
+                }
+                foreach (int index in Get.SlotsPosition(entry.Position, entry.size)) { slots[index] = true; }
+            }
+            occupied_slots[container.Pointer] = slots;
+            return slots;
+        }
         public class Get
         {
             public static string ActiveTabName()
@@ -287,7 +318,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Bank
                 public static readonly string base_path = Directory.GetCurrentDirectory() + @"\Mods\LastEpoch_Hud\QuadStashs\";
                 public static string filename = "QuadStashs.json";
                 public static string path = "";
-                public static Structures.tabs UserTabs = new Structures.tabs();
+                public static Structures.tabs UserTabs = new Structures.tabs { names = new System.Collections.Generic.List<string>() };
 
                 public class Structures
                 {
@@ -308,6 +339,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Bank
                 }
                 public static void Load()
                 {
+                    if (string.IsNullOrEmpty(Data.path)) { return; }
                     Main.logger_instance.Msg("QuadStashs : Try to Load : " + Data.path + Data.filename);
 
                     if (!File.Exists(Data.path + filename))
@@ -320,6 +352,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Bank
                         try
                         {
                             Data.UserTabs = JsonConvert.DeserializeObject<Structures.tabs>(File.ReadAllText(Data.path + filename));
+                            if (Data.UserTabs.names == null) { DefaultConfig(); }
                             Main.logger_instance.Msg("QuadStashs : Loaded");
                         }
                         catch { Main.logger_instance.Error("QuadStashs : Error loading file : " + Data.path + filename); }
@@ -327,16 +360,23 @@ namespace LastEpoch_Hud.Scripts.Mods.Bank
                 }
                 public static void Save()
                 {
+                    if (string.IsNullOrEmpty(Data.path)) { return; }
                     Main.logger_instance.Msg("QuadStashs : Save : " + Data.path + Data.filename);
                     string jsonString = JsonConvert.SerializeObject(Data.UserTabs, Newtonsoft.Json.Formatting.Indented);
                     if (!Directory.Exists(Data.path)) { Directory.CreateDirectory(Data.path); }
-                    if (File.Exists(Data.path + Data.filename)) { File.Delete(Data.path + Data.filename); }
                     File.WriteAllText(Data.path + Data.filename, jsonString);
                 }
             }
         }
         public class Hooks
         {
+            [HarmonyPatch(typeof(ItemContainer), "Clear", new System.Type[] { })]
+            public class ItemContainer_Clear
+            {
+                [HarmonyPostfix]
+                static void Postfix(ItemContainer __instance) { occupied_slots.Remove(__instance.Pointer); }
+            }
+
             [HarmonyPatch(typeof(StashItemContainerUI), "Awake")]
             public class StashItemContainerUI_Awake
             {
@@ -354,153 +394,80 @@ namespace LastEpoch_Hud.Scripts.Mods.Bank
                 static void Prefix(ref ItemContainersManager __instance)
                 {
                     item_contenairs_manager = __instance;
-                    occupied_slots = new System.Collections.Generic.List<bool[]>();
+                    occupied_slots.Clear();
                     stash_item_container = null;
                     backup_active_tab = -1;
                 }
             }
 
-            [HarmonyPatch(typeof(TabbedItemContainer), "AddNewTab")]
+            [HarmonyPatch(typeof(TabbedItemContainer), "AddNewTab", new System.Type[] { typeof(ItemContainer) })]
             public class TabbedItemContainer_AddNewTab
             {
                 [HarmonyPrefix]
-                static void Prefix(ref TabbedItemContainer __instance, ref ItemContainer __0)
+                static void Prefix(TabbedItemContainer __instance, ItemContainer __0)
                 {
-                    if (stash_item_container.IsNullOrDestroyed()) { stash_item_container = __instance.TryCast<StashItemContainer>(); }
-                    if (!stash_item_container.IsNullOrDestroyed())
-                    {
-                        int index = stash_item_container.containers.Count;
-                        if (Get.IsQuadStash(index)) { __0.size = quad_size; }
-                        else { __0.size = default_size; }
-                        bool[] occupied = new bool[(quad_size.x * quad_size.y)];
-                        for (int i = 0; i < occupied.Length; i++) { occupied[i] = false; }
-                        occupied_slots.Add(occupied);
-                    }
+                    var stash = __instance.TryCast<StashItemContainer>();
+                    if (stash.IsNullOrDestroyed() || __0.IsNullOrDestroyed() || __0.id != ContainerID.STASH) { return; }
+                    stash_item_container = stash;
+                    int index = stash.containers.Count;
+                    // Do not overwrite native dimensions for ordinary/special-purpose tabs.
+                    if (Get.IsQuadStash(index)) { __0.size = quad_size; }
+                    occupied_slots.Remove(__0.Pointer);
                 }
             }
 
             [HarmonyPatch(typeof(ItemContainerUIWithSearch), "Tabbed_OnActiveTabChanged")]
             public class ItemContainerUIWithSearch_Tabbed_OnActiveTabChanged
             {
-                [HarmonyPrefix]
-                static void Prefix(ref ItemContainerUIWithSearch __instance, ref TabbedItemContainer __0)
+                // Let the game select the new container before calculating its slot size.
+                [HarmonyPostfix]
+                static void Postfix(ItemContainerUIWithSearch __instance, TabbedItemContainer __0)
                 {
-                    if (stash_item_container.IsNullOrDestroyed()) { stash_item_container = __0.TryCast<StashItemContainer>(); }
-                    if (!stash_item_container_ui.IsNullOrDestroyed())
-                    {
-                        stash_item_container_ui.slotSize = stash_item_container_ui.CalculateSlotSize();
-                        stash_item_container_ui.ReDrawWholeContainer();
-                    }
-                    __instance.ReDrawWholeContainer();
+                    var stash = __0.TryCast<StashItemContainer>();
+                    var ui = __instance.TryCast<StashItemContainerUI>();
+                    if (stash.IsNullOrDestroyed() || ui.IsNullOrDestroyed()) { return; }
+                    stash_item_container = stash;
+                    stash_item_container_ui = ui;
+                    ui.slotSize = ui.CalculateSlotSize();
+                    ui.ReDrawWholeContainer();
                 }
             }
 
-            [HarmonyPatch(typeof(ItemContainer), "CheckSlotsOccupied")]
+            [HarmonyPatch(typeof(ItemContainer), "CheckSlotsOccupied", new System.Type[] { typeof(Vector2Int), typeof(Vector2Int), typeof(Context) })]
             public class ItemContainer_CheckSlotsOccupied
             {
                 [HarmonyPrefix]
-                static bool Prefix(ref ItemContainer __instance, ref bool __result, Vector2Int __0, Vector2Int __1)
+                static bool Prefix(ItemContainer __instance, ref bool __result, Vector2Int __0, Vector2Int __1)
                 {
-                    bool r = true;                    
-                    if (__instance.id == ContainerID.STASH)
+                    if (!IsQuadContainer(__instance)) { return true; }
+                    // Invalid coordinates must never be treated as free space.
+                    __result = true;
+                    if (!Fits(__0, __1, __instance.size)) { return false; }
+                    var slots = GetOccupiedSlots(__instance);
+                    foreach (int index in Get.SlotsPosition(__0, __1))
                     {
-                        if (!stash_item_container.IsNullOrDestroyed())
-                        {
-                            bool occupied = false;
-                            bool found = false;
-                            int index = 0;
-                            foreach (ItemContainer item_contenair in stash_item_container.containers)
-                            {
-                                if (item_contenair == __instance)
-                                {
-                                    found = true;
-                                    break;
-                                }
-                                index++;
-                            }
-                            if (found)
-                            {
-                                if (index < occupied_slots.Count)
-                                {
-                                    foreach (int slot_index in Get.SlotsPosition(__0, __1))
-                                    {
-                                        if (slot_index < occupied_slots[index].Length)
-                                        {                                            
-                                            if (occupied_slots[index][slot_index])
-                                            {
-                                                occupied = true;
-                                                break;
-                                            }
-                                        }
-                                        else
-                                        {
-                                            Main.logger_instance.Error("CheckSlotsOccupied : slot_index = " + slot_index + " / occupied_slots[" + index + "].Length = " + occupied_slots[index].Length);
-                                            break;
-                                        }
-                                    }                                    
-                                }
-                                else { Main.logger_instance.Error("CheckSlotsOccupied : Index  = " + index + " /  occupied_slots.Count = " + occupied_slots.Count); }
-                            }
-                            __result = occupied;
-                            r = false;
-                        }
-                        else { Main.logger_instance.Error("ItemContainer.CheckSlotsOccupied() stash_item_container : is null"); }
+                        if (slots[index]) { return false; }
                     }
-
-                    return r;
+                    __result = false;
+                    return false;
                 }
             }
 
-            [HarmonyPatch(typeof(ItemContainer), "SetSlotsOccupied")]
+            [HarmonyPatch(typeof(ItemContainer), "SetSlotsOccupied", new System.Type[] { typeof(Vector2Int), typeof(Vector2Int), typeof(bool) })]
             public class ItemContainer_SetSlotsOccupied
             {
                 [HarmonyPrefix]
-                static bool Prefix(ref ItemContainer __instance, bool __result, Vector2Int __0, Vector2Int __1, bool __2)
+                static bool Prefix(ItemContainer __instance, ref bool __result, Vector2Int __0, Vector2Int __1, bool __2)
                 {
-                    bool r = true;
-                    if (__instance.id == ContainerID.STASH)
-                    {
-                        if (!stash_item_container.IsNullOrDestroyed())
-                        {
-                            bool found = false;
-                            int index = 0;
-                            foreach (ItemContainer item_contenair in stash_item_container.containers)
-                            {
-                                if (item_contenair == __instance)
-                                {
-                                    found = true;
-                                    break;
-                                }
-                                index++;
-                            }
-
-                            if (found)
-                            {
-                                if (index < occupied_slots.Count)
-                                {
-                                    foreach (int slot_index in Get.SlotsPosition(__0, __1))
-                                    {
-                                        if (slot_index < occupied_slots[index].Length)
-                                        {
-                                            occupied_slots[index][slot_index] = __2;
-                                        }
-                                        else
-                                        {
-                                            Main.logger_instance.Error("SetSlotsOccupied : slot_index = " + slot_index + " / occupied_slots[" + index + "].Length = " + occupied_slots[index].Length);
-                                            break;
-                                        }
-                                    }
-                                }
-                                else { Main.logger_instance.Error("SetSlotsOccupied : Index  = " + index + " /  occupied_slots.Count = " + occupied_slots.Count); }
-                            }
-                            r = false;
-                        }
-                    }
-
-                    return r;
+                    if (!IsQuadContainer(__instance)) { return true; }
+                    __result = false;
+                    if (!Fits(__0, __1, __instance.size)) { return false; }
+                    var slots = GetOccupiedSlots(__instance);
+                    foreach (int index in Get.SlotsPosition(__0, __1)) { slots[index] = __2; }
+                    __result = true;
+                    return false;
                 }
             }
-
             [HarmonyPatch(typeof(ItemContainer), "GetItemsInArea")]
             public class ItemContainer_GetItemsInArea
             {
@@ -510,6 +477,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Bank
                     bool r = true;
                     if ((__instance.id == ContainerID.STASH) && (__instance.size == quad_size))
                     {
+                        if (!Fits(__0, __1, quad_size))
+                        {
+                            __result = new Il2CppSystem.Collections.Generic.HashSet<ItemContainerEntry>();
+                            return false;
+                        }
                         Il2CppSystem.Collections.Generic.List<int> area_positions = new Il2CppSystem.Collections.Generic.List<int>();
                         foreach (int slot_index in Get.SlotsPosition(__0, __1)) { area_positions.Add(slot_index); }
                         Il2CppSystem.Collections.Generic.HashSet<ItemContainerEntry> item_list = new Il2CppSystem.Collections.Generic.HashSet<ItemContainerEntry>();
@@ -529,27 +501,35 @@ namespace LastEpoch_Hud.Scripts.Mods.Bank
                 }
             }
 
-            [HarmonyPatch(typeof(ConfigureTabUI), "OnEnable")]
-            public class ConfigureTabUI_OnEnable
+            [HarmonyPatch(typeof(ConfigureTabUI), "OnModalOpen")]
+            public class ConfigureTabUI_OnModalOpen
             {
-                [HarmonyPrefix]
-                static void Prefix(ref ConfigureTabUI __instance)
+                [HarmonyPostfix]
+                static void Postfix(ConfigureTabUI __instance)
                 {
+                    configure_tab_ui = __instance;
+                    open_configure = false;
+                    configure_stash_toggle = null;
+                    if (__instance.nameInputTMP.IsNullOrDestroyed()) { return; }
+                    configure_stash_name_backup = __instance.nameInputTMP.text;
+                    if (__instance.contents.IsNullOrDestroyed() || __instance.stashPriorityUI.IsNullOrDestroyed()) { return; }
                     GameObject content = __instance.contents.gameObject;
                     if (!content.IsNullOrDestroyed())
                     {
                         QuadStash_obj = Functions.GetChild(content, "quad_stash_row");
                         if (QuadStash_obj.IsNullOrDestroyed())
                         {
-                            GameObject priority_section = Functions.GetChild(content, "Priority Section");
+                            GameObject priority_section = Functions.FindDescendant(content, "Priority Section");
                             GameObject priority = __instance.stashPriorityUI.gameObject;
                             if ((!priority_section.IsNullOrDestroyed()) && (!priority.IsNullOrDestroyed()))
                             {
                                 RectTransform priority_section_rect_transf = priority_section.GetComponent<RectTransform>();
+                                if (priority_section_rect_transf.IsNullOrDestroyed()) { return; }
                                 float row_H = priority_section_rect_transf.rect.height;
                                 float margin = 20 * priority_section_rect_transf.lossyScale.x; //Fix Hight resolution scaling
 
-                                GameObject row = Functions.GetChild(priority, "Explanation Row");
+                                GameObject row = Functions.FindDescendant(priority, "Explanation Row");
+                                if (row.IsNullOrDestroyed()) { return; }
                                 QuadStash_obj = UnityEngine.Object.Instantiate(row, new Vector3(row.transform.position.x, (row.transform.position.y - row_H - margin), row.transform.position.z), Quaternion.identity);
                                 QuadStash_obj.name = "quad_stash_row";
                                 QuadStash_obj.transform.SetParent(content.transform);
@@ -576,88 +556,57 @@ namespace LastEpoch_Hud.Scripts.Mods.Bank
                                 }
                             }
                         }
+                        // Rebind on every modal open, including an existing cloned row.
+                        if (!QuadStash_obj.IsNullOrDestroyed())
+                        {
+                            configure_stash_toggle = QuadStash_obj.GetComponentInChildren<Toggle>(true);
+                            if (!configure_stash_toggle.IsNullOrDestroyed())
+                            {
+                                configure_stash_toggle.onValueChanged = new Toggle.ToggleEvent();
+                                configure_stash_toggle.SetIsOnWithoutNotify(Save.Data.UserTabs.names != null &&
+                                    Save.Data.UserTabs.names.Contains(configure_stash_name_backup));
+                            }
+                            if (!configure_stash_toggle_title.IsNullOrDestroyed()) { configure_stash_toggle_title.text = toggle_str; }
+                            if (!configure_stash_toggle_explanation.IsNullOrDestroyed()) { configure_stash_toggle_explanation.text = toggle_explain_str; }
+                        }
                     }
                 }
             }
 
-            [HarmonyPatch(typeof(ConfigureTabUI), "SetSelections")]
-            public class ConfigureTabUI_SetSelections
+            [HarmonyPatch(typeof(StashTabbedUIControls), "HandleConfigureTabResult",
+                new System.Type[] { typeof(Il2CppLE.UI.PanelSystem.StashConfigureTabModalResult) })]
+            public class StashTabbedUIControls_HandleConfigureTabResult
             {
                 [HarmonyPostfix]
-                static void Postfix(ref ConfigureTabUI __instance, int __0, int __1, string __2, int __3, int __4, Il2CppSystem.Collections.Generic.List<string> __5, Il2CppSystem.Collections.Generic.List<int> __6, bool __7, StashPriority __8)
+                static void Postfix(StashTabbedUIControls __instance, Il2CppLE.UI.PanelSystem.StashConfigureTabModalResult __0)
                 {
-                    configure_tab_ui = __instance;
-                    open_configure = true;
-                }
-            }
-
-            [HarmonyPatch(typeof(ConfigureTabUI), "ConfirmConfigure")]
-            public class ConfigureTabUI_ConfirmConfigure
-            {
-                [HarmonyPrefix]
-                static void Prefix(ref ConfigureTabUI __instance)
-                {
-                    if ((!Save.Data.UserTabs.IsNullOrDestroyed()) && (!configure_stash_toggle.IsNullOrDestroyed()))
+                    if (__0.IsNullOrDestroyed() || __0.Action != Il2CppLE.UI.PanelSystem.StashConfigureResult.Save ||
+                        configure_tab_ui.IsNullOrDestroyed() || __instance != configure_tab_ui.parentUIController ||
+                        __0.SelectedTabId != configure_tab_ui.selectedTabID ||
+                        string.IsNullOrEmpty(Save.Data.path) || Save.Data.UserTabs.names == null ||
+                        configure_stash_toggle.IsNullOrDestroyed() || stash_item_container.IsNullOrDestroyed()) { return; }
+                    int selected = __0.SelectedTabId;
+                    if (selected < 0 || selected >= stash_item_container.containers.Count) { return; }
+                    var container = stash_item_container.containers[selected];
+                    if (container.id != ContainerID.STASH) { return; }
+                    bool wasQuad = IsQuadContainer(container);
+                    bool wantQuad = configure_stash_toggle.isOn;
+                    if (wasQuad != wantQuad && container.content.Count > 0)
                     {
-                        bool save = false;
-                        bool update_containers = false;
-                        if (!configure_stash_toggle.isOn)
-                        {
-                            if (Save.Data.UserTabs.names.Contains(configure_stash_name_backup)) //remove tab name
-                            {
-                                System.Collections.Generic.List<string> new_names = new System.Collections.Generic.List<string>();
-                                foreach (string s in Save.Data.UserTabs.names)
-                                {
-                                    if (s != configure_stash_name_backup) { new_names.Add(s); }
-                                }
-                                Save.Data.UserTabs.names = new_names;
-                                save = true;
-                                update_containers = true;                                
-                            }
-                        }
-                        else
-                        {
-                            if (__instance.nameInputTMP.text != configure_stash_name_backup) //update tab name
-                            {
-                                bool updated = false;
-                                for (int i = 0; i < Save.Data.UserTabs.names.Count; i++)
-                                {
-                                    if (Save.Data.UserTabs.names[i] == configure_stash_name_backup)
-                                    {
-                                        Save.Data.UserTabs.names[i] = __instance.nameInputTMP.text;
-                                        updated = true;
-                                    }
-                                }
-                                if (!updated)
-                                {
-                                    Save.Data.UserTabs.names.Add(__instance.nameInputTMP.text);
-                                    update_containers = true;
-                                }
-                                save = true;
-                            }
-                            else if (!Save.Data.UserTabs.names.Contains(__instance.nameInputTMP.text)) //add tab name
-                            {
-                                Save.Data.UserTabs.names.Add(__instance.nameInputTMP.text);
-                                save = true;
-                                update_containers = true;                                
-                            }
-                        }
-                        if (save)
-                        {
-                            Save.Data.Save();
-                            Save.Data.Load();
-                        }
-                        if ((update_containers) && (!stash_item_container.IsNullOrDestroyed()))
-                        {
-                            int i = 0;
-                            foreach (ItemContainer item_container in stash_item_container.containers)
-                            {
-                                if (Get.IsQuadStash(i)) { item_container.size = quad_size; }
-                                else { item_container.size = default_size; }
-                                i++;
-                            }
-                        }
+                        wantQuad = wasQuad;
+                        Main.logger_instance?.Warning("Empty this stash tab before changing its Quad Stash size.");
                     }
+                    // Preserve existing quad status across renames, even when a size change is rejected.
+                    var names = Save.Data.UserTabs.names;
+                    names.Remove(configure_stash_name_backup);
+                    if (wantQuad && !names.Contains(__0.TabName)) { names.Add(__0.TabName); }
+                    Save.Data.Save();
+                    if (wantQuad != wasQuad)
+                    {
+                        container.size = wantQuad ? quad_size : default_size;
+                        occupied_slots.Remove(container.Pointer);
+                    }
+                    backup_active_tab = -1;
                 }
             }
         }

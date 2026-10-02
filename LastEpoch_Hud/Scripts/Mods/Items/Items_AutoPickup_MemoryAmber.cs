@@ -1,4 +1,5 @@
-﻿using HarmonyLib;
+using HarmonyLib;
+using Il2CppLE.Factions;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items
@@ -7,39 +8,36 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
     {
         public static bool CanRun()
         {
-            if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()) && (!Refs_Manager.player_actor.IsNullOrDestroyed()))
-            {
-                return Save_Manager.instance.data.Items.Pickup.Enable_AutoPickup_MemoryAmber;
-            }
-            else { return false; }
+            return Scenes.IsGameScene() && !Save_Manager.instance.IsNullOrDestroyed() &&
+                !Save_Manager.instance.data.IsNullOrDestroyed() && !Refs_Manager.player_actor.IsNullOrDestroyed() &&
+                Save_Manager.instance.data.Items.Pickup.Enable_AutoPickup_MemoryAmber;
         }
 
-        [HarmonyPatch(typeof(Il2CppLE.Factions.PickupableObjectsManager), "CreatePickupableObjectForPlayer", new System.Type[] { typeof(Il2CppLE.Factions.PickupableObjectSet), typeof(Vector3), typeof(uint) })]
-        public class PickupableObjectsManager_CreatePickupableObjectForPlayer2
+        [HarmonyPatch(typeof(PickupableObjectsManager), "CreatePickupableObjectForPlayer",
+            new System.Type[] { typeof(PickupableObjectType), typeof(PickupableObjectSet), typeof(Vector3), typeof(uint) })]
+        public class PickupableObjectsManager_CreatePickupableObjectForPlayer
         {
-            [HarmonyPostfix]
-            static void Postfix(ref Il2CppLE.Factions.PickupableObjectsManager __instance, Il2CppLE.Factions.PickupableObjectSet __0, ref Vector3 __1, uint __2)
+            [HarmonyPrefix]
+            static void Prefix(PickupableObjectSet __1, out uint __state)
             {
-                if (CanRun())
+                __state = __1.IsNullOrDestroyed() ? 0 : __1.NextID;
+            }
+
+            [HarmonyPostfix]
+            static void Postfix(PickupableObjectsManager __instance, PickupableObjectType __0,
+                PickupableObjectSet __1, uint __state)
+            {
+                if (!CanRun() || __0 != PickupableObjectType.MemoryAmber || __1.IsNullOrDestroyed() ||
+                    __1.PlayerActor != Refs_Manager.player_actor || __1.NextID == __state) { return; }
+                if (__1.pickupables.IsNullOrDestroyed() || !__1.pickupables.ContainsKey(__0)) { return; }
+                var objects = __1.pickupables[__0];
+                // Indexing avoids invalidating an enumerator when PickupObject removes the item.
+                for (int i = 0; i < objects.Count; i++)
                 {
-                    bool pick = false;
-                    System.UInt32 id = __0.NextID - 1;
-                    foreach (Il2CppSystem.Collections.Generic.KeyValuePair<Il2CppLE.Factions.PickupableObjectType, Il2CppSystem.Collections.Generic.List<Il2CppLE.Factions.PickupableObject>> obj in __0.pickupables)
-                    {
-                        int index = 0;
-                        foreach (Il2CppLE.Factions.PickupableObject pickupable_obj in obj.Value)
-                        {
-                            if (pickupable_obj.Id == id)
-                            {
-                                __1 = Refs_Manager.player_actor.position();                                
-                                __instance.PickupObject(__0, pickupable_obj, index);
-                                pick = true;
-                                break;
-                            }
-                            index++;
-                        }
-                        if (pick) { break; }
-                    }
+                    var pickup = objects[i];
+                    if (pickup.Id != __state) { continue; }
+                    __instance.PickupObject(__1, pickup, i);
+                    break;
                 }
             }
         }

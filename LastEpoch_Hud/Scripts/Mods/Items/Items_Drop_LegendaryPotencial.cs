@@ -20,21 +20,17 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             else { return false; }
         }
 
-        [HarmonyPatch(typeof(ItemData), "rollLegendaryPotential")]
+        [HarmonyPatch(typeof(ItemData), "RollLegendaryPotential", new System.Type[] { typeof(UniqueList.Entry), typeof(int), typeof(int), typeof(float), typeof(float), typeof(bool), typeof(float) }, new ArgumentType[] { ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Normal, ArgumentType.Ref, ArgumentType.Normal })]
         public class rollLegendaryPotential
         {
-            [HarmonyPrefix]
-            static bool Prefix(ref ItemData __instance, ref int __result, UniqueList.Entry __0, int __1, int __2)
+            // Preserve the game's side effects and improvedByCoF out parameter.
+            [HarmonyPostfix]
+            static void Postfix(ref int __result)
             {
-                if (CanRun())
-                {
-                    int roll = 0;
-                    if (Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Min == Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Max) { roll = (int)Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Max; }
-                    else { roll = (int)Random.RandomRange(Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Min, Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Max); }
-                    __result = roll;
-                    return false;
-                }
-                else { return true; };
+                if (!CanRun()) { return; }
+                int min = Mathf.Clamp((int)Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Min, 0, 4);
+                int max = Mathf.Clamp((int)Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Max, min, 4);
+                __result = Random.Range(min, max + 1);
             }
         }
     }
