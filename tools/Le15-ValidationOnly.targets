@@ -1,0 +1,14 @@
+<Project><ItemGroup><Compile Remove="Scripts\Mods\Character\Character_TwoHandedShield.cs" />
+<Compile Remove="Scripts\Mods\Craft\Craft_MaxTier.cs" />
+<Compile Remove="Scripts\Mods\Harbringers\Harbringers_AltarWithoutKey.cs" />
+<Compile Remove="Scripts\Mods\Maxroll\Maxroll_import.cs" />
+<Compile Remove="Scripts\Mods\NewItems\Items_ArakaalisFang.cs" />
+<Compile Remove="Scripts\Mods\NewItems\Items_HeadHunter.cs" />
+<Compile Remove="Scripts\Mods\NewItems\Items_Heralds.cs" />
+<Compile Remove="Scripts\Mods\NewItems\Items_Mjolner.cs" />
+<Compile Remove="Scripts\Mods\Spawn\TimeBeast.cs" />
+<Compile Remove="Scripts\Mods\Summon\Summon_Collider.cs" />
+<Compile Remove="Scripts\Mods\Summon\Summon_Forever.cs" />
+<Compile Remove="Scripts\Mods\Summon\Summon_GodMode.cs" />
+<Compile Remove="Scripts\Mods\Teleport\Teleport_ToScene.cs" />
+<Compile Remove="Scripts\Mods\UI\DamageMeter.cs" /><Compile Remove="Scripts\Mods\Localization\LocalizationOverride.cs" /><Compile Remove="Scripts\Mods\NewItems\**\*.cs;Scripts\Mods\Craft\Craft_Locales.cs" /></ItemGroup></Project>

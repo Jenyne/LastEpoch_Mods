@@ -414,15 +414,31 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 }
             }
 
-            [HarmonyPatch(typeof(UITooltipItem), "GetItemSprite")]
-            public class UITooltipItem_GetItemSprite
+            // LE 1.5 GetItemSprite returns SoftRef<Sprite>. Our generated icon has
+            // no addressable GUID, so apply it after the tooltip selects its images.
+            [HarmonyPatch(typeof(UITooltipItem), "SetItemImage", new System.Type[] {
+                typeof(ItemDataUnpacked), typeof(UITooltipItem.ItemTooltipInfo), typeof(bool) })]
+            public class UITooltipItem_SetItemImage
             {
                 [HarmonyPostfix]
-                static void Postfix(ref UnityEngine.Sprite __result, ItemData __0)
+                static void Postfix(UITooltipItem __instance, ItemDataUnpacked __0, bool __2)
                 {
-                    if ((__0.getAsUnpacked().FullName == Get_Unique_Name()) && (!Icon.IsNullOrDestroyed()))
+                    if (__instance.IsNullOrDestroyed() || __0.IsNullOrDestroyed() ||
+                        __0.FullName != Get_Unique_Name() || Icon.IsNullOrDestroyed()) { return; }
+
+                    var images = __2
+                        ? new[] { __instance.compareItemImage, __instance.compareSmallItemImage,
+                            __instance.compareMediumItemImage, __instance.compareLargeItemImage,
+                            __instance.compareSpearItemImage, __instance.compareWideItemImage }
+                        : new[] { __instance.itemImage, __instance.smallItemImage,
+                            __instance.mediumItemImage, __instance.tallMediumItemImage,
+                            __instance.largeItemImage, __instance.spearItemImage, __instance.wideItemImage };
+                    foreach (var image in images)
                     {
-                        __result = Icon;
+                        if (image.IsNullOrDestroyed()) { continue; }
+                        // Release the pending game icon before assigning our runtime sprite.
+                        image.spriteSoftRef = null;
+                        image.sprite = Icon;
                     }
                 }
             }
@@ -634,7 +650,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 //Add all languages here
             }
 
-            [HarmonyPatch(typeof(Localization), "TryGetText")]
+            [HarmonyPatch(typeof(Il2Cpp.Localization), "TryGetText")]
             public class Localization_TryGetText
             {
                 [HarmonyPrefix]
@@ -652,7 +668,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 }
             }
 
-            [HarmonyPatch(typeof(Localization), "GetText")]
+            [HarmonyPatch(typeof(Il2Cpp.Localization), "GetText")]
             public class Localization_GetText
             {
                 [HarmonyPrefix]

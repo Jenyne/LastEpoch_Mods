@@ -20,7 +20,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Mobs
 
         //[HarmonyPatch(typeof(SpawnerPlacementManager), "Start")] //Patched by https://github.com/RolandSolymosi
        // The Start of SpawnerPlacementManager still return access violation exception with ML 6+ interop dll 
-        [HarmonyPatch(typeof(SpawnerPlacementManager), "RollSpawners")]
+        [HarmonyPatch(typeof(SpawnerPlacementManager), "RollSpawners", new System.Type[] { })]
         public class SpawnerPlacementManager_RollSpawners
         {
             [HarmonyPrefix]
