@@ -26,9 +26,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Localization
             NewItems.Items_HeadHunter.HHLocales.RegisterLocales();
             NewItems.Items_EssentiaSanguis.ESLocales.RegisterLocales();
             NewItems.Items_SandsOfSilk.SOSLocales.RegisterLocales();
-#if !COMPAT15_MINIMAL
             NewItems.Items_ArakaalisFang.AFLocales.RegisterLocales();
-#endif
         }
 
         [HarmonyPatch(typeof(Il2Cpp.Localization), "TryGetText")]

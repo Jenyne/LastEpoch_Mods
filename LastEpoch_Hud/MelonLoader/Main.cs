@@ -5,6 +5,7 @@ using UnityEngine.Events;
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using Il2Cpp;
+using Il2CppLE.AssetBundles;
 using System.IO;
 using System.Collections.Generic;
 using Newtonsoft.Json;
@@ -17,40 +18,13 @@ namespace LastEpoch_Hud
         public const string company_name = "Eleventh Hour Games";
         public const string game_name = "Last Epoch";
         public const string mod_name = "LastEpoch_Hud";
-        #if COMPAT15_MINIMAL
-        public const string mod_version = "4.4.7-LE1.5-exp1";
-#else
         public const string mod_version = "4.4.7"; //LastEpoch 1.3
-#endif
         public static bool debug = false;
 
         public override void OnInitializeMelon()
         {
             logger_instance = LoggerInstance;
-#if COMPAT15_MINIMAL
-            Main.logger_instance?.Msg("[Compat15:LOAD] Experimental Last Epoch 1.5 minimal mode");
-            PatchCompat15<Scripts.Mods.Character.Character_Experience_Multiplier.ExperienceTracker_GainExp>("Character XP");
-            PatchCompat15<Scripts.Mods.Character.Character_Ability_Experience_Multiplier.ExperienceTracker_GainExp>("Skill XP");
-            PatchCompat15<Scripts.Mods.Character.Character_Favor_Experience_Multiplier.ExperienceTracker_GainExp>("Favor XP");
-            PatchCompat15<Scripts.Mods.Items.Items_AutoPickup_Items.GroundItemManager_dropItemForPlayer>("Basic Auto Pickup");
-#else
-            Scripts.Mods.Localization.LocalizationOverride.RegisterAll();
-#endif
         }
-#if COMPAT15_MINIMAL
-        private void PatchCompat15<T>(string name)
-        {
-            try
-            {
-                HarmonyInstance.CreateClassProcessor(typeof(T)).Patch();
-                Main.logger_instance?.Msg("[Compat15:PATCH] OK " + name);
-            }
-            catch (System.Exception ex)
-            {
-                Main.logger_instance?.Error("[Compat15:PATCH] FAIL " + name + ": " + ex);
-            }
-        }
-#endif
         public override void OnSceneWasLoaded(int buildIndex, string sceneName)
         {
             Scenes.SceneName = SceneManager.GetActiveScene().name;
@@ -59,17 +33,9 @@ namespace LastEpoch_Hud
         {
             Scenes.SceneName = SceneManager.GetActiveScene().name;
         }
-        static bool diagnosticsAttachAttempted = false;
         public override void OnLateUpdate()
         {
             if ((!Base.Initializing) && (!Base.Initialized)) { Base.Init(); }
-            if (!diagnosticsAttachAttempted
-                && Scripts.ModUI.SaveManager.instance != null
-                && Scripts.ModUI.SaveManager.instance.initialized)
-            {
-                diagnosticsAttachAttempted = true;
-                Scripts.Mods.Diagnostics.DiagnosticsDumper.AttachIfEnabled();
-            }
         }
         public override void OnApplicationQuit()
         {
@@ -154,46 +120,15 @@ namespace LastEpoch_Hud
 
         public static void Init()
         {
-            if (Initializing || Initialized) { return; }
             Initializing = true;
-            try
-            {
-                Main.logger_instance?.Msg("[Compat15:BOOT] Creating BaseHud");
-                GameObject base_object = Object.Instantiate(new GameObject(name: base_object_name), Vector3.zero, Quaternion.identity);
-                Object.DontDestroyOnLoad(base_object);
-
-                TryAdd<Scripts.Refs_Manager>(base_object, "Refs_Manager");
-                TryAdd<Scripts.Save_Manager>(base_object, "Save_Manager");
-                TryAdd<Scripts.Hud_Manager>(base_object, "Hud_Manager");
-                TryAdd<Scripts.ModUI.SaveManager>(base_object, "ModUI.SaveManager");
-                TryAdd<Scripts.Mods_Manager>(base_object, "Mods_Manager");
-#if !COMPAT15_MINIMAL
-                TryAdd<Scripts.VirtualKeyboard>(base_object, "VirtualKeyboard");
-#endif
-                Initialized = true;
-                Main.logger_instance?.Msg("[Compat15:BOOT] BaseHud initialized");
-            }
-            catch (System.Exception ex)
-            {
-                Main.logger_instance?.Error("[Compat15:BOOT] Base initialization failed: " + ex);
-            }
-            finally
-            {
-                Initializing = false;
-            }
-        }
-
-        private static void TryAdd<T>(GameObject target, string name) where T : Component
-        {
-            try
-            {
-                target.AddComponent<T>();
-                Main.logger_instance?.Msg("[Compat15:BOOT] OK " + name);
-            }
-            catch (System.Exception ex)
-            {
-                Main.logger_instance?.Error("[Compat15:BOOT] FAIL " + name + ": " + ex);
-            }
+            GameObject base_object = Object.Instantiate(new GameObject(name: base_object_name), Vector3.zero, Quaternion.identity);
+            Object.DontDestroyOnLoad(base_object);
+            base_object.AddComponent<Scripts.Refs_Manager>();
+            base_object.AddComponent<Scripts.Save_Manager>();
+            base_object.AddComponent<Scripts.Hud_Manager>();
+            base_object.AddComponent<Scripts.Mods_Manager>();
+            Initialized = true;
+            Initializing = false;
         }
     }
     public class Scenes
@@ -233,6 +168,10 @@ namespace LastEpoch_Hud
         }
         public static GameObject GetChild(GameObject obj, string name)
         {
+            return GetChild(obj, name, true);
+        }
+        public static GameObject GetChild(GameObject obj, string name, bool log)
+        {
             GameObject result = null;
             if (!obj.IsNullOrDestroyed())
             {
@@ -247,12 +186,24 @@ namespace LastEpoch_Hud
                         break;
                     }
                 }
-                string[] no_bug = { "skin", "Modifier Button", "legendary_icon", "quad_stash_row", "Hud_VirtualKeyboard" };
-                if ((!found) && (!no_bug.Contains(name))) { Main.logger_instance?.Error("Functions.GetChild, Child : " + name + " not Found"); }
+                string[] no_bug = { "skin", "Modifier Button", "legendary_icon", "quad_stash_row" };
+                if (log && (!found) && (!no_bug.Contains(name))) { Main.logger_instance?.Error("Functions.GetChild, Child : " + name + " not Found"); }
             }
-            else { Main.logger_instance.Error("GetChild(" + name + ") : Obj is null"); }
+            else if (log) { Main.logger_instance.Error("GetChild(" + name + ") : Obj is null"); }
 
             return result;
+        }
+        public static GameObject FindDescendant(GameObject obj, string name)
+        {
+            if (obj.IsNullOrDestroyed()) { return null; }
+            for (int i = 0; i < obj.transform.childCount; i++)
+            {
+                GameObject child = obj.transform.GetChild(i).gameObject;
+                if (child.name == name) { return child; }
+                GameObject nested = FindDescendant(child, name);
+                if (!nested.IsNullOrDestroyed()) { return nested; }
+            }
+            return null;
         }
         public static List<GameObject> GetAllChild(GameObject obj)
         {
@@ -267,25 +218,74 @@ namespace LastEpoch_Hud
         }
         public static GameObject GetViewportContent(GameObject obj, string panel_name, string panel_content_name)
         {
-            GameObject result = null;
-            GameObject panel = GetChild(obj, panel_name);
-            if (!panel.IsNullOrDestroyed())
+            GameObject panel = GetChild(obj, panel_name, false);
+            if (panel.IsNullOrDestroyed()) { panel = FindDescendant(obj, panel_name); }
+            if (panel.IsNullOrDestroyed())
             {
-                GameObject content = GetChild(panel, panel_content_name);
-                if (!content.IsNullOrDestroyed())
-                {
-                    GameObject viewport = GetChild(content, "Viewport");
-                    if (!viewport.IsNullOrDestroyed()) { result = GetChild(viewport, "Content"); }
-                }
+                Main.logger_instance?.Error("Functions.GetChild, Child : " + panel_name + " not Found");
+                return null;
             }
 
-            return result;
+            // The live menu wraps these lists in an extra Content object, and Center has
+            // more than one child named Content. Use the one that actually owns a Viewport.
+            GameObject content = FindChildWithViewport(panel, panel_content_name);
+            if (content.IsNullOrDestroyed())
+            {
+                Main.logger_instance?.Error("Functions.GetChild, Child : " + panel_content_name + " not Found");
+                return null;
+            }
+
+            GameObject viewport = GetChild(content, "Viewport", false);
+            if (viewport.IsNullOrDestroyed())
+            {
+                Main.logger_instance?.Error("Functions.GetChild, Child : Viewport not Found");
+                return null;
+            }
+
+            return GetChild(viewport, "Content", false);
+        }
+        static GameObject FindChildWithViewport(GameObject obj, string name)
+        {
+            if (obj.IsNullOrDestroyed()) { return null; }
+            for (int i = 0; i < obj.transform.childCount; i++)
+            {
+                GameObject child = obj.transform.GetChild(i).gameObject;
+                if (child.name == name && !GetChild(child, "Viewport", false).IsNullOrDestroyed())
+                {
+                    return child;
+                }
+
+                GameObject nested = FindChildWithViewport(child, name);
+                if (!nested.IsNullOrDestroyed()) { return nested; }
+            }
+
+            return null;
+        }
+        public static GameObject Get_Along(GameObject root, params string[] path)
+        {
+            GameObject current = root;
+            for (int i = 0; i < path.Length; i++)
+            {
+                if (current.IsNullOrDestroyed()) { return null; }
+                current = GetChild(current, path[i], false);
+            }
+            return current;
+        }
+        public static Text Get_TextAlong(GameObject root, params string[] path)
+        {
+            GameObject obj = Get_Along(root, path);
+            if (obj.IsNullOrDestroyed()) { return null; }
+            return obj.GetComponent<Text>();
         }
         public static Toggle Get_ToggleInPanel(GameObject obj, string panel_name, string obj_name)
         {
             Toggle result = null; // new Toggle();
             GameObject panel = GetChild(obj, panel_name);
-            if (!panel.IsNullOrDestroyed()) { result = Functions.GetChild(panel, obj_name).GetComponent<Toggle>(); }
+            if (!panel.IsNullOrDestroyed())
+            {
+                GameObject child = GetChild(panel, obj_name, false);
+                if (!child.IsNullOrDestroyed()) { result = child.GetComponent<Toggle>(); }
+            }
 
             return result;
         }
@@ -293,7 +293,11 @@ namespace LastEpoch_Hud
         {
             Text result = null;// new Text();
             GameObject panel = GetChild(obj, panel_name);
-            if (!panel.IsNullOrDestroyed()) { result = Functions.GetChild(panel, obj_name).GetComponent<Text>(); }
+            if (!panel.IsNullOrDestroyed())
+            {
+                GameObject child = GetChild(panel, obj_name, false);
+                if (!child.IsNullOrDestroyed()) { result = child.GetComponent<Text>(); }
+            }
 
             return result;
         }
@@ -301,7 +305,11 @@ namespace LastEpoch_Hud
         {
             Slider result = null; // new Slider();
             GameObject panel = GetChild(obj, panel_name);
-            if (!panel.IsNullOrDestroyed()) { result = Functions.GetChild(panel, obj_name).GetComponent<Slider>(); }
+            if (!panel.IsNullOrDestroyed())
+            {
+                GameObject child = GetChild(panel, obj_name, false);
+                if (!child.IsNullOrDestroyed()) { result = child.GetComponent<Slider>(); }
+            }
 
             return result;
         }
@@ -322,7 +330,8 @@ namespace LastEpoch_Hud
                 GameObject toogle = GetChild(panel, toggle_name);
                 if (!toogle.IsNullOrDestroyed())
                 {
-                    result = GetChild(toogle, obj_name).GetComponent<Text>();
+                    GameObject child = GetChild(toogle, obj_name, false);
+                    if (!child.IsNullOrDestroyed()) { result = child.GetComponent<Text>(); }
                 }
             }
 
@@ -334,7 +343,8 @@ namespace LastEpoch_Hud
             GameObject button = GetChild(obj, button_name);
             if (!button.IsNullOrDestroyed())
             {
-                result = GetChild(button, text_name).GetComponent<Text>();
+                GameObject child = GetChild(button, text_name, false);
+                if (!child.IsNullOrDestroyed()) { result = child.GetComponent<Text>(); }
             }
 
             return result;
@@ -402,17 +412,38 @@ namespace LastEpoch_Hud
         }
         public static Sprite GetItemIcon(ItemDataUnpacked item)
         {
-#if COMPAT15_MINIMAL
-            // Last Epoch 1.5 moved this path to SoftRef<Sprite>/Addressables.
-            // Custom item/icon features are intentionally quarantined in exp1.
-            return null;
-#else
-            Sprite result = null; // new Sprite();
-            try { result = UITooltipItem.GetItemSprite(item, ItemUIContext.Default); }
-            catch { Main.logger_instance?.Error("Error GetItemIcon"); }
+            if (item == null)
+            {
+                return null;
+            }
 
-            return result;
-#endif
+            LoadRef<Sprite> loadRef = null;
+            try
+            {
+                SoftRef<Sprite> softRef = item.GetItemSpriteFromData(ItemUIContext.Default);
+                if (softRef == null || !softRef)
+                {
+                    return null;
+                }
+
+                loadRef = SoftRefExtensions.CreateLoadRef(softRef, "LastEpoch_Hud", 0);
+                if (loadRef == null)
+                {
+                    return null;
+                }
+
+                loadRef.BlockForLoad();
+                return loadRef.AssetOrNull;
+            }
+            catch
+            {
+                Main.logger_instance?.Error("Error GetItemIcon");
+                return null;
+            }
+            finally
+            {
+                loadRef?.Dispose();
+            }
         }
         public static bool CheckClass(int classe, ItemList.ClassRequirement req)
         {
