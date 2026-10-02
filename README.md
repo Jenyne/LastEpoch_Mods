@@ -34,3 +34,18 @@ The project references assemblies from your Last Epoch install. If the game is n
 ```powershell
 dotnet build .\LastEpoch_Hud\LastEpoch_Hud.csproj -c Release -p:LastEpochPath="D:\SteamLibrary\steamapps\common\Last Epoch"
 ```
+
+For the current LE 1.5 compatibility branch, build the installable reduced
+feature set with the `Compat15` configuration. It targets net6.0 and excludes
+the donor modules that still use pre-1.5 APIs:
+
+```powershell
+dotnet build .\LastEpoch_Hud\LastEpoch_Hud.csproj -c Compat15 -p:LastEpochPath="D:\SteamLibrary\steamapps\common\Last Epoch"
+```
+
+The DLL is emitted to `Build\Compat15\net6.0\LastEpoch_Hud.dll`. Copy that DLL
+next to the `LastEpoch_Hud` folder from the same output directory into the
+game's `Mods` folder. The generated `LastEpoch_Hud\Assets` and `LastEpoch_Hud\Locales`
+folders must be copied beside it as well. This is a valid net6.0 MelonLoader
+assembly, but it does not include the legacy modules excluded by `Compat15`.
+
