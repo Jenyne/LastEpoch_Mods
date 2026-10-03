@@ -403,8 +403,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                     if ((__instance.EntryRef.data.getAsUnpacked().FullName == Get_Unique_Name()) && (!Icon.IsNullOrDestroyed()) &&
                         !__instance.contentImage.IsNullOrDestroyed())
                     {
-                        __instance.contentImage.spriteHardRef = Icon;
-                        __instance.contentImage.overrideSpriteHardRef = Icon;
+                        __instance.contentImage.sprite = Icon;
                     }
                 }
             }
@@ -430,8 +429,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                     foreach (var image in images)
                     {
                         if (image.IsNullOrDestroyed()) { continue; }
-                        image.spriteHardRef = Icon;
-                        image.overrideSpriteHardRef = Icon;
+                        image.sprite = Icon;
                     }
                 }
             }
