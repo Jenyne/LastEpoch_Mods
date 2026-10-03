@@ -180,7 +180,6 @@
     <Compile Remove="Scripts\Mods\Summon\Summon_Forever.cs" />
     <Compile Remove="Scripts\Mods\Summon\Summon_GodMode.cs" />
     <Compile Remove="Scripts\Mods\Teleport\Teleport_ToScene.cs" />
-    <Compile Remove="Scripts\Mods\UI\DamageMeter.cs" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.3.1.1" />
