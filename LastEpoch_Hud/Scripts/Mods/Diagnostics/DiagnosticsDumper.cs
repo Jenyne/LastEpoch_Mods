@@ -20,7 +20,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Diagnostics
             : base(ptr) { }
 
         const int RingFrames = 120;
-        const float HitchThresholdMs = 100f;
+        const float HitchThresholdMs = 50f;
         const float HitchLogCooldownSec = 5f;
         const float TickIntervalSec = 5f;
         const float SlowMeanMs = 0.5f;
@@ -31,6 +31,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Diagnostics
             new Dictionary<Type, RingBuffer>();
         static readonly Dictionary<Type, long> modAllocBytes = new Dictionary<Type, long>();
         static readonly Dictionary<string, int> assetBundleCalls = new Dictionary<string, int>();
+        static readonly Dictionary<string, OperationStats> operationStats =
+            new Dictionary<string, OperationStats>();
+        public static bool Active { get; private set; }
         static readonly long[] frameHistogram = new long[8];
         static readonly double[] histogramBoundsMs =
         {
@@ -79,6 +82,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Diagnostics
 
         void Awake()
         {
+            Active = true;
             Main.logger_instance?.Msg("[Profiling] DiagnosticsDumper attached (F10 = snapshot)");
             try
             {
@@ -101,6 +105,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Diagnostics
 
         void OnDestroy()
         {
+            Active = false;
             try
             {
                 harmony?.UnpatchAll(harmony.Id);
@@ -468,7 +473,33 @@ namespace LastEpoch_Hud.Scripts.Mods.Diagnostics
             );
 
             LogSlowMods();
+            LogOperationStats();
             LogAssetBundleSpam();
+        }
+
+        void LogOperationStats()
+        {
+            if (operationStats.Count == 0)
+            {
+                return;
+            }
+
+            foreach (var kv in operationStats.OrderByDescending(k => k.Value.MaxTicks))
+            {
+                var s = kv.Value;
+                if (s.Calls <= 0) { continue; }
+
+                double totalMs = TicksToMs(s.TotalTicks);
+                double meanMs = totalMs / s.Calls;
+                double maxMs = TicksToMs(s.MaxTicks);
+                long meanAlloc = s.TotalAllocBytes / Math.Max(1, s.Calls);
+
+                Main.logger_instance?.Msg(
+                    $"[Profiling] op {kv.Key}: calls={s.Calls} total={totalMs:F2}ms mean={meanMs:F3}ms max={maxMs:F2}ms alloc={meanAlloc}B/call"
+                );
+            }
+
+            operationStats.Clear();
         }
 
         void LogSlowMods()
@@ -838,6 +869,48 @@ namespace LastEpoch_Hud.Scripts.Mods.Diagnostics
                 assetBundleCalls[method] = 0;
             }
             assetBundleCalls[method]++;
+        }
+
+        public static long BeginOperation(out long allocatedBytes)
+        {
+            if (!Active)
+            {
+                allocatedBytes = 0;
+                return 0;
+            }
+
+            allocatedBytes = GC.GetAllocatedBytesForCurrentThread();
+            return Stopwatch.GetTimestamp();
+        }
+
+        public static void EndOperation(string name, long startedAt, long allocatedBytes)
+        {
+            if (!Active || startedAt == 0 || string.IsNullOrEmpty(name))
+            {
+                return;
+            }
+
+            long elapsed = Stopwatch.GetTimestamp() - startedAt;
+            long alloc = GC.GetAllocatedBytesForCurrentThread() - allocatedBytes;
+
+            if (!operationStats.TryGetValue(name, out var s))
+            {
+                s = new OperationStats();
+                operationStats[name] = s;
+            }
+
+            s.Calls++;
+            s.TotalTicks += elapsed;
+            if (elapsed > s.MaxTicks) { s.MaxTicks = elapsed; }
+            if (alloc > 0) { s.TotalAllocBytes += alloc; }
+        }
+
+        sealed class OperationStats
+        {
+            public long Calls;
+            public long TotalTicks;
+            public long MaxTicks;
+            public long TotalAllocBytes;
         }
 
         static double TicksToMs(long ticks) => ticks * 1000.0 / Stopwatch.Frequency;
