@@ -804,16 +804,35 @@ namespace LastEpoch_Hud.Scripts
                 }
             }
 
+            [HarmonyPatch(typeof(Slider), "Set", new System.Type[] { typeof(float), typeof(bool) })]
+            public class Slider_Set
+            {
+                [HarmonyPostfix]
+                static void Postfix(Slider __instance, bool sendCallback)
+                {
+                    if (!sendCallback || Content.Character.Data.suppressWeaverSlider) { return; }
+                    if (__instance.IsNullOrDestroyed() || __instance.name != "Slider_Weaver_TreePoints") { return; }
+                    if (hud_object.IsNullOrDestroyed() || !hud_object.active || Save_Manager.instance.IsNullOrDestroyed()) { return; }
+                    Content.Character.Data.SetWeaverTreePoints(__instance.value);
+                }
+            }
+
             [HarmonyPatch(typeof(Slider), "set_value")]
             public class Slider_set_value
             {
                 [HarmonyPostfix]
                 static void Postfix(ref Slider __instance, float __0)
                 {
+                    if (Content.Character.Data.suppressWeaverSlider) { return; }
                     if (!(hud_object.IsNullOrDestroyed()) && (!Save_Manager.instance.IsNullOrDestroyed()))
                     {
                         if ((hud_object.active) && (!Refs_Manager.player_data.IsNullOrDestroyed()))
                         {
+                            if (__instance.name == "Slider_Weaver_TreePoints")
+                            {
+                                Content.Character.Data.SetWeaverTreePoints(__instance.value);
+                                return;
+                            }
                             if (__instance.name.Contains("Slider_Character_"))
                             {
                                 switch (__instance.name)
@@ -1635,6 +1654,24 @@ namespace LastEpoch_Hud.Scripts
                                 Data.soul_text = Functions.Get_TextInButton(character_data_content, "Soul Embers", "Value");
                                 Data.soul_slider = Functions.Get_SliderInPanel(character_data_content, "Soul Embers", "Slider_Character_Data_SoulEmbers");
 
+                                Data.weaver_points_toggle = Functions.Get_ToggleInPanel(character_data_content, "TreePoints", "Toggle_Weaver_TreePoints");
+                                Data.weaver_points_text = Functions.Get_TextInToggle(character_data_content, "TreePoints", "Toggle_Weaver_TreePoints", "Value");
+                                Data.weaver_points_slider = Functions.Get_SliderInPanel(character_data_content, "TreePoints", "Slider_Weaver_TreePoints");
+                                if (!Data.weaver_points_slider.IsNullOrDestroyed())
+                                {
+                                    Data.weaver_points_slider.interactable = true;
+                                    Data.EnsureWeaverRange();
+                                }
+                                if (!Save_Manager.instance.IsNullOrDestroyed())
+                                {
+                                    var woven = Save_Manager.instance.data.Factions.TheWoven;
+                                    Data.suppressWeaverSlider = true;
+                                    if (!Data.weaver_points_toggle.IsNullOrDestroyed()) { Data.weaver_points_toggle.isOn = woven.Enable_TreePoints; }
+                                    if (!Data.weaver_points_slider.IsNullOrDestroyed()) { Data.weaver_points_slider.value = woven.TreePoints; }
+                                    if (!Data.weaver_points_text.IsNullOrDestroyed()) { Data.weaver_points_text.text = woven.TreePoints.ToString(); }
+                                    Data.suppressWeaverSlider = false;
+                                }
+
                                 Data.monolith_stability_basic_go = Functions.GetChild(character_data_content, "Monolith_Stability_Basic");
                                 Data.monolith_stability_basic_go.active = false;
                                 Data.monolith_stability_basic_text = Functions.Get_TextInButton(character_data_content, "Monolith_Stability_Basic", "Value");
@@ -1888,6 +1925,10 @@ namespace LastEpoch_Hud.Scripts
                     if (!Data.monolith_gaze_slider.IsNullOrDestroyed())
                     {
                         Events.Set_Slider_Event(Data.monolith_gaze_slider, Data.monolith_gaze_slider_Action);
+                    }
+                    if (!Data.weaver_points_toggle.IsNullOrDestroyed())
+                    {
+                        Events.Set_Toggle_Event(Data.weaver_points_toggle, Data.weaver_points_toggle_Action);
                     }
                     
                     if (!Data.save_button.IsNullOrDestroyed())
@@ -2694,6 +2735,53 @@ namespace LastEpoch_Hud.Scripts
                     public static Slider lantern_slider = null;
                     public static Text soul_text = null;
                     public static Slider soul_slider = null;
+                    public static Toggle weaver_points_toggle = null;
+                    public static Text weaver_points_text = null;
+                    public static Slider weaver_points_slider = null;
+                    public static bool suppressWeaverSlider = false;
+                    public static readonly System.Action<bool> weaver_points_toggle_Action = new System.Action<bool>(SetWeaverTreePointsEnabled);
+                    public static void EnsureWeaverRange()
+                    {
+                        if (suppressWeaverSlider || weaver_points_slider.IsNullOrDestroyed()) { return; }
+                        int max = Mods.Factions.TheWoven.Faction_Woven_TreePoints.SliderMax;
+                        if (weaver_points_slider.wholeNumbers && weaver_points_slider.minValue == 0f && (int)weaver_points_slider.maxValue == max) { return; }
+                        suppressWeaverSlider = true;
+                        weaver_points_slider.wholeNumbers = true;
+                        weaver_points_slider.minValue = 0f;
+                        weaver_points_slider.maxValue = max;
+                        suppressWeaverSlider = false;
+                    }
+                    public static void SetWeaverTreePointsEnabled(bool on)
+                    {
+                        if (suppressWeaverSlider || Save_Manager.instance.IsNullOrDestroyed()) { return; }
+                        Save_Manager.instance.data.Factions.TheWoven.Enable_TreePoints = on;
+                        EnsureWeaverRange();
+                        if (on && !weaver_points_slider.IsNullOrDestroyed())
+                        {
+                            Save_Manager.instance.data.Factions.TheWoven.TreePoints = (int)weaver_points_slider.value;
+                        }
+                        if (!weaver_points_text.IsNullOrDestroyed() && !weaver_points_slider.IsNullOrDestroyed())
+                        {
+                            weaver_points_text.text = ((int)weaver_points_slider.value).ToString();
+                        }
+                        Mods.Factions.TheWoven.Faction_Woven_TreePoints.ApplyToPlayer();
+                    }
+                    public static void SetWeaverTreePoints(float value)
+                    {
+                        if (suppressWeaverSlider || Save_Manager.instance.IsNullOrDestroyed()) { return; }
+                        EnsureWeaverRange();
+                        int points = (int)value;
+                        int max = Mods.Factions.TheWoven.Faction_Woven_TreePoints.SliderMax;
+                        if (points > max) { points = max; }
+                        Save_Manager.instance.data.Factions.TheWoven.TreePoints = points;
+                        Save_Manager.instance.data.Factions.TheWoven.Enable_TreePoints = true;
+                        if (!weaver_points_toggle.IsNullOrDestroyed() && !weaver_points_toggle.isOn)
+                        {
+                            weaver_points_toggle.isOn = true;
+                        }
+                        if (!weaver_points_text.IsNullOrDestroyed()) { weaver_points_text.text = points.ToString(); }
+                        Mods.Factions.TheWoven.Faction_Woven_TreePoints.ApplyToPlayer();
+                    }
 
                     public static Dropdown monolith_dropdown = null;
                     public static GameObject monolith_stability_basic_go = null;
@@ -5002,6 +5090,7 @@ namespace LastEpoch_Hud.Scripts
                 public static readonly System.Action<float> affix_0_tier_Action = new System.Action<float>(SetAffix_0_Tier);
                 public static Text affix_0_value_text = null;
                 public static Slider affix_0_value_slider = null;
+                public static Toggle affix_0_random_toggle = null;
                 public static readonly System.Action<float> affix_0_value_Action = new System.Action<float>(SetAffix_0_Value);
 
                 public static bool affix_1_enable = false;
@@ -5016,6 +5105,7 @@ namespace LastEpoch_Hud.Scripts
                 public static readonly System.Action<float> affix_1_tier_Action = new System.Action<float>(SetAffix_1_Tier);
                 public static Text affix_1_value_text = null;
                 public static Slider affix_1_value_slider = null;
+                public static Toggle affix_1_random_toggle = null;
                 public static readonly System.Action<float> affix_1_value_Action = new System.Action<float>(SetAffix_1_Value);
 
                 public static bool affix_2_enable = false;
@@ -5030,6 +5120,7 @@ namespace LastEpoch_Hud.Scripts
                 public static readonly System.Action<float> affix_2_tier_Action = new System.Action<float>(SetAffix_2_Tier);
                 public static Text affix_2_value_text = null;
                 public static Slider affix_2_value_slider = null;
+                public static Toggle affix_2_random_toggle = null;
                 public static readonly System.Action<float> affix_2_value_Action = new System.Action<float>(SetAffix_2_Value);
 
                 public static bool affix_3_enable = false;
@@ -5044,6 +5135,7 @@ namespace LastEpoch_Hud.Scripts
                 public static readonly System.Action<float> affix_3_tier_Action = new System.Action<float>(SetAffix_3_Tier);
                 public static Text affix_3_value_text = null;
                 public static Slider affix_3_value_slider = null;
+                public static Toggle affix_3_random_toggle = null;
                 public static readonly System.Action<float> affix_3_value_Action = new System.Action<float>(SetAffix_3_Value);
 
                 public static bool affix_4_enable = false;
@@ -5058,6 +5150,7 @@ namespace LastEpoch_Hud.Scripts
                 public static readonly System.Action<float> affix_4_tier_Action = new System.Action<float>(SetAffix_4_Tier);
                 public static Text affix_4_value_text = null;
                 public static Slider affix_4_value_slider = null;
+                public static Toggle affix_4_random_toggle = null;
                 public static readonly System.Action<float> affix_4_value_Action = new System.Action<float>(SetAffix_4_Value);
 
                 public static bool affix_5_enable = false;
@@ -5072,6 +5165,8 @@ namespace LastEpoch_Hud.Scripts
                 public static readonly System.Action<float> affix_5_tier_Action = new System.Action<float>(SetAffix_5_Tier);
                 public static Text affix_5_value_text = null;
                 public static Slider affix_5_value_slider = null;
+                public static Toggle affix_5_random_toggle = null;
+                public static Toggle corrupted_toggle = null;
                 public static readonly System.Action<float> affix_5_value_Action = new System.Action<float>(SetAffix_5_Value);
 
                 //Unique mods
@@ -5157,7 +5252,8 @@ namespace LastEpoch_Hud.Scripts
                 public static GameObject shard_filters = null;
                 public static Dropdown shards_filter_type = null;
                 public static Dropdown shards_filter_class = null;
-                public static InputField shards_filter_name = null;
+                public static InputField shards_filter_name;
+                public static Il2CppTMPro.TMP_InputField shards_filter_name_tmp;
                 public static Button shards_filters_button = null;
                 public static readonly System.Action Resfresh_OnClick_Action = new System.Action(InitializeShardsView);
 
@@ -5174,6 +5270,78 @@ namespace LastEpoch_Hud.Scripts
                     Text text = Functions.Get_TextAlong(affix, group, "Value");
                     if (text.IsNullOrDestroyed()) { text = Functions.Get_TextAlong(affix, oldName); }
                     return text;
+                }
+                static void PrepareRollSlider(Slider slider)
+                {
+                    if (slider.IsNullOrDestroyed()) { return; }
+                    slider.minValue = 0f;
+                    slider.maxValue = 255f;
+                    slider.interactable = true;
+                }
+                static void ApplyAffixRandom(Toggle randomToggle, Slider slider)
+                {
+                    if (slider.IsNullOrDestroyed()) { return; }
+                    slider.interactable = randomToggle.IsNullOrDestroyed() || !randomToggle.isOn;
+                }
+                static void ApplyAffixRandomToggles(bool _)
+                {
+                    ApplyAffixRandom(affix_0_random_toggle, affix_0_value_slider);
+                    ApplyAffixRandom(affix_1_random_toggle, affix_1_value_slider);
+                    ApplyAffixRandom(affix_2_random_toggle, affix_2_value_slider);
+                    ApplyAffixRandom(affix_3_random_toggle, affix_3_value_slider);
+                    ApplyAffixRandom(affix_4_random_toggle, affix_4_value_slider);
+                    ApplyAffixRandom(affix_5_random_toggle, affix_5_value_slider);
+                }
+                static readonly System.Action<bool> AffixRandomToggleAction = new System.Action<bool>(ApplyAffixRandomToggles);
+                static void BindRandomToggle(Toggle randomToggle, Slider slider)
+                {
+                    PrepareRollSlider(slider);
+                    ApplyAffixRandom(randomToggle, slider);
+                    if (randomToggle.IsNullOrDestroyed()) { return; }
+                    Events.Set_Toggle_Event(randomToggle, AffixRandomToggleAction);
+                }
+                static byte ChosenRoll(Toggle randomToggle, Slider slider)
+                {
+                    if (!randomToggle.IsNullOrDestroyed() && randomToggle.isOn)
+                    {
+                        return (byte)Random.RandomRange(0f, 255f);
+                    }
+                    if (slider.IsNullOrDestroyed()) { return 0; }
+                    return (byte)slider.value;
+                }
+                static string AffixLabel(AffixList.Affix affix)
+                {
+                    string label = affix.getAffixDisplayName();
+                    if (string.IsNullOrEmpty(label)) { label = affix.affixName; }
+                    return label ?? "";
+                }
+                static bool AffixFitsItem(AffixList.Affix affix)
+                {
+                    if (item_type < 0) { return affix.rollsOn != AffixList.RollsOn.Idols; }
+                    try
+                    {
+                        if (item_subtype > -1)
+                        {
+                            return affix.CanRollOn(item_type, item_subtype, ItemList.ClassRequirement.Any);
+                        }
+                        ItemList items = ItemList.get();
+                        if (items.IsNullOrDestroyed()) { return true; }
+                        return affix.CanRollOnAnySubType(items.GetEquipmentTypeForBaseType(item_type), ItemList.ClassRequirement.Any);
+                    }
+                    catch (System.Exception ex)
+                    {
+                        Main.logger_instance.Error("Affix filter error : " + ex.Message);
+                        return false;
+                    }
+                }
+                static void TryAddAffix(AffixList.Affix affix, bool filter_by_name, string wanted_name, bool filter_by_type, AffixList.AffixType wanted_type, bool filter_by_class, AffixList.ClassSpecificity wanted_class)
+                {
+                    if (affix.IsNullOrDestroyed() || !AffixFitsItem(affix)) { return; }
+                    string label = AffixLabel(affix);
+                    if (filter_by_name && !label.ToLower().Contains(wanted_name.ToLower())) { return; }
+                    if (filter_by_type && affix.type != wanted_type) { return; }
+                    if (filter_by_class && affix.classSpecificity != wanted_class) { return; }
+                    AddShardInView(affix.affixId, label);
                 }
                 public static void Get_Refs()
                 {
@@ -5218,6 +5386,7 @@ namespace LastEpoch_Hud.Scripts
                                 forgin_potencial_value = Functions.GetChild(left_base_content, "ForginPotencial");
                                 forgin_potencial_text = Functions.Get_TextInPanel(left_base_content, "ForginPotencial", "Value");
                                 forgin_potencial_slider = Functions.Get_SliderInPanel(left_base_content, "ForginPotencial", "Slider");
+                                PrepareRollSlider(forgin_potencial_slider);
 
                                 seal = Functions.GetChild(left_base_content, "EnableSeal");
                                 seal_border = Functions.GetChild(left_base_content, "SealBorder");
@@ -5251,6 +5420,7 @@ namespace LastEpoch_Hud.Scripts
                                 affix_0_tier_slider = Functions.Get_SliderInPanel(left_base_content, "Affix_0", "TierSlider");
                                 affix_0_value_text = AffixText(affix_0, "Roll", "Value");
                                 affix_0_value_slider = Functions.Get_SliderInPanel(left_base_content, "Affix_0", "ValueSlider");
+                                affix_0_random_toggle = Functions.Get_ToggleInPanel(affix_0, "RandomRoll", "Toggle_Random");
                                 affix_1 = Functions.GetChild(left_base_content, "Affix_1");
                                 affix_1_button = Functions.Get_ButtonInPanel(affix_1, "Button");
                                 affix_1_select_text = Functions.Get_TextInButton(affix_1, "Button", "Text");
@@ -5258,6 +5428,7 @@ namespace LastEpoch_Hud.Scripts
                                 affix_1_tier_slider = Functions.Get_SliderInPanel(left_base_content, "Affix_1", "TierSlider");
                                 affix_1_value_text = AffixText(affix_1, "Roll", "Value");
                                 affix_1_value_slider = Functions.Get_SliderInPanel(left_base_content, "Affix_1", "ValueSlider");
+                                affix_1_random_toggle = Functions.Get_ToggleInPanel(affix_1, "RandomRoll", "Toggle_Random");
                                 affix_2 = Functions.GetChild(left_base_content, "Affix_2");
                                 affix_2_button = Functions.Get_ButtonInPanel(affix_2, "Button");
                                 affix_2_select_text = Functions.Get_TextInButton(affix_2, "Button", "Text");
@@ -5265,6 +5436,7 @@ namespace LastEpoch_Hud.Scripts
                                 affix_2_tier_slider = Functions.Get_SliderInPanel(left_base_content, "Affix_2", "TierSlider");
                                 affix_2_value_text = AffixText(affix_2, "Roll", "Value");
                                 affix_2_value_slider = Functions.Get_SliderInPanel(left_base_content, "Affix_2", "ValueSlider");
+                                affix_2_random_toggle = Functions.Get_ToggleInPanel(affix_2, "RandomRoll", "Toggle_Random");
                                 affix_3 = Functions.GetChild(left_base_content, "Affix_3");
                                 affix_3_button = Functions.Get_ButtonInPanel(affix_3, "Button");
                                 affix_3_select_text = Functions.Get_TextInButton(affix_3, "Button", "Text");
@@ -5272,6 +5444,7 @@ namespace LastEpoch_Hud.Scripts
                                 affix_3_tier_slider = Functions.Get_SliderInPanel(left_base_content, "Affix_3", "TierSlider");
                                 affix_3_value_text = AffixText(affix_3, "Roll", "Value");
                                 affix_3_value_slider = Functions.Get_SliderInPanel(left_base_content, "Affix_3", "ValueSlider");
+                                affix_3_random_toggle = Functions.Get_ToggleInPanel(affix_3, "RandomRoll", "Toggle_Random");
                                 affix_4 = Functions.GetChild(left_base_content, "Affix_4");
                                 affix_4_button = Functions.Get_ButtonInPanel(affix_4, "Button");
                                 affix_4_select_text = Functions.Get_TextInButton(affix_4, "Button", "Text");
@@ -5279,6 +5452,7 @@ namespace LastEpoch_Hud.Scripts
                                 affix_4_tier_slider = Functions.Get_SliderInPanel(left_base_content, "Affix_4", "TierSlider");
                                 affix_4_value_text = AffixText(affix_4, "Roll", "Value");
                                 affix_4_value_slider = Functions.Get_SliderInPanel(left_base_content, "Affix_4", "ValueSlider");
+                                affix_4_random_toggle = Functions.Get_ToggleInPanel(affix_4, "RandomRoll", "Toggle_Random");
                                 affix_5 = Functions.GetChild(left_base_content, "Affix_5");
                                 affix_5_button = Functions.Get_ButtonInPanel(affix_5, "Button");
                                 affix_5_select_text = Functions.Get_TextInButton(affix_5, "Button", "Text");
@@ -5286,6 +5460,9 @@ namespace LastEpoch_Hud.Scripts
                                 affix_5_tier_slider = Functions.Get_SliderInPanel(left_base_content, "Affix_5", "TierSlider");
                                 affix_5_value_text = AffixText(affix_5, "Roll", "Value");
                                 affix_5_value_slider = Functions.Get_SliderInPanel(left_base_content, "Affix_5", "ValueSlider");
+                                affix_5_random_toggle = Functions.Get_ToggleInPanel(affix_5, "RandomRoll", "Toggle_Random");
+
+                                corrupted_toggle = Functions.Get_ToggleInPanel(left_base_content, "Corrupted", "Toggle");
 
                                 unique_mods = Functions.GetChild(left_base_content, "EnableUniqueMods");
                                 unique_mods_border = Functions.GetChild(left_base_content, "UniqueModsBorder");
@@ -5360,7 +5537,11 @@ namespace LastEpoch_Hud.Scripts
                                         if (!name.IsNullOrDestroyed())
                                         {
                                             GameObject g = Functions.GetChild(name, "InputField");
-                                            if (!g.IsNullOrDestroyed()) { shards_filter_name = g.GetComponent<InputField>(); }
+                                            if (!g.IsNullOrDestroyed()) 
+                                            { 
+                                                shards_filter_name = g.GetComponent<InputField>(); 
+                                                shards_filter_name_tmp = g.GetComponent<Il2CppTMPro.TMP_InputField>();
+                                            }
                                             else { error = true; Main.logger_instance.Error("g_name not found"); }
                                         }
                                         else { error = true; Main.logger_instance.Error("name not found"); }
@@ -5369,7 +5550,18 @@ namespace LastEpoch_Hud.Scripts
                                         if (!refresh.IsNullOrDestroyed())
                                         {
                                             GameObject g = Functions.GetChild(refresh, "Button");
-                                            if (!g.IsNullOrDestroyed()) { shards_filters_button = g.GetComponent<Button>(); }
+                                            if (!g.IsNullOrDestroyed()) 
+                                            { 
+                                                shards_filters_button = g.GetComponent<Button>(); 
+                                                if (!shards_filters_button.IsNullOrDestroyed())
+                                                {
+                                                    shards_filters_button.onClick.RemoveAllListeners();
+                                                    shards_filters_button.onClick.AddListener((UnityEngine.Events.UnityAction)(() =>
+                                                    {
+                                                        InitializeShardsView();
+                                                    }));
+                                                }
+                                            }
                                             else { error = true; Main.logger_instance.Error("g_refresh not found"); }
                                         }
                                         else { error = true; Main.logger_instance.Error("refresh not found"); }
@@ -5420,6 +5612,12 @@ namespace LastEpoch_Hud.Scripts
                         Events.Set_Slider_Event(implicit_1_slider, implicit_1_Action);
                         Events.Set_Slider_Event(implicit_2_slider, implicit_2_Action);
                         Events.Set_Slider_Event(forgin_potencial_slider, forgin_potencial_Action);
+                        BindRandomToggle(affix_0_random_toggle, affix_0_value_slider);
+                        BindRandomToggle(affix_1_random_toggle, affix_1_value_slider);
+                        BindRandomToggle(affix_2_random_toggle, affix_2_value_slider);
+                        BindRandomToggle(affix_3_random_toggle, affix_3_value_slider);
+                        BindRandomToggle(affix_4_random_toggle, affix_4_value_slider);
+                        BindRandomToggle(affix_5_random_toggle, affix_5_value_slider);
                         Events.Set_Button_Event(seal_select_btn, Seal_OnClick_Action);
                         Events.Set_Slider_Event(seal_tier_slider, seal_tier_Action);
                         Events.Set_Slider_Event(seal_value_slider, seal_value_Action);                                                
@@ -5548,6 +5746,7 @@ namespace LastEpoch_Hud.Scripts
                             UpdateRarity();
                             UpdateItems();
                             shard_initialized = false; //Reset shards
+                            if (enable && !center_content.IsNullOrDestroyed()) { InitializeShardsView(); }
                             //UpdateUI();
                         }
                     }
@@ -5751,6 +5950,8 @@ namespace LastEpoch_Hud.Scripts
                                     }
                                 }
                             }
+                            shard_initialized = false;
+                            if (enable && !center_content.IsNullOrDestroyed()) { InitializeShardsView(); }
                             UpdateUI();
                         }
                     }
@@ -5984,26 +6185,48 @@ namespace LastEpoch_Hud.Scripts
                     weaver_will_Text.text = System.Convert.ToInt32(weaver_will_slider.value).ToString();
                 }
 
-                public static void SetShardsView(int affix_number, bool seal)
+public static void SetShardsView(int affix_number, bool seal)
                 {
                     shard_seal = seal;
                     shard_number = affix_number;
-                    if (!shard_initialized) { InitializeShardsView(); }                    
+                    if (!shard_initialized) { InitializeShardsView(); }
                 }
+
                 public static void InitializeShardsView()
                 {
+                    if (center_content.IsNullOrDestroyed())
+                    {
+                        Main.logger_instance.Error("[OdlForceDrop] InitializeShardsView aborted: center_content is null or destroyed.");
+                        return;
+                    }
+
+                    if (shard_prefab.IsNullOrDestroyed())
+                    {
+                        Main.logger_instance.Error("[OdlForceDrop] InitializeShardsView aborted: shard_prefab is null or destroyed.");
+                        return;
+                    }
+
+                    AffixList affixList = AffixList.get();
+                    if (affixList.IsNullOrDestroyed())
+                    {
+                        Main.logger_instance.Error("[OdlForceDrop] InitializeShardsView aborted: AffixList.get() returned null.");
+                        return;
+                    }
+
                     RemoveShardsInView();
-                    bool filter_by_type = false;                    
+
+                    bool filter_by_type = false;
                     AffixList.AffixType wanted_type = AffixList.AffixType.PREFIX;
-                    if (shards_filter_type.value > 0)
+                    if (!shards_filter_type.IsNullOrDestroyed() && shards_filter_type.value > 0)
                     {
                         filter_by_type = true;
                         if (shards_filter_type.value == 1) { wanted_type = AffixList.AffixType.PREFIX; }
                         else if (shards_filter_type.value == 2) { wanted_type = AffixList.AffixType.SUFFIX; }
                     }
+
                     bool filter_by_class = false;
                     AffixList.ClassSpecificity wanted_class = AffixList.ClassSpecificity.None;
-                    if (shards_filter_class.value > 0)
+                    if (!shards_filter_class.IsNullOrDestroyed() && shards_filter_class.value > 0)
                     {
                         filter_by_class = true;
                         if (shards_filter_class.value == 1) { wanted_class = AffixList.ClassSpecificity.NonSpecific; }
@@ -6011,68 +6234,110 @@ namespace LastEpoch_Hud.Scripts
                         else if (shards_filter_class.value == 3) { wanted_class = AffixList.ClassSpecificity.Mage; }
                         else if (shards_filter_class.value == 4) { wanted_class = AffixList.ClassSpecificity.Sentinel; }
                         else if (shards_filter_class.value == 5) { wanted_class = AffixList.ClassSpecificity.Acolyte; }
-                        else if (shards_filter_class.value == 6) { wanted_class = AffixList.ClassSpecificity.Rogue; }                        
+                        else if (shards_filter_class.value == 6) { wanted_class = AffixList.ClassSpecificity.Rogue; }
                     }
+
                     bool filter_by_name = false;
                     string wanted_name = "";
-                    if (shards_filter_name.text != "")
+                    if (!shards_filter_name.IsNullOrDestroyed() && !string.IsNullOrEmpty(shards_filter_name.text))
                     {
                         filter_by_name = true;
                         wanted_name = shards_filter_name.text;
                     }
-                    bool item_idol = false;
-                    if ((item_type > 24) && (item_type < 34)) { item_idol = true; }
-                    foreach (AffixList.SingleAffix affix in AffixList.get().singleAffixes)
+                    else if (!shards_filter_name_tmp.IsNullOrDestroyed() && !string.IsNullOrEmpty(shards_filter_name_tmp.text))
                     {
-                        bool affix_idol = false;
-                        if (affix.affixName.Contains("Idol ")) { affix_idol = true; }
+                        filter_by_name = true;
+                        wanted_name = shards_filter_name_tmp.text;
+                    }
 
-                        if (((item_idol && affix_idol) || (!item_idol && !affix_idol)) &&
-                            (((filter_by_name) && (affix.affixName.ToLower().Contains(wanted_name.ToLower()))) || (!filter_by_name)) &&
-                            (((filter_by_type) && (affix.type == wanted_type)) || (!filter_by_type)) &&
-                            (((filter_by_class) && (affix.classSpecificity == wanted_class)) || (!filter_by_class))
-                            )
+                    if (affixList.singleAffixes != null)
+                    {
+                        foreach (AffixList.SingleAffix affix in affixList.singleAffixes)
                         {
-                            AddShardInView(affix.affixId, affix.affixName);
+                            TryAddAffix(affix, filter_by_name, wanted_name, filter_by_type, wanted_type, filter_by_class, wanted_class);
                         }
                     }
-                    foreach (AffixList.MultiAffix affix in AffixList.get().multiAffixes)
-                    {
-                        bool affix_idol = false;
-                        if (affix.affixName.Contains("Idol ")) { affix_idol = true; }
 
-                        if (((item_idol && affix_idol) || (!item_idol && !affix_idol)) &&
-                            (((filter_by_name) && (affix.affixName.ToLower().Contains(wanted_name.ToLower()))) || (!filter_by_name)) &&
-                            (((filter_by_type) && (affix.type == wanted_type)) || (!filter_by_type)) &&
-                            (((filter_by_class) && (affix.classSpecificity == wanted_class)) || (!filter_by_class))
-                            )
+                    if (affixList.multiAffixes != null)
+                    {
+                        foreach (AffixList.MultiAffix affix in affixList.multiAffixes)
                         {
-                            AddShardInView(affix.affixId, affix.affixName);
+                            TryAddAffix(affix, filter_by_name, wanted_name, filter_by_type, wanted_type, filter_by_class, wanted_class);
                         }
                     }
+
                     shard_initialized = true;
                 }
+
                 public static void RemoveShardsInView()
                 {
-                    foreach (GameObject go in Functions.GetAllChild(center_content))
+                    if (center_content.IsNullOrDestroyed()) return;
+
+                    var children = Functions.GetAllChild(center_content);
+                    if (children != null)
                     {
-                        Destroy(go);
+                        foreach (GameObject go in children)
+                        {
+                            if (!go.IsNullOrDestroyed())
+                            {
+                                Object.Destroy(go);
+                            }
+                        }
                     }
-                        
                 }
+
                 public static void AddShardInView(int id, string name)
                 {
+                    if (shard_prefab.IsNullOrDestroyed() || center_content.IsNullOrDestroyed()) return;
+
                     GameObject g = Object.Instantiate(shard_prefab, Vector3.zero, Quaternion.identity);
-                    g.transform.SetParent(center_content.transform);
+                    if (g.IsNullOrDestroyed()) return;
+
+                    g.transform.SetParent(center_content.transform, false);
+
+                    // 1. Hook up the button click event
                     GameObject shard_btn_object = Functions.GetChild(g, "shard_btn");
-                    Button shard_btn = shard_btn_object.GetComponent<Button>();
-                    shard_btn.name = shard_btn_name + id;
-                    GameObject shard_id_object = Functions.GetChild(shard_btn_object, "shard_id");
-                    Text shard_id = shard_id_object.GetComponent<Text>();
-                    shard_id.text = id.ToString();
-                    GameObject shard_name_object = Functions.GetChild(shard_btn_object, "shard_name");
-                    Text shard_name = shard_name_object.GetComponent<Text>();
-                    shard_name.text = name.ToString();
+                    if (!shard_btn_object.IsNullOrDestroyed())
+                    {
+                        Button shard_btn = shard_btn_object.GetComponent<Button>();
+                        if (!shard_btn.IsNullOrDestroyed())
+                        {
+                            shard_btn.name = shard_btn_name + id;
+                            shard_btn.onClick.RemoveAllListeners();
+                            shard_btn.onClick.AddListener((UnityEngine.Events.UnityAction)(() =>
+                            {
+                                SelectShard(id, name);
+                            }));
+                        }
+
+                        // 2. Set all Text components under shard_id (including the child 'Text' object)
+                        GameObject shard_id_object = Functions.GetChild(shard_btn_object, "shard_id");
+                        if (!shard_id_object.IsNullOrDestroyed())
+                        {
+                            var idTexts = shard_id_object.GetComponentsInChildren<Text>(true);
+                            if (idTexts != null)
+                            {
+                                foreach (var t in idTexts)
+                                {
+                                    if (!t.IsNullOrDestroyed()) { t.text = id.ToString(); }
+                                }
+                            }
+                        }
+
+                        // 3. Set all Text components under shard_name (including the child 'Text' object)
+                        GameObject shard_name_object = Functions.GetChild(shard_btn_object, "shard_name");
+                        if (!shard_name_object.IsNullOrDestroyed())
+                        {
+                            var nameTexts = shard_name_object.GetComponentsInChildren<Text>(true);
+                            if (nameTexts != null)
+                            {
+                                foreach (var t in nameTexts)
+                                {
+                                    if (!t.IsNullOrDestroyed()) { t.text = name ?? ""; }
+                                }
+                            }
+                        }
+                    }
                 }
                 public static void SelectShard(int id, string name)
                 {
@@ -6214,27 +6479,27 @@ namespace LastEpoch_Hud.Scripts
                                 System.Collections.Generic.List<ItemAffix> new_affixes = new System.Collections.Generic.List<ItemAffix>();
                                 if (affix_0_id > -1)
                                 {
-                                    new_affixes.Add(MakeAffix(affix_0_id, (byte)affix_0_tier_slider.value, (byte)affix_0_value_slider.value, false));
+                                    new_affixes.Add(MakeAffix(affix_0_id, (byte)affix_0_tier_slider.value, ChosenRoll(affix_0_random_toggle, affix_0_value_slider), false));
                                 }
                                 if (affix_1_id > -1)
                                 {
-                                    new_affixes.Add(MakeAffix(affix_1_id, (byte)affix_1_tier_slider.value, (byte)affix_1_value_slider.value, false));
+                                    new_affixes.Add(MakeAffix(affix_1_id, (byte)affix_1_tier_slider.value, ChosenRoll(affix_1_random_toggle, affix_1_value_slider), false));
                                 }
                                 if (affix_2_id > -1)
                                 {
-                                    new_affixes.Add(MakeAffix(affix_2_id, (byte)affix_2_tier_slider.value, (byte)affix_2_value_slider.value, false));
+                                    new_affixes.Add(MakeAffix(affix_2_id, (byte)affix_2_tier_slider.value, ChosenRoll(affix_2_random_toggle, affix_2_value_slider), false));
                                 }
                                 if (affix_3_id > -1)
                                 {
-                                    new_affixes.Add(MakeAffix(affix_3_id, (byte)affix_3_tier_slider.value, (byte)affix_3_value_slider.value, false));
+                                    new_affixes.Add(MakeAffix(affix_3_id, (byte)affix_3_tier_slider.value, ChosenRoll(affix_3_random_toggle, affix_3_value_slider), false));
                                 }
                                 if (affix_4_id > -1)
                                 {
-                                    new_affixes.Add(MakeAffix(affix_4_id, (byte)affix_4_tier_slider.value, (byte)affix_4_value_slider.value, false));
+                                    new_affixes.Add(MakeAffix(affix_4_id, (byte)affix_4_tier_slider.value, ChosenRoll(affix_4_random_toggle, affix_4_value_slider), false));
                                 }
                                 if (affix_5_id > -1)
                                 {
-                                    new_affixes.Add(MakeAffix(affix_5_id, (byte)affix_5_tier_slider.value, (byte)affix_5_value_slider.value, false));
+                                    new_affixes.Add(MakeAffix(affix_5_id, (byte)affix_5_tier_slider.value, ChosenRoll(affix_5_random_toggle, affix_5_value_slider), false));
                                 }
                                 
                                 byte new_count = 0;
@@ -6327,7 +6592,16 @@ namespace LastEpoch_Hud.Scripts
                                     }
                                 }
                             }
-                            item.RefreshIDAndValues(); //Refresh item for implicits and unique mods
+                            if (!corrupted_toggle.IsNullOrDestroyed() && corrupted_toggle.isOn)
+                            {
+                                // The character save stores the packed item id, not the live flag.
+                                // Mark it before the refresh so that id includes the corruption bit.
+                                item.corrupted = true;
+                                item.CorruptWithoutEffect();
+                                item.SetAsCorrupted();
+                            }
+                            item.RefreshIDAndValues(); //Refresh item for implicits, unique mods, and the saved id
+                            if ((item_type < 100) && (ra < 7)) { item.forgingPotential = fg; }
                             
                             Refs_Manager.ground_item_manager.dropItemForPlayer(Refs_Manager.player_actor, item.TryCast<ItemData>(), Refs_Manager.player_actor.position(), false);
                         }
