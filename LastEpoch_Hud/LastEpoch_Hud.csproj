@@ -1,6 +1,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net6.0</TargetFrameworks>
+    <LastEpochPath Condition="'$(LastEpochPath)' == '' and Exists('D:\SteamLibrary\steamapps\common\Last Epoch\Last Epoch.exe')">D:\SteamLibrary\steamapps\common\Last Epoch</LastEpochPath>
     <LastEpochPath Condition="'$(LastEpochPath)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Last Epoch</LastEpochPath>
     <OutputType>Library</OutputType>
 	<Nullable>disable</Nullable>
@@ -203,6 +204,22 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
+  <Target Name="DeployCompat15ToGame" AfterTargets="Build" Condition="'$(Configuration)' == 'Compat15' and Exists('$(TargetPath)')">
+    <PropertyGroup>
+      <LastEpochModsPath>$(LastEpochPath)\Mods</LastEpochModsPath>
+    </PropertyGroup>
+
+    <MakeDir Directories="$(LastEpochModsPath)" Condition="!Exists('$(LastEpochModsPath)')" />
+    <Copy
+      SourceFiles="$(TargetPath)"
+      DestinationFiles="$(LastEpochModsPath)\$(TargetFileName)"
+      SkipUnchangedFiles="true" />
+
+    <Message
+      Importance="high"
+      Text="Compat15 deployed: $(TargetPath) -> $(LastEpochModsPath)\$(TargetFileName)" />
+  </Target>
+
   <ItemGroup>
     <None Update="LastEpoch_Hud\Assets\lastepochmods">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
