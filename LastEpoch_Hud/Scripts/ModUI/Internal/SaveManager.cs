@@ -21,6 +21,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
         private const string filename = "SaveModUI.json";
         private const float SaveInterval = 1f;
         private float saveTimer;
+        private bool profilingAttachAttempted;
 
         void Awake()
         {
@@ -47,6 +48,20 @@ namespace LastEpoch_Hud.Scripts.ModUI
             LocaleRegistry.TickIfLocaleChanged();
             if (KeybindCapture.Active)
                 KeybindCapture.Tick();
+
+            if (initialized && !profilingAttachAttempted)
+            {
+                profilingAttachAttempted = true;
+                try
+                {
+                    Mods.Diagnostics.DiagnosticsDumper.AttachIfEnabled();
+                }
+                catch (System.Exception ex)
+                {
+                    Main.logger_instance?.Warning("[Profiling] attach failed: " + ex.Message);
+                }
+            }
+
             if (!initialized)
                 return;
             if (!ModSettings.Dirty)
@@ -113,15 +128,6 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 ModSettings.Difficulty.CapLevelToZone.Value = false;
 
             initialized = true;
-
-            try
-            {
-                Mods.Diagnostics.DiagnosticsDumper.AttachIfEnabled();
-            }
-            catch (System.Exception ex)
-            {
-                Main.logger_instance?.Warning("[Profiling] attach failed: " + ex.Message);
-            }
 
             if (needsRewrite)
             {
