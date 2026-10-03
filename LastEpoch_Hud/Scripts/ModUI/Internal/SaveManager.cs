@@ -114,6 +114,15 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
             initialized = true;
 
+            try
+            {
+                Mods.Diagnostics.DiagnosticsDumper.AttachIfEnabled();
+            }
+            catch (System.Exception ex)
+            {
+                Main.logger_instance?.Warning("[Profiling] attach failed: " + ex.Message);
+            }
+
             if (needsRewrite)
             {
                 Save();
