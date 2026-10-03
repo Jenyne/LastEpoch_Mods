@@ -204,7 +204,9 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
-  <Target Name="DeployCompat15ToGame" AfterTargets="Build" Condition="'$(Configuration)' == 'Compat15' and Exists('$(TargetPath)')">
+  <Target Name="DeployCompat15ToGame"
+          AfterTargets="Build"
+          Condition="'$(Configuration)' == 'Compat15' and '$(TargetFramework)' == 'net6.0'">
     <PropertyGroup>
       <LastEpochModsPath>$(LastEpochPath)\Mods</LastEpochModsPath>
     </PropertyGroup>
