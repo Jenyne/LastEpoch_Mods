@@ -7,9 +7,10 @@ namespace LastEpoch_Hud.Scripts.Mods.Factions.TheWoven
 {
     public class Faction_Woven_TreePoints
     {
-        static bool capturedOriginal;
-        static ushort originalEarned;
-        static bool readingOriginal;
+        static bool overrideApplied;
+        static bool usedOverride;
+        static bool hasRealSnapshot;
+        static ushort realSnapshot;
         static bool readingMax;
         static bool writing;
 
@@ -43,6 +44,13 @@ namespace LastEpoch_Hud.Scripts.Mods.Factions.TheWoven
             return points;
         }
 
+        public static void ReleaseToRealPoints()
+        {
+            usedOverride = true;
+            overrideApplied = true;
+            ApplyToPlayer();
+        }
+
         public static void ApplyToPlayer()
         {
             try
@@ -56,30 +64,74 @@ namespace LastEpoch_Hud.Scripts.Mods.Factions.TheWoven
             catch { }
         }
 
+        static TheWeaver FindWeaver()
+        {
+            if (Refs_Manager.faction_tracker.IsNullOrDestroyed() && !Refs_Manager.player_actor.IsNullOrDestroyed())
+            {
+                Refs_Manager.faction_tracker = Refs_Manager.player_actor.gameObject.GetComponent<FactionTracker>();
+            }
+            if (Refs_Manager.faction_tracker.IsNullOrDestroyed() || Refs_Manager.faction_tracker.factions == null)
+            {
+                return null;
+            }
+
+            foreach (Il2CppSystem.Collections.Generic.KeyValuePair<FactionID, Faction> values in Refs_Manager.faction_tracker.factions)
+            {
+                if (values.Key != FactionID.TheWeaver || values.Value == null) { continue; }
+                TheWeaver weaver = values.Value.TryCast<TheWeaver>();
+                if (weaver != null) { return weaver; }
+            }
+            return null;
+        }
+
+        static bool TryRealEarned(out int points)
+        {
+            points = 0;
+            TheWeaver weaver = FindWeaver();
+            if (weaver == null) { return false; }
+
+            int earned = weaver.EarnedWeaverPointsFromRank + weaver.EarnedWeaverPointsFromWovenEchoes;
+            points = ClampPoints(earned);
+            return true;
+        }
+
         static void WritePoints(LocalTreeData.WeaverTreeData tree)
         {
             if (writing || tree == null) { return; }
             writing = true;
             try
             {
-                if (!capturedOriginal)
-                {
-                    readingOriginal = true;
-                    originalEarned = tree.EarnedWeaverPoints;
-                    readingOriginal = false;
-                    capturedOriginal = true;
-                }
-
                 if (CanRun())
                 {
+                    if (!hasRealSnapshot)
+                    {
+                        realSnapshot = tree._EarnedWeaverPoints_k__BackingField;
+                        hasRealSnapshot = true;
+                    }
                     tree.EarnedWeaverPoints = (ushort)ClampPoints(Save_Manager.instance.data.Factions.TheWoven.TreePoints);
+                    overrideApplied = true;
+                    usedOverride = true;
                 }
-                else
+                else if (overrideApplied)
                 {
-                    tree.EarnedWeaverPoints = originalEarned;
+                    RestoreRealPoints(tree);
                 }
             }
             finally { writing = false; }
+        }
+
+        static void RestoreRealPoints(LocalTreeData.WeaverTreeData tree)
+        {
+            if (tree == null) { return; }
+            int points;
+            if (!TryRealEarned(out points))
+            {
+                if (!hasRealSnapshot) { return; }
+                points = realSnapshot;
+            }
+            tree.EarnedWeaverPoints = (ushort)ClampPoints(points);
+            overrideApplied = false;
+            hasRealSnapshot = false;
         }
 
         static void RefreshOpenUi()
@@ -96,7 +148,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Factions.TheWoven
             [HarmonyPostfix]
             static void Postfix(ref ushort __result)
             {
-                if (readingOriginal || writing || !CanRun()) { return; }
+                if (writing || !CanRun()) { return; }
                 __result = (ushort)ClampPoints(Save_Manager.instance.data.Factions.TheWoven.TreePoints);
             }
         }
@@ -152,6 +204,21 @@ namespace LastEpoch_Hud.Scripts.Mods.Factions.TheWoven
             static void Postfix()
             {
                 ApplyToPlayer();
+            }
+        }
+
+        [HarmonyPatch(typeof(TheWeaver), nameof(TheWeaver.CompleteWovenEcho))]
+        public class TheWeaver_CompleteWovenEcho
+        {
+            [HarmonyPostfix]
+            static void Postfix()
+            {
+                if (CanRun() || !usedOverride || writing) { return; }
+                if (Refs_Manager.player_treedata.IsNullOrDestroyed() || Refs_Manager.player_treedata.weaverTree == null) { return; }
+                writing = true;
+                try { RestoreRealPoints(Refs_Manager.player_treedata.weaverTree); }
+                finally { writing = false; }
+                RefreshOpenUi();
             }
         }
     }

@@ -760,8 +760,18 @@ namespace LastEpoch_Hud.Scripts
                                     case "Toggle_UnlockAllSkills": { Save_Manager.instance.data.Skills.Enable_AllSkills = __instance.isOn; break; }
                                     case "Toggle_RemoveNodeRequirements": { Save_Manager.instance.data.Skills.Disable_NodeRequirement = __instance.isOn; break; }
                                     case "Toggle_SpecializationSlots": { Save_Manager.instance.data.Skills.Enable_SpecializationSlots = __instance.isOn; break; }
-                                    case "Toggle_SkillLevel": { Save_Manager.instance.data.Skills.Enable_SkillLevel = __instance.isOn; break; }
-                                    case "Toggle_PassivePoints": { Save_Manager.instance.data.Skills.Enable_PassivePoints = __instance.isOn; break; }
+                                    case "Toggle_SkillLevel":
+                                        {
+                                            Save_Manager.instance.data.Skills.Enable_SkillLevel = __instance.isOn;
+                                            if (!__instance.isOn) { Mods.Skills.Skills_Level.Restore(); }
+                                            break;
+                                        }
+                                    case "Toggle_PassivePoints":
+                                        {
+                                            Save_Manager.instance.data.Skills.Enable_PassivePoints = __instance.isOn;
+                                            if (!__instance.isOn) { Mods.Skills.Passives_Points.Restore(); }
+                                            break;
+                                        }
                                     case "Toggle_NoTarget": { Save_Manager.instance.data.Skills.MovementSkills.Enable_NoTarget = __instance.isOn; break; }
                                     case "Toggle_ImmuneDuringMovement": { Save_Manager.instance.data.Skills.MovementSkills.Enable_ImmuneDuringMovement = __instance.isOn; break; }
                                     case "Toggle_DisableSimplePath": { Save_Manager.instance.data.Skills.MovementSkills.Disable_SimplePath = __instance.isOn; break; }
@@ -2722,6 +2732,7 @@ namespace LastEpoch_Hud.Scripts
                     public static void SetWeaverTreePointsEnabled(bool on)
                     {
                         if (suppressWeaverSlider || Save_Manager.instance.IsNullOrDestroyed()) { return; }
+                        if (!weaver_points_toggle.IsNullOrDestroyed()) { on = weaver_points_toggle.isOn; }
                         Save_Manager.instance.data.Factions.TheWoven.Enable_TreePoints = on;
                         EnsureWeaverRange();
                         if (on && !weaver_points_slider.IsNullOrDestroyed())
@@ -2732,21 +2743,19 @@ namespace LastEpoch_Hud.Scripts
                         {
                             weaver_points_text.text = ((int)weaver_points_slider.value).ToString();
                         }
-                        Mods.Factions.TheWoven.Faction_Woven_TreePoints.ApplyToPlayer();
+                        if (on) { Mods.Factions.TheWoven.Faction_Woven_TreePoints.ApplyToPlayer(); }
+                        else { Mods.Factions.TheWoven.Faction_Woven_TreePoints.ReleaseToRealPoints(); }
                     }
                     public static void SetWeaverTreePoints(float value)
                     {
                         if (suppressWeaverSlider || Save_Manager.instance.IsNullOrDestroyed()) { return; }
+                        if (!weaver_points_toggle.IsNullOrDestroyed() && !weaver_points_toggle.isOn) { return; }
                         EnsureWeaverRange();
                         int points = (int)value;
                         int max = Mods.Factions.TheWoven.Faction_Woven_TreePoints.SliderMax;
                         if (points > max) { points = max; }
                         Save_Manager.instance.data.Factions.TheWoven.TreePoints = points;
                         Save_Manager.instance.data.Factions.TheWoven.Enable_TreePoints = true;
-                        if (!weaver_points_toggle.IsNullOrDestroyed() && !weaver_points_toggle.isOn)
-                        {
-                            weaver_points_toggle.isOn = true;
-                        }
                         if (!weaver_points_text.IsNullOrDestroyed()) { weaver_points_text.text = points.ToString(); }
                         Mods.Factions.TheWoven.Faction_Woven_TreePoints.ApplyToPlayer();
                     }

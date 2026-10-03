@@ -28,6 +28,20 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
 
         static bool writing;
 
+        public static void Restore()
+        {
+            try
+            {
+                if (Refs_Manager.player_treedata.IsNullOrDestroyed() || Refs_Manager.player_treedata.specialisedSkillTrees.IsNullOrDestroyed()) { return; }
+                foreach (LocalTreeData.SkillTreeData data in Refs_Manager.player_treedata.specialisedSkillTrees)
+                {
+                    if (data == null) { continue; }
+                    data.level = SpecialisedAbilityManager.getAbilityLevel(data.abilityXp);
+                }
+            }
+            catch { }
+        }
+
         static void Apply(LocalTreeData tree, Ability ability)
         {
             if (writing || !CanRun() || tree == null || ability.IsNullOrDestroyed() || tree.specialisedSkillTrees.IsNullOrDestroyed()) { return; }

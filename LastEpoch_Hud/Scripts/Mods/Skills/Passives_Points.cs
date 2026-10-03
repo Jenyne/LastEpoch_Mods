@@ -17,6 +17,16 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             }
             else { return false; }
         }
+        public static void Restore()
+        {
+            try
+            {
+                if (Refs_Manager.player_treedata.IsNullOrDestroyed() || Refs_Manager.player_treedata.passiveTree == null) { return; }
+                Refs_Manager.player_treedata.passiveTree.pointsEarnt = Refs_Manager.player_treedata.calculatePassivePointsEarnt();
+            }
+            catch { }
+        }
+
         [HarmonyPatch(typeof(PassivePanelManager), "onTreeOpened")]
         public class PassivePanelManager_onTreeOpened
         {
