@@ -18,6 +18,7 @@ namespace LastEpoch_Hud.Scripts
         GameObject character_bank_from_anywhere = null;
         GameObject character_permanentbuffs_obj = null;
         GameObject character_safetp_obj = null;
+        GameObject character_twohanded_shield_obj = null;
         GameObject items_nbsocket_obj = null;
         GameObject items_autosell_timer_obj = null;
         GameObject items_headhunter_obj = null;
@@ -76,6 +77,10 @@ namespace LastEpoch_Hud.Scripts
             character_safetp_obj = Object.Instantiate(new GameObject { name = "Mod_Character_SafeTp" }, Vector3.zero, Quaternion.identity);
             character_safetp_obj.AddComponent<Mods.Character.Character_TpSafe>();
             Mods_Objects.Add(character_safetp_obj);
+
+            character_twohanded_shield_obj = Object.Instantiate(new GameObject { name = "Mod_Character_TwoHandedShield" }, Vector3.zero, Quaternion.identity);
+            character_twohanded_shield_obj.AddComponent<Mods.Character.Character_TwoHandedShield>();
+            Mods_Objects.Add(character_twohanded_shield_obj);
 
             items_nbsocket_obj = Object.Instantiate(new GameObject { name = "Mod_Items_NbSocket" }, Vector3.zero, Quaternion.identity);
             items_nbsocket_obj.AddComponent<Mods.Items.Items_SocketsNb>();

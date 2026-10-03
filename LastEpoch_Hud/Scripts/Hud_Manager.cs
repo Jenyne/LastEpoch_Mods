@@ -581,6 +581,7 @@ namespace LastEpoch_Hud.Scripts
                                     case "Toggle_Character_Data_Masochist": { if ((!Refs_Manager.player_data.IsNullOrDestroyed()) && (!Content.Character.Data.masochist_toggle.IsNullOrDestroyed())) { Refs_Manager.player_data.Masochist = Content.Character.Data.masochist_toggle.isOn; } break; }
                                     case "Toggle_Character_Data_Portal": { if ((!Refs_Manager.player_data.IsNullOrDestroyed()) && (!Content.Character.Data.portal_toggle.IsNullOrDestroyed())) { Refs_Manager.player_data.PortalUnlocked = Content.Character.Data.portal_toggle.isOn; } break; }
                                     case "Toggle_Character_Data_SoloChallenge": { if ((!Refs_Manager.player_data.IsNullOrDestroyed()) && (!Content.Character.Data.solo_toggle.IsNullOrDestroyed())) { Refs_Manager.player_data.SoloChallenge = Content.Character.Data.solo_toggle.isOn; } break; }
+                                    case "Toggle_Character_Cheats_TwoHandeWithShield": { if (!Content.Character.Cheats.twohanded_shield_toggle.IsNullOrDestroyed()) { Save_Manager.instance.data.Character.Cheats.Enable_TwoHandedWithShield = Content.Character.Cheats.twohanded_shield_toggle.isOn; } break; }
 
                                     case "Toggle_Character_Buffs_Enable": { Save_Manager.instance.data.Character.PermanentBuffs.Enable_Mod = __instance.isOn; break; }
                                     case "Toggle_Character_Buffs_MoveSpeed": { Save_Manager.instance.data.Character.PermanentBuffs.Enable_MoveSpeed_Buff = __instance.isOn; break; }
@@ -1605,6 +1606,7 @@ namespace LastEpoch_Hud.Scripts
                                 Cheats.golddropchance_slider = Functions.Get_SliderInPanel(character_cheats_content, "GoldDropChance", "Slider_Character_Cheats_GoldDropChance");
 
                                 Cheats.waypoints_toggle = Functions.Get_ToggleInPanel(character_cheats_content, "WaypointsUnlock", "Toggle_Character_Cheats_UnlockAllWaypoints");
+                                Cheats.twohanded_shield_toggle = Functions.Get_ToggleInPanel(character_cheats_content, "TwoHandeWithShield", "Toggle_Character_Cheats_TwoHandeWithShield");
 
                                 Cheats.level_once_button = Functions.GetChild(character_cheats_content, "Btn_Character_Cheats_LevelOnce").GetComponent<Button>();
                                 Cheats.level_max_button = Functions.GetChild(character_cheats_content, "Btn_Character_Cheats_LevelToMax").GetComponent<Button>();
@@ -1807,6 +1809,10 @@ namespace LastEpoch_Hud.Scripts
                     {
                         Events.Set_Toggle_Event(Cheats.godmode_toggle, Cheats.Godmode_Toggle_Action);
                     }
+                    if (!Cheats.twohanded_shield_toggle.IsNullOrDestroyed())
+                    {
+                        Events.Set_Toggle_Event(Cheats.twohanded_shield_toggle, Cheats.TwoHandedShield_Toggle_Action);
+                    }
                     if (!Cheats.lowlife_toggle.IsNullOrDestroyed())
                     {
                         Events.Set_Toggle_Event(Cheats.lowlife_toggle, Cheats.Lowlife_Toggle_Action);
@@ -1978,6 +1984,10 @@ namespace LastEpoch_Hud.Scripts
                             if (!Cheats.godmode_toggle.IsNullOrDestroyed())
                             {
                                 Cheats.godmode_toggle.isOn = Save_Manager.instance.data.Character.Cheats.Enable_GodMode;
+                            }
+                            if (!Cheats.twohanded_shield_toggle.IsNullOrDestroyed())
+                            {
+                                Cheats.twohanded_shield_toggle.isOn = Save_Manager.instance.data.Character.Cheats.Enable_TwoHandedWithShield;
                             }
                             if (!Cheats.lowlife_toggle.IsNullOrDestroyed())
                             {
@@ -2486,6 +2496,16 @@ namespace LastEpoch_Hud.Scripts
                         {
                             Save_Manager.instance.data.Character.Cheats.Enable_GodMode = godmode_toggle.isOn;
                         }                        
+                    }
+
+                    public static Toggle twohanded_shield_toggle = null;
+                    public static readonly System.Action<bool> TwoHandedShield_Toggle_Action = new System.Action<bool>(Set_TwoHandedShield_Enable);
+                    private static void Set_TwoHandedShield_Enable(bool enable)
+                    {
+                        if ((!Save_Manager.instance.IsNullOrDestroyed()) && (!twohanded_shield_toggle.IsNullOrDestroyed()))
+                        {
+                            Save_Manager.instance.data.Character.Cheats.Enable_TwoHandedWithShield = twohanded_shield_toggle.isOn;
+                        }
                     }
 
                     public static Toggle lowlife_toggle = null;
