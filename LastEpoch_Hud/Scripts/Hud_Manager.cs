@@ -4185,13 +4185,15 @@ namespace LastEpoch_Hud.Scripts
                                     scene_minimap_content,
                                     "ShowAllItems",
                                     "Toggle_Scenes_Minimap_ShowAllItems",
-                                    "Show All Items"
+                                    "Show All Items",
+                                    1
                                 );
                                 Minimap.show_items_from_filter_toggle = Minimap.CreateRuntimeToggle(
                                     scene_minimap_content,
                                     "ShowItemsFromFilter",
                                     "Toggle_Scenes_Minimap_ShowItemsFromFilter",
-                                    "Show Items From Filter"
+                                    "Show Items From Filter",
+                                    2
                                 );
                             }
                             GameObject scene_monoliths_content = Functions.GetViewportContent(content_obj, "Monoliths", "Scenes_Monoliths_Content");
@@ -4405,7 +4407,8 @@ namespace LastEpoch_Hud.Scripts
                         GameObject content,
                         string panelName,
                         string toggleName,
-                        string label
+                        string label,
+                        int rowOffset
                     )
                     {
                         try
@@ -4413,14 +4416,44 @@ namespace LastEpoch_Hud.Scripts
                             if (content.IsNullOrDestroyed()) { return null; }
 
                             GameObject panel = Functions.GetChild(content, panelName, false);
+                            GameObject template = Functions.GetChild(content, "RemoveFogOfWar", false);
+                            if (template.IsNullOrDestroyed()) { return null; }
+
                             if (panel.IsNullOrDestroyed())
                             {
-                                GameObject template = Functions.GetChild(content, "RemoveFogOfWar", false);
-                                if (template.IsNullOrDestroyed()) { return null; }
-
                                 panel = Object.Instantiate(template, template.transform.parent);
                                 panel.name = panelName;
                                 panel.transform.SetAsLastSibling();
+                            }
+
+                            // This prefab section is positioned manually rather than by a
+                            // VerticalLayoutGroup. Clones otherwise inherit RemoveFogOfWar's
+                            // exact anchored position and overlap each other.
+                            RectTransform panelRect = panel.GetComponent<RectTransform>();
+                            RectTransform templateRect = template.GetComponent<RectTransform>();
+                            GameObject previous = Functions.GetChild(content, "MaxZoomOut", false);
+                            RectTransform previousRect = previous.IsNullOrDestroyed()
+                                ? null
+                                : previous.GetComponent<RectTransform>();
+
+                            if (!panelRect.IsNullOrDestroyed() && !templateRect.IsNullOrDestroyed())
+                            {
+                                float rowDeltaY = 0f;
+                                if (!previousRect.IsNullOrDestroyed())
+                                {
+                                    rowDeltaY = templateRect.anchoredPosition.y - previousRect.anchoredPosition.y;
+                                }
+
+                                if (Mathf.Abs(rowDeltaY) < 1f)
+                                {
+                                    float rowHeight = Mathf.Abs(templateRect.rect.height);
+                                    if (rowHeight < 1f) { rowHeight = 34f; }
+                                    rowDeltaY = -rowHeight;
+                                }
+
+                                Vector2 pos = templateRect.anchoredPosition;
+                                pos.y += rowDeltaY * rowOffset;
+                                panelRect.anchoredPosition = pos;
                             }
 
                             Toggle toggle = panel.GetComponentInChildren<Toggle>(true);
