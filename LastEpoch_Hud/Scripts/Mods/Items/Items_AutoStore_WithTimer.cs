@@ -9,43 +9,49 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         public static Items_AutoStore_WithTimer instance { get; private set; }
         public Items_AutoStore_WithTimer(System.IntPtr ptr) : base(ptr) { }
 
-        public static System.DateTime StartTime;
-        public static System.DateTime LastTime;
         public static bool running = false;
+        static float nextStoreAt;
 
         void Awake()
         {
             instance = this;
         }
+
         void Update()
         {
-            if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()) && (!Save_Manager.instance.data.IsNullOrDestroyed()))
-            {
-                if (Save_Manager.instance.data.Items.Pickup.Enable_AutoStore_Timer)
-                {
-                    if (!running)
-                    {
-                        StartTime = System.DateTime.Now;
-                        running = true;
-                    }
-                    if (running)
-                    {
-                        if (GetElapsedTime() > Save_Manager.instance.data.Items.Pickup.AutoStore_Timer)
-                        {
-                            Items_AutoStore_OnPickup.StoreNow();
-                            running = false;
-                        }
-                    }
-                }
-            }
-            else { running = false; }
-        }
-        double GetElapsedTime()
-        {
-            LastTime = System.DateTime.Now;
-            var elaspedTime = LastTime - StartTime;
+            // Always service the cheap debounced on-drop queue. The GameObject stays
+            // active even when the periodic timer feature itself is disabled.
+            Items_AutoStore_OnPickup.FlushPending();
 
-            return elaspedTime.TotalSeconds;
+            if ((!Scenes.IsGameScene()) ||
+                Save_Manager.instance.IsNullOrDestroyed() ||
+                Save_Manager.instance.data.IsNullOrDestroyed())
+            {
+                running = false;
+                return;
+            }
+
+            if (!Save_Manager.instance.data.Items.Pickup.Enable_AutoStore_Timer)
+            {
+                running = false;
+                return;
+            }
+
+            float interval = Mathf.Max(1f, Save_Manager.instance.data.Items.Pickup.AutoStore_Timer);
+            float now = Time.realtimeSinceStartup;
+
+            if (!running)
+            {
+                nextStoreAt = now + interval;
+                running = true;
+                return;
+            }
+
+            if (now >= nextStoreAt)
+            {
+                Items_AutoStore_OnPickup.StoreNow();
+                nextStoreAt = now + interval;
+            }
         }
     }
 }
