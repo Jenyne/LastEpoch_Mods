@@ -65,6 +65,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Minimap
         }
         private static bool ItemMatchFilter(ItemDataUnpacked item)
         {
+            long profAlloc;
+            long profStart = Diagnostics.DiagnosticsDumper.BeginOperation(out profAlloc);
             bool result = false;
             if ((!Refs_Manager.player_actor.IsNullOrDestroyed()) && (!Refs_Manager.filter_manager.IsNullOrDestroyed()))
             {
@@ -87,6 +89,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Minimap
                 }
             }
 
+            Diagnostics.DiagnosticsDumper.EndOperation("Minimap.FilterMatch", profStart, profAlloc);
             return result;
         }
         
@@ -96,6 +99,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Minimap
             [HarmonyPostfix]
             static void Postfix(ref GroundItemVisuals __instance, ItemDataUnpacked __0, uint __1) //, GroundItemLabel __2, bool __3)
             {
+                long profAlloc;
+                long profStart = Diagnostics.DiagnosticsDumper.BeginOperation(out profAlloc);
                 if ((CanRun()) && (!DMMap.Instance.IsNullOrDestroyed()))
                 {
                     if (items_in_map.IsNullOrDestroyed()) { items_in_map = new System.Collections.Generic.List<objects_structure>(); }
@@ -128,12 +133,17 @@ namespace LastEpoch_Hud.Scripts.Mods.Minimap
                             base_object.transform.localPosition = __instance.gameObject.transform.localPosition;
                             base_object.AddComponent<DMMapIcon>();
                             base_object.AddComponent<Minimap_Icons_UI>();
+
+                            long iconAlloc;
+                            long iconStart = Diagnostics.DiagnosticsDumper.BeginOperation(out iconAlloc);
                             base_object.GetComponent<Minimap_Icons_UI>().icon = Functions.GetItemIcon(__0);
+                            Diagnostics.DiagnosticsDumper.EndOperation("Minimap.IconLoad", iconStart, iconAlloc);
 
                             items_in_map.Add(new objects_structure { scene_name = Scenes.SceneName, id = __1, base_object = base_object });
                         }
                     }
                 }
+                Diagnostics.DiagnosticsDumper.EndOperation("Minimap.IconCreate", profStart, profAlloc);
             }
         }
         
