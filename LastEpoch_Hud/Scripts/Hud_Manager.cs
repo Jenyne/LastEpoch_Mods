@@ -194,6 +194,11 @@ namespace LastEpoch_Hud.Scripts
                             Content.Headhunter.Get_Refs();
                             Content.Headhunter.Set_Active(false);
                         });
+
+                        SafeInit("ModUI.SaveManager.BindHud", () =>
+                        {
+                            ModUI.SaveManager.BindHud(hud_object);
+                        });
                     }
                     else { Main.logger_instance.Error("Hud Manager : Hud Prefab not found"); }
                 }
@@ -4407,10 +4412,10 @@ namespace LastEpoch_Hud.Scripts
                         {
                             if (content.IsNullOrDestroyed()) { return null; }
 
-                            GameObject panel = Functions.GetChild(content, panelName);
+                            GameObject panel = Functions.GetChild(content, panelName, false);
                             if (panel.IsNullOrDestroyed())
                             {
-                                GameObject template = Functions.GetChild(content, "RemoveFogOfWar");
+                                GameObject template = Functions.GetChild(content, "RemoveFogOfWar", false);
                                 if (template.IsNullOrDestroyed()) { return null; }
 
                                 panel = Object.Instantiate(template, template.transform.parent);
