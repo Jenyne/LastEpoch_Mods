@@ -1589,6 +1589,8 @@ namespace LastEpoch_Hud.Scripts
                                 Cheats.add_runes_button = Functions.GetChild(character_cheats_content, "Btn_Character_Cheats_AddRunes").GetComponent<Button>();
                                 Cheats.add_glyphs_button = Functions.GetChild(character_cheats_content, "Btn_Character_Cheats_AddGlyphs").GetComponent<Button>();
                                 Cheats.add_shards_button = Functions.GetChild(character_cheats_content, "Btn_Character_Cheats_AddAffixs").GetComponent<Button>();
+                                GameObject ancient_bones_button = Functions.FindDescendant(character_cheats_content, "Btn_Character_Cheats_AddAncienBone");
+                                if (!ancient_bones_button.IsNullOrDestroyed()) { Cheats.add_ancient_bones_button = ancient_bones_button.GetComponent<Button>(); }
                                 Cheats.discover_blessings_button = Functions.GetChild(character_cheats_content, "Btn_Character_Cheats_DicoverAllBlessings").GetComponent<Button>();
                             }
                             else { Main.logger_instance.Error("Hud Manager : character_cheats_content is null"); }
@@ -1869,6 +1871,10 @@ namespace LastEpoch_Hud.Scripts
                     if (!Cheats.add_shards_button.IsNullOrDestroyed())
                     {
                         Events.Set_Button_Event(Cheats.add_shards_button, Cheats.AddAffixs_OnClick_Action);
+                    }
+                    if (!Cheats.add_ancient_bones_button.IsNullOrDestroyed())
+                    {
+                        Events.Set_Button_Event(Cheats.add_ancient_bones_button, Cheats.AddAncientBones_OnClick_Action);
                     }
                     if (!Cheats.discover_blessings_button.IsNullOrDestroyed())
                     {
@@ -2690,6 +2696,13 @@ namespace LastEpoch_Hud.Scripts
                     public static void AddAffixs_Click()
                     {
                         Mods.Character.Character_Materials.GetAllShardsX10();
+                    }
+
+                    public static Button add_ancient_bones_button = null;
+                    public static readonly System.Action AddAncientBones_OnClick_Action = new System.Action(AddAncientBones_Click);
+                    public static void AddAncientBones_Click()
+                    {
+                        Mods.Character.Character_Materials.AddAncientBones(10000);
                     }
 
                     public static Button discover_blessings_button = null;

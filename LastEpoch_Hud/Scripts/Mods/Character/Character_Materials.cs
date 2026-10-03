@@ -32,6 +32,28 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
                 }
             }
         }
+        public static void AddAncientBones(int amount)
+        {
+            Hud_Manager.Hud_Base.Resume_Click();
+            try
+            {
+                AncientBonesTracker tracker = PlayerFinder.getAncientBonesTracker();
+                if (tracker.IsNullOrDestroyed() && !Refs_Manager.player_actor.IsNullOrDestroyed())
+                {
+                    tracker = Refs_Manager.player_actor.ancientBonesTracker;
+                }
+                if (tracker.IsNullOrDestroyed())
+                {
+                    Main.logger_instance?.Error("Character_Materials : Ancient bones tracker not found");
+                    return;
+                }
+                tracker.modifyAncientBones(amount);
+            }
+            catch (System.Exception exception)
+            {
+                Main.logger_instance?.Error("Character_Materials : Add ancient bones failed: " + exception.Message);
+            }
+        }
         public static void GetAllShardsX10()
         {
             if (!Refs_Manager.item_list.IsNullOrDestroyed())

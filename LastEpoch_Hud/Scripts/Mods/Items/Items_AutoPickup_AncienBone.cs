@@ -18,22 +18,16 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         [HarmonyPatch(typeof(GroundItemManager), "dropAncientBoneForPlayer")]
         public class GroundItemManager_dropAncientBoneForPlayer
         {
-            [HarmonyPostfix]
-            static void Postfix(ref GroundItemManager __instance, Actor __0, int __1, UnityEngine.Vector3 __2, bool __3, bool __4)
+            [HarmonyPrefix]
+            static bool Prefix(Actor __0, int __1)
             {
-                if (CanRun())
-                {
-                    System.UInt32 ancien_bone_id = __instance.nextAncientBoneId - 1;
-                    foreach (PickupAncientBonesInteraction pick_ancien_bone_interaction in __instance.activeAncientBones)
-                    {
-                        if (pick_ancien_bone_interaction.id == ancien_bone_id)
-                        {
-                            __2 = Refs_Manager.player_actor.position();
-                            __instance.pickupAncientBone(__0, ancien_bone_id, pick_ancien_bone_interaction);
-                            break;
-                        }
-                    }
-                }
+                if ((!CanRun()) || (__1 <= 0) || (__0.IsNullOrDestroyed())) { return true; }
+
+                AncientBonesTracker tracker = __0.ancientBonesTracker;
+                if (tracker.IsNullOrDestroyed()) { tracker = PlayerFinder.getAncientBonesTracker(); }
+                if (tracker.IsNullOrDestroyed()) { return true; }
+
+                return !tracker.modifyAncientBones(__1);
             }
         }
     }
