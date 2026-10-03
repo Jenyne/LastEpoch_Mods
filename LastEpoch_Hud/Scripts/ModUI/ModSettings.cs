@@ -159,6 +159,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
             public static readonly BoolSetting CapLevelToZone = Group.Bool(
                 "CapLevelToZone",
+                defaultValue: false,
                 label: "Cap Player Level Gain to Zone Level"
             );
 
