@@ -20,6 +20,8 @@
   <PropertyGroup Condition="'$(Configuration)' == 'Compat15'">
     <DefineConstants>COMPAT15_MINIMAL</DefineConstants>
     <DebugType>portable</DebugType>
+    <OutputPath>$(LastEpochPath)\Mods\</OutputPath>
+    <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <Reference Include="AssetsTools.NET">
@@ -204,23 +206,6 @@
       <Private>False</Private>
     </Reference>
   </ItemGroup>
-  <Target Name="DeployCompat15ToGame"
-          AfterTargets="Build"
-          Condition="'$(Configuration)' == 'Compat15' and '$(TargetFramework)' == 'net6.0'">
-    <PropertyGroup>
-      <LastEpochModsPath>$(LastEpochPath)\Mods</LastEpochModsPath>
-    </PropertyGroup>
-
-    <MakeDir Directories="$(LastEpochModsPath)" Condition="!Exists('$(LastEpochModsPath)')" />
-    <Copy
-      SourceFiles="$(TargetPath)"
-      DestinationFiles="$(LastEpochModsPath)\$(TargetFileName)"
-      SkipUnchangedFiles="true" />
-
-    <Message
-      Importance="high"
-      Text="Compat15 deployed: $(TargetPath) -> $(LastEpochModsPath)\$(TargetFileName)" />
-  </Target>
 
   <ItemGroup>
     <None Update="LastEpoch_Hud\Assets\lastepochmods">
