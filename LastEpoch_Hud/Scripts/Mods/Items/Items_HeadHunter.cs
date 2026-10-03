@@ -386,21 +386,38 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 [HarmonyPostfix]
                 static void Postfix(ref Il2Cpp.InventoryItemUI __instance)
                 {
-                    if ((__instance.EntryRef.data.getAsUnpacked().FullName == Get_Unique_Name()) && (!Icon.IsNullOrDestroyed()))
+                    if ((__instance.EntryRef.data.getAsUnpacked().FullName == Get_Unique_Name()) && (!Icon.IsNullOrDestroyed()) &&
+                        !__instance.contentImage.IsNullOrDestroyed())
                     {
-                        __instance.contentImage.sprite = Icon;
+                        __instance.contentImage.spriteHardRef = Icon;
+                        __instance.contentImage.overrideSpriteHardRef = Icon;
                     }
                 }
             }
 
-            public class UITooltipItem_GetItemSprite
+            [HarmonyPatch(typeof(UITooltipItem), "SetItemImage", new System.Type[] {
+                typeof(ItemDataUnpacked), typeof(UITooltipItem.ItemTooltipInfo), typeof(bool) })]
+            public class UITooltipItem_SetItemImage
             {
                 [HarmonyPostfix]
-                static void Postfix(ref UnityEngine.Sprite __result, ItemData __0)
+                static void Postfix(UITooltipItem __instance, ItemDataUnpacked __0, bool __2)
                 {
-                    if ((__0.getAsUnpacked().FullName == Get_Unique_Name()) && (!Icon.IsNullOrDestroyed()))
+                    if (__instance.IsNullOrDestroyed() || __0.IsNullOrDestroyed() ||
+                        __0.FullName != Get_Unique_Name() || Icon.IsNullOrDestroyed()) { return; }
+
+                    var images = __2
+                        ? new[] { __instance.compareItemImage, __instance.compareSmallItemImage,
+                            __instance.compareMediumItemImage, __instance.compareLargeItemImage,
+                            __instance.compareSpearItemImage, __instance.compareWideItemImage }
+                        : new[] { __instance.itemImage, __instance.smallItemImage,
+                            __instance.mediumItemImage, __instance.tallMediumItemImage,
+                            __instance.largeItemImage, __instance.spearItemImage, __instance.wideItemImage };
+
+                    foreach (var image in images)
                     {
-                        __result = Icon;
+                        if (image.IsNullOrDestroyed()) { continue; }
+                        image.spriteHardRef = Icon;
+                        image.overrideSpriteHardRef = Icon;
                     }
                 }
             }
