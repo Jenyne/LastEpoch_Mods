@@ -67,7 +67,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                         {
                             if (name.Contains("/headhunter/"))
                             {
-                                if ((Functions.Check_Texture(name)) && (name.Contains("icon")) && (Unique.Icon.IsNullOrDestroyed()))
+                                if ((Functions.Check_Texture(name)) &&
+                                    (name.Replace("\\", "/").ToLowerInvariant().EndsWith("/headhunter/texture2d/icon.png")) &&
+                                    (Unique.Icon.IsNullOrDestroyed()))
                                 {
                                     Texture2D texture = Hud_Manager.asset_bundle.LoadAsset(name).TryCast<Texture2D>();
                                     Unique.Icon = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
@@ -92,7 +94,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         {
             public static bool AddedToBasicList = false;
             public static readonly byte base_type = 2; //Belt
-            public static readonly int base_id = 13;
+            public static int base_id = -1;
             public static ItemList.EquipmentItem Item()
             {
                 ItemList.EquipmentItem item = new ItemList.EquipmentItem
@@ -114,8 +116,20 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             {
                 if ((!AddedToBasicList) && (!Refs_Manager.item_list.IsNullOrDestroyed()))
                 {
-                    Refs_Manager.item_list.EquippableItems[base_type].subItems.Add(Item());
-                    AddedToBasicList = true;
+                    try
+                    {
+                        var subItems = Refs_Manager.item_list.EquippableItems[base_type].subItems;
+                        base_id = subItems.Count;
+                        if (base_id < 0 || base_id > byte.MaxValue)
+                        {
+                            Main.logger_instance?.Error("Headhunter Basic List Error : no free subtype id");
+                            return;
+                        }
+
+                        subItems.Add(Item());
+                        AddedToBasicList = true;
+                    }
+                    catch { Main.logger_instance?.Error("Headhunter Basic List Error"); }
                 }
             }
             public static string Get_Subtype_Name()
