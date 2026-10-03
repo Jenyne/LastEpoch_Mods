@@ -105,6 +105,13 @@ namespace LastEpoch_Hud.Scripts.ModUI
             Main.logger_instance?.Msg(
                 "ModUI SaveManager: Initialized with " + ModSettings.AllGroups.Count + " group(s)"
             );
+
+            // Schema rewrites/fresh saves should never silently enable XP capping.
+            // Preserve the user's choice on normal loads, but reset this option when
+            // the settings file is being regenerated or upgraded.
+            if (needsRewrite)
+                ModSettings.Difficulty.CapLevelToZone.Value = false;
+
             initialized = true;
 
             if (needsRewrite)
