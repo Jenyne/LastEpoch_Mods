@@ -8,7 +8,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         static bool storing;
         static bool pendingStore;
         static float pendingStoreAt;
-        const float StoreDebounceSeconds = 0.05f;
+        const float StoreDebounceSeconds = 0.20f;
 
         public static void RequestStore()
         {
@@ -32,6 +32,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         public static void StoreNow()
         {
             if (storing) { return; }
+
+            // Any explicit/timer/inventory-open store satisfies a queued drop-store request.
+            pendingStore = false;
 
             long profAlloc;
             long profStart = Diagnostics.DiagnosticsDumper.BeginOperation(out profAlloc);
