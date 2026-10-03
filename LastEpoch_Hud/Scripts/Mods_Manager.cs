@@ -82,7 +82,7 @@ namespace LastEpoch_Hud.Scripts
             Mods_Objects.Add(items_nbsocket_obj);
 
             items_autosell_timer_obj = Object.Instantiate(new GameObject { name = "Mod_Items_AutoStore_All10Sec" }, Vector3.zero, Quaternion.identity);
-            items_autosell_timer_obj.active = false;
+            items_autosell_timer_obj.active = true;
             items_autosell_timer_obj.AddComponent<Mods.Items.Items_AutoStore_WithTimer>();
             Mods_Objects.Add(items_autosell_timer_obj);
 
@@ -162,7 +162,7 @@ namespace LastEpoch_Hud.Scripts
                 character_godmode_obj.SetActive(Save_Manager.instance.data.Character.Cheats.Enable_GodMode);
                 character_lowlife_obj.SetActive(Save_Manager.instance.data.Character.Cheats.Enable_LowLife);
                 character_autopotion_obj.SetActive(Save_Manager.instance.data.Character.Cheats.Enable_AutoPot);
-                items_autosell_timer_obj.SetActive(Save_Manager.instance.data.Items.Pickup.Enable_AutoStore_Timer);
+                items_autosell_timer_obj.SetActive(true); // worker also services debounced AutoStore-on-drop
                 Mods.Items.Items_Update.Reqs(); //Used to update item req
             }
         }
