@@ -4172,6 +4172,22 @@ namespace LastEpoch_Hud.Scripts
                             {
                                 Minimap.max_zoom_out_toggle = Functions.Get_ToggleInPanel(scene_minimap_content, "MaxZoomOut", "Toggle_Scenes_Minimap_MaxZoomOut");
                                 Minimap.remove_fog_of_war_toggle = Functions.Get_ToggleInPanel(scene_minimap_content, "RemoveFogOfWar", "Toggle_Scenes_Minimap_RemoveFogOfWar");
+
+                                // These settings already existed in Save.json and Minimap_Icons,
+                                // but the current HUD bundle has no rows for them. Clone the
+                                // existing Remove Fog row so they are actually user-accessible.
+                                Minimap.show_all_items_toggle = Minimap.CreateRuntimeToggle(
+                                    scene_minimap_content,
+                                    "ShowAllItems",
+                                    "Toggle_Scenes_Minimap_ShowAllItems",
+                                    "Show All Items"
+                                );
+                                Minimap.show_items_from_filter_toggle = Minimap.CreateRuntimeToggle(
+                                    scene_minimap_content,
+                                    "ShowItemsFromFilter",
+                                    "Toggle_Scenes_Minimap_ShowItemsFromFilter",
+                                    "Show Items From Filter"
+                                );
                             }
                             GameObject scene_monoliths_content = Functions.GetViewportContent(content_obj, "Monoliths", "Scenes_Monoliths_Content");
                             if (!scene_monoliths_content.IsNullOrDestroyed())
@@ -4205,6 +4221,8 @@ namespace LastEpoch_Hud.Scripts
                 {
                     Events.Set_Button_Event(Camera.reset_button, Camera.Reset_OnClick_Action);
                     Events.Set_Button_Event(Camera.set_button, Camera.Set_OnClick_Action);
+                    Events.Set_Toggle_Event(Minimap.show_all_items_toggle, Minimap.ShowAllItems_Action);
+                    Events.Set_Toggle_Event(Minimap.show_items_from_filter_toggle, Minimap.ShowItemsFromFilter_Action);
                 }
                 public static void Set_Active(bool show)
                 {
@@ -4262,6 +4280,10 @@ namespace LastEpoch_Hud.Scripts
 
                             Minimap.max_zoom_out_toggle.isOn = Save_Manager.instance.data.Scenes.Minimap.Enable_MaxZoomOut;
                             Minimap.remove_fog_of_war_toggle.isOn = Save_Manager.instance.data.Scenes.Minimap.Enable_RemoveFogOfWar;
+                            if (!Minimap.show_all_items_toggle.IsNullOrDestroyed())
+                                Minimap.show_all_items_toggle.isOn = Save_Manager.instance.data.Scenes.Minimap.Enable_ShowAllItems;
+                            if (!Minimap.show_items_from_filter_toggle.IsNullOrDestroyed())
+                                Minimap.show_items_from_filter_toggle.isOn = Save_Manager.instance.data.Scenes.Minimap.Enable_ShowItemsFromFilter;
 
                             Monoliths.max_stability_toggle.isOn = Save_Manager.instance.data.Scenes.Monoliths.Enable_MaxStability;
                             Monoliths.max_stability_slider.value = Save_Manager.instance.data.Scenes.Monoliths.MaxStability;
@@ -4366,6 +4388,80 @@ namespace LastEpoch_Hud.Scripts
                 {
                     public static Toggle max_zoom_out_toggle = null;
                     public static Toggle remove_fog_of_war_toggle = null;
+                    public static Toggle show_all_items_toggle = null;
+                    public static Toggle show_items_from_filter_toggle = null;
+
+                    public static readonly System.Action<bool> ShowAllItems_Action =
+                        new System.Action<bool>(SetShowAllItems);
+                    public static readonly System.Action<bool> ShowItemsFromFilter_Action =
+                        new System.Action<bool>(SetShowItemsFromFilter);
+
+                    public static Toggle CreateRuntimeToggle(
+                        GameObject content,
+                        string panelName,
+                        string toggleName,
+                        string label
+                    )
+                    {
+                        try
+                        {
+                            if (content.IsNullOrDestroyed()) { return null; }
+
+                            GameObject panel = Functions.GetChild(content, panelName);
+                            if (panel.IsNullOrDestroyed())
+                            {
+                                GameObject template = Functions.GetChild(content, "RemoveFogOfWar");
+                                if (template.IsNullOrDestroyed()) { return null; }
+
+                                panel = Object.Instantiate(template, template.transform.parent);
+                                panel.name = panelName;
+                                panel.transform.SetAsLastSibling();
+                            }
+
+                            Toggle toggle = panel.GetComponentInChildren<Toggle>(true);
+                            if (toggle.IsNullOrDestroyed()) { return null; }
+
+                            // Remove the cloned RemoveFog listener before adding our own.
+                            toggle.onValueChanged = new Toggle.ToggleEvent();
+                            toggle.name = toggleName;
+
+                            foreach (Text text in panel.GetComponentsInChildren<Text>(true))
+                            {
+                                if (!text.IsNullOrDestroyed() && !string.IsNullOrEmpty(text.text))
+                                {
+                                    text.text = label;
+                                    break;
+                                }
+                            }
+
+                            return toggle;
+                        }
+                        catch (System.Exception ex)
+                        {
+                            Main.logger_instance?.Warning(
+                                "Hud Manager : Failed to create Minimap toggle " + panelName + " : " + ex.Message
+                            );
+                            return null;
+                        }
+                    }
+
+                    private static void SetShowAllItems(bool value)
+                    {
+                        if (!Save_Manager.instance.IsNullOrDestroyed() &&
+                            !Save_Manager.instance.data.IsNullOrDestroyed())
+                        {
+                            Save_Manager.instance.data.Scenes.Minimap.Enable_ShowAllItems = value;
+                        }
+                    }
+
+                    private static void SetShowItemsFromFilter(bool value)
+                    {
+                        if (!Save_Manager.instance.IsNullOrDestroyed() &&
+                            !Save_Manager.instance.data.IsNullOrDestroyed())
+                        {
+                            Save_Manager.instance.data.Scenes.Minimap.Enable_ShowItemsFromFilter = value;
+                        }
+                    }
                 }
                 public class Dungeons
                 {
