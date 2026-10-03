@@ -137,7 +137,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         {
             public static bool AddedToBasicList = false;
             public static readonly byte base_type = 1; //Body Armor
-            public static readonly int base_id = 72;
+            public static int base_id = -1;
             public static ItemList.EquipmentItem Item()
             {
                 ItemList.EquipmentItem item = new ItemList.EquipmentItem
@@ -161,7 +161,15 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 {
                     try
                     {
-                        Refs_Manager.item_list.EquippableItems[base_type].subItems.Add(Item());
+                        var subItems = Refs_Manager.item_list.EquippableItems[base_type].subItems;
+                        base_id = subItems.Count;
+                        if (base_id < 0 || base_id > byte.MaxValue)
+                        {
+                            Main.logger_instance?.Error("Temporalis Basic List Error : no free subtype id");
+                            return;
+                        }
+
+                        subItems.Add(Item());
                         AddedToBasicList = true;
                     }
                     catch { Main.logger_instance?.Error("Temporalis Basic List Error"); }
@@ -364,16 +372,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                     maxValue = 0.2f,
                     value = 0.1f
                 });
-                result.Add(new UniqueItemMod
-                {
-                    canRoll = true,
-                    property = SP.DamageTakenBuff,
-                    tags = AT.None,
-                    type = BaseStats.ModType.ADDED,
-                    maxValue = 0.2f,
-                    value = 0.1f
-                });
-
                 return result;
             }
             private static Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry> TooltipEntries()
@@ -381,7 +379,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry> result = new Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry>();
                 result.Add(new UniqueModDisplayListEntry(0));
                 result.Add(new UniqueModDisplayListEntry(1));
-                result.Add(new UniqueModDisplayListEntry(2));
                 result.Add(new UniqueModDisplayListEntry(128));
 
                 return result;
