@@ -155,6 +155,7 @@ namespace LastEpoch_Hud.Scripts
                         if (Main.debug) { Main.logger_instance.Msg("Hud Manager : Instantiate hud prefab"); }
                         hud_object = Object.Instantiate(prefab_object, Vector3.zero, Quaternion.identity);
                         Object.DontDestroyOnLoad(hud_object);
+                        RemoveUnusedButtons();
 
                         if (Main.debug) { Main.logger_instance.Msg("Hud Manager : Initialize hud refs"); }
                         SafeInit("Hud_Menu.Set_Events", () => { Hud_Menu.Set_Events(); });
@@ -248,6 +249,22 @@ namespace LastEpoch_Hud.Scripts
             }
             data_initializing = false;
         }
+        static void RemoveUnusedButtons()
+        {
+            string[] names =
+            {
+                "Base",
+                "Btn_Menu_Maxroll",
+                "Btn_Menu_NewItems",
+                "Maxroll_Content",
+                "NewItems_Content"
+            };
+            foreach (string name in names)
+            {
+                GameObject button = Functions.FindDescendant(hud_object, name);
+                if (!button.IsNullOrDestroyed()) { UnityEngine.Object.Destroy(button); }
+            }
+        }
         void Update_Refs()
         {
             if ((hud_canvas.IsNullOrDestroyed()) && (!hud_object.IsNullOrDestroyed())) { hud_canvas = hud_object.GetComponent<Canvas>(); }
@@ -262,7 +279,6 @@ namespace LastEpoch_Hud.Scripts
                         Hud_Base.Get_DefaultPauseMenu();
                     }
                 }
-                if ((!Hud_Base.initiliazed_events) && (!game_pause_menu.IsNullOrDestroyed()) && (!Hud_Base.Default_PauseMenu_Btns.IsNullOrDestroyed())) { Hud_Base.Set_Events(); }
                 if (Hud_Base.Get_DefaultPauseMenu_Open()) { Hud_Base.Toogle_DefaultPauseMenu(false); }
             }
             if (!(asset_bundle.IsNullOrDestroyed()) && (hud_object.IsNullOrDestroyed()) && (!hud_initializing)) { Init_Hud(); }
@@ -1293,13 +1309,8 @@ namespace LastEpoch_Hud.Scripts
         {
             public static bool Initialized = false;
             public static bool Initializing = false;
-            public static bool initiliazed_events = false;
             public static GameObject Default_PauseMenu_Btns = null;
             public static Button Btn_Resume;
-            public static Button Btn_Settings;
-            public static Button Btn_GameGuide;
-            public static Button Btn_LeaveGame;
-            public static Button Btn_ExitDesktop;
             public static GameObject ChapterInfo = null;
             public static GameObject Menu_Fade_Background = null;
             public static GameObject Chapter_Fade_Background = null;
@@ -1380,63 +1391,15 @@ namespace LastEpoch_Hud.Scripts
                     GameObject Btns = Functions.GetChild(Default_PauseMenu_Btns, "Buttons");
                     if (!Btns.IsNullOrDestroyed())
                     {
-                        Hud_Base.Btn_Resume = Functions.GetChild(Btns, "ResumeButton (1)").GetComponent<Button>();
-                        Hud_Base.Btn_Settings = Functions.GetChild(Btns, "SettingsButton").GetComponent<Button>();
-                        Hud_Base.Btn_GameGuide = Functions.GetChild(Btns, "GameButton").GetComponent<Button>();
-                        Hud_Base.Btn_LeaveGame = Functions.GetChild(Btns, "ExitToCharacterSelectButton").GetComponent<Button>();
-                        Hud_Base.Btn_ExitDesktop = Functions.GetChild(Btns, "ExitGameButton").GetComponent<Button>();
+                        GameObject resume = Functions.GetChild(Btns, "ResumeButton (1)", false);
+                        if (!resume.IsNullOrDestroyed()) { Hud_Base.Btn_Resume = resume.GetComponent<Button>(); }
                     }
-                }
-            }            
-            public static void Set_Events()
-            {
-                if ((!Default_PauseMenu_Btns.IsNullOrDestroyed()) && (!hud_object.IsNullOrDestroyed()))
-                {
-                    Events.Set_Base_Button_Event(hud_object, "Base", "Btn_Base_Resume", Resume_OnClick_Action);
-                    Events.Set_Base_Button_Event(hud_object, "Base", "Btn_Base_Settings", Settings_OnClick_Action);
-                    Events.Set_Base_Button_Event(hud_object, "Base", "Btn_Base_GameGuide", GameGuide_OnClick_Action);
-                    Events.Set_Base_Button_Event(hud_object, "Base", "Btn_Base_LeaveGame", LeaveGame_OnClick_Action);
-                    Events.Set_Base_Button_Event(hud_object, "Base", "Btn_Base_ExitDesktop", ExitDesktop_OnClick_Action);
-                    initiliazed_events = true;
                 }
             }
 
-            private static readonly System.Action Resume_OnClick_Action = new System.Action(Resume_Click);
             public static void Resume_Click()
             {
                 if (!Btn_Resume.IsNullOrDestroyed()) { Btn_Resume.onClick.Invoke(); }
-            }
-
-            private static readonly System.Action Settings_OnClick_Action = new System.Action(Settings_Click);
-            public static void Settings_Click()
-            {
-                if (!Btn_Settings.IsNullOrDestroyed()) { Btn_Settings.onClick.Invoke(); }
-            }
-
-            private static readonly System.Action GameGuide_OnClick_Action = new System.Action(GameGuide_Click);
-            public static void GameGuide_Click()
-            {
-                if (!Btn_GameGuide.IsNullOrDestroyed()) { Btn_GameGuide.onClick.Invoke(); }
-            }
-
-            private static readonly System.Action LeaveGame_OnClick_Action = new System.Action(LeaveGame_Click);
-            public static void LeaveGame_Click()
-            {
-                if (Btn_LeaveGame is  not null)
-                {
-                    Content.Close_AllContent();
-                    Btn_LeaveGame.onClick.Invoke();
-                }
-            }
-
-            private static readonly System.Action ExitDesktop_OnClick_Action = new System.Action(ExitDesktop_Click);
-            public static void ExitDesktop_Click()
-            {
-                if (!Btn_ExitDesktop.IsNullOrDestroyed())
-                {
-                    Content.Close_AllContent();
-                    Btn_ExitDesktop.onClick.Invoke();
-                }
             }
         }
         public class Hud_Menu

@@ -21,12 +21,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Localization
         public static void RegisterAll()
         {
             Craft.Craft_Locales.RegisterLocales();
-            NewItems.Items_Mjolner.Locales.RegisterLocales();
-            NewItems.Items_Heralds.Languagues.RegisterLocales();
-            NewItems.Items_HeadHunter.HHLocales.RegisterLocales();
-            NewItems.Items_EssentiaSanguis.ESLocales.RegisterLocales();
-            NewItems.Items_SandsOfSilk.SOSLocales.RegisterLocales();
-            NewItems.Items_ArakaalisFang.AFLocales.RegisterLocales();
         }
 
         [HarmonyPatch(typeof(Il2Cpp.Localization), "TryGetText")]
