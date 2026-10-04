@@ -4350,6 +4350,10 @@ namespace LastEpoch_Hud.Scripts
                             if (!scene_dungeons_content.IsNullOrDestroyed())
                             {
                                 Dungeons.enter_without_key_toggle = Functions.Get_ToggleInPanel(scene_dungeons_content, "EnterWithoutKey", "Toggle_Scenes_Dungeons_EnterWithoutKey");
+                                HideSceneTeleport(scene_dungeons_content, "Teleport_Dropdown");
+                                HideSceneTeleport(scene_dungeons_content, "Border (1)");
+                                HideSceneTeleport(scene_dungeons_content, "Teleport_Btn");
+                                HideSceneTeleport(scene_dungeons_content, "Border (2)");
                             }
                             GameObject scene_minimap_content = Functions.GetViewportContent(content_obj, "Center", "Scenes_Minimap_Content");
                             if (!scene_minimap_content.IsNullOrDestroyed())
@@ -4554,6 +4558,11 @@ namespace LastEpoch_Hud.Scripts
                 public class Dungeons
                 {
                     public static Toggle enter_without_key_toggle = null;
+                }
+                static void HideSceneTeleport(GameObject content, string child_name)
+                {
+                    GameObject child = Functions.GetChild(content, child_name);
+                    if (!child.IsNullOrDestroyed()) { child.SetActive(false); }
                 }
                 public class Monoliths
                 {

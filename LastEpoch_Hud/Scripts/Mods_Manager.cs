@@ -32,6 +32,7 @@ namespace LastEpoch_Hud.Scripts
         GameObject bank_quad_obj = null;
         GameObject Cosmetics_offline_obj = null;
         GameObject damage_meter_obj = null;
+        GameObject teleport_to_scene_obj = null;
 
         bool initialized = false;
         bool enable = false;
@@ -138,6 +139,10 @@ namespace LastEpoch_Hud.Scripts
             damage_meter_obj = Object.Instantiate(new GameObject { name = "mod_damage_meter" }, Vector3.zero, Quaternion.identity);
             damage_meter_obj.AddComponent<Mods.UI.DamageMeter>();
             Mods_Objects.Add(damage_meter_obj);
+
+            teleport_to_scene_obj = Object.Instantiate(new GameObject { name = "Mod_Teleport_To_Scene" }, Vector3.zero, Quaternion.identity);
+            teleport_to_scene_obj.AddComponent<Mods.Teleport.Teleport_ToScene>();
+            Mods_Objects.Add(teleport_to_scene_obj);
 
             foreach (GameObject mod in Mods_Objects) { Object.DontDestroyOnLoad(mod); }
             Mods_Objects.Clear();
