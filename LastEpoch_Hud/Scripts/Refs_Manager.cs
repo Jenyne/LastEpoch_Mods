@@ -67,7 +67,10 @@ public class Refs_Manager : MonoBehaviour
         {
             Tick();
         }
-        catch (System.Exception) { }
+        catch (System.Exception ex)
+        {
+            ErrorLog.Report(ex, "Refs_Manager.Tick");
+        }
     }
 
     static T TryGet<T>(System.Func<T> getter)
@@ -79,6 +82,7 @@ public class Refs_Manager : MonoBehaviour
         }
         catch (System.Exception)
         {
+            // Game singleton getters throw until their data is loaded; LoadSlowRefs retries every 15 s.
             return null;
         }
     }
