@@ -141,15 +141,36 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             real_additional.Clear();
         }
 
+        static void OnAdditionalPointsUpdating()
+        {
+            if (writing || !Ready() || !LevelOn()) { return; }
+            try
+            {
+                // The game's stat refresh validates/respecs skill trees using the stored
+                // SkillTreeData.level value. Feeding the synthetic override (for example
+                // 255) into that validation can put respecNodesFromSkillIfOverInvested()
+                // into an invalid tree state. Temporarily restore the real XP-derived
+                // levels for the native calculation; the postfix reapplies the override.
+                writing = true;
+                foreach (LocalTreeData.SkillTreeData data in Refs_Manager.player_treedata.specialisedSkillTrees)
+                {
+                    if (data == null) { continue; }
+                    data.level = SpecialisedAbilityManager.getAbilityLevel(data.abilityXp);
+                }
+                writing = false;
+            }
+            catch { writing = false; }
+        }
+
         static void OnAdditionalPointsUpdated()
         {
             if (writing || !Ready()) { return; }
             real_additional.Clear();
-            if (!MultiplierOn()) { return; }
             try
             {
                 writing = true;
-                ApplyPointBonus();
+                if (LevelOn()) { ApplyLevels(); }
+                if (MultiplierOn()) { ApplyPointBonus(); }
                 writing = false;
             }
             catch { writing = false; }
@@ -260,6 +281,12 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         [HarmonyPatch(typeof(LocalTreeData), nameof(LocalTreeData.setAdditionalMaxPointsFromStatsOnServerOrInSingleplayer))]
         public class LocalTreeData_setAdditionalMaxPointsFromStats
         {
+            [HarmonyPrefix]
+            static void Prefix()
+            {
+                OnAdditionalPointsUpdating();
+            }
+
             [HarmonyPostfix]
             static void Postfix()
             {
