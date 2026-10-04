@@ -196,15 +196,33 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             {
                 writing = true;
 
-                if (MultiplierOn() && pending_real_additional.Count > 0)
+                if (MultiplierOn())
                 {
+                    // The native refresh has now finished and each tree contains the
+                    // NEW real +skills contribution. Rebuild the cache every time,
+                    // including increases where LE never calls the over-investment
+                    // respec routine.
                     real_additional.Clear();
-                    foreach (KeyValuePair<string, byte> pair in pending_real_additional)
+                    foreach (LocalTreeData.SkillTreeData data in Refs_Manager.player_treedata.specialisedSkillTrees)
                     {
-                        real_additional[pair.Key] = pair.Value;
+                        string key = Key(data);
+                        if (key == null) { continue; }
+
+                        if (pending_real_additional.ContainsKey(key))
+                        {
+                            // A decreasing cap went through our respec wrapper; its
+                            // postfix restored the raw real value recorded there.
+                            real_additional[key] = pending_real_additional[key];
+                        }
+                        else
+                        {
+                            // Increasing/unchanged caps do not necessarily invoke the
+                            // respec routine, so take the freshly calculated native value.
+                            real_additional[key] = data.additionalMaxPointsFromStats;
+                        }
                     }
                 }
-                else if (!MultiplierOn())
+                else
                 {
                     real_additional.Clear();
                 }
