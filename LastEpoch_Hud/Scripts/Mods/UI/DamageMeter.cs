@@ -100,9 +100,10 @@ namespace LastEpoch_Hud.Scripts.Mods.UI
                 {
                     if (!Abilities.Contains(ab)) { Abilities.Add(ab); }
                 }
-                if (Items.Items_Mjolner.Trigger.Abilities != null)
+                Ability[] mjolnerAbilities = Items.Items_Mjolner.GetTriggerAbilities();
+                if (mjolnerAbilities != null)
                 {
-                    foreach (Ability ab in Items.Items_Mjolner.Trigger.Abilities)
+                    foreach (Ability ab in mjolnerAbilities)
                     {
                         if (!ab.IsNullOrDestroyed() && !Abilities.Contains(ab)) { Abilities.Add(ab); }
                     }
