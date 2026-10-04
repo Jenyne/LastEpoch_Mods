@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using UnityEngine;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.Items;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items
 {
@@ -20,21 +21,17 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             else { return false; }
         }
 
-        [HarmonyPatch(typeof(ItemData), "rollLegendaryPotential")]
+        [HarmonyPatch(typeof(ItemData), "RollLegendaryPotential")]
         public class rollLegendaryPotential
         {
             [HarmonyPrefix]
-            static bool Prefix(ref ItemData __instance, ref int __result, UniqueList.Entry __0, int __1, int __2)
+            static bool Prefix(ref int __result)
             {
-                if (CanRun())
-                {
-                    int roll = 0;
-                    if (Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Min == Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Max) { roll = (int)Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Max; }
-                    else { roll = (int)Random.RandomRange(Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Min, Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Max); }
-                    __result = roll;
-                    return false;
-                }
-                else { return true; };
+                if (!CanRun()) { return true; }
+
+                var drop = Save_Manager.instance.data.Items.Drop;
+                __result = LegendaryPotentialRoll.Pick(drop.LegendaryPotencial_Min, drop.LegendaryPotencial_Max, Random.value);
+                return false;
             }
         }
     }
