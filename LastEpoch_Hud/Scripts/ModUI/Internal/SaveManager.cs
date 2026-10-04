@@ -21,6 +21,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
         private const string filename = "SaveModUI.json";
         private const float SaveInterval = 1f;
         private float saveTimer;
+        private bool profilingAttachAttempted;
 
         void Awake()
         {
@@ -47,6 +48,20 @@ namespace LastEpoch_Hud.Scripts.ModUI
             LocaleRegistry.TickIfLocaleChanged();
             if (KeybindCapture.Active)
                 KeybindCapture.Tick();
+
+            if (initialized && !profilingAttachAttempted)
+            {
+                profilingAttachAttempted = true;
+                try
+                {
+                    Mods.Diagnostics.DiagnosticsDumper.AttachIfEnabled();
+                }
+                catch (System.Exception ex)
+                {
+                    Main.logger_instance?.Warning("[Profiling] attach failed: " + ex.Message);
+                }
+            }
+
             if (!initialized)
                 return;
             if (!ModSettings.Dirty)
@@ -105,6 +120,13 @@ namespace LastEpoch_Hud.Scripts.ModUI
             Main.logger_instance?.Msg(
                 "ModUI SaveManager: Initialized with " + ModSettings.AllGroups.Count + " group(s)"
             );
+
+            // Schema rewrites/fresh saves should never silently enable XP capping.
+            // Preserve the user's choice on normal loads, but reset this option when
+            // the settings file is being regenerated or upgraded.
+            if (needsRewrite)
+                ModSettings.Difficulty.CapLevelToZone.Value = false;
+
             initialized = true;
 
             if (needsRewrite)
