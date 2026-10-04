@@ -69,7 +69,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             try
             {
                 writing = true;
-                if (LevelOn()) { ApplyLevels(); }
+                if (LevelOn() || MultiplierOn()) { ApplyLevels(); }
                 else { RestoreLevels(); }
                 if (MultiplierOn()) { ApplyPointBonus(); }
                 else { RestorePoints(); }
@@ -80,11 +80,10 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
 
         static void ApplyLevels()
         {
-            byte level = ChosenLevel();
             foreach (LocalTreeData.SkillTreeData data in Refs_Manager.player_treedata.specialisedSkillTrees)
             {
                 if (data == null) { continue; }
-                data.level = level;
+                data.level = EffectiveLevel(data);
             }
         }
 
@@ -97,13 +96,21 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             }
         }
 
-        static int PointLevel(LocalTreeData.SkillTreeData data)
+        static int RawLevel(LocalTreeData.SkillTreeData data)
         {
-            if (LevelOn()) { return ChosenLevel(); }
             int level = SpecialisedAbilityManager.getAbilityLevel(data.abilityXp);
             if (level < 0) { level = 0; }
             if (level > byte.MaxValue) { level = byte.MaxValue; }
             return level;
+        }
+
+        static byte EffectiveLevel(LocalTreeData.SkillTreeData data)
+        {
+            long level = LevelOn() ? ChosenLevel() : RawLevel(data);
+            if (MultiplierOn()) { level *= Multiplier(); }
+            if (level < 0) { level = 0; }
+            if (level > byte.MaxValue) { level = byte.MaxValue; }
+            return (byte)level;
         }
 
         static string Key(LocalTreeData.SkillTreeData data)
@@ -112,9 +119,10 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             return data.slot + ":" + data.ability.abilityName;
         }
 
-        static byte BonusAdditional(int level, int real)
+        static byte EffectiveAdditional(int real)
         {
-            long additional = (((long)level + real) * Multiplier()) - level;
+            long additional = real;
+            if (MultiplierOn()) { additional *= Multiplier(); }
             if (additional < 0) { additional = 0; }
             if (additional > byte.MaxValue) { additional = byte.MaxValue; }
             return (byte)additional;
@@ -127,7 +135,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 string key = Key(data);
                 if (key == null) { continue; }
                 if (!real_additional.ContainsKey(key)) { real_additional[key] = data.additionalMaxPointsFromStats; }
-                data.additionalMaxPointsFromStats = BonusAdditional(PointLevel(data), real_additional[key]);
+                data.additionalMaxPointsFromStats = EffectiveAdditional(real_additional[key]);
             }
         }
 
@@ -158,9 +166,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                     string key = Key(data);
                     if (key == null) { continue; }
 
-                    if (LevelOn())
+                    if (LevelOn() || MultiplierOn())
                     {
-                        data.level = SpecialisedAbilityManager.getAbilityLevel(data.abilityXp);
+                        data.level = (byte)RawLevel(data);
                     }
 
                     if (MultiplierOn() && real_additional.ContainsKey(key))
@@ -207,7 +215,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                     real_additional.Clear();
                 }
 
-                if (LevelOn()) { ApplyLevels(); }
+                if (LevelOn() || MultiplierOn()) { ApplyLevels(); }
                 if (MultiplierOn()) { ApplyPointBonus(); }
                 writing = false;
             }
@@ -258,17 +266,24 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 {
                     if (data == null || data.ability.IsNullOrDestroyed()) { continue; }
                     if (data.ability.abilityName != __0.abilityName) { continue; }
-                    if (LevelOn())
+                    if (LevelOn() || MultiplierOn())
                     {
-                        byte level = ChosenLevel();
+                        byte level = EffectiveLevel(data);
                         writing = true;
                         data.level = level;
                         writing = false;
                         __result = level;
+
+                        if (MultiplierOn() && !nativeAdditionalRefresh)
+                        {
+                            writing = true;
+                            ApplyPointBonus();
+                            writing = false;
+                        }
                     }
                     else
                     {
-                        byte real = SpecialisedAbilityManager.getAbilityLevel(data.abilityXp);
+                        byte real = (byte)RawLevel(data);
                         if (data.level != real)
                         {
                             writing = true;
@@ -276,12 +291,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                             writing = false;
                         }
                         __result = real;
-                        if (MultiplierOn() && !nativeAdditionalRefresh)
-                        {
-                            writing = true;
-                            ApplyPointBonus();
-                            writing = false;
-                        }
                     }
                     return;
                 }
@@ -346,11 +355,13 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 byte rawAdditional = __0.additionalMaxPointsFromStats;
                 real_additional[key] = rawAdditional;
 
-                int rawLevel = SpecialisedAbilityManager.getAbilityLevel(__0.abilityXp);
-                int effectiveLevel = LevelOn() ? ChosenLevel() : rawLevel;
-                __0.level = (byte)System.Math.Min(byte.MaxValue, effectiveLevel);
-
-                __0.additionalMaxPointsFromStats = BonusAdditional(effectiveLevel, rawAdditional);
+                // Preserve LE's own semantic buckets:
+                //   base/XP level is multiplied as base level
+                //   item-granted +skills are multiplied as additional points
+                // This is materially different from stuffing the whole multiplier
+                // into additionalMaxPointsFromStats.
+                __0.level = EffectiveLevel(__0);
+                __0.additionalMaxPointsFromStats = EffectiveAdditional(rawAdditional);
             }
         }
 
