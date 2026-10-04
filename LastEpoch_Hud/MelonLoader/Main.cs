@@ -68,6 +68,36 @@ namespace LastEpoch_Hud
         //public static List<string>? debug_json;
         public static char[] igrone_str = { '+', '%', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9' };
 
+        // Legacy HUD prefab text contains several spelling mistakes. Keep those
+        // internal object/text identifiers compatible, but normalize them to clean
+        // canonical locale keys for display and translation.
+        private static readonly Dictionary<string, string> key_aliases = new()
+        {
+            { "Choose Masterie", "Choose Mastery" },
+            { "Strenght", "Strength" },
+            { "Forgin Potencial", "Forging Potential" },
+            { "Legendary Potencial", "Legendary Potential" },
+            { "Wolfs", "Wolves" },
+            { "Summon Quantity from Skil lTree", "Summon Quantity from Skill Tree" },
+            { "Self Resurect Chance", "Self Resurrect Chance" },
+            { "Forgin", "Forging" },
+            { "Affixs", "Affixes" }
+        };
+
+        public static string CanonicalKey(string key)
+        {
+            if (string.IsNullOrEmpty(key)) { return key; }
+            return key_aliases.TryGetValue(key, out string canonical) ? canonical : key;
+        }
+
+        public static bool TryGetTranslation(string key, out string translated)
+        {
+            translated = null;
+            if (current_dictionary == null) { return false; }
+            string canonical = CanonicalKey(key);
+            return current_dictionary.TryGetValue(canonical, out translated) && !string.IsNullOrEmpty(translated);
+        }
+
         [HarmonyPatch(typeof(Localization), "get_Locale")]
         public class Localization_get_Locale
         {
