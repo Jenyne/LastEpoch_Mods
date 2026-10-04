@@ -318,6 +318,8 @@ namespace LastEpoch_Hud.Scripts
                     {
                         Enable_TreePoints = false,
                         TreePoints = 0,
+                        Enable_PointMultiplier = false,
+                        PointMultiplier = 2,
                         Enable_FreeRespe = false
                     }
                 },
@@ -401,8 +403,12 @@ namespace LastEpoch_Hud.Scripts
                         Enable_SpecializationSlots = false,
                         Enable_SkillLevel = false,
                         SkillLevel = 0,
+                        Enable_SkillLevelMultiplier = false,
+                        SkillLevelMultiplier = 2,
                         Enable_PassivePoints = false,
                         PassivePoints = 0,
+                        Enable_PassivePointMultiplier = false,
+                        PassivePointMultiplier = 2,
                         SpecializationSlots = 0,
                         MovementSkills =
                         {
@@ -875,6 +881,8 @@ namespace LastEpoch_Hud.Scripts
             {
                 public bool Enable_TreePoints;
                 public int TreePoints;
+                public bool Enable_PointMultiplier;
+                public int PointMultiplier;
                 public bool Enable_FreeRespe;
             }
 
@@ -984,9 +992,13 @@ namespace LastEpoch_Hud.Scripts
 
                 public bool Enable_SkillLevel;
                 public float SkillLevel;
+                public bool Enable_SkillLevelMultiplier;
+                public float SkillLevelMultiplier;
 
                 public bool Enable_PassivePoints;
                 public float PassivePoints;
+                public bool Enable_PassivePointMultiplier;
+                public float PassivePointMultiplier;
 
                 public MovementSkills MovementSkills;
                 public SkillTree SkillTree;
