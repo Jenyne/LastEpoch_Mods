@@ -463,7 +463,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 }
             }            
 
-            private static Ability[] Abilities = null;
+            internal static Ability[] Abilities = null;
             private static System.DateTime[] Times = null;
             private static bool Initializing = false;
             private static bool trigger = false;
