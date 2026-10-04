@@ -25,7 +25,7 @@ namespace LastEpoch_Hud.Scripts
         GameObject items_mjolner_obj = null;
         GameObject items_sandsofsilk_obj = null;
         GameObject items_essentiasanguis_obj = null;
-        //GameObject items_temporalis_obj = null;
+        GameObject items_temporalis_obj = null;
         //GameObject items_crafting_obj = null;
         GameObject minimap_icons_obj = null;
         GameObject monoliths_complete_objectives_obj = null;
@@ -88,7 +88,7 @@ namespace LastEpoch_Hud.Scripts
             Mods_Objects.Add(items_nbsocket_obj);
 
             items_autosell_timer_obj = Object.Instantiate(new GameObject { name = "Mod_Items_AutoStore_All10Sec" }, Vector3.zero, Quaternion.identity);
-            items_autosell_timer_obj.active = false;
+            items_autosell_timer_obj.active = true;
             items_autosell_timer_obj.AddComponent<Mods.Items.Items_AutoStore_WithTimer>();
             Mods_Objects.Add(items_autosell_timer_obj);
 
@@ -108,9 +108,9 @@ namespace LastEpoch_Hud.Scripts
             items_essentiasanguis_obj.AddComponent<Mods.Items.Items_EssentiaSanguis>();
             Mods_Objects.Add(items_essentiasanguis_obj);
 
-            //items_temporalis_obj = Object.Instantiate(new GameObject { name = "Mod_Items_Temporalis" }, Vector3.zero, Quaternion.identity);
-            //items_temporalis_obj.AddComponent<Mods.Items.Items_Temporalis>();
-            //Mods_Objects.Add(items_temporalis_obj);
+            items_temporalis_obj = Object.Instantiate(new GameObject { name = "Mod_Items_Temporalis" }, Vector3.zero, Quaternion.identity);
+            items_temporalis_obj.AddComponent<Mods.Items.Items_Temporalis>();
+            Mods_Objects.Add(items_temporalis_obj);
 
             //items_crafting_obj = Object.Instantiate(new GameObject { name = "Mod_Items_Crafting" }, Vector3.zero, Quaternion.identity);
             //items_crafting_obj.AddComponent<Mods.Items.Items_Crafting>();
@@ -172,7 +172,7 @@ namespace LastEpoch_Hud.Scripts
                 character_godmode_obj.SetActive(Save_Manager.instance.data.Character.Cheats.Enable_GodMode);
                 character_lowlife_obj.SetActive(Save_Manager.instance.data.Character.Cheats.Enable_LowLife);
                 character_autopotion_obj.SetActive(Save_Manager.instance.data.Character.Cheats.Enable_AutoPot);
-                items_autosell_timer_obj.SetActive(Save_Manager.instance.data.Items.Pickup.Enable_AutoStore_Timer);
+                items_autosell_timer_obj.SetActive(true); // worker also services debounced AutoStore-on-drop
                 Mods.Items.Items_Update.Reqs(); //Used to update item req
             }
         }
