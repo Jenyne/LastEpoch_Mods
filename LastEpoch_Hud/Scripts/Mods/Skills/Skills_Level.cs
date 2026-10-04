@@ -345,9 +345,16 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         public class LocalTreeData_respecNodesFromSkillIfOverInvested
         {
             [HarmonyPrefix]
-            static void Prefix(LocalTreeData.SkillTreeData __0)
+            static void Prefix(LocalTreeData.SkillTreeData __0, ref byte __1)
             {
                 if (!Ready() || !MultiplierOn() || __0 == null) { return; }
+
+                // The caller can enter this routine with the vanilla lost-point delta
+                // already accumulated in overAllocatedAmount (__1). Once we replace
+                // the cap with the multiplied cap, keeping that carry-in double-counts
+                // the gear loss (for example +2 at x2 becoming 2 + 4 = 6 removed).
+                // Recalculate the overage from zero against the multiplied cap.
+                __1 = 0;
 
                 // At this point the native stat refresh has already written the NEW
                 // real +skills value into additionalMaxPointsFromStats. Preserve it,
@@ -391,6 +398,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             static void Postfix()
             {
                 OnAdditionalPointsUpdated();
+                RefreshOpenTree();
             }
         }
 
@@ -401,6 +409,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             static void Postfix()
             {
                 OnAdditionalPointsUpdated();
+                RefreshOpenTree();
             }
         }
     }
