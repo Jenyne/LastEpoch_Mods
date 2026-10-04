@@ -6895,7 +6895,10 @@ public static void SetShardsView(int affix_number, bool seal)
                                 item.SetAsCorrupted();
                             }
                             item.RefreshIDAndValues(); //Refresh item for implicits, unique mods, and the saved id
-                            if ((item_type < 100) && (ra < 7)) { item.forgingPotential = fg; }
+                            if ((item_type < 100) && (ra < 7))
+                            {
+                                Mods.Items.Items_Drop_ForginPotencial.Stamp(item, fg);
+                            }
                             
                             Refs_Manager.ground_item_manager.dropItemForPlayer(Refs_Manager.player_actor, item.TryCast<ItemData>(), Refs_Manager.player_actor.position(), false);
                         }
