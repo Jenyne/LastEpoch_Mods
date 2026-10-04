@@ -1,0 +1,31 @@
+name: Build Skill Level Hotfix
+
+on:
+  pull_request:
+    branches:
+      - compat15-experimental
+    paths:
+      - "Hotfixes/SkillLevelOverride/**"
+      - ".github/workflows/skill-hotfix-build.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "6.0.x"
+
+      - name: Restore
+        run: dotnet restore Hotfixes/SkillLevelOverride/SkillLevelOverride.csproj
+
+      - name: Build
+        run: dotnet build Hotfixes/SkillLevelOverride/SkillLevelOverride.csproj -c Release --no-restore
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: LastEpoch-SkillLevelHotfix
+          path: Hotfixes/SkillLevelOverride/bin/Release/net6.0/LastEpoch_SkillLevelHotfix.dll
