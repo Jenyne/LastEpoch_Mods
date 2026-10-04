@@ -50,6 +50,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         static bool writing;
         static bool nativeAdditionalRefresh;
         static readonly Dictionary<string, byte> real_additional = new Dictionary<string, byte>();
+        static readonly Dictionary<string, byte> pending_real_additional = new Dictionary<string, byte>();
 
         public static void Sync()
         {
@@ -148,6 +149,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             try
             {
                 nativeAdditionalRefresh = true;
+                pending_real_additional.Clear();
                 writing = true;
 
                 foreach (LocalTreeData.SkillTreeData data in Refs_Manager.player_treedata.specialisedSkillTrees)
@@ -186,18 +188,37 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             if (writing || !Ready())
             {
                 nativeAdditionalRefresh = false;
+                pending_real_additional.Clear();
                 return;
             }
-            real_additional.Clear();
+
             try
             {
                 writing = true;
+
+                if (MultiplierOn() && pending_real_additional.Count > 0)
+                {
+                    real_additional.Clear();
+                    foreach (KeyValuePair<string, byte> pair in pending_real_additional)
+                    {
+                        real_additional[pair.Key] = pair.Value;
+                    }
+                }
+                else if (!MultiplierOn())
+                {
+                    real_additional.Clear();
+                }
+
                 if (LevelOn()) { ApplyLevels(); }
                 if (MultiplierOn()) { ApplyPointBonus(); }
                 writing = false;
             }
             catch { writing = false; }
-            finally { nativeAdditionalRefresh = false; }
+            finally
+            {
+                nativeAdditionalRefresh = false;
+                pending_real_additional.Clear();
+            }
         }
 
         static void RefreshOpenTree()
@@ -306,18 +327,21 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         public class LocalTreeData_respecNodesFromSkillIfOverInvested
         {
             [HarmonyPrefix]
-            static bool Prefix(ref byte __1, ref byte __2)
+            static void Prefix(LocalTreeData.SkillTreeData __0)
             {
-                // When the multiplier is active, equipment/stat changes briefly reduce
-                // additionalMaxPointsFromStats to the game's real value. The native
-                // method interprets the mod-granted points as over-investment and
-                // removes nodes before our postfix can reapply the multiplier.
-                // Suppress only that automatic respec while the multiplier is active.
-                if (!Ready() || !MultiplierOn()) { return true; }
+                if (!Ready() || !MultiplierOn() || __0 == null) { return; }
 
-                __1 = 0;
-                __2 = 0;
-                return false;
+                // At this point the native stat refresh has already written the NEW
+                // real +skills value into additionalMaxPointsFromStats. Preserve it,
+                // then present the multiplied cap to LE's normal over-investment
+                // respec routine. Example: losing +2 skills at x2 lowers the effective
+                // cap by 4, so the native respec removes exactly four allocated points.
+                string key = Key(__0);
+                if (key == null) { return; }
+
+                byte real = __0.additionalMaxPointsFromStats;
+                pending_real_additional[key] = real;
+                __0.additionalMaxPointsFromStats = BonusAdditional(PointLevel(__0), real);
             }
         }
 
