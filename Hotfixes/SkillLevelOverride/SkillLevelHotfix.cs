@@ -17,7 +17,7 @@ namespace LastEpochSkillLevelHotfix
         private static int _level = 20;
         private static string _configPath;
         private static DateTime _lastWriteUtc;
-        private static float _nextConfigCheck;
+        private static long _nextConfigCheckMs;
         private HarmonyLib.Harmony _harmony;
 
         public override void OnInitializeMelon()
@@ -34,8 +34,9 @@ namespace LastEpochSkillLevelHotfix
 
         public override void OnUpdate()
         {
-            if (UnityEngine.Time.unscaledTime < _nextConfigCheck) return;
-            _nextConfigCheck = UnityEngine.Time.unscaledTime + 0.5f;
+            long now = Environment.TickCount64;
+            if (now < _nextConfigCheckMs) return;
+            _nextConfigCheckMs = now + 500;
             LoadConfig(force: false);
         }
 
