@@ -7050,7 +7050,9 @@ public static void SetShardsView(int affix_number, bool seal)
 
                 public static void Get_Refs()
                 {
-                    content_obj = Functions.GetChild(Content.content_obj, "Headhunter_Content");
+                    // Optional page: current HUD bundles may not contain Headhunter_Content.
+                    // Use the non-logging descendant probe so its absence is not treated as an error.
+                    content_obj = Functions.FindDescendant(Content.content_obj, "Headhunter_Content");
                 }
                 public static void Set_Active(bool show)
                 {
