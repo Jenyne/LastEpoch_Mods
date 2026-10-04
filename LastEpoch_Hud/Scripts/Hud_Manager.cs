@@ -378,10 +378,9 @@ namespace LastEpoch_Hud.Scripts
                             if (!Locales.debug_json.Contains(s)) { Locales.debug_json.Add(s); }
                         }*/
 
-                        if (Locales.current_dictionary != null)
+                        if (Locales.TryGetTranslation(label.text, out string translated))
                         {
-                            if (Locales.current_dictionary.ContainsKey(label.text)) { label.text = Locales.current_dictionary[label.text]; }
-                            //else { Main.logger_instance.Error(label.text + ", not found in dictionnary"); }
+                            label.text = translated;
                         }
                     }
                 }
@@ -2883,7 +2882,7 @@ namespace LastEpoch_Hud.Scripts
                         GameObject label = Functions.FindDescendant(buttonClone, "Label");
                         if (!label.IsNullOrDestroyed()) { buttonText = label.GetComponent<Text>(); }
                         if (buttonText.IsNullOrDestroyed()) { buttonText = buttonClone.GetComponentInChildren<Text>(true); }
-                        if (!buttonText.IsNullOrDestroyed()) { buttonText.text = "Add"; }
+                        if (!buttonText.IsNullOrDestroyed()) { ModUI.Prefab.ApplyLabel(buttonText, "Add"); }
 
                         UpdateSoulEmberBalance();
                     }
