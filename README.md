@@ -36,6 +36,19 @@ In a zone, press **F3** to open and close the mod menu. Escape closes it.
 
 In case this does not work, please contact me on Discord: sync0333 (attach a log file from MelonLoader/latest.log)
 
+## Linux
+
+1. Check if your LastEpoch_Hud folder looks like this:
+<img width="927" height="208" alt="image" src="https://github.com/user-attachments/assets/dd848129-0927-47c9-b330-5fd5af2b7992" />
+
+2. If that is the case, it got unzipped badly, simply create 2 new folders (Locales | Assets)
+3. Rename the files (e.g LastEpoch_Hud\Locales\base.json -> base.json)
+4. Move the new files into the respective folders:
+* Locales - base.json | en.json | fr.json | zh.json
+* Assets - lastepochmods
+5. Head into the game and see if it works (F3)
+
+
 ## Build
 
 The project references assemblies from your Last Epoch install. If the game is not in the default Steam folder:
