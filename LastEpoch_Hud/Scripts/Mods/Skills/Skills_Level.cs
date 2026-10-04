@@ -51,48 +51,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         static bool nativeAdditionalRefresh;
         static bool effectiveRespec;
         static readonly Dictionary<string, byte> real_additional = new Dictionary<string, byte>();
-        static readonly Dictionary<string, byte> respec_raw_additional = new Dictionary<string, byte>();
         static SkillsPanelManager activeSkillsPanel;
         static SkillTree activeSkillTree;
         static Transform activeSkillTreeTransform;
         static bool refreshingTreeUi;
         static readonly Dictionary<string, int> before_effective_cap = new Dictionary<string, int>();
-        static int AllocatedPoints(LocalTreeData.SkillTreeData data)
-        {
-            int total = 0;
-            bool found = false;
-            try
-            {
-                // Diagnostic only: when a specialization is open, its visible
-                // SkillTreeNode components expose the native allocated ranks.
-                foreach (SkillTreeNode node in Object.FindObjectsOfType<SkillTreeNode>())
-                {
-                    if (node.IsNullOrDestroyed()) { continue; }
-                    total += node.pointsAllocated;
-                    found = true;
-                }
-            }
-            catch { return -1; }
-            return found ? total : -1;
-        }
-
-        static void LogRespecState(string stage, LocalTreeData.SkillTreeData data, byte overAllocatedAmount, byte highestId)
-        {
-            if (data == null) { return; }
-            string key = Key(data) ?? "?";
-            int raw = real_additional.TryGetValue(key, out byte rawBonus) ? rawBonus : -1;
-            Main.logger_instance?.Msg(
-                "SkillRespec " + stage +
-                " key=" + key +
-                " level=" + data.level +
-                " additional=" + data.additionalMaxPointsFromStats +
-                " rawCached=" + raw +
-                " allocated=" + AllocatedPoints(data) +
-                " over=" + overAllocatedAmount +
-                " highest=" + highestId
-            );
-        }
-
         public static void Sync()
         {
             Reapply();
@@ -199,7 +162,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             {
                 nativeAdditionalRefresh = true;
                 effectiveRespec = false;
-                respec_raw_additional.Clear();
                 before_effective_cap.Clear();
                 writing = true;
 
@@ -296,7 +258,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             {
                 nativeAdditionalRefresh = false;
                 effectiveRespec = false;
-                respec_raw_additional.Clear();
                 before_effective_cap.Clear();
 
                 if (capChanged) { RefreshOpenTree(); }
@@ -333,30 +294,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             {
                 refreshingTreeUi = false;
                 Main.logger_instance?.Warning("Skill tree UI refresh failed: " + ex.Message);
-            }
-        }
-
-        [HarmonyPatch(typeof(SkillsPanelManager), nameof(SkillsPanelManager.updateVisuals))]
-        public class SkillsPanelManager_updateVisuals
-        {
-            [HarmonyPrefix]
-            static bool Prefix()
-            {
-                // Gear-driven +skill recalculation temporarily exposes raw/effective
-                // states while LE determines over-investment and removes nodes.
-                // Do not let the open UI render those intermediate values; the final
-                // stable state is refreshed once OnAdditionalPointsUpdated finishes.
-                return !nativeAdditionalRefresh || refreshingTreeUi;
-            }
-        }
-
-        [HarmonyPatch(typeof(SkillTreeNode), "updateText")]
-        public class SkillTreeNode_updateText
-        {
-            [HarmonyPrefix]
-            static bool Prefix()
-            {
-                return !nativeAdditionalRefresh || refreshingTreeUi;
             }
         }
 
@@ -479,53 +416,59 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         [HarmonyPatch(typeof(LocalTreeData), "respecNodesFromSkillIfOverInvested")]
         public class LocalTreeData_respecNodesFromSkillIfOverInvested
         {
-            [HarmonyPrefix]
-            static void Prefix(LocalTreeData.SkillTreeData __0, ref byte __1, ref byte __2)
+            public struct RespecState
             {
-                if (!Ready() || !MultiplierOn() || __0 == null) { return; }
+                public bool active;
+                public byte rawLevel;
+                public byte rawAdditional;
+                public string key;
+            }
 
-                LogRespecState("before", __0, __1, __2);
+            [HarmonyPrefix]
+            static void Prefix(LocalTreeData.SkillTreeData __0, out RespecState __state)
+            {
+                __state = default;
+                if (!Ready() || !MultiplierOn() || __0 == null) { return; }
 
                 string key = Key(__0);
                 if (key == null) { return; }
 
-                // The outer native refresh has already calculated the NEW raw gear
-                // bonus. Save it, then expose the multiplied representation only for
-                // this native over-cap check/removal.
-                byte rawAdditional = __0.additionalMaxPointsFromStats;
-                respec_raw_additional[key] = rawAdditional;
-                real_additional[key] = rawAdditional;
+                // Capture the exact raw state for this invocation. Native overflow
+                // removal can trigger nested stat recalculations, so this must not
+                // live in a shared dictionary that another refresh can clear.
+                __state.active = true;
+                __state.key = key;
+                __state.rawLevel = (byte)RawLevel(__0);
+                __state.rawAdditional = __0.additionalMaxPointsFromStats;
+
+                real_additional[key] = __state.rawAdditional;
 
                 effectiveRespec = true;
                 __0.level = EffectiveLevel(__0);
-                __0.additionalMaxPointsFromStats = EffectiveAdditional(rawAdditional);
-
-                LogRespecState("effective", __0, __1, __2);
+                __0.additionalMaxPointsFromStats = EffectiveAdditional(__state.rawAdditional);
             }
 
             [HarmonyPostfix]
-            static void Postfix(LocalTreeData.SkillTreeData __0, ref byte __1, ref byte __2)
+            static void Postfix(LocalTreeData.SkillTreeData __0, RespecState __state)
             {
-                if (__0 == null)
+                if (!__state.active || __0 == null)
                 {
                     effectiveRespec = false;
                     return;
                 }
 
-                LogRespecState("native-after", __0, __1, __2);
+                // Always restore the raw representation that belonged to this exact
+                // native respec call. This prevents effective +skills from leaking
+                // back into real_additional and being multiplied again on the next
+                // periodic stat refresh (e.g. 32 briefly becoming 44).
+                __0.level = __state.rawLevel;
+                __0.additionalMaxPointsFromStats = __state.rawAdditional;
 
-                string key = Key(__0);
-                if (key != null && respec_raw_additional.ContainsKey(key))
+                if (__state.key != null)
                 {
-                    // Do not leak the multiplied representation back into the outer
-                    // native refresh. Otherwise it gets cached as raw and compounds
-                    // on the next equip/unequip.
-                    __0.additionalMaxPointsFromStats = respec_raw_additional[key];
-                    __0.level = (byte)RawLevel(__0);
-                    respec_raw_additional.Remove(key);
+                    real_additional[__state.key] = __state.rawAdditional;
                 }
 
-                LogRespecState("restored", __0, __1, __2);
                 effectiveRespec = false;
             }
         }
