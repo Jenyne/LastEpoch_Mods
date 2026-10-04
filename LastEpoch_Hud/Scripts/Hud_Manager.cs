@@ -977,15 +977,6 @@ namespace LastEpoch_Hud.Scripts
                                             //Content.Character.Data.lantern_text.text = ((int)__0).ToString();
                                             break;
                                         }
-                                    case "Slider_Character_Data_SoulEmbers":
-                                        {
-                                            if (!Refs_Manager.player_data.IsNullOrDestroyed())
-                                            {
-                                                Refs_Manager.player_data.SoulEmbers = (int)__0;
-                                            }
-                                            //Content.Character.Data.soul_text.text = ((int)__0).ToString();
-                                            break;
-                                        }
                                     //Buffs
                                     case "Slider_Character_Buffs_MoveSpeed":
                                         {
@@ -1713,6 +1704,7 @@ namespace LastEpoch_Hud.Scripts
                                 Data.lantern_text = Functions.Get_TextInButton(character_data_content, "LanternLuminance", "Value");
                                 Data.lantern_slider = Functions.Get_SliderInPanel(character_data_content, "LanternLuminance", "Slider_Character_Data_LanternLuminance");
 
+                                Data.soul_row = Functions.GetChild(character_data_content, "Soul Embers");
                                 Data.soul_text = Functions.Get_TextInButton(character_data_content, "Soul Embers", "Value");
                                 Data.soul_slider = Functions.Get_SliderInPanel(character_data_content, "Soul Embers", "Slider_Character_Data_SoulEmbers");
 
@@ -1791,6 +1783,7 @@ namespace LastEpoch_Hud.Scripts
                                 {
                                     Data.save_button = Functions.GetChild(panel_save, "Btn_Character_Data_Save").GetComponent<Button>();
                                 }
+                                Data.SetupSoulEmberControls();
                             }
 
                             //Faction Tracker
@@ -2023,6 +2016,10 @@ namespace LastEpoch_Hud.Scripts
                         Events.Set_Toggle_Event(Data.weaver_points_toggle, Data.weaver_points_toggle_Action);
                     }
                     
+                    if (!Data.soul_add_button.IsNullOrDestroyed())
+                    {
+                        Events.Set_Button_Event(Data.soul_add_button, Data.SoulEmbers_Add_Action);
+                    }
                     if (!Data.save_button.IsNullOrDestroyed())
                     {
                         Events.Set_Button_Event(Data.save_button, Data.Save_OnClick_Action);
@@ -2353,14 +2350,7 @@ namespace LastEpoch_Hud.Scripts
                         {
                             Data.lantern_text.text = Refs_Manager.player_data.LanternLuminance.ToString();
                         }
-                        if (!Data.soul_slider.IsNullOrDestroyed())
-                        {
-                            Data.soul_slider.value = Refs_Manager.player_data.SoulEmbers;
-                        }
-                        if (!Data.soul_text.IsNullOrDestroyed())
-                        {
-                            Data.soul_text.text = Refs_Manager.player_data.SoulEmbers.ToString();
-                        }
+                        Data.UpdateSoulEmberBalance();
                     }
                 }
                 public static void Update_Monoliths_Data()
@@ -2810,8 +2800,12 @@ namespace LastEpoch_Hud.Scripts
                     public static Slider deaths_slider = null;
                     public static Text lantern_text = null;
                     public static Slider lantern_slider = null;
+                    public static GameObject soul_row = null;
                     public static Text soul_text = null;
                     public static Slider soul_slider = null;
+                    public static Il2CppTMPro.TMP_InputField soul_amount_input = null;
+                    public static Button soul_add_button = null;
+                    public static readonly System.Action SoulEmbers_Add_Action = new System.Action(AddSoulEmbers);
                     public static Toggle weaver_points_toggle = null;
                     public static Text weaver_points_text = null;
                     public static Slider weaver_points_slider = null;
@@ -2820,6 +2814,106 @@ namespace LastEpoch_Hud.Scripts
                     public static Slider weaver_multiplier_slider = null;
                     public static bool suppressWeaverSlider = false;
                     public static readonly System.Action<bool> weaver_points_toggle_Action = new System.Action<bool>(SetWeaverTreePointsEnabled);
+                    public static void SetupSoulEmberControls()
+                    {
+                        if (soul_row.IsNullOrDestroyed() || soul_slider.IsNullOrDestroyed() ||
+                            save_button.IsNullOrDestroyed() || !soul_amount_input.IsNullOrDestroyed())
+                        {
+                            return;
+                        }
+
+                        GameObject inputTemplate = FindShardNameInput(hud_object);
+                        if (inputTemplate.IsNullOrDestroyed()) { return; }
+
+                        RectTransform source = soul_slider.GetComponent<RectTransform>();
+                        if (source.IsNullOrDestroyed()) { return; }
+
+                        soul_slider.gameObject.SetActive(false);
+
+                        GameObject inputClone = Object.Instantiate(inputTemplate, soul_row.transform);
+                        inputClone.name = "SoulEmberAmountInput";
+                        soul_amount_input = inputClone.GetComponent<Il2CppTMPro.TMP_InputField>();
+                        RectTransform inputRect = inputClone.GetComponent<RectTransform>();
+
+                        float totalWidth = Mathf.Max(180f, source.rect.width);
+                        float height = Mathf.Max(28f, source.rect.height);
+                        const float buttonWidth = 64f;
+                        const float gap = 6f;
+                        float inputWidth = Mathf.Max(100f, totalWidth - buttonWidth - gap);
+
+                        if (!inputRect.IsNullOrDestroyed())
+                        {
+                            Vector2 anchor = (source.anchorMin + source.anchorMax) * 0.5f;
+                            inputRect.anchorMin = anchor;
+                            inputRect.anchorMax = anchor;
+                            inputRect.pivot = new Vector2(0.5f, 0.5f);
+                            inputRect.sizeDelta = new Vector2(inputWidth, height);
+                            inputRect.localScale = Vector3.one;
+                            inputRect.localPosition = source.localPosition + new Vector3(-(buttonWidth + gap) * 0.5f, 0f, 0f);
+                        }
+
+                        if (!soul_amount_input.IsNullOrDestroyed())
+                        {
+                            soul_amount_input.contentType = Il2CppTMPro.TMP_InputField.ContentType.IntegerNumber;
+                            soul_amount_input.characterLimit = 7;
+                            soul_amount_input.text = "1000";
+                            if (!soul_amount_input.textComponent.IsNullOrDestroyed())
+                            {
+                                soul_amount_input.textComponent.horizontalAlignment = Il2CppTMPro.HorizontalAlignmentOptions.Left;
+                                soul_amount_input.textComponent.verticalAlignment = Il2CppTMPro.VerticalAlignmentOptions.Middle;
+                            }
+                        }
+
+                        GameObject buttonClone = Object.Instantiate(save_button.gameObject, soul_row.transform);
+                        buttonClone.name = "Btn_Character_Data_AddSoulEmbers";
+                        soul_add_button = buttonClone.GetComponent<Button>();
+                        RectTransform buttonRect = buttonClone.GetComponent<RectTransform>();
+                        if (!buttonRect.IsNullOrDestroyed())
+                        {
+                            Vector2 anchor = (source.anchorMin + source.anchorMax) * 0.5f;
+                            buttonRect.anchorMin = anchor;
+                            buttonRect.anchorMax = anchor;
+                            buttonRect.pivot = new Vector2(0.5f, 0.5f);
+                            buttonRect.sizeDelta = new Vector2(buttonWidth, height);
+                            buttonRect.localScale = Vector3.one;
+                            buttonRect.localPosition = source.localPosition + new Vector3((inputWidth + gap) * 0.5f, 0f, 0f);
+                        }
+
+                        Text buttonText = null;
+                        GameObject label = Functions.FindDescendant(buttonClone, "Label");
+                        if (!label.IsNullOrDestroyed()) { buttonText = label.GetComponent<Text>(); }
+                        if (buttonText.IsNullOrDestroyed()) { buttonText = buttonClone.GetComponentInChildren<Text>(true); }
+                        if (!buttonText.IsNullOrDestroyed()) { buttonText.text = "Add"; }
+
+                        UpdateSoulEmberBalance();
+                    }
+
+                    public static void AddSoulEmbers()
+                    {
+                        if (soul_amount_input.IsNullOrDestroyed()) { return; }
+                        if (!int.TryParse(soul_amount_input.text, out int amount) || amount <= 0)
+                        {
+                            soul_amount_input.text = "1000";
+                            return;
+                        }
+                        if (amount > 9999999) { amount = 9999999; }
+
+                        if (Mods.Character.Character_SoulEmbers.Add(amount))
+                        {
+                            UpdateSoulEmberBalance();
+                        }
+                    }
+
+                    public static void UpdateSoulEmberBalance()
+                    {
+                        int balance = Mods.Character.Character_SoulEmbers.GetBalance();
+                        if (balance >= 0 && !soul_text.IsNullOrDestroyed())
+                        {
+                            soul_text.gameObject.SetActive(true);
+                            soul_text.text = balance.ToString();
+                        }
+                    }
+
                     public static void EnsureWeaverRange()
                     {
                         if (suppressWeaverSlider || weaver_points_slider.IsNullOrDestroyed()) { return; }
