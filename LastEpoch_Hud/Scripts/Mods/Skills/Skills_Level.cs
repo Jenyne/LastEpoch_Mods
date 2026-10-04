@@ -237,12 +237,26 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         {
             try
             {
+                // Refresh panel-level totals/available-points first.
                 foreach (SkillsPanelManager panel in Object.FindObjectsOfType<SkillsPanelManager>())
                 {
                     if (!panel.IsNullOrDestroyed()) { panel.updateVisuals(false); }
                 }
+
+                // SkillTreeNode caches its own displayed rank. Gear-driven respecs can
+                // update LocalTreeData while the currently open node widgets remain
+                // visually stale until another specialization is opened. Refresh the
+                // active node widgets in place so the tree updates immediately.
+                foreach (SkillTreeNode node in Object.FindObjectsOfType<SkillTreeNode>())
+                {
+                    if (node.IsNullOrDestroyed()) { continue; }
+                    node.updateText();
+                }
             }
-            catch { }
+            catch (System.Exception ex)
+            {
+                Main.logger_instance?.Warning("Skill tree UI refresh failed: " + ex.Message);
+            }
         }
 
         [HarmonyPatch(typeof(SkillsPanelManager), "OnOpenSkillTree")]
