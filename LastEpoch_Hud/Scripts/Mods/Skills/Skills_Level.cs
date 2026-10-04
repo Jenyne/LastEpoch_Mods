@@ -57,6 +57,37 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         static Transform activeSkillTreeTransform;
         static bool refreshingTreeUi;
         static readonly Dictionary<string, int> before_effective_cap = new Dictionary<string, int>();
+        static int AllocatedPoints(LocalTreeData.SkillTreeData data)
+        {
+            if (data == null || data.skillTree.IsNullOrDestroyed() || data.skillTree.nodes.IsNullOrDestroyed()) { return -1; }
+            int total = 0;
+            try
+            {
+                foreach (SkillTreeNode node in data.skillTree.nodes)
+                {
+                    if (!node.IsNullOrDestroyed()) { total += node.pointsAllocated; }
+                }
+            }
+            catch { return -1; }
+            return total;
+        }
+
+        static void LogRespecState(string stage, LocalTreeData.SkillTreeData data, byte overAllocatedAmount, byte highestId)
+        {
+            if (data == null) { return; }
+            string key = Key(data) ?? "?";
+            int raw = real_additional.TryGetValue(key, out byte rawBonus) ? rawBonus : -1;
+            Main.logger_instance?.Msg(
+                "SkillRespec " + stage +
+                " key=" + key +
+                " level=" + data.level +
+                " additional=" + data.additionalMaxPointsFromStats +
+                " rawCached=" + raw +
+                " allocated=" + AllocatedPoints(data) +
+                " over=" + overAllocatedAmount +
+                " highest=" + highestId
+            );
+        }
 
         public static void Sync()
         {
@@ -445,9 +476,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         public class LocalTreeData_respecNodesFromSkillIfOverInvested
         {
             [HarmonyPrefix]
-            static void Prefix(LocalTreeData.SkillTreeData __0)
+            static void Prefix(LocalTreeData.SkillTreeData __0, ref byte __1, ref byte __2)
             {
                 if (!Ready() || !MultiplierOn() || __0 == null) { return; }
+
+                LogRespecState("before", __0, __1, __2);
 
                 string key = Key(__0);
                 if (key == null) { return; }
@@ -462,16 +495,20 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 effectiveRespec = true;
                 __0.level = EffectiveLevel(__0);
                 __0.additionalMaxPointsFromStats = EffectiveAdditional(rawAdditional);
+
+                LogRespecState("effective", __0, __1, __2);
             }
 
             [HarmonyPostfix]
-            static void Postfix(LocalTreeData.SkillTreeData __0)
+            static void Postfix(LocalTreeData.SkillTreeData __0, ref byte __1, ref byte __2)
             {
                 if (__0 == null)
                 {
                     effectiveRespec = false;
                     return;
                 }
+
+                LogRespecState("native-after", __0, __1, __2);
 
                 string key = Key(__0);
                 if (key != null && respec_raw_additional.ContainsKey(key))
@@ -484,6 +521,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                     respec_raw_additional.Remove(key);
                 }
 
+                LogRespecState("restored", __0, __1, __2);
                 effectiveRespec = false;
             }
         }
