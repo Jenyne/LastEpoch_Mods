@@ -301,6 +301,30 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             }
         }
 
+        [HarmonyPatch(typeof(SkillsPanelManager), nameof(SkillsPanelManager.updateVisuals))]
+        public class SkillsPanelManager_updateVisuals
+        {
+            [HarmonyPrefix]
+            static bool Prefix()
+            {
+                // Gear-driven +skill recalculation temporarily exposes raw/effective
+                // states while LE determines over-investment and removes nodes.
+                // Do not let the open UI render those intermediate values; the final
+                // stable state is refreshed once OnAdditionalPointsUpdated finishes.
+                return !nativeAdditionalRefresh || refreshingTreeUi;
+            }
+        }
+
+        [HarmonyPatch(typeof(SkillTreeNode), "updateText")]
+        public class SkillTreeNode_updateText
+        {
+            [HarmonyPrefix]
+            static bool Prefix()
+            {
+                return !nativeAdditionalRefresh || refreshingTreeUi;
+            }
+        }
+
         [HarmonyPatch(typeof(SkillsPanelManager), "OnOpenSkillTree")]
         public class SkillsPanelManager_OnOpenSkillTree
         {
