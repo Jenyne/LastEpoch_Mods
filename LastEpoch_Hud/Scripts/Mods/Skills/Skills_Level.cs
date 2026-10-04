@@ -343,6 +343,21 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 pending_real_additional[key] = real;
                 __0.additionalMaxPointsFromStats = BonusAdditional(PointLevel(__0), real);
             }
+
+            [HarmonyPostfix]
+            static void Postfix(LocalTreeData.SkillTreeData __0)
+            {
+                if (!nativeAdditionalRefresh || __0 == null) { return; }
+
+                // Keep the synthetic multiplied value scoped to the respec calculation.
+                // The rest of LE's native stat refresh should continue seeing the real
+                // +skills contribution; our outer postfix reapplies the multiplier.
+                string key = Key(__0);
+                if (key != null && pending_real_additional.ContainsKey(key))
+                {
+                    __0.additionalMaxPointsFromStats = pending_real_additional[key];
+                }
+            }
         }
 
         [HarmonyPatch(typeof(LocalTreeData), nameof(LocalTreeData.setAdditionalMaxPointsFromStatsOnServerOrInSingleplayer))]
