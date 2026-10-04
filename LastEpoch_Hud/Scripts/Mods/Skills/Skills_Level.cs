@@ -59,17 +59,21 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         static readonly Dictionary<string, int> before_effective_cap = new Dictionary<string, int>();
         static int AllocatedPoints(LocalTreeData.SkillTreeData data)
         {
-            if (data == null || data.skillTree.IsNullOrDestroyed() || data.skillTree.nodes.IsNullOrDestroyed()) { return -1; }
             int total = 0;
+            bool found = false;
             try
             {
-                foreach (SkillTreeNode node in data.skillTree.nodes)
+                // Diagnostic only: when a specialization is open, its visible
+                // SkillTreeNode components expose the native allocated ranks.
+                foreach (SkillTreeNode node in Object.FindObjectsOfType<SkillTreeNode>())
                 {
-                    if (!node.IsNullOrDestroyed()) { total += node.pointsAllocated; }
+                    if (node.IsNullOrDestroyed()) { continue; }
+                    total += node.pointsAllocated;
+                    found = true;
                 }
             }
             catch { return -1; }
-            return total;
+            return found ? total : -1;
         }
 
         static void LogRespecState(string stage, LocalTreeData.SkillTreeData data, byte overAllocatedAmount, byte highestId)
