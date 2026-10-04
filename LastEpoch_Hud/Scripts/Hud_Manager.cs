@@ -680,6 +680,8 @@ namespace LastEpoch_Hud.Scripts
                                     case "Toggle_Items_Pickup_AutoStore_OnInventoryOpen": { Save_Manager.instance.data.Items.Pickup.Enable_AutoStore_OnInventoryOpen = __instance.isOn; break; }
                                     case "Toggle_Items_Pickup_AutoStore_Timer": { Save_Manager.instance.data.Items.Pickup.Enable_AutoStore_Timer = __instance.isOn; break; }
                                     case "Toggle_Items_Pickup_AutoSell_FromFilter": { Save_Manager.instance.data.Items.Pickup.Enable_AutoSell_FromFilter = __instance.isOn; break; }
+                                    case "Toggle_Items_Pickup_AutoShatter_FromFilter": { Save_Manager.instance.data.Items.Pickup.Enable_AutoShatter_FromFilter = __instance.isOn; break; }
+                                    case "Toggle_Items_Pickup_AutoShatter_Rune": { Save_Manager.instance.data.Items.Pickup.Enable_AutoShatter_UseRune = __instance.isOn; break; }
                                     
                                     case "Toggle_Items_Pickup_Range_Pickup": { Save_Manager.instance.data.Items.Pickup.Enable_RangePickup = __instance.isOn; break; }
                                     case "Toggle_Items_Pickup_Hide_Notifications": { Save_Manager.instance.data.Items.Pickup.Enable_HideMaterialsNotifications = __instance.isOn; break; }
@@ -1196,6 +1198,24 @@ namespace LastEpoch_Hud.Scripts
                                     case "Slider_Items_Craft_LegendaryPotencial": { Save_Manager.instance.data.Items.CraftingSlot.LegendaryPotencial = (int)__0; break; }
                                     case "Slider_Items_Craft_WeaverWill": { Save_Manager.instance.data.Items.CraftingSlot.WeaverWill = (int)__0; break; }
                                     case "Slider_Items_Pickup_AutoStore_Timer": { Save_Manager.instance.data.Items.Pickup.AutoStore_Timer = (int)__0; break; }
+                                    case "Slider_Items_Pickup_AutoShatter_Chance":
+                                        {
+                                            Save_Manager.instance.data.Items.Pickup.AutoShatter_Chance = (int)__0;
+                                            if (!Content.Items.Pickup.autoshatter_chance_text.IsNullOrDestroyed()) { Content.Items.Pickup.autoshatter_chance_text.text = (int)__0 + " %"; }
+                                            break;
+                                        }
+                                    case "Slider_Items_Pickup_AutoShatter_AffixChance":
+                                        {
+                                            Save_Manager.instance.data.Items.Pickup.AutoShatter_AffixChance = (int)__0;
+                                            if (!Content.Items.Pickup.autoshatter_affix_text.IsNullOrDestroyed()) { Content.Items.Pickup.autoshatter_affix_text.text = (int)__0 + " %"; }
+                                            break;
+                                        }
+                                    case "Slider_Items_Pickup_AutoShatter_QuantityChance":
+                                        {
+                                            Save_Manager.instance.data.Items.Pickup.AutoShatter_QuantityChance = (int)__0;
+                                            if (!Content.Items.Pickup.autoshatter_quantity_text.IsNullOrDestroyed()) { Content.Items.Pickup.autoshatter_quantity_text.text = (int)__0 + " %"; }
+                                            break;
+                                        }
                                 }
                             }
                             else if (__instance.name.Contains("Slider_Scenes_"))
@@ -3312,6 +3332,15 @@ namespace LastEpoch_Hud.Scripts
 
                                 Pickup.autosell_hide_toggle = Functions.Get_ToggleInPanel(items_pickup_content, "AutoSell_FromFilter", "Toggle_Items_Pickup_AutoSell_FromFilter");
 
+                                Pickup.autoshatter_fromfilter_toggle = Functions.Get_ToggleInPanel(items_pickup_content, "AutoShatter_FromFilter", "Toggle_Items_Pickup_AutoShatter_FromFilter");
+                                Pickup.autoshatter_rune_toggle = Functions.Get_ToggleInPanel(items_pickup_content, "AutoShatter_Rune", "Toggle_Items_Pickup_AutoShatter_Rune");
+                                Pickup.autoshatter_chance_slider = Functions.Get_SliderInPanel(items_pickup_content, "AutoShatter_Chance", "Slider_Items_Pickup_AutoShatter_Chance");
+                                Pickup.autoshatter_affix_slider = Functions.Get_SliderInPanel(items_pickup_content, "AutoShatter_AffixChance", "Slider_Items_Pickup_AutoShatter_AffixChance");
+                                Pickup.autoshatter_quantity_slider = Functions.Get_SliderInPanel(items_pickup_content, "AutoShatter_QuantityChance", "Slider_Items_Pickup_AutoShatter_QuantityChance");
+                                Pickup.autoshatter_chance_text = Pickup.PanelValueText(items_pickup_content, "AutoShatter_Chance");
+                                Pickup.autoshatter_affix_text = Pickup.PanelValueText(items_pickup_content, "AutoShatter_AffixChance");
+                                Pickup.autoshatter_quantity_text = Pickup.PanelValueText(items_pickup_content, "AutoShatter_QuantityChance");
+
                                 Pickup.range_pickup_toggle = Functions.Get_ToggleInPanel(items_pickup_content, "Range_Pickup", "Toggle_Items_Pickup_Range_Pickup");
                                 Pickup.hide_materials_notifications_toggle = Functions.Get_ToggleInPanel(items_pickup_content, "Hide_Notifications", "Toggle_Items_Pickup_Hide_Notifications");
                             }
@@ -3539,7 +3568,12 @@ namespace LastEpoch_Hud.Scripts
                             Pickup.autostore_materials_Timer_toggle.isOn = Save_Manager.instance.data.Items.Pickup.Enable_AutoStore_Timer;
                             Pickup.autostore_materials_Timer_slider.value = Save_Manager.instance.data.Items.Pickup.AutoStore_Timer;
 
-                            Pickup.autosell_hide_toggle.isOn = Save_Manager.instance.data.Items.Pickup.Enable_AutoSell_FromFilter;                            
+                            Pickup.autosell_hide_toggle.isOn = Save_Manager.instance.data.Items.Pickup.Enable_AutoSell_FromFilter;
+                            if (!Pickup.autoshatter_fromfilter_toggle.IsNullOrDestroyed()) { Pickup.autoshatter_fromfilter_toggle.isOn = Save_Manager.instance.data.Items.Pickup.Enable_AutoShatter_FromFilter; }
+                            if (!Pickup.autoshatter_rune_toggle.IsNullOrDestroyed()) { Pickup.autoshatter_rune_toggle.isOn = Save_Manager.instance.data.Items.Pickup.Enable_AutoShatter_UseRune; }
+                            if (!Pickup.autoshatter_chance_slider.IsNullOrDestroyed()) { Pickup.autoshatter_chance_slider.value = Save_Manager.instance.data.Items.Pickup.AutoShatter_Chance; }
+                            if (!Pickup.autoshatter_affix_slider.IsNullOrDestroyed()) { Pickup.autoshatter_affix_slider.value = Save_Manager.instance.data.Items.Pickup.AutoShatter_AffixChance; }
+                            if (!Pickup.autoshatter_quantity_slider.IsNullOrDestroyed()) { Pickup.autoshatter_quantity_slider.value = Save_Manager.instance.data.Items.Pickup.AutoShatter_QuantityChance; }
 
                             Pickup.range_pickup_toggle.isOn = Save_Manager.instance.data.Items.Pickup.Enable_RangePickup;
                             Pickup.hide_materials_notifications_toggle.isOn = Save_Manager.instance.data.Items.Pickup.Enable_HideMaterialsNotifications;
@@ -3646,6 +3680,9 @@ namespace LastEpoch_Hud.Scripts
                             CraftingSlot.legendary_potencial_text.text = "" + (int)(Save_Manager.instance.data.Items.CraftingSlot.LegendaryPotencial);
                             CraftingSlot.weaver_will_text.text = "" + (int)(Save_Manager.instance.data.Items.CraftingSlot.WeaverWill);
                             Pickup.autostore_materials_Timer_text.text = "All " + (int)Save_Manager.instance.data.Items.Pickup.AutoStore_Timer + " sec";
+                            if (!Pickup.autoshatter_chance_text.IsNullOrDestroyed()) { Pickup.autoshatter_chance_text.text = Save_Manager.instance.data.Items.Pickup.AutoShatter_Chance + " %"; }
+                            if (!Pickup.autoshatter_affix_text.IsNullOrDestroyed()) { Pickup.autoshatter_affix_text.text = Save_Manager.instance.data.Items.Pickup.AutoShatter_AffixChance + " %"; }
+                            if (!Pickup.autoshatter_quantity_text.IsNullOrDestroyed()) { Pickup.autoshatter_quantity_text.text = Save_Manager.instance.data.Items.Pickup.AutoShatter_QuantityChance + " %"; }
 
                             //Tiers
                             Drop.seal_tier_text.text = ((int)(Save_Manager.instance.data.Items.Drop.SealTier_Min) + 1) + " to " + ((int)(Save_Manager.instance.data.Items.Drop.SealTier_Max) + 1);
@@ -3756,6 +3793,22 @@ namespace LastEpoch_Hud.Scripts
                     public static Text autostore_materials_Timer_text = null;
                     public static Slider autostore_materials_Timer_slider = null;                    
                     public static Toggle autosell_hide_toggle = null;
+                    public static Toggle autoshatter_fromfilter_toggle = null;
+                    public static Toggle autoshatter_rune_toggle = null;
+                    public static Slider autoshatter_chance_slider = null;
+                    public static Slider autoshatter_affix_slider = null;
+                    public static Slider autoshatter_quantity_slider = null;
+                    public static Text autoshatter_chance_text = null;
+                    public static Text autoshatter_affix_text = null;
+                    public static Text autoshatter_quantity_text = null;
+                    public static Text PanelValueText(GameObject content, string panelName)
+                    {
+                        GameObject panel = Functions.GetChild(content, panelName);
+                        if (panel.IsNullOrDestroyed()) { return null; }
+                        GameObject valueObj = Functions.FindDescendant(panel, "Value");
+                        if (valueObj.IsNullOrDestroyed()) { return null; }
+                        return valueObj.GetComponent<Text>();
+                    }
                     public static Toggle range_pickup_toggle = null;
                     public static Toggle hide_materials_notifications_toggle = null;
                 }

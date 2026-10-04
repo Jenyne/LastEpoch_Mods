@@ -57,6 +57,14 @@ namespace LastEpoch_Hud.Scripts
                 Save();
             }
             Check_Update();
+            if (!data.Items.Pickup.AutoShatter_Configured)
+            {
+                data.Items.Pickup.AutoShatter_Chance = 100;
+                data.Items.Pickup.AutoShatter_AffixChance = 100;
+                data.Items.Pickup.AutoShatter_QuantityChance = 0;
+                data.Items.Pickup.AutoShatter_Configured = true;
+                Save();
+            }
             data_duplicate = data; //Use to check for data changed
             Main.logger_instance?.Msg("Save Manager : Data initialized");
             initialized = true;
@@ -209,6 +217,12 @@ namespace LastEpoch_Hud.Scripts
                         Enable_AutoStore_Timer = false,
                         AutoStore_Timer = 10,
                         Enable_AutoSell_FromFilter = false,
+                        Enable_AutoShatter_FromFilter = false,
+                        Enable_AutoShatter_UseRune = false,
+                        AutoShatter_Chance = 100,
+                        AutoShatter_AffixChance = 100,
+                        AutoShatter_QuantityChance = 0,
+                        AutoShatter_Configured = true,
                         Enable_RangePickup = false,
                         Enable_HideMaterialsNotifications = false
                     },
@@ -743,6 +757,13 @@ namespace LastEpoch_Hud.Scripts
                 public int AutoStore_Timer;
 
                 public bool Enable_AutoSell_FromFilter;
+
+                public bool Enable_AutoShatter_FromFilter;
+                public bool Enable_AutoShatter_UseRune;
+                public int AutoShatter_Chance;
+                public int AutoShatter_AffixChance;
+                public int AutoShatter_QuantityChance;
+                public bool AutoShatter_Configured;
 
                 public bool Enable_RangePickup;
                 public bool Enable_HideMaterialsNotifications;
