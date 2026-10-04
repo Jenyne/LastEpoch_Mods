@@ -1,4 +1,5 @@
 name: Export v4.4.16 Integration Source
+# Export-only workflow used for local validation against uploaded game assemblies.
 
 on:
   push:
