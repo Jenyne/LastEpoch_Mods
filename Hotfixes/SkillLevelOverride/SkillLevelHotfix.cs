@@ -18,14 +18,14 @@ namespace LastEpochSkillLevelHotfix
         private static string _configPath;
         private static DateTime _lastWriteUtc;
         private static float _nextConfigCheck;
-        private Harmony _harmony;
+        private HarmonyLib.Harmony _harmony;
 
         public override void OnInitializeMelon()
         {
             _configPath = Path.Combine(Directory.GetCurrentDirectory(), "Mods", "LastEpoch_Hud", "Save.json");
             LoadConfig(force: true);
 
-            _harmony = new Harmony("jenyne.lastepoch.skilllevelhotfix");
+            _harmony = new HarmonyLib.Harmony("jenyne.lastepoch.skilllevelhotfix");
             PatchAbilityLevelMethods();
 
             LoggerInstance.Msg($"Skill-level hotfix loaded. HUD config: {_configPath}");
