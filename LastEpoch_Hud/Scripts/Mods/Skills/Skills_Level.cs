@@ -302,6 +302,25 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             }
         }
 
+        [HarmonyPatch(typeof(LocalTreeData), "respecNodesFromSkillIfOverInvested")]
+        public class LocalTreeData_respecNodesFromSkillIfOverInvested
+        {
+            [HarmonyPrefix]
+            static bool Prefix(ref byte __1, ref byte __2)
+            {
+                // When the multiplier is active, equipment/stat changes briefly reduce
+                // additionalMaxPointsFromStats to the game's real value. The native
+                // method interprets the mod-granted points as over-investment and
+                // removes nodes before our postfix can reapply the multiplier.
+                // Suppress only that automatic respec while the multiplier is active.
+                if (!Ready() || !MultiplierOn()) { return true; }
+
+                __1 = 0;
+                __2 = 0;
+                return false;
+            }
+        }
+
         [HarmonyPatch(typeof(LocalTreeData), nameof(LocalTreeData.setAdditionalMaxPointsFromStatsOnServerOrInSingleplayer))]
         public class LocalTreeData_setAdditionalMaxPointsFromStats
         {
