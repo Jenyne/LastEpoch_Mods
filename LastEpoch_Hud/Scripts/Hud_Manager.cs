@@ -195,6 +195,11 @@ namespace LastEpoch_Hud.Scripts
                             Content.Headhunter.Get_Refs();
                             Content.Headhunter.Set_Active(false);
                         });
+
+                        SafeInit("ModUI.SaveManager.BindHud", () =>
+                        {
+                            ModUI.SaveManager.BindHud(hud_object);
+                        });
                     }
                     else { Main.logger_instance.Error("Hud Manager : Hud Prefab not found"); }
                 }
@@ -1501,7 +1506,22 @@ namespace LastEpoch_Hud.Scripts
                     Events.Set_Base_Button_Event(hud_object, "Menu", "Btn_Menu_Scenes", Scenes_OnClick_Action);
                     Events.Set_Base_Button_Event(hud_object, "Menu", "Btn_Menu_TreeSkills", Skills_OnClick_Action);
                     Events.Set_Base_Button_Event(hud_object, "Menu", "Btn_Menu_ForceDrop", OldForceDrop_OnClick_Action);
-                    Events.Set_Base_Button_Event(hud_object, "Menu", "Btn_Menu_Headhunter", Headhunter_OnClick_Action);
+                    // The donor bundle may omit this unfinished optional page.
+                    var headhunterButton = Functions.FindDescendant(hud_object, "Btn_Menu_Headhunter");
+                    var headhunterContent = Functions.FindDescendant(hud_object, "Headhunter_Content");
+                    if (!headhunterButton.IsNullOrDestroyed())
+                    {
+                        headhunterButton.SetActive(!headhunterContent.IsNullOrDestroyed());
+                        if (!headhunterContent.IsNullOrDestroyed())
+                        {
+                            var button = headhunterButton.GetComponent<Button>();
+                            if (!button.IsNullOrDestroyed())
+                            {
+                                button.onClick = new Button.ButtonClickedEvent();
+                                button.onClick.AddListener(Headhunter_OnClick_Action);
+                            }
+                        }
+                    }
                 }
             }
             
@@ -4426,6 +4446,20 @@ namespace LastEpoch_Hud.Scripts
                             {
                                 Minimap.max_zoom_out_toggle = Functions.Get_ToggleInPanel(scene_minimap_content, "MaxZoomOut", "Toggle_Scenes_Minimap_MaxZoomOut");
                                 Minimap.remove_fog_of_war_toggle = Functions.Get_ToggleInPanel(scene_minimap_content, "RemoveFogOfWar", "Toggle_Scenes_Minimap_RemoveFogOfWar");
+                                Minimap.show_all_items_toggle = Minimap.CreateRuntimeToggle(
+                                    scene_minimap_content,
+                                    "ShowAllItems",
+                                    "Toggle_Scenes_Minimap_ShowAllItems",
+                                    "Show All Items",
+                                    1
+                                );
+                                Minimap.show_items_from_filter_toggle = Minimap.CreateRuntimeToggle(
+                                    scene_minimap_content,
+                                    "ShowItemsFromFilter",
+                                    "Toggle_Scenes_Minimap_ShowItemsFromFilter",
+                                    "Show Items From Filter",
+                                    2
+                                );
                             }
                             GameObject scene_monoliths_content = Functions.GetViewportContent(content_obj, "Monoliths", "Scenes_Monoliths_Content");
                             if (!scene_monoliths_content.IsNullOrDestroyed())
@@ -4459,6 +4493,8 @@ namespace LastEpoch_Hud.Scripts
                 {
                     Events.Set_Button_Event(Camera.reset_button, Camera.Reset_OnClick_Action);
                     Events.Set_Button_Event(Camera.set_button, Camera.Set_OnClick_Action);
+                    Events.Set_Toggle_Event(Minimap.show_all_items_toggle, Minimap.ShowAllItems_Action);
+                    Events.Set_Toggle_Event(Minimap.show_items_from_filter_toggle, Minimap.ShowItemsFromFilter_Action);
                 }
                 public static void Set_Active(bool show)
                 {
@@ -4516,6 +4552,10 @@ namespace LastEpoch_Hud.Scripts
 
                             Minimap.max_zoom_out_toggle.isOn = Save_Manager.instance.data.Scenes.Minimap.Enable_MaxZoomOut;
                             Minimap.remove_fog_of_war_toggle.isOn = Save_Manager.instance.data.Scenes.Minimap.Enable_RemoveFogOfWar;
+                            if (!Minimap.show_all_items_toggle.IsNullOrDestroyed())
+                                Minimap.show_all_items_toggle.isOn = Save_Manager.instance.data.Scenes.Minimap.Enable_ShowAllItems;
+                            if (!Minimap.show_items_from_filter_toggle.IsNullOrDestroyed())
+                                Minimap.show_items_from_filter_toggle.isOn = Save_Manager.instance.data.Scenes.Minimap.Enable_ShowItemsFromFilter;
 
                             Monoliths.max_stability_toggle.isOn = Save_Manager.instance.data.Scenes.Monoliths.Enable_MaxStability;
                             Monoliths.max_stability_slider.value = Save_Manager.instance.data.Scenes.Monoliths.MaxStability;
@@ -4620,6 +4660,107 @@ namespace LastEpoch_Hud.Scripts
                 {
                     public static Toggle max_zoom_out_toggle = null;
                     public static Toggle remove_fog_of_war_toggle = null;
+                    public static Toggle show_all_items_toggle = null;
+                    public static Toggle show_items_from_filter_toggle = null;
+
+                    public static readonly System.Action<bool> ShowAllItems_Action =
+                        new System.Action<bool>(SetShowAllItems);
+                    public static readonly System.Action<bool> ShowItemsFromFilter_Action =
+                        new System.Action<bool>(SetShowItemsFromFilter);
+
+                    public static Toggle CreateRuntimeToggle(
+                        GameObject content,
+                        string panelName,
+                        string toggleName,
+                        string label,
+                        int rowOffset
+                    )
+                    {
+                        try
+                        {
+                            if (content.IsNullOrDestroyed()) { return null; }
+
+                            GameObject panel = Functions.GetChild(content, panelName, false);
+                            GameObject template = Functions.GetChild(content, "RemoveFogOfWar", false);
+                            if (template.IsNullOrDestroyed()) { return null; }
+
+                            if (panel.IsNullOrDestroyed())
+                            {
+                                panel = Object.Instantiate(template, template.transform.parent);
+                                panel.name = panelName;
+                                panel.transform.SetAsLastSibling();
+                            }
+
+                            RectTransform panelRect = panel.GetComponent<RectTransform>();
+                            RectTransform templateRect = template.GetComponent<RectTransform>();
+                            GameObject previous = Functions.GetChild(content, "MaxZoomOut", false);
+                            RectTransform previousRect = previous.IsNullOrDestroyed()
+                                ? null
+                                : previous.GetComponent<RectTransform>();
+
+                            if (!panelRect.IsNullOrDestroyed() && !templateRect.IsNullOrDestroyed())
+                            {
+                                float rowDeltaY = 0f;
+                                if (!previousRect.IsNullOrDestroyed())
+                                {
+                                    rowDeltaY = templateRect.anchoredPosition.y - previousRect.anchoredPosition.y;
+                                }
+
+                                if (Mathf.Abs(rowDeltaY) < 1f)
+                                {
+                                    float rowHeight = Mathf.Abs(templateRect.rect.height);
+                                    if (rowHeight < 1f) { rowHeight = 34f; }
+                                    rowDeltaY = -rowHeight;
+                                }
+
+                                Vector2 pos = templateRect.anchoredPosition;
+                                pos.y += rowDeltaY * rowOffset;
+                                panelRect.anchoredPosition = pos;
+                            }
+
+                            Toggle toggle = panel.GetComponentInChildren<Toggle>(true);
+                            if (toggle.IsNullOrDestroyed()) { return null; }
+
+                            toggle.onValueChanged = new Toggle.ToggleEvent();
+                            toggle.name = toggleName;
+
+                            foreach (Text text in panel.GetComponentsInChildren<Text>(true))
+                            {
+                                if (!text.IsNullOrDestroyed() && !string.IsNullOrEmpty(text.text))
+                                {
+                                    text.text = label;
+                                    break;
+                                }
+                            }
+
+                            return toggle;
+                        }
+                        catch (System.Exception ex)
+                        {
+                            Main.logger_instance?.Warning(
+                                "Hud Manager : Failed to create Minimap toggle " + panelName + " : " + ex.Message
+                            );
+                            return null;
+                        }
+                    }
+
+                    private static void SetShowAllItems(bool value)
+                    {
+                        if (!Save_Manager.instance.IsNullOrDestroyed() &&
+                            !Save_Manager.instance.data.IsNullOrDestroyed())
+                        {
+                            Save_Manager.instance.data.Scenes.Minimap.Enable_ShowAllItems = value;
+                        }
+                    }
+
+                    private static void SetShowItemsFromFilter(bool value)
+                    {
+                        if (!Save_Manager.instance.IsNullOrDestroyed() &&
+                            !Save_Manager.instance.data.IsNullOrDestroyed())
+                        {
+                            Save_Manager.instance.data.Scenes.Minimap.Enable_ShowItemsFromFilter = value;
+                        }
+                    }
                 }
                 public class Dungeons
                 {
