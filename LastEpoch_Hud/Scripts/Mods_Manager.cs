@@ -27,7 +27,6 @@ namespace LastEpoch_Hud.Scripts
         GameObject items_essentiasanguis_obj = null;
         //GameObject items_temporalis_obj = null;
         //GameObject items_crafting_obj = null;
-        GameObject minimap_icons_obj = null;
         GameObject monoliths_complete_objectives_obj = null;
         GameObject bank_quad_obj = null;
         GameObject Cosmetics_offline_obj = null;
@@ -119,10 +118,6 @@ namespace LastEpoch_Hud.Scripts
             character_bank_from_anywhere = Object.Instantiate(new GameObject { name = "Mod_Bank_Anywhere" }, Vector3.zero, Quaternion.identity);
             character_bank_from_anywhere.AddComponent<Mods.Character.Character_Bank_Anywhere>();
             Mods_Objects.Add(character_bank_from_anywhere);
-
-            minimap_icons_obj = Object.Instantiate(new GameObject { name = "Mod_Minimap_Icons" }, Vector3.zero, Quaternion.identity);
-            minimap_icons_obj.AddComponent<Mods.Minimap.Minimap_Icons>();
-            Mods_Objects.Add(minimap_icons_obj);
 
             monoliths_complete_objectives_obj = Object.Instantiate(new GameObject { name = "Mod_Monoliths_Complete_Objectives" }, Vector3.zero, Quaternion.identity);
             monoliths_complete_objectives_obj.AddComponent<Mods.Monoliths.Monoliths_CompleteObjective>();
