@@ -161,6 +161,15 @@
     <Compile Include="Scripts\Mods\Items\Items_Temporalis.txt" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Legacy modules whose settings/runtime dependencies were removed from the current v4.4.16 codebase. -->
+    <Compile Remove="Scripts\Mods\Craft\Craft_MaxTier.cs" />
+    <Compile Remove="Scripts\Mods\Harbringers\Harbringers_AltarWithoutKey.cs" />
+    <Compile Remove="Scripts\Mods\Spawn\TimeBeast.cs" />
+    <Compile Remove="Scripts\Mods\Summon\Summon_Collider.cs" />
+    <Compile Remove="Scripts\Mods\Summon\Summon_Forever.cs" />
+    <Compile Remove="Scripts\Mods\Summon\Summon_GodMode.cs" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Lib.Harmony" Version="2.3.1.1" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
   </ItemGroup>
