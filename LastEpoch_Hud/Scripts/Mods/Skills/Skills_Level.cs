@@ -54,7 +54,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         static readonly Dictionary<string, byte> respec_raw_additional = new Dictionary<string, byte>();
         static SkillsPanelManager activeSkillsPanel;
         static SkillTree activeSkillTree;
+        static Transform activeSkillTreeTransform;
         static bool refreshingTreeUi;
+        static readonly Dictionary<string, int> before_effective_cap = new Dictionary<string, int>();
 
         public static void Sync()
         {
@@ -163,7 +165,19 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 nativeAdditionalRefresh = true;
                 effectiveRespec = false;
                 respec_raw_additional.Clear();
+                before_effective_cap.Clear();
                 writing = true;
+
+                // Snapshot the currently exposed effective cap. The native stat refresh
+                // runs periodically even when gear did not change, so UI rebuilding must
+                // be gated on an actual cap change.
+                foreach (LocalTreeData.SkillTreeData data in Refs_Manager.player_treedata.specialisedSkillTrees)
+                {
+                    if (data == null) { continue; }
+                    string key = Key(data);
+                    if (key == null) { continue; }
+                    before_effective_cap[key] = data.level + data.additionalMaxPointsFromStats;
+                }
 
                 // Give LE the raw/native state only long enough for it to recalculate
                 // the new +skills contribution from the changed gear.
@@ -201,6 +215,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 return;
             }
 
+            bool capChanged = false;
             try
             {
                 writing = true;
@@ -224,6 +239,21 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
 
                 if (LevelOn() || MultiplierOn()) { ApplyLevels(); }
                 if (MultiplierOn()) { ApplyPointBonus(); }
+
+                foreach (LocalTreeData.SkillTreeData data in Refs_Manager.player_treedata.specialisedSkillTrees)
+                {
+                    if (data == null) { continue; }
+                    string key = Key(data);
+                    if (key == null) { continue; }
+
+                    int after = data.level + data.additionalMaxPointsFromStats;
+                    if (!before_effective_cap.TryGetValue(key, out int before) || before != after)
+                    {
+                        capChanged = true;
+                        break;
+                    }
+                }
+
                 writing = false;
             }
             catch { writing = false; }
@@ -232,7 +262,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 nativeAdditionalRefresh = false;
                 effectiveRespec = false;
                 respec_raw_additional.Clear();
-                RefreshOpenTree();
+                before_effective_cap.Clear();
+
+                if (capChanged) { RefreshOpenTree(); }
             }
         }
 
@@ -245,17 +277,15 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 // Re-run the same LE path used when the player switches away from a
                 // specialization and opens it again. Simple updateVisuals()/updateText()
                 // calls do not rebuild the active tree's cached allocation state.
-                if (!activeSkillsPanel.IsNullOrDestroyed() && !activeSkillTree.IsNullOrDestroyed())
+                if (!activeSkillsPanel.IsNullOrDestroyed() &&
+                    !activeSkillTree.IsNullOrDestroyed() &&
+                    !activeSkillTreeTransform.IsNullOrDestroyed())
                 {
-                    var reopen = AccessTools.Method(typeof(SkillsPanelManager), "OnOpenSkillTree");
-                    if (reopen != null)
-                    {
-                        refreshingTreeUi = true;
-                        reopen.Invoke(activeSkillsPanel, new object[] { activeSkillTree });
-                        activeSkillsPanel.updateVisuals(false);
-                        refreshingTreeUi = false;
-                        return;
-                    }
+                    refreshingTreeUi = true;
+                    activeSkillsPanel.OnOpenSkillTree(activeSkillTree, activeSkillTreeTransform);
+                    activeSkillsPanel.updateVisuals(false);
+                    refreshingTreeUi = false;
+                    return;
                 }
 
                 // Fallback when no active specialization has been cached yet.
@@ -275,7 +305,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         public class SkillsPanelManager_OnOpenSkillTree
         {
             [HarmonyPostfix]
-            static void Postfix(SkillsPanelManager __instance, SkillTree __0)
+            static void Postfix(SkillsPanelManager __instance, SkillTree __0, Transform __1)
             {
                 try
                 {
@@ -283,6 +313,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
 
                     activeSkillsPanel = __instance;
                     activeSkillTree = __0;
+                    activeSkillTreeTransform = __1;
 
                     // RefreshOpenTree deliberately re-enters OnOpenSkillTree to force LE
                     // to rebuild the active specialization. Do not recursively Sync().
@@ -456,7 +487,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             static void Postfix()
             {
                 OnAdditionalPointsUpdated();
-                RefreshOpenTree();
             }
         }
     }
