@@ -49,7 +49,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
 
         static bool writing;
         static bool nativeAdditionalRefresh;
+        static bool effectiveRespec;
         static readonly Dictionary<string, byte> real_additional = new Dictionary<string, byte>();
+        static readonly Dictionary<string, byte> respec_raw_additional = new Dictionary<string, byte>();
 
         public static void Sync()
         {
@@ -156,6 +158,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             try
             {
                 nativeAdditionalRefresh = true;
+                effectiveRespec = false;
+                respec_raw_additional.Clear();
                 writing = true;
 
                 // Give LE the raw/native state only long enough for it to recalculate
@@ -223,6 +227,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             finally
             {
                 nativeAdditionalRefresh = false;
+                effectiveRespec = false;
+                respec_raw_additional.Clear();
                 RefreshOpenTree();
             }
         }
@@ -262,10 +268,26 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             static void Postfix(LocalTreeData __instance, Ability __0, ref byte __result)
             {
                 if (writing || !CanRun() || __0.IsNullOrDestroyed() || __instance.specialisedSkillTrees.IsNullOrDestroyed()) { return; }
+
                 foreach (LocalTreeData.SkillTreeData data in __instance.specialisedSkillTrees)
                 {
                     if (data == null || data.ability.IsNullOrDestroyed()) { continue; }
                     if (data.ability.abilityName != __0.abilityName) { continue; }
+
+                    // During the outer native gear/stat refresh, keep LE on the real
+                    // XP-derived level so the raw +skills contribution is calculated
+                    // correctly. The one exception is the actual native respec call:
+                    // there we intentionally expose the multiplied effective level.
+                    if (nativeAdditionalRefresh && !effectiveRespec)
+                    {
+                        byte raw = (byte)RawLevel(data);
+                        writing = true;
+                        data.level = raw;
+                        writing = false;
+                        __result = raw;
+                        return;
+                    }
+
                     if (LevelOn() || MultiplierOn())
                     {
                         byte level = EffectiveLevel(data);
@@ -338,30 +360,42 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             {
                 if (!Ready() || !MultiplierOn() || __0 == null) { return; }
 
-                // This is the boundary that matters: the game's gear calculation has
-                // already written the NEW raw +skills value, but it has not yet decided
-                // whether the tree is over-invested. Convert the tree to its effective
-                // multiplied capacity BEFORE vanilla respec logic sees it.
-                //
-                // Example at x2:
-                //   level 10, +0  -> effective cap 20
-                //   level 10, +2  -> effective cap 24
-                //   remove +2     -> new effective cap 20
-                //
-                // Vanilla now performs its normal over-cap removal against 20/24/etc.
                 string key = Key(__0);
                 if (key == null) { return; }
 
+                // The outer native refresh has already calculated the NEW raw gear
+                // bonus. Save it, then expose the multiplied representation only for
+                // this native over-cap check/removal.
                 byte rawAdditional = __0.additionalMaxPointsFromStats;
+                respec_raw_additional[key] = rawAdditional;
                 real_additional[key] = rawAdditional;
 
-                // Preserve LE's own semantic buckets:
-                //   base/XP level is multiplied as base level
-                //   item-granted +skills are multiplied as additional points
-                // This is materially different from stuffing the whole multiplier
-                // into additionalMaxPointsFromStats.
+                effectiveRespec = true;
                 __0.level = EffectiveLevel(__0);
                 __0.additionalMaxPointsFromStats = EffectiveAdditional(rawAdditional);
+            }
+
+            [HarmonyPostfix]
+            static void Postfix(LocalTreeData.SkillTreeData __0)
+            {
+                if (__0 == null)
+                {
+                    effectiveRespec = false;
+                    return;
+                }
+
+                string key = Key(__0);
+                if (key != null && respec_raw_additional.ContainsKey(key))
+                {
+                    // Do not leak the multiplied representation back into the outer
+                    // native refresh. Otherwise it gets cached as raw and compounds
+                    // on the next equip/unequip.
+                    __0.additionalMaxPointsFromStats = respec_raw_additional[key];
+                    __0.level = (byte)RawLevel(__0);
+                    respec_raw_additional.Remove(key);
+                }
+
+                effectiveRespec = false;
             }
         }
 
