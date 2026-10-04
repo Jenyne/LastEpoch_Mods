@@ -159,7 +159,7 @@
   "Disable Simple Path": "자동 경로 비활성화",
   "Companions": "동료",
   "Maximum Companions": "최대 동료 수",
-  "Wolfs": "늑대",
+  "Wolves": "늑대",
   "Summon up to max": "최대 수까지 소환",
   "Summon Limit": "소환 제한",
   "Stun Immunity": "기절 면역",
@@ -178,7 +178,7 @@
   "Mage": "마법사",
   "Chance for 2 extra Projectiles": "추가 발사체 2개 확률",
   "Bone Golem": "뼈 골렘",
-  "Self Resurect Chance": "자가 부활 확률",
+  "Self Resurrect Chance": "자가 부활 확률",
   "Enable Twins": "쌍둥이 활성화",
   "Volatile Zombies": "휘발성 좀비",
   "Duration": "지속 시간",
@@ -192,9 +192,10 @@
   "Nb": "수",
   "Shards": "조각",
   "Title": "제목",
-  "Choose Masterie": "숙련도를 선택",
-  "Strenght": "힘",
-  "Forgin Potencial": "단조 잠재력",
-  "Legendary Potencial": "전설 잠재력",
-  "XpTome": "경험치 책"
+  "Choose Mastery": "숙련도를 선택",
+  "Strength": "힘",
+  "Forging Potential": "단조 잠재력",
+  "Legendary Potential": "전설 잠재력",
+  "XpTome": "경험치 책",
+  "Add": "추가"
 }
