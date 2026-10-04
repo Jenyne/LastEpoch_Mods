@@ -1,5 +1,4 @@
 ﻿using System.Collections.Generic;
-using System.Reflection;
 using HarmonyLib;
 using Il2Cpp;
 using UnityEngine;
@@ -50,10 +49,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
 
         static bool writing;
         static bool nativeAdditionalRefresh;
-        static bool manualRespec;
         static readonly Dictionary<string, byte> real_additional = new Dictionary<string, byte>();
-        static readonly Dictionary<string, byte> previous_real_additional = new Dictionary<string, byte>();
-        static MethodInfo respecMethod;
 
         public static void Sync()
         {
@@ -152,25 +148,21 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             try
             {
                 nativeAdditionalRefresh = true;
-                previous_real_additional.Clear();
                 writing = true;
 
+                // Give LE the raw/native state only long enough for it to recalculate
+                // the new +skills contribution from the changed gear.
                 foreach (LocalTreeData.SkillTreeData data in Refs_Manager.player_treedata.specialisedSkillTrees)
                 {
                     if (data == null) { continue; }
                     string key = Key(data);
                     if (key == null) { continue; }
 
-                    if (real_additional.ContainsKey(key))
-                    {
-                        previous_real_additional[key] = real_additional[key];
-                    }
-
-                    // Native gear/stat calculation must start from the real values.
                     if (LevelOn())
                     {
                         data.level = SpecialisedAbilityManager.getAbilityLevel(data.abilityXp);
                     }
+
                     if (MultiplierOn() && real_additional.ContainsKey(key))
                     {
                         data.additionalMaxPointsFromStats = real_additional[key];
@@ -194,16 +186,14 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 return;
             }
 
-            bool shouldCleanup = MultiplierOn();
             try
             {
                 writing = true;
 
+                // The native calculation has completed. Cache the NEW real +skills
+                // contribution, then make the stored tree state effective/multiplied.
                 if (MultiplierOn())
                 {
-                    // The native calculation just wrote the NEW real equipment-derived
-                    // +skills values. Capture them before putting the multiplied values
-                    // back. Native respec was suppressed while these raw caps existed.
                     real_additional.Clear();
                     foreach (LocalTreeData.SkillTreeData data in Refs_Manager.player_treedata.specialisedSkillTrees)
                     {
@@ -215,7 +205,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 else
                 {
                     real_additional.Clear();
-                    previous_real_additional.Clear();
                 }
 
                 if (LevelOn()) { ApplyLevels(); }
@@ -223,50 +212,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 writing = false;
             }
             catch { writing = false; }
-            finally { nativeAdditionalRefresh = false; }
-
-            // Only after the FINAL multiplied caps are restored do we allow LE to
-            // evaluate over-investment. This keeps its refund bookkeeping entirely
-            // out of the temporary vanilla/raw-cap phase.
-            if (shouldCleanup)
-            {
-                CleanupOverInvestedTrees();
-            }
-        }
-
-        static void CleanupOverInvestedTrees()
-        {
-            if (!Ready() || !MultiplierOn()) { return; }
-
-            try
-            {
-                if (respecMethod == null)
-                {
-                    respecMethod = AccessTools.Method(typeof(LocalTreeData), "respecNodesFromSkillIfOverInvested");
-                }
-                if (respecMethod == null)
-                {
-                    Main.logger_instance?.Warning("Skill multiplier: respec helper not found");
-                    return;
-                }
-
-                manualRespec = true;
-                foreach (LocalTreeData.SkillTreeData data in Refs_Manager.player_treedata.specialisedSkillTrees)
-                {
-                    if (data == null) { continue; }
-
-                    object[] args = new object[] { data, (byte)0, (byte)0 };
-                    respecMethod.Invoke(Refs_Manager.player_treedata, args);
-                }
-            }
-            catch (System.Exception ex)
-            {
-                Main.logger_instance?.Warning("Skill multiplier cleanup failed: " + ex.Message);
-            }
             finally
             {
-                manualRespec = false;
-                previous_real_additional.Clear();
+                nativeAdditionalRefresh = false;
                 RefreshOpenTree();
             }
         }
@@ -377,18 +325,32 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         public class LocalTreeData_respecNodesFromSkillIfOverInvested
         {
             [HarmonyPrefix]
-            static bool Prefix(ref byte __1, ref byte __2)
+            static void Prefix(LocalTreeData.SkillTreeData __0)
             {
-                // While the outer gear/stat refresh is temporarily using vanilla/raw
-                // +skills caps, do NOT let LE perform any respec/refund bookkeeping.
-                // We run this helper ourselves afterward against the final multiplied cap.
-                if (nativeAdditionalRefresh && MultiplierOn() && !manualRespec)
-                {
-                    __1 = 0;
-                    __2 = 0;
-                    return false;
-                }
-                return true;
+                if (!Ready() || !MultiplierOn() || __0 == null) { return; }
+
+                // This is the boundary that matters: the game's gear calculation has
+                // already written the NEW raw +skills value, but it has not yet decided
+                // whether the tree is over-invested. Convert the tree to its effective
+                // multiplied capacity BEFORE vanilla respec logic sees it.
+                //
+                // Example at x2:
+                //   level 10, +0  -> effective cap 20
+                //   level 10, +2  -> effective cap 24
+                //   remove +2     -> new effective cap 20
+                //
+                // Vanilla now performs its normal over-cap removal against 20/24/etc.
+                string key = Key(__0);
+                if (key == null) { return; }
+
+                byte rawAdditional = __0.additionalMaxPointsFromStats;
+                real_additional[key] = rawAdditional;
+
+                int rawLevel = SpecialisedAbilityManager.getAbilityLevel(__0.abilityXp);
+                int effectiveLevel = LevelOn() ? ChosenLevel() : rawLevel;
+                __0.level = (byte)System.Math.Min(byte.MaxValue, effectiveLevel);
+
+                __0.additionalMaxPointsFromStats = BonusAdditional(effectiveLevel, rawAdditional);
             }
         }
 
@@ -405,7 +367,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             static void Postfix()
             {
                 OnAdditionalPointsUpdated();
-                if (!MultiplierOn()) { RefreshOpenTree(); }
             }
         }
 
