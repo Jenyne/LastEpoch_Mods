@@ -90,11 +90,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Minimap
             return result;
         }
         
-        [HarmonyPatch(typeof(GroundItemVisuals), "initialise", new System.Type[] { typeof(ItemDataUnpacked), typeof(uint), typeof(GroundItemLabel), typeof(bool) })]
+        [HarmonyPatch(typeof(GroundItemVisuals), "initialise", new System.Type[] { typeof(ItemDataUnpacked), typeof(uint), typeof(GroundItemLabel), typeof(GroundItemRarityVisualsV2), typeof(bool) })]
         public class GroundItemVisuals_initialise
         {
             [HarmonyPostfix]
-            static void Postfix(ref GroundItemVisuals __instance, ItemDataUnpacked __0, uint __1) //, GroundItemLabel __2, bool __3)
+            static void Postfix(ref GroundItemVisuals __instance, ItemDataUnpacked __0, uint __1)
             {
                 if ((CanRun()) && (!DMMap.Instance.IsNullOrDestroyed()))
                 {
