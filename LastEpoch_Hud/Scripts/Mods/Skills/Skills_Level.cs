@@ -48,6 +48,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         }
 
         static bool writing;
+        static bool nativeAdditionalRefresh;
         static readonly Dictionary<string, byte> real_additional = new Dictionary<string, byte>();
 
         public static void Sync()
@@ -143,28 +144,50 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
 
         static void OnAdditionalPointsUpdating()
         {
-            if (writing || !Ready() || !LevelOn()) { return; }
+            if (writing || !Ready()) { return; }
             try
             {
-                // The game's stat refresh validates/respecs skill trees using the stored
-                // SkillTreeData.level value. Feeding the synthetic override (for example
-                // 255) into that validation can put respecNodesFromSkillIfOverInvested()
-                // into an invalid tree state. Temporarily restore the real XP-derived
-                // levels for the native calculation; the postfix reapplies the override.
+                nativeAdditionalRefresh = true;
                 writing = true;
+
                 foreach (LocalTreeData.SkillTreeData data in Refs_Manager.player_treedata.specialisedSkillTrees)
                 {
                     if (data == null) { continue; }
-                    data.level = SpecialisedAbilityManager.getAbilityLevel(data.abilityXp);
+
+                    // Native skill-stat refresh must see the real XP-derived level.
+                    if (LevelOn())
+                    {
+                        data.level = SpecialisedAbilityManager.getAbilityLevel(data.abilityXp);
+                    }
+
+                    // Likewise, never feed our multiplied point allowance back into the
+                    // game's own over-investment/respec validation.
+                    if (MultiplierOn())
+                    {
+                        string key = Key(data);
+                        if (key != null && real_additional.ContainsKey(key))
+                        {
+                            data.additionalMaxPointsFromStats = real_additional[key];
+                        }
+                    }
                 }
+
                 writing = false;
             }
-            catch { writing = false; }
+            catch
+            {
+                writing = false;
+                nativeAdditionalRefresh = false;
+            }
         }
 
         static void OnAdditionalPointsUpdated()
         {
-            if (writing || !Ready()) { return; }
+            if (writing || !Ready())
+            {
+                nativeAdditionalRefresh = false;
+                return;
+            }
             real_additional.Clear();
             try
             {
@@ -174,6 +197,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 writing = false;
             }
             catch { writing = false; }
+            finally { nativeAdditionalRefresh = false; }
         }
 
         static void RefreshOpenTree()
@@ -233,7 +257,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                             writing = false;
                         }
                         __result = real;
-                        if (MultiplierOn())
+                        if (MultiplierOn() && !nativeAdditionalRefresh)
                         {
                             writing = true;
                             ApplyPointBonus();
