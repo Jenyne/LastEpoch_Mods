@@ -1526,7 +1526,7 @@ namespace LastEpoch_Hud.Scripts
                 Content.Skills.Set_Active(false);
                 Content.OdlForceDrop.Set_Active(false);
                 Content.Headhunter.Set_Active(false);
-                Content.Character.Toggle_Active();          
+                Content.Character.Set_Active(true);          
             }
 
             private static readonly System.Action Items_OnClick_Action = new System.Action(Items_Click);
@@ -1537,7 +1537,7 @@ namespace LastEpoch_Hud.Scripts
                 Content.Skills.Set_Active(false);
                 Content.OdlForceDrop.Set_Active(false);
                 Content.Headhunter.Set_Active(false);
-                Content.Items.Toggle_Active();
+                Content.Items.Set_Active(true);
             }
 
             private static readonly System.Action Scenes_OnClick_Action = new System.Action(Scenes_Click);
@@ -1548,7 +1548,7 @@ namespace LastEpoch_Hud.Scripts
                 Content.Skills.Set_Active(false);
                 Content.OdlForceDrop.Set_Active(false);
                 Content.Headhunter.Set_Active(false);
-                Content.Scenes.Toggle_Active();
+                Content.Scenes.Set_Active(true);
             }
 
             private static readonly System.Action Skills_OnClick_Action = new System.Action(Skills_Click);
@@ -1559,7 +1559,7 @@ namespace LastEpoch_Hud.Scripts
                 Content.Scenes.Set_Active(false);
                 Content.OdlForceDrop.Set_Active(false);
                 Content.Headhunter.Set_Active(false);
-                Content.Skills.Toggle_Active();
+                Content.Skills.Set_Active(true);
             }
 
             private static readonly System.Action OldForceDrop_OnClick_Action = new System.Action(OldForceDrop_Click);
@@ -1570,7 +1570,7 @@ namespace LastEpoch_Hud.Scripts
                 Content.Scenes.Set_Active(false);
                 Content.Skills.Set_Active(false);
                 Content.Headhunter.Set_Active(false);
-                Content.OdlForceDrop.Toggle_Active();
+                Content.OdlForceDrop.Set_Active(true);
             }
 
             private static readonly System.Action Headhunter_OnClick_Action = new System.Action(Headhunter_Click);
@@ -1581,7 +1581,7 @@ namespace LastEpoch_Hud.Scripts
                 Content.Scenes.Set_Active(false);
                 Content.Skills.Set_Active(false);
                 Content.OdlForceDrop.Set_Active(false);
-                Content.Headhunter.Toggle_Active();
+                Content.Headhunter.Set_Active(true);
             }
         }                
         public class Content
