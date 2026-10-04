@@ -67,7 +67,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                         {
                             if (name.Contains("/headhunter/"))
                             {
-                                if ((Functions.Check_Texture(name)) && (name.Contains("icon")) && (Unique.Icon.IsNullOrDestroyed()))
+                                if ((Functions.Check_Texture(name)) &&
+                                    (name.Replace("\\", "/").ToLowerInvariant().EndsWith("/headhunter/texture2d/icon.png")) &&
+                                    (Unique.Icon.IsNullOrDestroyed()))
                                 {
                                     Texture2D texture = Hud_Manager.asset_bundle.LoadAsset(name).TryCast<Texture2D>();
                                     Unique.Icon = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
@@ -92,7 +94,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         {
             public static bool AddedToBasicList = false;
             public static readonly byte base_type = 2; //Belt
-            public static readonly int base_id = 13;
+            public static int base_id = -1;
             public static ItemList.EquipmentItem Item()
             {
                 ItemList.EquipmentItem item = new ItemList.EquipmentItem
@@ -114,8 +116,20 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             {
                 if ((!AddedToBasicList) && (!Refs_Manager.item_list.IsNullOrDestroyed()))
                 {
-                    Refs_Manager.item_list.EquippableItems[base_type].subItems.Add(Item());
-                    AddedToBasicList = true;
+                    try
+                    {
+                        var subItems = Refs_Manager.item_list.EquippableItems[base_type].subItems;
+                        base_id = subItems.Count;
+                        if (base_id < 0 || base_id > byte.MaxValue)
+                        {
+                            Main.logger_instance?.Error("Headhunter Basic List Error : no free subtype id");
+                            return;
+                        }
+
+                        subItems.Add(Item());
+                        AddedToBasicList = true;
+                    }
+                    catch { Main.logger_instance?.Error("Headhunter Basic List Error"); }
                 }
             }
             public static string Get_Subtype_Name()
@@ -386,21 +400,36 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 [HarmonyPostfix]
                 static void Postfix(ref Il2Cpp.InventoryItemUI __instance)
                 {
-                    if ((__instance.EntryRef.data.getAsUnpacked().FullName == Get_Unique_Name()) && (!Icon.IsNullOrDestroyed()))
+                    if ((__instance.EntryRef.data.getAsUnpacked().FullName == Get_Unique_Name()) && (!Icon.IsNullOrDestroyed()) &&
+                        !__instance.contentImage.IsNullOrDestroyed())
                     {
                         __instance.contentImage.sprite = Icon;
                     }
                 }
             }
 
-            public class UITooltipItem_GetItemSprite
+            [HarmonyPatch(typeof(UITooltipItem), "SetItemImage", new System.Type[] {
+                typeof(ItemDataUnpacked), typeof(UITooltipItem.ItemTooltipInfo), typeof(bool) })]
+            public class UITooltipItem_SetItemImage
             {
                 [HarmonyPostfix]
-                static void Postfix(ref UnityEngine.Sprite __result, ItemData __0)
+                static void Postfix(UITooltipItem __instance, ItemDataUnpacked __0, bool __2)
                 {
-                    if ((__0.getAsUnpacked().FullName == Get_Unique_Name()) && (!Icon.IsNullOrDestroyed()))
+                    if (__instance.IsNullOrDestroyed() || __0.IsNullOrDestroyed() ||
+                        __0.FullName != Get_Unique_Name() || Icon.IsNullOrDestroyed()) { return; }
+
+                    var images = __2
+                        ? new[] { __instance.compareItemImage, __instance.compareSmallItemImage,
+                            __instance.compareMediumItemImage, __instance.compareLargeItemImage,
+                            __instance.compareSpearItemImage, __instance.compareWideItemImage }
+                        : new[] { __instance.itemImage, __instance.smallItemImage,
+                            __instance.mediumItemImage, __instance.tallMediumItemImage,
+                            __instance.largeItemImage, __instance.spearItemImage, __instance.wideItemImage };
+
+                    foreach (var image in images)
                     {
-                        __result = Icon;
+                        if (image.IsNullOrDestroyed()) { continue; }
+                        image.sprite = Icon;
                     }
                 }
             }
