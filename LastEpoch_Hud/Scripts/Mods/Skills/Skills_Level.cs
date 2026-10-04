@@ -52,6 +52,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
         static bool effectiveRespec;
         static readonly Dictionary<string, byte> real_additional = new Dictionary<string, byte>();
         static readonly Dictionary<string, byte> respec_raw_additional = new Dictionary<string, byte>();
+        static SkillsPanelManager activeSkillsPanel;
+        static SkillTree activeSkillTree;
+        static bool refreshingTreeUi;
 
         public static void Sync()
         {
@@ -235,26 +238,35 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
 
         static void RefreshOpenTree()
         {
+            if (refreshingTreeUi) { return; }
+
             try
             {
-                // Refresh panel-level totals/available-points first.
+                // Re-run the same LE path used when the player switches away from a
+                // specialization and opens it again. Simple updateVisuals()/updateText()
+                // calls do not rebuild the active tree's cached allocation state.
+                if (!activeSkillsPanel.IsNullOrDestroyed() && !activeSkillTree.IsNullOrDestroyed())
+                {
+                    var reopen = AccessTools.Method(typeof(SkillsPanelManager), "OnOpenSkillTree");
+                    if (reopen != null)
+                    {
+                        refreshingTreeUi = true;
+                        reopen.Invoke(activeSkillsPanel, new object[] { activeSkillTree });
+                        activeSkillsPanel.updateVisuals(false);
+                        refreshingTreeUi = false;
+                        return;
+                    }
+                }
+
+                // Fallback when no active specialization has been cached yet.
                 foreach (SkillsPanelManager panel in Object.FindObjectsOfType<SkillsPanelManager>())
                 {
                     if (!panel.IsNullOrDestroyed()) { panel.updateVisuals(false); }
                 }
-
-                // SkillTreeNode caches its own displayed rank. Gear-driven respecs can
-                // update LocalTreeData while the currently open node widgets remain
-                // visually stale until another specialization is opened. Refresh the
-                // active node widgets in place so the tree updates immediately.
-                foreach (SkillTreeNode node in Object.FindObjectsOfType<SkillTreeNode>())
-                {
-                    if (node.IsNullOrDestroyed()) { continue; }
-                    node.updateText();
-                }
             }
             catch (System.Exception ex)
             {
+                refreshingTreeUi = false;
                 Main.logger_instance?.Warning("Skill tree UI refresh failed: " + ex.Message);
             }
         }
@@ -268,6 +280,14 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 try
                 {
                     if (__0.IsNullOrDestroyed()) { return; }
+
+                    activeSkillsPanel = __instance;
+                    activeSkillTree = __0;
+
+                    // RefreshOpenTree deliberately re-enters OnOpenSkillTree to force LE
+                    // to rebuild the active specialization. Do not recursively Sync().
+                    if (refreshingTreeUi) { return; }
+
                     Sync();
                     if (!__instance.IsNullOrDestroyed()) { __instance.updateVisuals(false); }
                 }
