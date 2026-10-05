@@ -6975,7 +6975,9 @@ public static void SetShardsView(int affix_number, bool seal)
                                     affixName = affix.affixName,
                                     affixTitle = affix.affixTitle,
                                     affixType = affix.type,
-                                    //isSealedAffix = seal,
+                                    specialAffixType = affix.specialAffixType,
+                                    titleType = affix.titleType,
+                                    sealedAffixType = seal ? Il2Cpp.SealedAffixType.Regular : Il2Cpp.SealedAffixType.None,
                                     affixTier = tier,
                                     affixRoll = roll
                                 };
@@ -6995,7 +6997,9 @@ public static void SetShardsView(int affix_number, bool seal)
                                         affixName = affix.affixName,
                                         affixTitle = affix.affixTitle,
                                         affixType = affix.type,
-                                        //isSealedAffix = seal,
+                                        specialAffixType = affix.specialAffixType,
+                                    titleType = affix.titleType,
+                                    sealedAffixType = seal ? Il2Cpp.SealedAffixType.Regular : Il2Cpp.SealedAffixType.None,
                                         affixTier = tier,
                                         affixRoll = roll
                                     };

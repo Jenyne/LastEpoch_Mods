@@ -40,36 +40,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 if (field != null && !field.IsInitOnly && field.FieldType == typeof(bool)) { storage = field; flagStorage = true; return; }
             }
         }
-        static bool HasCorruptionMarker(object definition)
-        {
-            if (definition == null) return false;
-            foreach (var member in definition.GetType().GetMembers(BindingFlags.Public | BindingFlags.Instance))
-            {
-                if (member.Name.IndexOf("corrupt", StringComparison.OrdinalIgnoreCase) < 0 &&
-                    member.Name.IndexOf("special", StringComparison.OrdinalIgnoreCase) < 0) continue;
-                try
-                {
-                    object value = null;
-                    if (member is PropertyInfo p && p.CanRead && p.GetIndexParameters().Length == 0) value = p.GetValue(definition);
-                    else if (member is FieldInfo f) value = f.GetValue(definition);
-                    if (value is bool flag && flag && member.Name.IndexOf("corrupt", StringComparison.OrdinalIgnoreCase) >= 0) return true;
-                    if (value != null && value.GetType().IsEnum &&
-                        value.ToString().IndexOf("corrupt", StringComparison.OrdinalIgnoreCase) >= 0) return true;
-                }
-                catch { }
-            }
-            return false;
-        }
         public static bool IsCorruption(AffixList.Affix affix)
         {
-            if (affix.IsNullOrDestroyed()) return false;
-            // Corruption can retain PREFIX/SUFFIX type. Its special classification is
-            // separate; SPECIAL alone is not proof that a modifier is a corruption.
-            if (HasCorruptionMarker(affix)) return true;
-            var single = affix.TryCast<AffixList.SingleAffix>();
-            if (!single.IsNullOrDestroyed() && HasCorruptionMarker(single)) return true;
-            var multi = affix.TryCast<AffixList.MultiAffix>();
-            return !multi.IsNullOrDestroyed() && HasCorruptionMarker(multi);
+            return !affix.IsNullOrDestroyed() &&
+                affix.specialAffixType == AffixList.SpecialAffixType.Corrupted;
         }
         public static bool FitsItem(AffixList.Affix definition, int baseType, int subType)
         {
@@ -139,11 +113,13 @@ namespace LastEpoch_Hud.Scripts.ModUI
             var affix = new ItemAffix
             {
                 affixId = (ushort)id, affixName = definition.affixName, affixTitle = definition.affixTitle,
-                affixType = definition.type, affixTier = (byte)Math.Max(0, Math.Min(6, tier)), affixRoll = (byte)Math.Max(0, Math.Min(255, roll))
+                affixType = definition.type, specialAffixType = definition.specialAffixType,
+                titleType = definition.titleType, sealedAffixType = Il2Cpp.SealedAffixType.FromCorruption,
+                affixTier = (byte)Math.Max(0, Math.Min(6, tier)), affixRoll = (byte)Math.Max(0, Math.Min(255, roll))
             };
             if (flagStorage)
             {
-                item.affixes.Insert(item.hasSealedRegularAffix ? 1 : 0, affix);
+                item.affixes.Insert((item.hasSealedRegularAffix ? 1 : 0) + (item.hasSealedPrimordialAffix ? 1 : 0), affix);
                 item.sockets = (byte)item.affixes.Count;
                 if (storage is PropertyInfo flag) flag.SetValue(item, true);
                 else ((FieldInfo)storage).SetValue(item, true);
