@@ -23,10 +23,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
             }
             try
             {
-                // A command, not a persistent cheat mode. Use the game's native
-                // respec UI and SwapBlessing/save path instead of editing packed bytes.
+                // Open normally: entering respec immediately submits through the
+                // controller navigator before it has a selected blessing.
+                // The native panel handles selecting, changing and saving blessings.
                 Hud_Manager.Hud_Base.Resume_Click();
-                Refs_Manager.InventoryPanelUI.OpenBlessingPanel(true, true);
+                Refs_Manager.InventoryPanelUI.OpenBlessingPanel(true, false);
             }
             catch (System.Exception ex)
             {
