@@ -26,11 +26,14 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static Font font;
         static Text preview, status, pickerTitle;
         static Button typeButton, rarityButton, dropButton, corruptButton, corruptionSelect, pickerPrevious, pickerNext;
-        static int corruptionId = -1, rageId = -1;
+        static int corruptionId = -1;
+        static readonly int[] variantIds = { -1, -1 };
+        static readonly string[] variantNames = { "Choose modifier 1", "Choose modifier 2" };
+        static readonly Button[] variantSelect = new Button[2];
+        static Text variantHeader, variantDescription;
         static ushort rageUniqueId;
         static int rageMetadataId = -1;
-        static string rageName = "Choose Rage";
-        static Button rageSelect;
+
         static string corruptionName = "None";
         static Number corruptionTier, corruptionRoll;
         static readonly List<Button> itemButtons = new List<Button>();
@@ -104,7 +107,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
             ww.group.SetActive(FD.item_rarity > 6 && FD.item_legendary_type != UniqueList.LegendaryType.LegendaryPotential);
             uniquePage.SetActive(FD.item_rarity > 6);
             var rageEntry = SelectedRageEntry();
-            bool showRage = UniqueVariantAdapter.IsUnsated(rageEntry);
+            int variantCount = UniqueVariantAdapter.VariantCount(rageEntry);
+            bool showRage = variantCount > 0;
             if (rageUniqueId != FD.item_unique_id)
             {
                 ResetRage(); rageUniqueId = (ushort)FD.item_unique_id;
@@ -113,7 +117,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             if (showRage && rageMetadataId != FD.item_unique_id)
             {
                 rageMetadataId = FD.item_unique_id;
-                Main.logger_instance.Msg("Unsated Rage native pool: unique=" + rageEntry.uniqueID +
+                Main.logger_instance.Msg("Unique variant native pool: unique=" + rageEntry.uniqueID +
                     ", specific=" + rageEntry.dropsSpecificLegendaryAffixes +
                     ", count=" + rageEntry.droppableLegendaryAffixCount +
                     ", excludesSlotLimits=" + rageEntry.excludeSpecificAffixesFromPrefixSuffixLimits +
@@ -122,9 +126,22 @@ namespace LastEpoch_Hud.Scripts.ModUI
                     ", resolved=" + UniqueVariantAdapter.Catalog(rageEntry).Count);
             }
             // Keep the exclusive modifier next to the item preview and outside the affix grid.
-            rageSelect.interactable = UniqueVariantAdapter.HasSingleVariant(rageEntry);
-            Caption(rageSelect, rageSelect.interactable ? rageName : "Rage pool unavailable");
-            Rect(preview.gameObject, .04f, showRage ? .47f : .28f, .96f, .90f);
+            bool twoVariants = variantCount == 2;
+            Rect(ragePage, .04f, .28f, .96f, twoVariants ? .54f : .45f);
+            LocaleRegistry.Apply(variantHeader, twoVariants ? "Exclusive glove modifiers" : "Unsated Rage modifier");
+            LocaleRegistry.Apply(variantDescription, twoVariants ?
+                "Two exclusive modifiers · separate from LP" : "Exclusive ring modifier · separate from LP");
+            Rect(variantHeader.gameObject, .03f, twoVariants ? .78f : .72f, .97f, .97f);
+            Rect(variantDescription.gameObject, .03f, .02f, .97f, twoVariants ? .22f : .25f);
+            for (int slot = 0; slot < variantSelect.Length; slot++)
+            {
+                variantSelect[slot].gameObject.SetActive(slot < variantCount);
+                variantSelect[slot].interactable = UniqueVariantAdapter.HasVariants(rageEntry);
+                Caption(variantSelect[slot], variantSelect[slot].interactable ?
+                    variantNames[slot] : "Unique modifier pool unavailable");
+            }
+            Rect(variantSelect[0].gameObject, .03f, twoVariants ? .51f : .29f, .97f, twoVariants ? .75f : .69f);
+            Rect(preview.gameObject, .04f, showRage ? (twoVariants ? .56f : .47f) : .28f, .96f, .90f);
             if (Time.unscaledTime >= nextCorruptionCheck)
             {
                 nextCorruptionCheck = Time.unscaledTime + 2f;
@@ -201,10 +218,12 @@ namespace LastEpoch_Hud.Scripts.ModUI
             ww = NumericGrid(uniquePage, "Weaver's Will", 1, 2, 0, 28, 0, false, 3);
             for (int i = 0; i < 8; i++)
                 uniqueRolls[i] = NumericGrid(uniquePage, "Roll " + (i + 1), i % 4, i < 4 ? 1 : 0, 0, 100, 100, true, 3, 4);
-            ragePage = Panel(right, "Unsated Rage variant", .04f, .28f, .96f, .45f);
-            Label(ragePage, "Unsated Rage modifier", .03f, .72f, .97f, .96f, 15);
-            rageSelect = Button(ragePage, "Choose Rage", .03f, .29f, .97f, .69f, RagePicker);
-            Label(ragePage, "Exclusive ring modifier · separate from LP", .03f, .04f, .97f, .25f, 11);
+            ragePage = Panel(right, "Unique variants", .04f, .28f, .96f, .45f);
+            variantHeader = Label(ragePage, "Unsated Rage modifier", .03f, .72f, .97f, .96f, 15);
+            variantSelect[0] = Button(ragePage, "Choose Rage", .03f, .29f, .97f, .69f, () => RagePicker(0));
+            variantSelect[1] = Button(ragePage, "Choose modifier 2", .03f, .25f, .97f, .49f, () => RagePicker(1));
+            variantSelect[1].gameObject.SetActive(false);
+            variantDescription = Label(ragePage, "Exclusive ring modifier · separate from LP", .03f, .04f, .97f, .25f, 11);
             ragePage.SetActive(false);
             Label(right, "Item preview", .04f, .92f, .96f, .99f, 20);
             preview = Label(right, "Choose an item", .04f, .28f, .96f, .90f, 15);
@@ -278,22 +297,31 @@ namespace LastEpoch_Hud.Scripts.ModUI
         }
         static void ResetRage()
         {
-            rageId = -1; rageName = "Choose Rage";
-            if (!rageSelect.IsNullOrDestroyed()) Caption(rageSelect, rageName);
+            bool ring = UniqueVariantAdapter.IsUnsated(SelectedRageEntry());
+            for (int slot = 0; slot < variantIds.Length; slot++)
+            {
+                variantIds[slot] = -1;
+                variantNames[slot] = ring && slot == 0 ? "Choose Rage" :
+                    slot == 0 ? "Choose modifier 1" : "Choose modifier 2";
+                if (!variantSelect[slot].IsNullOrDestroyed()) Caption(variantSelect[slot], variantNames[slot]);
+            }
         }
-        static void RagePicker()
+        static void RagePicker(int slot)
         {
             choices.Clear();
             foreach (var definition in UniqueVariantAdapter.Catalog(SelectedRageEntry()))
             {
                 int id = definition.affixId;
+                if (variantIds[1 - slot] == id) continue;
                 string name = definition.getAffixDisplayName();
                 if (string.IsNullOrEmpty(name)) name = definition.affixName;
                 choices.Add(new Choice { id = id, name = name, select = () =>
-                { rageId = id; rageName = name; Caption(rageSelect, name); } });
+                { variantIds[slot] = id; variantNames[slot] = name; Caption(variantSelect[slot], name); } });
             }
             choices.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
-            OpenPicker("Unsated Rage — exclusive ring modifier");
+            OpenPicker(UniqueVariantAdapter.IsUnsated(SelectedRageEntry()) ?
+                "Unsated Rage — exclusive ring modifier" :
+                slot == 0 ? "Withstand the Elements — modifier 1" : "Withstand the Elements — modifier 2");
         }
 
         static void CorruptionPicker()
@@ -316,15 +344,23 @@ namespace LastEpoch_Hud.Scripts.ModUI
         public static void ApplySelectedCorruption(ItemDataUnpacked item)
         {
             if (!IsReady) return;
-            if (UniqueVariantAdapter.IsUnsated(SelectedRageEntry()))
-                UniqueVariantAdapter.Apply(item, rageId);
+            if (UniqueVariantAdapter.VariantCount(SelectedRageEntry()) > 0)
+                UniqueVariantAdapter.Apply(item, SelectedVariantIds());
             if (!corrupted || corruptionId < 0) return;
             CorruptedAffixAdapter.Apply(item, corruptionId, corruptionTier.value - 1, Roll(corruptionRoll));
         }
         public static void VerifySelectedCorruption(ItemDataUnpacked item)
         {
-            if (!IsReady || !corrupted || corruptionId < 0) return;
-            CorruptedAffixAdapter.VerifySelection(item, corruptionId, corruptionTier.value - 1, Roll(corruptionRoll));
+            if (!IsReady) return;
+            if (UniqueVariantAdapter.VariantCount(SelectedRageEntry()) > 0)
+                UniqueVariantAdapter.VerifySelection(item, SelectedVariantIds());
+            if (corrupted && corruptionId >= 0)
+                CorruptedAffixAdapter.VerifySelection(item, corruptionId, corruptionTier.value - 1, Roll(corruptionRoll));
+        }
+        static int[] SelectedVariantIds()
+        {
+            return UniqueVariantAdapter.VariantCount(SelectedRageEntry()) == 2 ?
+                new[] { variantIds[0], variantIds[1] } : new[] { variantIds[0] };
         }
         static void CatalogPicker(Dropdown catalog, Action changed, bool skipPlaceholder)
         {
@@ -403,12 +439,18 @@ namespace LastEpoch_Hud.Scripts.ModUI
             foreach (var r in rows) if (r.id >= 0 && !ids.Add(r.id)) return "Each affix must be different, including the sealed affix.";
             if (!ValidSelectedItem()) return "The selected item does not match its category. Choose it again.";
             var rageEntry = SelectedRageEntry();
-            if (UniqueVariantAdapter.IsUnsated(rageEntry))
+            int variantCount = UniqueVariantAdapter.VariantCount(rageEntry);
+            if (variantCount > 0)
             {
-                if (!UniqueVariantAdapter.HasSingleVariant(rageEntry)) return "Unsated Rage fixed-pool data is unavailable.";
-                if (!UniqueVariantAdapter.Catalog(rageEntry).Exists(a => a.affixId == rageId))
-                    return "Choose the ring's exclusive Rage modifier.";
-                if (!ids.Add(rageId)) return "Rage cannot occupy an ordinary affix slot.";
+                if (!UniqueVariantAdapter.HasVariants(rageEntry)) return "Unique modifier pool unavailable";
+                var variantCatalog = UniqueVariantAdapter.Catalog(rageEntry);
+                for (int slot = 0; slot < variantCount; slot++)
+                {
+                    if (!variantCatalog.Exists(a => a.affixId == variantIds[slot]))
+                        return variantCount == 1 ? "Choose the ring's exclusive Rage modifier." :
+                            "Choose both exclusive glove modifiers.";
+                    if (!ids.Add(variantIds[slot])) return "Exclusive unique modifiers must be different and separate from ordinary affixes.";
+                }
             }
             for (int slot = 0; slot < rows.Length; slot++)
             {
@@ -447,7 +489,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 foreach (var r in rows) if (r.id >= 0) s.Append("\n\n").Append(r == rows[4] ? L("Sealed") + ": " : "").Append(r.name).Append("\nT").Append(r.tier.value).Append(" · ").Append((r.roll.random ? L("Random") : r.roll.value.ToString())).Append(" %");
                 if (FD.item_rarity > 6) s.Append("\n\n").Append(FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential ? L("LP") + ": " + (lp.random ? L("Random") : lp.value.ToString()) : L("Weaver's Will") + ": " + (ww.random ? L("Random") : ww.value.ToString()));
             }
-            if (UniqueVariantAdapter.IsUnsated(SelectedRageEntry())) s.Append("\n\n").Append(L("Ring variant")).Append(": ").Append(L(rageName));
+            int variantCount = UniqueVariantAdapter.VariantCount(SelectedRageEntry());
+            for (int slot = 0; slot < variantCount; slot++)
+                s.Append("\n\n").Append(L(variantCount == 1 ? "Ring variant" :
+                    slot == 0 ? "Glove modifier 1" : "Glove modifier 2")).Append(": ").Append(L(variantNames[slot]));
             s.Append("\n\n").Append(L("Corrupted")).Append(": ").Append(corrupted ? L("Yes") : L("No"));
             if (corrupted && corruptionId >= 0) s.Append("\n").Append(corruptionName).Append("\nT").Append(corruptionTier.value).Append(" · ").Append(corruptionRoll.value).Append(" %");
             preview.text = s.ToString();

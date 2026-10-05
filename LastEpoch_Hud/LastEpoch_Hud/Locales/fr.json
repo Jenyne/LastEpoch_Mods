@@ -326,5 +326,16 @@
   "Choose Blessings": "Choisir les bénédictions",
   "Unlock Blessing Slots": "Débloquer les emplacements de bénédiction",
   "Discover All Blessings": "Découvrir toutes les bénédictions",
-  "Max Out Blessings": "Maximiser les bénédictions"
+  "Max Out Blessings": "Maximiser les bénédictions",
+  "Exclusive glove modifiers": "Modificateurs exclusifs des gants",
+  "Two exclusive modifiers · separate from LP": "Deux modificateurs exclusifs · indépendants du PL",
+  "Choose modifier 1": "Choisir le modificateur 1",
+  "Choose modifier 2": "Choisir le modificateur 2",
+  "Unique modifier pool unavailable": "Liste des modificateurs uniques indisponible",
+  "Withstand the Elements — modifier 1": "Withstand the Elements — modificateur 1",
+  "Withstand the Elements — modifier 2": "Withstand the Elements — modificateur 2",
+  "Choose both exclusive glove modifiers.": "Choisissez les deux modificateurs exclusifs des gants.",
+  "Exclusive unique modifiers must be different and separate from ordinary affixes.": "Les modificateurs uniques exclusifs doivent être distincts et séparés des affixes ordinaires.",
+  "Glove modifier 1": "Modificateur de gants 1",
+  "Glove modifier 2": "Modificateur de gants 2"
 }

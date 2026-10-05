@@ -337,5 +337,16 @@
   "Magic": "마법",
   "Rare": "희귀",
   "Reset Difficulty": "난이도 초기화",
-  "Max Out Blessings": "축복 수치 최대화"
+  "Max Out Blessings": "축복 수치 최대화",
+  "Exclusive glove modifiers": "장갑 전용 속성",
+  "Two exclusive modifiers · separate from LP": "전용 속성 2개 · 전설 잠재력과 별개",
+  "Choose modifier 1": "속성 1 선택",
+  "Choose modifier 2": "속성 2 선택",
+  "Unique modifier pool unavailable": "고유 아이템 속성 목록을 사용할 수 없음",
+  "Withstand the Elements — modifier 1": "Withstand the Elements — 속성 1",
+  "Withstand the Elements — modifier 2": "Withstand the Elements — 속성 2",
+  "Choose both exclusive glove modifiers.": "장갑 전용 속성을 두 개 모두 선택하세요.",
+  "Exclusive unique modifiers must be different and separate from ordinary affixes.": "고유 아이템 전용 속성은 서로 달라야 하며 일반 접사와 중복될 수 없습니다.",
+  "Glove modifier 1": "장갑 속성 1",
+  "Glove modifier 2": "장갑 속성 2"
 }

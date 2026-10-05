@@ -337,5 +337,16 @@
   "Choose Blessings": "选择祝福",
   "Unlock Blessing Slots": "解锁祝福槽位",
   "Discover All Blessings": "发现所有祝福",
-  "Max Out Blessings": "最大化祝福数值"
+  "Max Out Blessings": "最大化祝福数值",
+  "Exclusive glove modifiers": "手套专属词缀",
+  "Two exclusive modifiers · separate from LP": "两个专属词缀 · 不占传奇潜能",
+  "Choose modifier 1": "选择词缀 1",
+  "Choose modifier 2": "选择词缀 2",
+  "Unique modifier pool unavailable": "独特物品词缀池不可用",
+  "Withstand the Elements — modifier 1": "Withstand the Elements — 词缀 1",
+  "Withstand the Elements — modifier 2": "Withstand the Elements — 词缀 2",
+  "Choose both exclusive glove modifiers.": "请选择两个手套专属词缀。",
+  "Exclusive unique modifiers must be different and separate from ordinary affixes.": "独特物品专属词缀必须各不相同，且不能与普通词缀重复。",
+  "Glove modifier 1": "手套词缀 1",
+  "Glove modifier 2": "手套词缀 2"
 }
