@@ -3731,8 +3731,10 @@ public partial class Hud_Manager : MonoBehaviour
                     button.name = "Btn_Character_Cheats_UnlockBlessingSlots";
                     unlock_blessing_slots_button = button.GetComponent<Button>();
                     unlock_blessing_slots_button.onClick = new Button.ButtonClickedEvent();
-                    foreach (var label in button.GetComponentsInChildren<Text>(true)) label.text = "Unlock Blessing Slots";
-                    foreach (var label in button.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)) label.text = "Unlock Blessing Slots";
+                    foreach (var label in button.GetComponentsInChildren<Text>(true)) ModUI.LocaleRegistry.Apply(label, "Unlock Blessing Slots");
+                    foreach (var label in button.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)) ModUI.LocaleRegistry.Apply(label, "Unlock Blessing Slots");
+                    foreach (var label in original.GetComponentsInChildren<Text>(true)) ModUI.LocaleRegistry.Apply(label, "Discover All Blessings");
+                    foreach (var label in original.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)) ModUI.LocaleRegistry.Apply(label, "Discover All Blessings");
                     original.transform.SetParent(row.transform, false);
                     rect.anchorMin = Vector2.zero; rect.anchorMax = new Vector2(.49f, 1f);
                     rect.offsetMin = rect.offsetMax = Vector2.zero;
@@ -3776,9 +3778,9 @@ public partial class Hud_Manager : MonoBehaviour
                         choose_blessings_button = replacement.GetComponent<Button>();
                         choose_blessings_button.onClick = new Button.ButtonClickedEvent();
                         foreach (var label in replacement.GetComponentsInChildren<Text>(true))
-                            label.text = "Choose Blessings";
+                            ModUI.LocaleRegistry.Apply(label, "Choose Blessings");
                         foreach (var label in replacement.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
-                            label.text = "Choose Blessings";
+                            ModUI.LocaleRegistry.Apply(label, "Choose Blessings");
                         replacement.SetActive(true);
                     }
                     oldRow.SetActive(false);

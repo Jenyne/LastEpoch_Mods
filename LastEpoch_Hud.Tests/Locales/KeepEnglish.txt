@@ -21,3 +21,5 @@ fr:Affixes
 fr:Zoom Minimum
 fr:Angle Minimum
 fr:Angle Maximum
+
+fr:Runes

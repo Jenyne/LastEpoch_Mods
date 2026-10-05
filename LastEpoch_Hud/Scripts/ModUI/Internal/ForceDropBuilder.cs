@@ -17,7 +17,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static readonly Color gold = new Color(0.96f, 0.81f, 0.48f);
         static readonly Color dark = new Color(0.10f, 0.12f, 0.15f);
         static readonly Dictionary<int, Action> clicks = new Dictionary<int, Action>();
-        static GameObject root, basePage, affixPage, uniquePage, picker;
+        static GameObject root, basePage, affixPage, uniquePage, ragePage, picker;
         static TMP_InputField template, search, pickerSearch;
         static bool categoryPicker, rarityPicker;
         static readonly List<Choice> visiblePicks = new List<Choice>();
@@ -26,7 +26,11 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static Font font;
         static Text preview, status, pickerTitle;
         static Button typeButton, rarityButton, dropButton, corruptButton, corruptionSelect, pickerPrevious, pickerNext;
-        static int corruptionId = -1;
+        static int corruptionId = -1, rageId = -1;
+        static ushort rageUniqueId;
+        static int rageMetadataId = -1;
+        static string rageName = "Choose Rage";
+        static Button rageSelect;
         static string corruptionName = "None";
         static Number corruptionTier, corruptionRoll;
         static readonly List<Button> itemButtons = new List<Button>();
@@ -99,6 +103,28 @@ namespace LastEpoch_Hud.Scripts.ModUI
             lp.group.SetActive(FD.item_rarity > 6 && FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential);
             ww.group.SetActive(FD.item_rarity > 6 && FD.item_legendary_type != UniqueList.LegendaryType.LegendaryPotential);
             uniquePage.SetActive(FD.item_rarity > 6);
+            var rageEntry = SelectedRageEntry();
+            bool showRage = UniqueVariantAdapter.IsUnsated(rageEntry);
+            if (rageUniqueId != FD.item_unique_id)
+            {
+                ResetRage(); rageUniqueId = (ushort)FD.item_unique_id;
+            }
+            ragePage.SetActive(showRage);
+            if (showRage && rageMetadataId != FD.item_unique_id)
+            {
+                rageMetadataId = FD.item_unique_id;
+                Main.logger_instance.Msg("Unsated Rage native pool: unique=" + rageEntry.uniqueID +
+                    ", specific=" + rageEntry.dropsSpecificLegendaryAffixes +
+                    ", count=" + rageEntry.droppableLegendaryAffixCount +
+                    ", excludesSlotLimits=" + rageEntry.excludeSpecificAffixesFromPrefixSuffixLimits +
+                    ", pool=" + (rageEntry.droppableLegendaryAffixes.IsNullOrDestroyed() ? "null" :
+                        rageEntry.droppableLegendaryAffixes.Count.ToString()) +
+                    ", resolved=" + UniqueVariantAdapter.Catalog(rageEntry).Count);
+            }
+            // Keep the exclusive modifier next to the item preview and outside the affix grid.
+            rageSelect.interactable = UniqueVariantAdapter.HasSingleVariant(rageEntry);
+            Caption(rageSelect, rageSelect.interactable ? rageName : "Rage pool unavailable");
+            Rect(preview.gameObject, .04f, showRage ? .47f : .28f, .96f, .90f);
             if (Time.unscaledTime >= nextCorruptionCheck)
             {
                 nextCorruptionCheck = Time.unscaledTime + 2f;
@@ -175,6 +201,11 @@ namespace LastEpoch_Hud.Scripts.ModUI
             ww = NumericGrid(uniquePage, "Weaver's Will", 1, 2, 0, 28, 0, false, 3);
             for (int i = 0; i < 8; i++)
                 uniqueRolls[i] = NumericGrid(uniquePage, "Roll " + (i + 1), i % 4, i < 4 ? 1 : 0, 0, 100, 100, true, 3, 4);
+            ragePage = Panel(right, "Unsated Rage variant", .04f, .28f, .96f, .45f);
+            Label(ragePage, "Unsated Rage modifier", .03f, .72f, .97f, .96f, 15);
+            rageSelect = Button(ragePage, "Choose Rage", .03f, .29f, .97f, .69f, RagePicker);
+            Label(ragePage, "Exclusive ring modifier · separate from LP", .03f, .04f, .97f, .25f, 11);
+            ragePage.SetActive(false);
             Label(right, "Item preview", .04f, .92f, .96f, .99f, 20);
             preview = Label(right, "Choose an item", .04f, .28f, .96f, .90f, 15);
             quantity = Numeric(right, "Quantity", .20f, 1, 99, 1, false, false);
@@ -208,7 +239,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             corrupted = false; corruptionId = -1; corruptionName = "None"; Caption(corruptButton, "Corrupted: No");
             quantity.value = 1; quantity.input.SetTextWithoutNotify("1");
             lp.value = ww.value = 0; lp.input.SetTextWithoutNotify("0"); ww.input.SetTextWithoutNotify("0");
-            Preset(true); result = "";
+            ResetRage(); Preset(true); result = "";
         }
 
         static void RefreshItems()
@@ -233,13 +264,38 @@ namespace LastEpoch_Hud.Scripts.ModUI
         {
             int i = itemPage * 12 + slot;
             if (i >= itemIndexes.Count) return;
-            FD.items_dropdown.SetValueWithoutNotify(itemIndexes[i]); FD.SelectItem();
+            FD.items_dropdown.SetValueWithoutNotify(itemIndexes[i]); FD.SelectItem(); ResetRage();
             RefreshItems();
             foreach (var row in rows) { row.id = -1; row.name = "None"; Caption(row.select, "None"); }
             corruptionId = -1; corruptionName = "None";
             Caption(corruptionSelect, CorruptedAffixAdapter.IsSupported ? "Corrupted affix: None" : "Corrupted affix API unavailable");
             result = "";
         }
+        static UniqueList.Entry SelectedRageEntry()
+        {
+            if (FD.item_rarity < 7 || FD.items_dropdown.value <= 0 || UniqueList.instance.IsNullOrDestroyed()) return null;
+            return UniqueList.getUnique((ushort)FD.item_unique_id);
+        }
+        static void ResetRage()
+        {
+            rageId = -1; rageName = "Choose Rage";
+            if (!rageSelect.IsNullOrDestroyed()) Caption(rageSelect, rageName);
+        }
+        static void RagePicker()
+        {
+            choices.Clear();
+            foreach (var definition in UniqueVariantAdapter.Catalog(SelectedRageEntry()))
+            {
+                int id = definition.affixId;
+                string name = definition.getAffixDisplayName();
+                if (string.IsNullOrEmpty(name)) name = definition.affixName;
+                choices.Add(new Choice { id = id, name = name, select = () =>
+                { rageId = id; rageName = name; Caption(rageSelect, name); } });
+            }
+            choices.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
+            OpenPicker("Unsated Rage — exclusive ring modifier");
+        }
+
         static void CorruptionPicker()
         {
             choices.Clear();
@@ -259,7 +315,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
         }
         public static void ApplySelectedCorruption(ItemDataUnpacked item)
         {
-            if (!IsReady || !corrupted || corruptionId < 0) return;
+            if (!IsReady) return;
+            if (UniqueVariantAdapter.IsUnsated(SelectedRageEntry()))
+                UniqueVariantAdapter.Apply(item, rageId);
+            if (!corrupted || corruptionId < 0) return;
             CorruptedAffixAdapter.Apply(item, corruptionId, corruptionTier.value - 1, Roll(corruptionRoll));
         }
         static void CatalogPicker(Dropdown catalog, Action changed, bool skipPlaceholder)
@@ -272,7 +331,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 if (catalog == FD.type_dropdown && label.IndexOf("blessing", StringComparison.OrdinalIgnoreCase) >= 0) continue;
                 string display = catalog == FD.type_dropdown ? CategoryLabel(label) : label;
                 int index = i;
-                choices.Add(new Choice { group = CategoryGroup(label), name = display, select = () => { catalog.SetValueWithoutNotify(index); changed(); foreach (var r in rows) { r.id = -1; r.name = "None"; Caption(r.select, "None"); } corruptionId = -1; corruptionName = "None"; lastItems = ""; } });
+                choices.Add(new Choice { group = CategoryGroup(label), name = display, select = () => { catalog.SetValueWithoutNotify(index); changed(); ResetRage(); foreach (var r in rows) { r.id = -1; r.name = "None"; Caption(r.select, "None"); } corruptionId = -1; corruptionName = "None"; lastItems = ""; } });
             }
             OpenPicker(catalog == FD.type_dropdown ? "Category" : "Rarity");
             categoryPicker = catalog == FD.type_dropdown; rarityPicker = !categoryPicker; RefreshPicker();
@@ -290,7 +349,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
         }
         static void AddAffixChoice(AffixList.Affix a, int slot)
         {
-            if (a.IsNullOrDestroyed() || CorruptedAffixAdapter.IsCorruption(a) || FD.item_type < 0 || FD.item_subtype < 0) return;
+            if (a.IsNullOrDestroyed() || CorruptedAffixAdapter.IsCorruption(a) || UniqueVariantAdapter.IsVariant(a) || FD.item_type < 0 || FD.item_subtype < 0) return;
             if (a.type != AffixList.AffixType.PREFIX && a.type != AffixList.AffixType.SUFFIX) return;
             if (slot < 4 && a.type != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX)) return;
             if (!CorruptedAffixAdapter.FitsItem(a, FD.item_type, FD.item_subtype)) return;
@@ -338,12 +397,20 @@ namespace LastEpoch_Hud.Scripts.ModUI
             var ids = new HashSet<int>();
             foreach (var r in rows) if (r.id >= 0 && !ids.Add(r.id)) return "Each affix must be different, including the sealed affix.";
             if (!ValidSelectedItem()) return "The selected item does not match its category. Choose it again.";
+            var rageEntry = SelectedRageEntry();
+            if (UniqueVariantAdapter.IsUnsated(rageEntry))
+            {
+                if (!UniqueVariantAdapter.HasSingleVariant(rageEntry)) return "Unsated Rage fixed-pool data is unavailable.";
+                if (!UniqueVariantAdapter.Catalog(rageEntry).Exists(a => a.affixId == rageId))
+                    return "Choose the ring's exclusive Rage modifier.";
+                if (!ids.Add(rageId)) return "Rage cannot occupy an ordinary affix slot.";
+            }
             for (int slot = 0; slot < rows.Length; slot++)
             {
                 var row = rows[slot];
                 if (row.id < 0) continue;
                 var definition = FindAffix(row.id);
-                if (definition.IsNullOrDestroyed() || CorruptedAffixAdapter.IsCorruption(definition))
+                if (definition.IsNullOrDestroyed() || CorruptedAffixAdapter.IsCorruption(definition) || UniqueVariantAdapter.IsVariant(definition))
                     return "Choose a regular affix for " + (slot == 4 ? "Sealed" : slot < 2 ? "Prefix" : "Suffix") + ".";
                 if (definition.type != AffixList.AffixType.PREFIX && definition.type != AffixList.AffixType.SUFFIX)
                     return "Special modifiers belong in the Corruption row.";
@@ -367,18 +434,19 @@ namespace LastEpoch_Hud.Scripts.ModUI
         }
         static void RefreshPreview()
         {
-            var s = new StringBuilder(Selected(FD.items_dropdown, "Choose an item"));
-            s.Append("\n\n").Append(Selected(FD.type_dropdown, "")).Append("\n").Append(Selected(FD.rarity_dropdown, ""));
+            var s = new StringBuilder(Selected(FD.items_dropdown, L("Choose an item")));
+            s.Append("\n\n").Append(L(CategoryLabel(Selected(FD.type_dropdown, "")))).Append("\n").Append(L(Selected(FD.rarity_dropdown, "")));
             if (FD.item_type < 100)
             {
-                if (FD.item_rarity < 7) s.Append("\nForging potential: ").Append(forging.random ? "Random" : forging.value.ToString());
-                foreach (var r in rows) if (r.id >= 0) s.Append("\n\n").Append(r == rows[4] ? "Sealed: " : "").Append(r.name).Append("\nT").Append(r.tier.value).Append(" · ").Append((r.roll.random ? "Random" : r.roll.value.ToString())).Append(" %");
-                if (FD.item_rarity > 6) s.Append("\n\n").Append(FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential ? "LP: " + (lp.random ? "Random" : lp.value.ToString()) : "Weaver's Will: " + (ww.random ? "Random" : ww.value.ToString()));
+                if (FD.item_rarity < 7) s.Append("\n").Append(L("Forging potential")).Append(": ").Append(forging.random ? L("Random") : forging.value.ToString());
+                foreach (var r in rows) if (r.id >= 0) s.Append("\n\n").Append(r == rows[4] ? L("Sealed") + ": " : "").Append(r.name).Append("\nT").Append(r.tier.value).Append(" · ").Append((r.roll.random ? L("Random") : r.roll.value.ToString())).Append(" %");
+                if (FD.item_rarity > 6) s.Append("\n\n").Append(FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential ? L("LP") + ": " + (lp.random ? L("Random") : lp.value.ToString()) : L("Weaver's Will") + ": " + (ww.random ? L("Random") : ww.value.ToString()));
             }
-            s.Append("\n\nCorrupted: ").Append(corrupted ? "Yes" : "No");
+            if (UniqueVariantAdapter.IsUnsated(SelectedRageEntry())) s.Append("\n\n").Append(L("Ring variant")).Append(": ").Append(L(rageName));
+            s.Append("\n\n").Append(L("Corrupted")).Append(": ").Append(corrupted ? L("Yes") : L("No"));
             if (corrupted && corruptionId >= 0) s.Append("\n").Append(corruptionName).Append("\nT").Append(corruptionTier.value).Append(" · ").Append(corruptionRoll.value).Append(" %");
             preview.text = s.ToString();
-            string problem = Validate(); status.text = problem.Length > 0 ? problem : result.Length > 0 ? result : "Drops at your character.";
+            string problem = Validate(); status.text = L(problem.Length > 0 ? problem : result.Length > 0 ? result : "Drops at your character.");
             dropButton.interactable = problem.Length == 0;
         }
 
@@ -453,7 +521,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static void OpenPicker(string title)
         {
             categoryPicker = rarityPicker = false;
-            pickerTitle.text = title; pickerSearch.SetTextWithoutNotify(""); lastPickerSearch = ""; pickerPage = 0;
+            LocaleRegistry.Apply(pickerTitle, title); pickerSearch.SetTextWithoutNotify(""); lastPickerSearch = ""; pickerPage = 0;
             picker.SetActive(true); picker.transform.SetAsLastSibling(); RefreshPicker();
         }
         static string CategoryLabel(string name)
@@ -557,7 +625,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static Text Label(GameObject parent, string text, float x0, float y0, float x1, float y1, int size = 15)
         {
             var go = new GameObject("Label"); go.AddComponent<RectTransform>(); go.transform.SetParent(parent.transform, false); Rect(go, x0, y0, x1, y1);
-            var label = go.AddComponent<Text>(); label.font = font; label.fontSize = size; label.color = gold; label.text = text; label.raycastTarget = false;
+            var label = go.AddComponent<Text>(); label.font = font; label.fontSize = size; label.color = gold; LocaleRegistry.Apply(label, text); label.raycastTarget = false;
             label.alignment = TextAnchor.UpperLeft; label.horizontalOverflow = HorizontalWrapMode.Wrap; label.verticalOverflow = VerticalWrapMode.Truncate;
             return label;
         }
@@ -568,7 +636,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
             clicks[button.GetInstanceID()] = action;
             return button;
         }
-        static void Caption(Button button, string text) { button.GetComponentInChildren<Text>(true).text = text; }
+        static void Caption(Button button, string text) { LocaleRegistry.Apply(button.GetComponentInChildren<Text>(true), text); }
+        static string L(string text) => LocaleRegistry.Translate(text);
         static string Selected(Dropdown catalog, string fallback) => catalog.value > 0 && catalog.value < catalog.options.Count ? catalog.options[catalog.value].text : fallback;
         static TMP_InputField Input(GameObject parent, string name, float x0, float y0, float x1, float y1, string value, bool numeric)
         {
