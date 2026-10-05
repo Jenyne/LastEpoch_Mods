@@ -118,19 +118,97 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 throw new InvalidOperationException("Corruption constructor rejected affix " + id +
                     " (saved=" + affix.affixId + ", sealed=" + affix.sealedAffixType +
                     ", special=" + affix.specialAffixType + "); no item was dropped");
+            var originalAffixes = SnapshotAffixes(item);
+            ushort originalUniqueId = item.uniqueID;
+            byte originalLP = item.legendaryPotential;
+            byte originalWW = item.weaversWill;
             if (flagStorage)
             {
-                // The native unpacker assigns the corruption seal to the final affix.
-                item.affixes.Add(affix);
-                item.sockets = (byte)item.affixes.Count;
-                if (storage is PropertyInfo flag) flag.SetValue(item, true);
-                else ((FieldInfo)storage).SetValue(item, true);
+                // The native operation owns sealed-affix ordering, socket counts and
+                // rarity-specific packing flags. Appending an affix manually causes
+                // the unpacker to put the corruption seal on an ordinary affix.
+                AddUsingNativeCorruptionSlot(item, affix);
             }
             else if (storage is PropertyInfo property) property.SetValue(item, affix);
             else ((FieldInfo)storage).SetValue(item, affix);
             VerifyStoredCorruption(item, id, "before packing");
             item.RefreshIDAndValues();
             VerifyStoredCorruption(item, id, "after packing");
+            VerifyOriginalAffixes(item, originalAffixes, id);
+            if (item.uniqueID != originalUniqueId || item.legendaryPotential != originalLP || item.weaversWill != originalWW)
+                throw new InvalidOperationException("Corruption changed unique item properties; no item was dropped");
+            VerifySelection(item, id, tier, roll);
+        }
+        static void AddUsingNativeCorruptionSlot(ItemDataUnpacked item, ItemAffix selected)
+        {
+            if (item.hasSealedAffixFromCorruption)
+                throw new InvalidOperationException("This item already has a corrupted affix; no item was dropped");
+            var outcome = new WeightedCorruptionOutcome
+            {
+                corruptionOutcome = CorruptionOutcome.AddsCorruptedAffix,
+                replacesAffix = false,
+                tierWeights = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<float>(
+                    new float[] { 1, 1, 1, 1, 1, 1, 1 })
+            };
+            // Do not use a forced unique-id match: that parameter filters unique
+            // items, not affix ids. Replace only the native-created corruption slot.
+            if (!item.AddRandomSpecialAffix(outcome, AffixList.SpecialAffixType.Corrupted,
+                false, 100, out int addedId, out bool regularSealed, false,
+                new Il2CppSystem.Nullable<ushort>(), false))
+                throw new InvalidOperationException("The game could not create a corrupted affix slot; no item was dropped");
+            if (!item.TryGetSealedCorruptedAffixe(out ItemAffix generated) ||
+                generated.IsNullOrDestroyed() || generated.affixId != addedId ||
+                !generated.IsSealedCorrupted || regularSealed)
+                throw new InvalidOperationException("The game did not create a sealed corruption slot; no item was dropped");
+            int index = -1;
+            for (int i = 0; i < item.affixes.Count; i++)
+                if (!item.affixes[i].IsNullOrDestroyed() && item.affixes[i].IsSealedCorrupted)
+                {
+                    if (index >= 0) throw new InvalidOperationException("Multiple corrupted affix slots; no item was dropped");
+                    index = i;
+                }
+            if (index < 0) throw new InvalidOperationException("Missing corrupted affix slot; no item was dropped");
+            item.affixes[index] = selected;
+        }
+        static List<string> SnapshotAffixes(ItemDataUnpacked item)
+        {
+            var result = new List<string>();
+            foreach (var affix in item.affixes)
+            {
+                if (affix.IsNullOrDestroyed()) throw new InvalidOperationException("Invalid existing affix; no item was dropped");
+                result.Add(AffixSignature(affix));
+            }
+            result.Sort(StringComparer.Ordinal);
+            return result;
+        }
+        static string AffixSignature(ItemAffix affix)
+        {
+            return affix.affixId + ":" + affix.affixTier + ":" + affix.affixRoll +
+                ":" + affix.sealedAffixType + ":" + affix.specialAffixType;
+        }
+        static void VerifyOriginalAffixes(ItemDataUnpacked item, List<string> expected, int corruptionId)
+        {
+            var actual = new List<string>();
+            foreach (var affix in item.affixes)
+            {
+                if (affix.IsNullOrDestroyed()) throw new InvalidOperationException("Invalid packed affix; no item was dropped");
+                if (affix.affixId == corruptionId && affix.IsSealedCorrupted) continue;
+                actual.Add(AffixSignature(affix));
+            }
+            actual.Sort(StringComparer.Ordinal);
+            if (actual.Count != expected.Count)
+                throw new InvalidOperationException("Corruption changed the existing affix count; no item was dropped");
+            for (int i = 0; i < actual.Count; i++)
+                if (actual[i] != expected[i])
+                    throw new InvalidOperationException("Corruption changed an existing affix; no item was dropped");
+        }
+        public static void VerifySelection(ItemDataUnpacked item, int id, int tier, int roll)
+        {
+            VerifyStoredCorruption(item, id, "final packing");
+            item.TryGetSealedCorruptedAffixe(out ItemAffix saved);
+            if (saved.affixTier != Math.Max(0, Math.Min(6, tier)) ||
+                saved.affixRoll != Math.Max(0, Math.Min(255, roll)))
+                throw new InvalidOperationException("Corruption tier or roll changed during packing; no item was dropped");
         }
         static void VerifyStoredCorruption(ItemDataUnpacked item, int id, string stage)
         {

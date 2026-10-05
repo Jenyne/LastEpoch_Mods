@@ -13457,6 +13457,7 @@ public partial class Hud_Manager : MonoBehaviour
                         }
                         ModUI.ForceDropBuilder.ApplySelectedCorruption(item);
                         item.RefreshIDAndValues(); //Refresh item for implicits, unique mods, and the saved id
+                        ModUI.ForceDropBuilder.VerifySelectedCorruption(item);
                         if ((item_type < 100) && (ra < 7))
                         {
                             Mods.Items.Items_Drop_ForginPotencial.Stamp(item, fg);

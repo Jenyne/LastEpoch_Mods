@@ -321,6 +321,11 @@ namespace LastEpoch_Hud.Scripts.ModUI
             if (!corrupted || corruptionId < 0) return;
             CorruptedAffixAdapter.Apply(item, corruptionId, corruptionTier.value - 1, Roll(corruptionRoll));
         }
+        public static void VerifySelectedCorruption(ItemDataUnpacked item)
+        {
+            if (!IsReady || !corrupted || corruptionId < 0) return;
+            CorruptedAffixAdapter.VerifySelection(item, corruptionId, corruptionTier.value - 1, Roll(corruptionRoll));
+        }
         static void CatalogPicker(Dropdown catalog, Action changed, bool skipPlaceholder)
         {
             choices.Clear();
