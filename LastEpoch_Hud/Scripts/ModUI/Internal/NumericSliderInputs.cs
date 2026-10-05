@@ -2,20 +2,35 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Il2CppTMPro;
-using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI
 {
     // One shared adapter for legacy and dynamically-created slider rows.
+    // The boxes edit the same numbers the old labels showed. They do not
+    // rescale a slider to 0-100 just because its label contains "%".
     public static class NumericSliderInputs
     {
+        enum Unit
+        {
+            Raw,
+            PercentOf255, // (value / 255) * 100, shown as "N %"
+            Times100, // value * 100, shown as "+ N %" (move speed reaches 2000)
+            StatPercent, // the slider value itself, shown as "+ N %"
+            ChancePercent, // the slider value itself, shown as "N %"
+            CritChance, // (value * 100) + 1 when the value is above 0
+            Tier, // stored 0-based, shown 1-based
+            PrefixX, // "x N"
+            SuffixX, // "Nx"
+            Seconds, // "All N sec"
+        }
+
         sealed class Entry
         {
             public Slider slider;
-            public bool percent;
-            public bool tier;
+            public Unit unit;
+            public bool plus;
             public Text label;
             public TMP_InputField input;
             public UnityEngine.Events.UnityAction<string> submit;
@@ -103,15 +118,15 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
         static void Attach(Slider slider, Text label, TMP_InputField template)
         {
-            bool percent = label.text.Contains("%");
-            bool tier = slider.name.IndexOf("Tier", StringComparison.OrdinalIgnoreCase) >= 0;
+            Unit unit = Classify(slider, out bool plus);
             // Only regular, unsealed tier controls are capped; sealed controls retain their range.
-            if (tier && slider.name.IndexOf("Seal", StringComparison.OrdinalIgnoreCase) < 0)
+            if (unit == Unit.Tier && slider.name.IndexOf("Seal", StringComparison.OrdinalIgnoreCase) < 0 &&
+                !HasName(slider, "SealTier"))
             {
                 slider.maxValue = Mathf.Min(slider.maxValue, 6f);
+                slider.wholeNumbers = true;
             }
-            slider.wholeNumbers = true;
-            slider.value = Mathf.Round(slider.value);
+
             GameObject clone = UnityEngine.Object.Instantiate(template.gameObject, label.transform.parent);
             clone.name = "NumericInput_" + slider.GetInstanceID();
             TMP_InputField input = clone.GetComponent<TMP_InputField>();
@@ -154,7 +169,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
             input.enabled = true;
             input.readOnly = false;
             input.interactable = slider.interactable;
-            input.contentType = TMP_InputField.ContentType.IntegerNumber;
+            // Fractional rows (camera zoom, difficulty) must accept decimals and negatives.
+            input.contentType = slider.wholeNumbers
+                ? TMP_InputField.ContentType.IntegerNumber
+                : TMP_InputField.ContentType.DecimalNumber;
             input.characterLimit = 16;
             // Populate after the display units have been recorded.
             if (!input.targetGraphic.IsNullOrDestroyed()) { input.targetGraphic.raycastTarget = true; }
@@ -182,7 +200,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 group.blocksRaycasts = true;
             }
 
-            var entry = new Entry { slider = slider, label = label, input = input, percent = percent, tier = tier };
+            var entry = new Entry { slider = slider, label = label, input = input, unit = unit, plus = plus };
             input.SetTextWithoutNotify(Format(entry));
             entry.submit = (UnityEngine.Events.UnityAction<string>)(text => Commit(entry, entry.input.text));
             input.onEndEdit.AddListener(entry.submit);
@@ -191,48 +209,178 @@ namespace LastEpoch_Hud.Scripts.ModUI
             clone.SetActive(slider.gameObject.activeInHierarchy);
         }
 
+        static Unit Classify(Slider slider, out bool plus)
+        {
+            plus = false;
+            string name = slider.name ?? "";
+            if (name.IndexOf("Tier", StringComparison.OrdinalIgnoreCase) >= 0 || HasName(slider, "SealTier"))
+                return Unit.Tier;
+            if (name.IndexOf("CriticalChance", StringComparison.OrdinalIgnoreCase) >= 0)
+                return Unit.CritChance;
+            if (IsTimes100(name))
+                return Unit.Times100;
+            if (IsStatPercent(name))
+                return Unit.StatPercent;
+            if (name.IndexOf("AutoShatter", StringComparison.OrdinalIgnoreCase) >= 0)
+                return Unit.ChancePercent;
+            if (IsSuffixMultiplier(name))
+                return Unit.SuffixX;
+            if (name.IndexOf("Multiplier", StringComparison.OrdinalIgnoreCase) >= 0)
+                return Unit.PrefixX;
+            if (name.IndexOf("ItemDropChance", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("GoldDropChance", StringComparison.OrdinalIgnoreCase) >= 0)
+            {
+                plus = true;
+                return Unit.PercentOf255;
+            }
+            if (name.IndexOf("AutoPotion", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("Implicit", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("AffixValue", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("UniqueMod", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("SealValue", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                (name == "ValueSlider") ||
+                (name == "Slider" && (HasName(slider, "Implicit") || HasName(slider, "UniqueMod") || HasName(slider, "SealValue"))))
+            {
+                return Unit.PercentOf255;
+            }
+            if (name.IndexOf("AutoStore", StringComparison.OrdinalIgnoreCase) >= 0)
+                return Unit.Seconds;
+            return Unit.Raw;
+        }
+
+        static bool IsTimes100(string name)
+        {
+            // Minion move-speed rows store a raw number. Only the character buffs use value * 100.
+            if (name.IndexOf("Buffs_", StringComparison.OrdinalIgnoreCase) < 0) { return false; }
+            return name.IndexOf("MoveSpeed", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("AttackSpeed", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("CastingSpeed", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("CriticalMultiplier", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("HealthRegen", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("ManaRegen", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("Buffs_Damage", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        static bool IsStatPercent(string name)
+        {
+            return name.IndexOf("Buffs_Strenght", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("Buffs_Intelligence", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("Buffs_Dexterity", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("Buffs_Vitality", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("Buffs_Attunement", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        static bool IsSuffixMultiplier(string name)
+        {
+            return name.IndexOf("SkillLevelMultiplier", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("PassivePointMultiplier", StringComparison.OrdinalIgnoreCase) >= 0 ||
+                name.IndexOf("PointMultiplier", StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+
+        static bool HasName(Slider slider, string token)
+        {
+            Transform current = slider.transform;
+            for (int depth = 0; depth < 5 && current != null; depth++, current = current.parent)
+            {
+                if (current.name.IndexOf(token, StringComparison.OrdinalIgnoreCase) >= 0) { return true; }
+            }
+            return false;
+        }
+
         static float DisplayValue(Entry entry)
         {
-            if (entry.percent && entry.slider.maxValue > 0f)
-                return entry.slider.value / entry.slider.maxValue * 100f;
-            return entry.slider.value + (entry.tier ? 1f : 0f);
+            float value = entry.slider.value;
+            switch (entry.unit)
+            {
+                case Unit.PercentOf255:
+                    return value / 255f * 100f;
+                case Unit.Times100:
+                    return value * 100f;
+                case Unit.CritChance:
+                    return value > 0f ? (int)(value * 100f) + 1f : 0f;
+                case Unit.Tier:
+                    return value + 1f;
+                default:
+                    return value;
+            }
         }
 
         static string Format(Entry entry)
         {
-            return Mathf.Round(DisplayValue(entry)).ToString("0", CultureInfo.InvariantCulture)
-                + (entry.percent ? " %" : "");
+            float shown = DisplayValue(entry);
+            bool fractional = entry.unit == Unit.Raw && !entry.slider.wholeNumbers;
+            string number = fractional ? FormatFloat(shown) : Mathf.Round(shown).ToString("0", CultureInfo.InvariantCulture);
+            switch (entry.unit)
+            {
+                case Unit.Times100:
+                case Unit.StatPercent:
+                case Unit.CritChance:
+                    return "+ " + number + " %";
+                case Unit.PercentOf255:
+                    return (entry.plus ? "+ " : "") + number + " %";
+                case Unit.ChancePercent:
+                    return number + " %";
+                case Unit.PrefixX:
+                    return "x " + number;
+                case Unit.SuffixX:
+                    return number + "x";
+                case Unit.Seconds:
+                    return "All " + number + " sec";
+                default:
+                    return number;
+            }
         }
 
-        // Normalize before the existing handlers receive the value, including while dragging.
-        [HarmonyPatch(typeof(Slider), "set_value")]
-        public class WholeNumberPatch
+        static string FormatFloat(float value)
         {
-            [HarmonyPrefix]
-            static void Prefix(Slider __instance, ref float value)
-            {
-                if (entries.ContainsKey(__instance.GetInstanceID()))
-                    value = Mathf.Clamp(Mathf.Round(value), __instance.minValue, __instance.maxValue);
-            }
+            float rounded = Mathf.Round(value);
+            if (Mathf.Abs(value - rounded) < 0.001f)
+                return rounded.ToString("0", CultureInfo.InvariantCulture);
+            return value.ToString("0.##", CultureInfo.InvariantCulture);
         }
 
         static void Commit(Entry entry, string text)
         {
             if (entry.slider.IsNullOrDestroyed() || entry.input.IsNullOrDestroyed()) { return; }
-            if (entry.slider.interactable &&
-                float.TryParse(text.Replace("%", "").Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out float value) &&
-                !float.IsNaN(value) && !float.IsInfinity(value))
+            if (entry.slider.interactable && TryParse(text, out float value))
             {
-                value = Mathf.Round(value);
-                if (entry.percent)
-                    value = Mathf.Clamp(value, 0f, 100f) / 100f * entry.slider.maxValue;
-                else if (entry.tier)
-                    value -= 1f;
-                value = Mathf.Clamp(Mathf.Round(value), entry.slider.minValue, entry.slider.maxValue);
-                // Use the normal setter so existing config, labels and Harmony hooks run.
+                switch (entry.unit)
+                {
+                    case Unit.PercentOf255:
+                        value = value / 100f * 255f;
+                        break;
+                    case Unit.Times100:
+                        value = value / 100f;
+                        break;
+                    case Unit.CritChance:
+                        value = value <= 0f ? 0f : (value - 1f) / 100f;
+                        break;
+                    case Unit.Tier:
+                        value -= 1f;
+                        break;
+                }
+                if (entry.unit == Unit.Tier || entry.slider.wholeNumbers)
+                    value = Mathf.Round(value);
+                value = Mathf.Clamp(value, entry.slider.minValue, entry.slider.maxValue);
                 entry.slider.value = value;
             }
             entry.input.SetTextWithoutNotify(Format(entry));
+        }
+
+        static bool TryParse(string text, out float value)
+        {
+            value = 0f;
+            if (string.IsNullOrEmpty(text)) { return false; }
+            string cleaned = text
+                .Replace("%", "")
+                .Replace("+", "")
+                .Replace("x", "")
+                .Replace("X", "")
+                .Replace("sec", "")
+                .Replace("All", "")
+                .Trim();
+            return float.TryParse(cleaned, NumberStyles.Float, CultureInfo.InvariantCulture, out value) ||
+                float.TryParse(cleaned, NumberStyles.Float, CultureInfo.CurrentCulture, out value);
         }
     }
 }
