@@ -220,7 +220,13 @@ namespace LastEpoch_Hud.Scripts.ModUI
             {
                 int index = itemPage * 12 + slot;
                 itemButtons[slot].gameObject.SetActive(index < itemIndexes.Count);
-                if (index < itemIndexes.Count) Caption(itemButtons[slot], FD.items_dropdown.options[itemIndexes[index]].text);
+                if (index < itemIndexes.Count)
+                {
+                    bool selected = itemIndexes[index] == FD.items_dropdown.value;
+                    Caption(itemButtons[slot], (selected ? "Selected: " : "") + FD.items_dropdown.options[itemIndexes[index]].text);
+                    itemButtons[slot].GetComponent<Image>().color = selected ? new Color(.29f, .24f, .13f) : dark;
+                    itemButtons[slot].GetComponent<Outline>().effectColor = selected ? gold : new Color(gold.r, gold.g, gold.b, .65f);
+                }
             }
         }
         static void ChooseItem(int slot)
@@ -228,6 +234,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             int i = itemPage * 12 + slot;
             if (i >= itemIndexes.Count) return;
             FD.items_dropdown.SetValueWithoutNotify(itemIndexes[i]); FD.SelectItem();
+            RefreshItems();
             foreach (var row in rows) { row.id = -1; row.name = "None"; Caption(row.select, "None"); }
             corruptionId = -1; corruptionName = "None";
             Caption(corruptionSelect, CorruptedAffixAdapter.IsSupported ? "Corrupted affix: None" : "Corrupted affix API unavailable");

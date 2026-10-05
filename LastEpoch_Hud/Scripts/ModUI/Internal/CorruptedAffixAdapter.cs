@@ -120,7 +120,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
                     ", special=" + affix.specialAffixType + "); no item was dropped");
             if (flagStorage)
             {
-                item.affixes.Insert((item.hasSealedRegularAffix ? 1 : 0) + (item.hasSealedPrimordialAffix ? 1 : 0), affix);
+                // The native unpacker assigns the corruption seal to the final affix.
+                item.affixes.Add(affix);
                 item.sockets = (byte)item.affixes.Count;
                 if (storage is PropertyInfo flag) flag.SetValue(item, true);
                 else ((FieldInfo)storage).SetValue(item, true);
