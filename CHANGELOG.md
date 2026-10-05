@@ -6,8 +6,7 @@ This changelog describes the source differences between
 [Syncingoutt v4.4.17](https://github.com/Syncingoutt/LastEpoch_Mods/releases/tag/v4.4.17)
 (tag commit `b2399c7c521c02a20b83531a640e2f56e3708212`) and
 [Jenyne v4.4.18](https://github.com/Jenyne/LastEpoch_Mods/tree/v4.4.18).
-It includes earlier custom changes retained in this branch. It does not imply that a
-4.4.18 release archive has been published.
+It includes earlier custom changes retained in this branch. Release packaging and publication are tracked separately from these source changes.
 
 ### Confirmed in game
 
@@ -17,6 +16,7 @@ The maintainer has confirmed the following behaviors as of October 5, 2026:
 - **Corrupted Force Drop:** the previously failing test item now drops successfully after correcting corrupted-affix serialization order.
 - **Menu yellow screen:** the menu-tab fix resolves the reported yellow-screen/double-click problem.
 - **Temporalis:** reported working.
+- **Headhunter icon:** the final runtime-sprite and targeted image-refresh patch was confirmed working in game.
 - **Safe Teleport disabled:** the change removing the Ctrl+Q shortcut conflict was reported working.
 
 These confirmations cover the reported tests. They do not establish coverage of every item, affix combination, language, or gameplay situation.
@@ -108,7 +108,7 @@ These confirmations cover the reported tests. They do not establish coverage of 
 ### Validation status and remaining issues
 
 - **Soul Embers:** implementation present; in-game addition still needs testing.
-- **Headhunter icon:** reported broken before this patch; the first explicit asset-type patch did not resolve the white placeholders. The revised runtime-sprite and late-frame refresh patch needs an in-game retest.
+- **Headhunter icon:** confirmed working after the runtime-sprite and targeted late-frame refresh patch.
 - **Live skill-tree refresh:** previously failed testing; do not describe it as confirmed fixed.
 - **Skill-effect cosmetics:** no new cosmetics-loading fix in this comparison; affected users still need investigation.
 - **Summon toggle restoration, AutoCast, timeline Copy to All, numeric bounds, Memory Amber, Quad Stash, auto-store, fog of war, and Damage Meter changes:** present in source, but not all have explicit successful gameplay confirmation.
