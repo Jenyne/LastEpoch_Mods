@@ -143,6 +143,10 @@ namespace LastEpoch_Hud.Scripts
             summon_options.AddComponent<Mods.Summon.Summon_Options>();
             Mods_Objects.Add(summon_options);
 
+            GameObject skills_autocast = new GameObject { name = "Mod_Skills_AutoCast" };
+            skills_autocast.AddComponent<Mods.Skills.Skills_AutoCast>();
+            Mods_Objects.Add(skills_autocast);
+
             foreach (GameObject mod in Mods_Objects) { Object.DontDestroyOnLoad(mod); }
             Mods_Objects.Clear();
 
