@@ -1368,11 +1368,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "ForceLowLife",
                                 "Toggle_Character_Cheats_LowLife"
                             );
-                            Cheats.allow_choosing_blessing = Functions.Get_ToggleInPanel(
-                                character_cheats_content,
-                                "AllowChoosingBlessings",
-                                "Toggle_Character_Cheats_AllowChooseBlessings"
-                            );
                             Cheats.unlock_all_idols = Functions.Get_ToggleInPanel(
                                 character_cheats_content,
                                 "UnlockAllIdolsSlots",
@@ -1617,6 +1612,7 @@ public partial class Hud_Manager : MonoBehaviour
                                     "Btn_Character_Cheats_DicoverAllBlessings"
                                 )
                                 .GetComponent<Button>();
+                            Cheats.BuildChooseBlessingsButton(character_cheats_content);
                         }
                         else
                         {
@@ -2295,13 +2291,8 @@ public partial class Hud_Manager : MonoBehaviour
                 {
                     Events.Set_Toggle_Event(Cheats.lowlife_toggle, Cheats.Lowlife_Toggle_Action);
                 }
-                if (!Cheats.allow_choosing_blessing.IsNullOrDestroyed())
-                {
-                    Events.Set_Toggle_Event(
-                        Cheats.allow_choosing_blessing,
-                        Cheats.AllowChooseBlessings_Toggle_Action
-                    );
-                }
+                if (!Cheats.choose_blessings_button.IsNullOrDestroyed())
+                    Events.Set_Button_Event(Cheats.choose_blessings_button, Cheats.ChooseBlessings_OnClick_Action);
                 if (!Cheats.unlock_all_idols.IsNullOrDestroyed())
                 {
                     Events.Set_Toggle_Event(
@@ -2615,15 +2606,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 .Character
                                 .Cheats
                                 .Enable_LowLife;
-                        }
-                        if (!Cheats.allow_choosing_blessing.IsNullOrDestroyed())
-                        {
-                            Cheats.allow_choosing_blessing.isOn = Save_Manager
-                                .instance
-                                .data
-                                .Character
-                                .Cheats
-                                .Enable_CanChooseBlessing;
                         }
                         if (!Cheats.unlock_all_idols.IsNullOrDestroyed())
                         {
@@ -3718,20 +3700,46 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static Toggle allow_choosing_blessing = null;
-                public static readonly System.Action<bool> AllowChooseBlessings_Toggle_Action =
-                    new System.Action<bool>(Set_AllowChooseBlessings_Enable);
+                public static Button choose_blessings_button = null;
+                public static readonly System.Action ChooseBlessings_OnClick_Action =
+                    new System.Action(Mods.Character.Character_Blessings.ChooseBlessings);
 
-                private static void Set_AllowChooseBlessings_Enable(bool enable)
+                public static void BuildChooseBlessingsButton(GameObject content)
                 {
-                    if (
-                        (!Save_Manager.instance.IsNullOrDestroyed())
-                        && (!allow_choosing_blessing.IsNullOrDestroyed())
-                    )
+                    var oldRow = Functions.GetChild(content, "AllowChoosingBlessings");
+                    if (oldRow.IsNullOrDestroyed() || discover_blessings_button.IsNullOrDestroyed()) return;
+                    if (choose_blessings_button.IsNullOrDestroyed())
                     {
-                        Save_Manager.instance.data.Character.Cheats.Enable_CanChooseBlessing =
-                            allow_choosing_blessing.isOn;
+                        var replacement = UnityEngine.Object.Instantiate(
+                            discover_blessings_button.gameObject, oldRow.transform.parent, false);
+                        replacement.name = "Btn_Character_Cheats_ChooseBlessings";
+                        replacement.transform.SetSiblingIndex(oldRow.transform.GetSiblingIndex());
+                        var sourceRect = oldRow.GetComponent<RectTransform>();
+                        var targetRect = replacement.GetComponent<RectTransform>();
+                        targetRect.anchorMin = sourceRect.anchorMin;
+                        targetRect.anchorMax = sourceRect.anchorMax;
+                        targetRect.pivot = sourceRect.pivot;
+                        targetRect.anchoredPosition = sourceRect.anchoredPosition;
+                        targetRect.sizeDelta = sourceRect.sizeDelta;
+                        targetRect.localScale = Vector3.one;
+                        var oldLayout = oldRow.GetComponent<LayoutElement>();
+                        var newLayout = replacement.GetComponent<LayoutElement>();
+                        if (!oldLayout.IsNullOrDestroyed())
+                        {
+                            if (newLayout.IsNullOrDestroyed()) newLayout = replacement.AddComponent<LayoutElement>();
+                            newLayout.minWidth = oldLayout.minWidth; newLayout.minHeight = oldLayout.minHeight;
+                            newLayout.preferredWidth = oldLayout.preferredWidth; newLayout.preferredHeight = oldLayout.preferredHeight;
+                            newLayout.flexibleWidth = oldLayout.flexibleWidth; newLayout.flexibleHeight = oldLayout.flexibleHeight;
+                        }
+                        choose_blessings_button = replacement.GetComponent<Button>();
+                        choose_blessings_button.onClick = new Button.ButtonClickedEvent();
+                        foreach (var label in replacement.GetComponentsInChildren<Text>(true))
+                            label.text = "Choose Blessings";
+                        foreach (var label in replacement.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
+                            label.text = "Choose Blessings";
+                        replacement.SetActive(true);
                     }
+                    oldRow.SetActive(false);
                 }
 
                 public static Toggle unlock_all_idols = null;
