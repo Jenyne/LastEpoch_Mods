@@ -1729,13 +1729,14 @@ public partial class Hud_Manager
                                 }
                                 case "Slider_Character_Cheats_MemoryAmberMultiplier":
                                 {
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .Cheats
-                                        .MemoryAmberMultiplier = (uint)__0;
-                                    //Content.Character.Cheats.favor_text.text = "x " + (int)(Save_Manager.instance.data.Character.Cheats.FavorMultiplier);
+                                    uint multiplier = (uint)Mathf.Clamp(Mathf.RoundToInt(__0), 1, 10000);
+                                    Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier =
+                                        multiplier;
+                                    if (!Content.Character.Cheats.memoryamber_text.IsNullOrDestroyed())
+                                    {
+                                        Content.Character.Cheats.memoryamber_text.text =
+                                            "x " + multiplier;
+                                    }
                                     break;
                                 }
                                 case "Slider_Character_Cheats_ItemDropMultiplier":
@@ -1784,15 +1785,6 @@ public partial class Hud_Manager
                                         Refs_Manager.player_data.LanternLuminance = (int)__0;
                                     }
                                     //Content.Character.Data.lantern_text.text = ((int)__0).ToString();
-                                    break;
-                                }
-                                case "Slider_Character_Data_SoulEmbers":
-                                {
-                                    if (!Refs_Manager.player_data.IsNullOrDestroyed())
-                                    {
-                                        Refs_Manager.player_data.SoulEmbers = (int)__0;
-                                    }
-                                    //Content.Character.Data.soul_text.text = ((int)__0).ToString();
                                     break;
                                 }
                                 //Buffs

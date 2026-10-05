@@ -108,6 +108,7 @@ public partial class Hud_Manager : MonoBehaviour
                     Update_Hud_Content();
                     hud_object.active = true;
                     Content.Set_Active();
+                    ModUI.NumericSliderInputs.Tick(hud_object);
                     if (!Refs_Manager.epoch_input_manager.IsNullOrDestroyed())
                     {
                         if (!Refs_Manager.epoch_input_manager.isControllerActive) //Keyboard
@@ -294,6 +295,13 @@ public partial class Hud_Manager : MonoBehaviour
                         {
                             Content.Headhunter.Get_Refs();
                             Content.Headhunter.Set_Active(false);
+                        }
+                    );
+                    SafeInit(
+                        "ModUI.SaveManager.BindHud",
+                        () =>
+                        {
+                            ModUI.SaveManager.BindHud(hud_object);
                         }
                     );
                 }
@@ -555,13 +563,9 @@ public partial class Hud_Manager : MonoBehaviour
                         if (!Locales.debug_json.Contains(s)) { Locales.debug_json.Add(s); }
                     }*/
 
-                    if (Locales.current_dictionary != null)
+                    if (Locales.TryGetTranslation(label.text, out string translated))
                     {
-                        if (Locales.current_dictionary.ContainsKey(label.text))
-                        {
-                            label.text = Locales.current_dictionary[label.text];
-                        }
-                        //else { Main.logger_instance.Error(label.text + ", not found in dictionnary"); }
+                        label.text = translated;
                     }
                 }
             }
@@ -604,7 +608,7 @@ public partial class Hud_Manager : MonoBehaviour
             {
                 Content.OdlForceDrop.InitForcedrop();
             }
-            else
+            else if (!ModUI.ForceDropBuilder.Tick())
             {
                 Content.OdlForceDrop.implicits.active = Content.OdlForceDrop.implicits_enable;
                 Content.OdlForceDrop.implicits_border.active = Content
@@ -1193,12 +1197,23 @@ public partial class Hud_Manager : MonoBehaviour
                     "Btn_Menu_ForceDrop",
                     OldForceDrop_OnClick_Action
                 );
-                Events.Set_Base_Button_Event(
-                    hud_object,
-                    "Menu",
-                    "Btn_Menu_Headhunter",
-                    Headhunter_OnClick_Action
-                );
+                // Optional unfinished page: only wire/show the button when the
+                // donor HUD bundle actually contains Headhunter content.
+                var headhunterButton = Functions.FindDescendant(hud_object, "Btn_Menu_Headhunter");
+                var headhunterContent = Functions.FindDescendant(hud_object, "Headhunter_Content");
+                if (!headhunterButton.IsNullOrDestroyed())
+                {
+                    headhunterButton.SetActive(!headhunterContent.IsNullOrDestroyed());
+                    if (!headhunterContent.IsNullOrDestroyed())
+                    {
+                        var button = headhunterButton.GetComponent<Button>();
+                        if (!button.IsNullOrDestroyed())
+                        {
+                            button.onClick = new Button.ButtonClickedEvent();
+                            button.onClick.AddListener(Headhunter_OnClick_Action);
+                        }
+                    }
+                }
             }
         }
 
@@ -1213,7 +1228,7 @@ public partial class Hud_Manager : MonoBehaviour
             Content.Skills.Set_Active(false);
             Content.OdlForceDrop.Set_Active(false);
             Content.Headhunter.Set_Active(false);
-            Content.Character.Toggle_Active();
+            Content.Character.Set_Active(true);
         }
 
         private static readonly System.Action Items_OnClick_Action = new System.Action(Items_Click);
@@ -1225,7 +1240,7 @@ public partial class Hud_Manager : MonoBehaviour
             Content.Skills.Set_Active(false);
             Content.OdlForceDrop.Set_Active(false);
             Content.Headhunter.Set_Active(false);
-            Content.Items.Toggle_Active();
+            Content.Items.Set_Active(true);
         }
 
         private static readonly System.Action Scenes_OnClick_Action = new System.Action(
@@ -1239,7 +1254,7 @@ public partial class Hud_Manager : MonoBehaviour
             Content.Skills.Set_Active(false);
             Content.OdlForceDrop.Set_Active(false);
             Content.Headhunter.Set_Active(false);
-            Content.Scenes.Toggle_Active();
+            Content.Scenes.Set_Active(true);
         }
 
         private static readonly System.Action Skills_OnClick_Action = new System.Action(
@@ -1253,7 +1268,7 @@ public partial class Hud_Manager : MonoBehaviour
             Content.Scenes.Set_Active(false);
             Content.OdlForceDrop.Set_Active(false);
             Content.Headhunter.Set_Active(false);
-            Content.Skills.Toggle_Active();
+            Content.Skills.Set_Active(true);
         }
 
         private static readonly System.Action OldForceDrop_OnClick_Action = new System.Action(
@@ -1267,7 +1282,7 @@ public partial class Hud_Manager : MonoBehaviour
             Content.Scenes.Set_Active(false);
             Content.Skills.Set_Active(false);
             Content.Headhunter.Set_Active(false);
-            Content.OdlForceDrop.Toggle_Active();
+            Content.OdlForceDrop.Set_Active(true);
         }
 
         private static readonly System.Action Headhunter_OnClick_Action = new System.Action(
@@ -1281,7 +1296,7 @@ public partial class Hud_Manager : MonoBehaviour
             Content.Scenes.Set_Active(false);
             Content.Skills.Set_Active(false);
             Content.OdlForceDrop.Set_Active(false);
-            Content.Headhunter.Toggle_Active();
+            Content.Headhunter.Set_Active(true);
         }
     }
 
@@ -1465,6 +1480,7 @@ public partial class Hud_Manager : MonoBehaviour
                                 "MemoryAmberMultiplier",
                                 "Slider_Character_Cheats_MemoryAmberMultiplier"
                             );
+                            Cheats.PrepareMemoryAmberMultiplier();
 
                             Cheats.itemdropmultiplier_toggle = Functions.Get_ToggleInPanel(
                                 character_cheats_content,
@@ -1684,6 +1700,7 @@ public partial class Hud_Manager : MonoBehaviour
                                 "Slider_Character_Data_LanternLuminance"
                             );
 
+                            Data.soul_row = Functions.GetChild(character_data_content, "Soul Embers");
                             Data.soul_text = Functions.Get_TextInButton(
                                 character_data_content,
                                 "Soul Embers",
@@ -1846,6 +1863,10 @@ public partial class Hud_Manager : MonoBehaviour
                             );
                             Data.SetupMonolithInputs();
 
+                            Data.monolith_selector_go = Functions.GetChild(
+                                character_data_content,
+                                "Monoliths"
+                            );
                             Data.monolith_dropdown = Functions.Get_DopboxInPanel(
                                 character_data_content,
                                 "Monoliths",
@@ -1910,6 +1931,8 @@ public partial class Hud_Manager : MonoBehaviour
                                     .GetChild(panel_save, "Btn_Character_Data_Save")
                                     .GetComponent<Button>();
                             }
+                            Data.SetupSoulEmberControls();
+                            Data.SetupCorruptionAllButton();
                         }
 
                         //Faction Tracker
@@ -2472,6 +2495,17 @@ public partial class Hud_Manager : MonoBehaviour
                     );
                 }
 
+                if (!Data.soul_add_button.IsNullOrDestroyed())
+                {
+                    Events.Set_Button_Event(Data.soul_add_button, Data.SoulEmbers_Add_Action);
+                }
+                if (!Data.monolith_corruption_all_button.IsNullOrDestroyed())
+                {
+                    Events.Set_Button_Event(
+                        Data.monolith_corruption_all_button,
+                        Data.MonolithCorruptionAll_Action
+                    );
+                }
                 if (!Data.save_button.IsNullOrDestroyed())
                 {
                     Events.Set_Button_Event(Data.save_button, Data.Save_OnClick_Action);
@@ -3098,19 +3132,49 @@ public partial class Hud_Manager : MonoBehaviour
                         Data.lantern_text.text =
                             Refs_Manager.player_data.LanternLuminance.ToString();
                     }
-                    if (!Data.soul_slider.IsNullOrDestroyed())
-                    {
-                        Data.soul_slider.value = Refs_Manager.player_data.SoulEmbers;
-                    }
-                    if (!Data.soul_text.IsNullOrDestroyed())
-                    {
-                        Data.soul_text.text = Refs_Manager.player_data.SoulEmbers.ToString();
-                    }
+                    Data.UpdateSoulEmberBalance();
                 }
             }
 
             public static void Update_Monoliths_Data()
             {
+                if (Refs_Manager.player_data.IsNullOrDestroyed())
+                {
+                    Data.ShowMonolithValue(
+                        Data.monolith_stability_basic_go,
+                        Data.monolith_stability_basic_input,
+                        Data.monolith_stability_basic_slider,
+                        Data.monolith_stability_basic_text,
+                        -1,
+                        false
+                    );
+                    Data.ShowMonolithValue(
+                        Data.monolith_stability_empower_go,
+                        Data.monolith_stability_empower_input,
+                        Data.monolith_stability_empower_slider,
+                        Data.monolith_stability_empower_text,
+                        -1,
+                        false
+                    );
+                    Data.ShowMonolithValue(
+                        Data.monolith_corruption_go,
+                        Data.monolith_corruption_input,
+                        Data.monolith_corruption_slider,
+                        Data.monolith_corruption_text,
+                        -1,
+                        false
+                    );
+                    Data.ShowMonolithValue(
+                        Data.monolith_gaze_go,
+                        Data.monolith_gaze_input,
+                        Data.monolith_gaze_slider,
+                        Data.monolith_gaze_text,
+                        -1,
+                        false
+                    );
+                    ModUI.MonolithTimelineEditor.RefreshSelection();
+                    return;
+                }
                 if (
                     (!Refs_Manager.player_data.IsNullOrDestroyed())
                     && (!Data.monolith_dropdown.IsNullOrDestroyed())
@@ -3284,6 +3348,7 @@ public partial class Hud_Manager : MonoBehaviour
                         }
                     }
                 }
+                ModUI.MonolithTimelineEditor.RefreshSelection();
             }
 
             public static void Update_Faction_Data()
@@ -3789,11 +3854,41 @@ public partial class Hud_Manager : MonoBehaviour
                 {
                     if (
                         (!Save_Manager.instance.IsNullOrDestroyed())
-                        && (!favor_toggle.IsNullOrDestroyed())
+                        && (!memoryamber_toggle.IsNullOrDestroyed())
                     )
                     {
                         Save_Manager.instance.data.Character.Cheats.Enable_MemoryAmberMultiplier =
                             memoryamber_toggle.isOn;
+                    }
+                }
+
+                public static void PrepareMemoryAmberMultiplier()
+                {
+                    if (memoryamber_slider.IsNullOrDestroyed())
+                    {
+                        return;
+                    }
+                    memoryamber_slider.wholeNumbers = true;
+                    memoryamber_slider.minValue = 1f;
+                    memoryamber_slider.maxValue = 10000f;
+
+                    if (!Save_Manager.instance.IsNullOrDestroyed())
+                    {
+                        uint value = Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier;
+                        if (value < 1)
+                        {
+                            value = 1;
+                        }
+                        if (value > 10000)
+                        {
+                            value = 10000;
+                        }
+                        Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier = value;
+                        memoryamber_slider.value = value;
+                        if (!memoryamber_text.IsNullOrDestroyed())
+                        {
+                            memoryamber_text.text = "x " + value;
+                        }
                     }
                 }
 
@@ -3994,8 +4089,14 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Slider deaths_slider = null;
                 public static Text lantern_text = null;
                 public static Slider lantern_slider = null;
+                public static GameObject soul_row = null;
                 public static Text soul_text = null;
                 public static Slider soul_slider = null;
+                public static Il2CppTMPro.TMP_InputField soul_amount_input = null;
+                public static Button soul_add_button = null;
+                public static readonly System.Action SoulEmbers_Add_Action = new System.Action(
+                    AddSoulEmbers
+                );
                 public static Toggle weaver_points_toggle = null;
                 public static Text weaver_points_text = null;
                 public static Slider weaver_points_slider = null;
@@ -4005,6 +4106,111 @@ public partial class Hud_Manager : MonoBehaviour
                 public static bool suppressWeaverSlider = false;
                 public static readonly System.Action<bool> weaver_points_toggle_Action =
                     new System.Action<bool>(SetWeaverTreePointsEnabled);
+
+                public static void SetupSoulEmberControls()
+                {
+                    if (
+                        soul_row.IsNullOrDestroyed()
+                        || soul_slider.IsNullOrDestroyed()
+                        || save_button.IsNullOrDestroyed()
+                        || !soul_amount_input.IsNullOrDestroyed()
+                    )
+                    {
+                        return;
+                    }
+
+                    GameObject inputTemplate = FindShardNameInput(hud_object);
+                    if (inputTemplate.IsNullOrDestroyed())
+                    {
+                        return;
+                    }
+
+                    RectTransform source = soul_slider.GetComponent<RectTransform>();
+                    if (source.IsNullOrDestroyed())
+                    {
+                        return;
+                    }
+
+                    soul_slider.gameObject.SetActive(false);
+
+                    GameObject inputClone = Object.Instantiate(inputTemplate, soul_row.transform);
+                    inputClone.name = "SoulEmberAmountInput";
+                    soul_amount_input = inputClone.GetComponent<Il2CppTMPro.TMP_InputField>();
+                    RectTransform inputRect = inputClone.GetComponent<RectTransform>();
+
+                    if (!inputRect.IsNullOrDestroyed())
+                    {
+                        inputRect.anchorMin = source.anchorMin;
+                        inputRect.anchorMax = source.anchorMax;
+                        inputRect.pivot = source.pivot;
+                        inputRect.anchoredPosition = source.anchoredPosition;
+                        inputRect.sizeDelta = source.sizeDelta;
+                        inputRect.localScale = Vector3.one;
+                    }
+
+                    PrepareNumericInput(soul_amount_input, "1000");
+
+                    GameObject buttonClone = Object.Instantiate(save_button.gameObject, soul_row.transform);
+                    buttonClone.name = "Btn_Character_Data_AddSoulEmbers";
+                    soul_add_button = buttonClone.GetComponent<Button>();
+                    PrepareFullWidthActionButton(buttonClone, soul_add_button, "Add Soul Embers");
+
+                    RectTransform buttonRect = buttonClone.GetComponent<RectTransform>();
+                    if (!buttonRect.IsNullOrDestroyed() && !inputRect.IsNullOrDestroyed())
+                    {
+                        inputRect.anchorMin = new Vector2(0f, source.anchorMin.y);
+                        inputRect.anchorMax = new Vector2(0.64f, source.anchorMax.y);
+                        inputRect.anchoredPosition = new Vector2(0f, source.anchoredPosition.y);
+                        inputRect.sizeDelta = new Vector2(-8f, source.sizeDelta.y);
+                        buttonRect.anchorMin = new Vector2(0.65f, source.anchorMin.y);
+                        buttonRect.anchorMax = new Vector2(1f, source.anchorMax.y);
+                        buttonRect.pivot = source.pivot;
+                        buttonRect.anchoredPosition = new Vector2(0f, source.anchoredPosition.y);
+                        buttonRect.sizeDelta = new Vector2(-8f, source.sizeDelta.y);
+                    }
+                    LayoutElement actionLayout = buttonClone.GetComponent<LayoutElement>();
+                    if (!actionLayout.IsNullOrDestroyed())
+                    {
+                        actionLayout.ignoreLayout = true;
+                    }
+                    buttonClone.SetActive(true);
+                    Events.Set_Button_Event(soul_add_button, SoulEmbers_Add_Action);
+
+                    inputClone.transform.SetAsLastSibling();
+                    UpdateSoulEmberBalance();
+                }
+
+                public static void AddSoulEmbers()
+                {
+                    if (soul_amount_input.IsNullOrDestroyed())
+                    {
+                        return;
+                    }
+                    if (!int.TryParse(soul_amount_input.text, out int amount) || amount <= 0)
+                    {
+                        soul_amount_input.text = "1000";
+                        return;
+                    }
+                    if (amount > 9999999)
+                    {
+                        amount = 9999999;
+                    }
+
+                    if (Mods.Character.Character_SoulEmbers.Add(amount))
+                    {
+                        UpdateSoulEmberBalance();
+                    }
+                }
+
+                public static void UpdateSoulEmberBalance()
+                {
+                    int balance = Mods.Character.Character_SoulEmbers.GetBalance();
+                    if (balance >= 0 && !soul_text.IsNullOrDestroyed())
+                    {
+                        soul_text.gameObject.SetActive(true);
+                        soul_text.text = balance.ToString();
+                    }
+                }
 
                 public static void EnsureWeaverRange()
                 {
@@ -4089,6 +4295,7 @@ public partial class Hud_Manager : MonoBehaviour
                 }
 
                 public static Dropdown monolith_dropdown = null;
+                public static GameObject monolith_selector_go = null;
                 public static bool monolith_inputs_ready = false;
                 static bool suppress_monolith_input = false;
 
@@ -4182,6 +4389,10 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Text monolith_corruption_text = null;
                 public static Slider monolith_corruption_slider = null;
                 public static Il2CppTMPro.TMP_InputField monolith_corruption_input = null;
+                public static Button monolith_corruption_all_button = null;
+                public static readonly System.Action MonolithCorruptionAll_Action = new System.Action(
+                    CopySelectedTimelineToAll
+                );
                 public static readonly System.Action<float> monolith_corruption_slider_Action =
                     new System.Action<float>(Set_monolith_corruption_slider);
                 public static readonly System.Action<string> monolith_corruption_input_Action =
@@ -4274,6 +4485,282 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
+                public static void SetupCorruptionAllButton()
+                {
+                    if (
+                        monolith_corruption_go.IsNullOrDestroyed()
+                        || monolith_corruption_input.IsNullOrDestroyed()
+                        || save_button.IsNullOrDestroyed()
+                        || !monolith_corruption_all_button.IsNullOrDestroyed()
+                    )
+                    {
+                        return;
+                    }
+
+                    GameObject parent =
+                        monolith_corruption_go.transform.parent != null
+                            ? monolith_corruption_go.transform.parent.gameObject
+                            : null;
+                    if (parent.IsNullOrDestroyed())
+                    {
+                        return;
+                    }
+
+                    GameObject buttonClone = Object.Instantiate(save_button.gameObject, parent.transform);
+                    buttonClone.name = "Btn_Monolith_Corruption_ApplyAll";
+                    monolith_corruption_all_button = buttonClone.GetComponent<Button>();
+                    PrepareFullWidthActionButton(
+                        buttonClone,
+                        monolith_corruption_all_button,
+                        "Apply to All Timelines"
+                    );
+                }
+
+                public static void CopySelectedTimelineToAll()
+                {
+                    if (
+                        Refs_Manager.player_data.IsNullOrDestroyed()
+                        || monolith_dropdown.IsNullOrDestroyed()
+                        || monolith_dropdown.value <= 0
+                    )
+                    {
+                        return;
+                    }
+
+                    bool copyBasic =
+                        !monolith_stability_basic_go.IsNullOrDestroyed()
+                        && monolith_stability_basic_go.activeSelf;
+                    bool copyEmpowered =
+                        !monolith_stability_empower_go.IsNullOrDestroyed()
+                        && monolith_stability_empower_go.activeSelf;
+                    bool copyCorruption =
+                        !monolith_corruption_go.IsNullOrDestroyed() && monolith_corruption_go.activeSelf;
+                    bool copyGaze = !monolith_gaze_go.IsNullOrDestroyed() && monolith_gaze_go.activeSelf;
+                    int basic = 0,
+                        empowered = 0,
+                        corruption = 0,
+                        gaze = 0;
+                    if (
+                        copyBasic
+                        && !ReadMonolithControl(
+                            monolith_stability_basic_input,
+                            monolith_stability_basic_slider,
+                            out basic
+                        )
+                    )
+                    {
+                        return;
+                    }
+                    if (
+                        copyEmpowered
+                        && !ReadMonolithControl(
+                            monolith_stability_empower_input,
+                            monolith_stability_empower_slider,
+                            out empowered
+                        )
+                    )
+                    {
+                        return;
+                    }
+                    if (
+                        copyCorruption
+                        && !ReadMonolithControl(
+                            monolith_corruption_input,
+                            monolith_corruption_slider,
+                            out corruption
+                        )
+                    )
+                    {
+                        return;
+                    }
+                    if (
+                        copyGaze
+                        && !ReadMonolithControl(monolith_gaze_input, monolith_gaze_slider, out gaze)
+                    )
+                    {
+                        return;
+                    }
+
+                    var runs = new System.Collections.Generic.List<(int TimelineId, int Difficulty)>();
+                    foreach (SavedMonolithRun saved in Refs_Manager.player_data.MonolithRuns)
+                    {
+                        if (saved.DifficultyIndex == 0 && copyBasic)
+                        {
+                            saved.Stability = basic;
+                            runs.Add((saved.TimelineID, 0));
+                        }
+                        else if (
+                            saved.DifficultyIndex == 1 && (copyEmpowered || copyCorruption || copyGaze)
+                        )
+                        {
+                            if (copyEmpowered)
+                            {
+                                saved.Stability = empowered;
+                            }
+                            if (!saved.SavedEchoWeb.IsNullOrDestroyed())
+                            {
+                                if (copyCorruption)
+                                {
+                                    saved.SavedEchoWeb.Corruption = corruption;
+                                }
+                                if (copyGaze)
+                                {
+                                    saved.SavedEchoWeb.GazeOfOrobyss = gaze;
+                                }
+                            }
+                            runs.Add((saved.TimelineID, 1));
+                        }
+                    }
+                    foreach (var run in runs)
+                    {
+                        if (run.Difficulty == 0)
+                        {
+                            ApplyLiveStability(run.TimelineId, 0, basic);
+                        }
+                        else
+                        {
+                            if (copyEmpowered)
+                            {
+                                ApplyLiveStability(run.TimelineId, 1, empowered);
+                            }
+                            if (copyCorruption)
+                            {
+                                ApplyLiveCorruption(run.TimelineId, corruption);
+                            }
+                            if (copyGaze)
+                            {
+                                ApplyLiveGaze(run.TimelineId, gaze);
+                            }
+                        }
+                    }
+                    if (
+                        copyCorruption
+                        && runs.Count > 0
+                        && Refs_Manager.player_data.MaxCorruption < corruption
+                    )
+                    {
+                        Refs_Manager.player_data.MaxCorruption = corruption;
+                    }
+                    Content.Character.Update_Monoliths_Data();
+                    Main.logger_instance?.Msg(
+                        "Copied selected values to " + runs.Count + " existing timeline runs"
+                    );
+                }
+
+                static bool ReadMonolithControl(
+                    Il2CppTMPro.TMP_InputField input,
+                    Slider slider,
+                    out int value
+                )
+                {
+                    value = 0;
+                    if (!input.IsNullOrDestroyed())
+                    {
+                        return TryReadMonolithValue(input.text, out value);
+                    }
+                    if (slider.IsNullOrDestroyed())
+                    {
+                        return false;
+                    }
+                    return TryReadMonolithValue(Mathf.RoundToInt(slider.value).ToString(), out value);
+                }
+
+                static void PrepareNumericInput(Il2CppTMPro.TMP_InputField input, string defaultText)
+                {
+                    if (input.IsNullOrDestroyed())
+                    {
+                        return;
+                    }
+                    input.enabled = true;
+                    input.interactable = true;
+                    input.readOnly = false;
+                    input.contentType = Il2CppTMPro.TMP_InputField.ContentType.IntegerNumber;
+                    input.characterLimit = 7;
+                    input.text = defaultText ?? "";
+
+                    if (!input.targetGraphic.IsNullOrDestroyed())
+                    {
+                        input.targetGraphic.raycastTarget = true;
+                    }
+                    if (!input.textComponent.IsNullOrDestroyed())
+                    {
+                        input.textComponent.raycastTarget = false;
+                        input.textComponent.horizontalAlignment = Il2CppTMPro
+                            .HorizontalAlignmentOptions
+                            .Left;
+                        input.textComponent.verticalAlignment = Il2CppTMPro
+                            .VerticalAlignmentOptions
+                            .Middle;
+                    }
+
+                    CanvasGroup group = input.GetComponent<CanvasGroup>();
+                    if (!group.IsNullOrDestroyed())
+                    {
+                        group.interactable = true;
+                        group.blocksRaycasts = true;
+                    }
+                }
+
+                static void PrepareFullWidthActionButton(
+                    GameObject buttonObject,
+                    Button button,
+                    string labelText
+                )
+                {
+                    if (buttonObject.IsNullOrDestroyed() || button.IsNullOrDestroyed())
+                    {
+                        return;
+                    }
+                    button.interactable = true;
+
+                    LayoutElement layout = buttonObject.GetComponent<LayoutElement>();
+                    if (layout.IsNullOrDestroyed())
+                    {
+                        layout = buttonObject.AddComponent<LayoutElement>();
+                    }
+                    layout.ignoreLayout = false;
+                    layout.minHeight = 34f;
+                    layout.preferredHeight = 38f;
+                    layout.flexibleWidth = 1f;
+
+                    RectTransform rect = buttonObject.GetComponent<RectTransform>();
+                    if (!rect.IsNullOrDestroyed())
+                    {
+                        rect.localScale = Vector3.one;
+                    }
+
+                    Text buttonText = null;
+                    GameObject label = Functions.FindDescendant(buttonObject, "Label");
+                    if (!label.IsNullOrDestroyed())
+                    {
+                        buttonText = label.GetComponent<Text>();
+                    }
+                    if (buttonText.IsNullOrDestroyed())
+                    {
+                        buttonText = buttonObject.GetComponentInChildren<Text>(true);
+                    }
+                    if (!buttonText.IsNullOrDestroyed())
+                    {
+                        RectTransform labelRect = buttonText.GetComponent<RectTransform>();
+                        if (!labelRect.IsNullOrDestroyed())
+                        {
+                            labelRect.anchorMin = Vector2.zero;
+                            labelRect.anchorMax = Vector2.one;
+                            labelRect.offsetMin = Vector2.zero;
+                            labelRect.offsetMax = Vector2.zero;
+                        }
+                        ModUI.Prefab.ApplyLabel(buttonText, labelText);
+                    }
+                }
+
+                public static void MoveEndgameControls(GameObject monolithTarget, GameObject dungeonTarget)
+                {
+                    if (!monolithTarget.IsNullOrDestroyed())
+                    {
+                        ModUI.MonolithTimelineEditor.Build(monolithTarget);
+                    }
+                }
+
                 public static void SetupMonolithInputs()
                 {
                     monolith_stability_basic_input = CreateMonolithInput(
@@ -4341,25 +4828,14 @@ public partial class Hud_Manager : MonoBehaviour
 
                     Il2CppTMPro.TMP_InputField input =
                         clone.GetComponent<Il2CppTMPro.TMP_InputField>();
-                    if (!input.IsNullOrDestroyed())
-                    {
-                        input.contentType = Il2CppTMPro.TMP_InputField.ContentType.IntegerNumber;
-                        input.characterLimit = 7;
-                        input.text = "";
+                        if (!input.IsNullOrDestroyed())
+                        {
+                            PrepareNumericInput(input, "");
                         if (!input.textViewport.IsNullOrDestroyed())
                         {
                             RectTransform view = input.textViewport;
                             view.anchoredPosition = new Vector2(view.anchoredPosition.x, 0f);
                             view.sizeDelta = new Vector2(view.sizeDelta.x, 0f);
-                        }
-                        if (!input.textComponent.IsNullOrDestroyed())
-                        {
-                            input.textComponent.horizontalAlignment = Il2CppTMPro
-                                .HorizontalAlignmentOptions
-                                .Left;
-                            input.textComponent.verticalAlignment = Il2CppTMPro
-                                .VerticalAlignmentOptions
-                                .Middle;
                         }
                     }
                     return input;
@@ -7858,6 +8334,11 @@ public partial class Hud_Manager : MonoBehaviour
                                 "NoLostWhenDie",
                                 "Toggle_Scenes_Monoliths_NoLostWhenDie"
                             );
+
+                            Content.Character.Data.MoveEndgameControls(
+                                scene_monoliths_content,
+                                scene_dungeons_content
+                            );
                         }
                     }
                 }
@@ -7873,8 +8354,13 @@ public partial class Hud_Manager : MonoBehaviour
             {
                 if (!content_obj.IsNullOrDestroyed())
                 {
+                    bool wasEnabled = enable;
                     content_obj.active = show;
                     enable = show;
+                    if (show && !wasEnabled)
+                    {
+                        Content.Character.Update_Monoliths_Data();
+                    }
                 }
             }
 
@@ -8289,6 +8775,7 @@ public partial class Hud_Manager : MonoBehaviour
                         );
                         if (!skills_content.IsNullOrDestroyed())
                         {
+                            Mods.Summon.Summon_Options.BindUI(skills_content);
                             SkillTree.enable_remove_mana_cost_toggle = Functions.Get_ToggleInPanel(
                                 skills_content,
                                 "RemoveManaCost",
@@ -9111,6 +9598,7 @@ public partial class Hud_Manager : MonoBehaviour
                         && (!Save_Manager.instance.data.IsNullOrDestroyed())
                     )
                     {
+                        Mods.Summon.Summon_Options.RefreshUI();
                         SkillTree.enable_remove_mana_cost_toggle.isOn = Save_Manager
                             .instance
                             .data
@@ -11636,7 +12124,7 @@ public partial class Hud_Manager : MonoBehaviour
                         UpdateRarity();
                         UpdateItems();
                         shard_initialized = false; //Reset shards
-                        if (enable && !center_content.IsNullOrDestroyed())
+                        if (enable && !ModUI.ForceDropBuilder.IsReady && !center_content.IsNullOrDestroyed())
                         {
                             InitializeShardsView();
                         }
@@ -11927,7 +12415,7 @@ public partial class Hud_Manager : MonoBehaviour
                             }
                         }
                         shard_initialized = false;
-                        if (enable && !center_content.IsNullOrDestroyed())
+                        if (enable && !ModUI.ForceDropBuilder.IsReady && !center_content.IsNullOrDestroyed())
                         {
                             InitializeShardsView();
                         }
@@ -12536,6 +13024,11 @@ public partial class Hud_Manager : MonoBehaviour
                                 affixName = affix.affixName,
                                 affixTitle = affix.affixTitle,
                                 affixType = affix.type,
+                                specialAffixType = affix.specialAffixType,
+                                titleType = affix.titleType,
+                                sealedAffixType = seal
+                                    ? Il2Cpp.SealedAffixType.Regular
+                                    : Il2Cpp.SealedAffixType.None,
                                 //isSealedAffix = seal,
                                 affixTier = tier,
                                 affixRoll = roll,
@@ -12556,6 +13049,11 @@ public partial class Hud_Manager : MonoBehaviour
                                     affixName = affix.affixName,
                                     affixTitle = affix.affixTitle,
                                     affixType = affix.type,
+                                specialAffixType = affix.specialAffixType,
+                                titleType = affix.titleType,
+                                sealedAffixType = seal
+                                    ? Il2Cpp.SealedAffixType.Regular
+                                    : Il2Cpp.SealedAffixType.None,
                                     //isSealedAffix = seal,
                                     affixTier = tier,
                                     affixRoll = roll,
@@ -12881,6 +13379,7 @@ public partial class Hud_Manager : MonoBehaviour
                             item.CorruptWithoutEffect();
                             item.SetAsCorrupted();
                         }
+                        ModUI.ForceDropBuilder.ApplySelectedCorruption(item);
                         item.RefreshIDAndValues(); //Refresh item for implicits, unique mods, and the saved id
                         if ((item_type < 100) && (ra < 7))
                         {
@@ -12905,7 +13404,7 @@ public partial class Hud_Manager : MonoBehaviour
 
             public static void Get_Refs()
             {
-                content_obj = Functions.GetChild(Content.content_obj, "Headhunter_Content");
+                content_obj = Functions.FindDescendant(Content.content_obj, "Headhunter_Content");
             }
 
             public static void Set_Active(bool show)

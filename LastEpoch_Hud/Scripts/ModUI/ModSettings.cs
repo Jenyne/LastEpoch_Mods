@@ -105,6 +105,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 .OnBind(
                     (contentObj, _) =>
                     {
+                        // Apply to existing asset bundles as well as the updated prefab.
+                        LayoutPanel(contentObj, "Camera", 0.006f, 0.505f, 0.33229983f, 0.9895249f);
+                        LayoutPanel(contentObj, "Difficulty", 0.006f, 0.010475103f, 0.33229983f, 0.495f);
+                        LayoutPanel(contentObj, "Monoliths", 0.6692167f, 0.010475103f, 0.994f, 0.9895249f);
                         var title = Prefab.Child(contentObj, "Difficulty");
                         if (title == null)
                             return;
@@ -119,6 +123,19 @@ namespace LastEpoch_Hud.Scripts.ModUI
                             Prefab.ApplyLabel(text, "Difficulty");
                     }
                 );
+
+            private static void LayoutPanel(UnityEngine.GameObject content, string name,
+                float left, float bottom, float right, float top)
+            {
+                var panel = Prefab.Child(content, name);
+                if (panel == null) return;
+                var rect = panel.GetComponent<UnityEngine.RectTransform>();
+                if (rect == null) return;
+                rect.anchorMin = new UnityEngine.Vector2(left, bottom);
+                rect.anchorMax = new UnityEngine.Vector2(right, top);
+                rect.anchoredPosition = UnityEngine.Vector2.zero;
+                rect.sizeDelta = UnityEngine.Vector2.zero;
+            }
 
             public static readonly FloatSetting EnemyHealthMult = Group.Float(
                 "EnemyHealthMult",
@@ -159,6 +176,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
             public static readonly BoolSetting CapLevelToZone = Group.Bool(
                 "CapLevelToZone",
+                defaultValue: false,
                 label: "Cap Player Level Gain to Zone Level"
             );
 
@@ -190,7 +208,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
             public static readonly HeaderSetting Description = Group.Header(
                 "AutoCastDescription",
-                label: "Hold the modifier key and click an ability slot to toggle autocast on/off for that skill."
+                label: "Hold the modifier key and press the skill's normal keybind to toggle autocast on/off."
             );
 
             // Default per build config so a fresh install on either control scheme has a working modifier.

@@ -6,27 +6,55 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
     public class Items_AutoStore_OnPickup
     {
         static bool storing;
+        static bool pendingStore;
+        static float pendingStoreAt;
+        const float StoreDebounceSeconds = 0.20f;
+
+        public static void RequestStore()
+        {
+            if (storing) { return; }
+            if (!pendingStore)
+            {
+                pendingStore = true;
+                pendingStoreAt = UnityEngine.Time.realtimeSinceStartup + StoreDebounceSeconds;
+            }
+        }
+
+        public static void FlushPending()
+        {
+            if (!pendingStore || storing) { return; }
+            if (UnityEngine.Time.realtimeSinceStartup < pendingStoreAt) { return; }
+
+            pendingStore = false;
+            StoreNow();
+        }
 
         public static void StoreNow()
         {
             if (storing) { return; }
+
+            // Any explicit/timer/inventory-open store satisfies a queued drop-store request.
+            pendingStore = false;
+
+            long profAlloc;
+            long profStart = Diagnostics.DiagnosticsDumper.BeginOperation(out profAlloc);
             storing = true;
             try
             {
                 ItemContainersManager manager = ItemContainersManager.Instance;
                 if (manager.IsNullOrDestroyed()) { return; }
+
+                // Let the game bulk-store crafting materials first, then handle the
+                // special inventory-backed material types in one inventory scan.
                 manager.TryStoreMaterials(false);
-                if (!manager.keys.IsNullOrDestroyed())
-                {
-                    MoveMatching(manager, data => Item.isKey(data.itemType), (data, qty) => manager.keys.TryAddItem(data, qty, Context.SILENT));
-                }
-                if (!manager.wovenEchoes.IsNullOrDestroyed())
-                {
-                    MoveMatching(manager, data => Item.isWovenEcho(data.itemType), (data, qty) => manager.wovenEchoes.TryAddItem(data, qty, Context.SILENT));
-                }
+                MoveKeysAndEchoes(manager);
             }
             catch { Main.logger_instance?.Msg("Items_AutoStore.StoreNow() ERROR"); }
-            finally { storing = false; }
+            finally
+            {
+                storing = false;
+                Diagnostics.DiagnosticsDumper.EndOperation("AutoStore.StoreNow", profStart, profAlloc);
+            }
         }
 
         public static void StorePicked(ItemData data)
@@ -82,21 +110,50 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             if (add(entry.data, qty)) { inventory.TryRemoveItem(entry, qty, Context.SILENT); }
         }
 
-        static void MoveMatching(ItemContainersManager manager, System.Func<ItemData, bool> match, System.Func<ItemData, int, bool> add)
+        static void MoveKeysAndEchoes(ItemContainersManager manager)
         {
             ItemContainer inventory = manager.inventory;
             if (inventory.IsNullOrDestroyed()) { return; }
+
             Il2CppSystem.Collections.Generic.List<ItemContainerEntry> content = inventory.GetContent();
             if (content == null) { return; }
 
-            var pendingEntries = new System.Collections.Generic.List<ItemContainerEntry>();
+            var keys = new System.Collections.Generic.List<ItemContainerEntry>();
+            var echoes = new System.Collections.Generic.List<ItemContainerEntry>();
+
             for (int i = 0; i < content.Count; i++)
             {
                 ItemContainerEntry entry = content[i];
                 if ((entry == null) || (entry.data.IsNullOrDestroyed())) { continue; }
-                if (match(entry.data)) { pendingEntries.Add(entry); }
+
+                int type = entry.data.itemType;
+                if (Item.isKey(type)) { keys.Add(entry); }
+                else if (Item.isWovenEcho(type)) { echoes.Add(entry); }
             }
-            foreach (ItemContainerEntry entry in pendingEntries) { MoveEntry(inventory, entry, add); }
+
+            if (!manager.keys.IsNullOrDestroyed())
+            {
+                foreach (ItemContainerEntry entry in keys)
+                {
+                    MoveEntry(
+                        inventory,
+                        entry,
+                        (data, qty) => manager.keys.TryAddItem(data, qty, Context.SILENT)
+                    );
+                }
+            }
+
+            if (!manager.wovenEchoes.IsNullOrDestroyed())
+            {
+                foreach (ItemContainerEntry entry in echoes)
+                {
+                    MoveEntry(
+                        inventory,
+                        entry,
+                        (data, qty) => manager.wovenEchoes.TryAddItem(data, qty, Context.SILENT)
+                    );
+                }
+            }
         }
 
         [HarmonyPatch(typeof(ItemContainersManager), "attemptToPickupItem")]
@@ -108,7 +165,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 if ((!__result) || (storing) || (__0.IsNullOrDestroyed()) || (Save_Manager.instance.IsNullOrDestroyed()) || (Save_Manager.instance.data.IsNullOrDestroyed())) { return; }
                 if (!Save_Manager.instance.data.Items.Pickup.Enable_AutoStore_OnDrop) { return; }
                 int type = __0.itemType;
-                if ((ItemList.isCraftingItem(type)) || (Item.isKey(type)) || (Item.isWovenEcho(type))) { StorePicked(__0); }
+                if ((ItemList.isCraftingItem(type)) || (Item.isKey(type)) || (Item.isWovenEcho(type)))
+                {
+                    // Collapse a burst of material pickups into one bulk-store pass.
+                    RequestStore();
+                }
             }
         }
     }

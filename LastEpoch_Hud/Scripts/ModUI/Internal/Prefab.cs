@@ -100,12 +100,12 @@ namespace LastEpoch_Hud.Scripts.ModUI
         public static void ApplyLabel(Text text, string englishLabel)
         {
             if (text == null || string.IsNullOrEmpty(englishLabel)) return;
-            LocaleRegistry.Register(text, englishLabel);
-            var dict = Locales.current_dictionary;
-            if (dict != null && dict.TryGetValue(englishLabel, out var translated) && !string.IsNullOrEmpty(translated))
+            string canonical = Locales.CanonicalKey(englishLabel);
+            LocaleRegistry.Register(text, canonical);
+            if (Locales.TryGetTranslation(canonical, out string translated))
                 text.text = translated;
             else
-                text.text = englishLabel;
+                text.text = canonical;
         }
 
         // Navigate: parent -> panel -> "Title" -> toggleName (for master toggles)
@@ -159,8 +159,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 if (text == null) return;
                 if (text.text.Length == 0) return;
                 if (Array.IndexOf(Locales.igrone_str, text.text[0]) >= 0) return;
-                if (Locales.current_dictionary.ContainsKey(text.text))
-                    text.text = Locales.current_dictionary[text.text];
+                if (Locales.TryGetTranslation(text.text, out string translated))
+                    text.text = translated;
             });
         }
     }

@@ -17,6 +17,7 @@ fr:Option A
 fr:Max ?
 # Same word in French, only the case differs.
 fr:AutoCast
+fr:Affixes
 fr:Zoom Minimum
 fr:Angle Minimum
 fr:Angle Maximum

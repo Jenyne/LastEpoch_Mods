@@ -373,6 +373,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 }
             }            
         }
+        internal static Ability[] GetTriggerAbilities()
+        {
+            return Trigger.Abilities;
+        }
+
         private class Trigger
         {
             internal static void AllSkills(Actor hitActor)
@@ -458,7 +463,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 }
             }            
 
-            private static Ability[] Abilities = null;
+            internal static Ability[] Abilities = null;
             private static System.DateTime[] Times = null;
             private static bool Initializing = false;
             private static bool trigger = false;

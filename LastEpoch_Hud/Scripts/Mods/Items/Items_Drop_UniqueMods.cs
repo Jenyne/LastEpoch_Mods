@@ -23,10 +23,10 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         [HarmonyPatch(typeof(ItemData), "randomiseUniqueRolls")]
         public class randomiseUniqueRolls
         {
-            [HarmonyPrefix]
-            static bool Prefix(ref ItemData __instance)
+            [HarmonyPostfix]
+            static void Postfix(ItemData __instance)
             {
-                if (CanRun())
+                if (CanRun() && !__instance.IsNullOrDestroyed())
                 {
                     for (int k = 0; k < __instance.uniqueRolls.Count; k++)
                     {
@@ -35,11 +35,10 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                         else { roll = (byte)Random.RandomRange(Save_Manager.instance.data.Items.Drop.UniqueMods_Min, Save_Manager.instance.data.Items.Drop.UniqueMods_Max); }
                         __instance.uniqueRolls[k] = roll;
                     }
-                    __instance.RefreshIDAndValues();
-                    
-                    return false;
+                    // Only change the rolls here. Ascendance can call this before it has
+                    // finished assigning the unique identity; rebuilding or refreshing now
+                    // can serialize that intermediate base item. The caller owns finalization.
                 }
-                else { return true; };
             }
         }
     }
