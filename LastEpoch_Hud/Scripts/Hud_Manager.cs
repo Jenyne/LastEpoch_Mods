@@ -1762,6 +1762,7 @@ namespace LastEpoch_Hud.Scripts
                                 Data.monolith_gaze_slider = Functions.Get_SliderInPanel(character_data_content, "Monolith_Gaze", "Slider");
                                 Data.SetupMonolithInputs();
 
+                                Data.monolith_selector_go = Functions.GetChild(character_data_content, "Monoliths");
                                 Data.monolith_dropdown = Functions.Get_DopboxInPanel(character_data_content, "Monoliths", "Dropdown", new System.Action<int>((_) => { Update_Monoliths_Data(); }));
                                 Data.monolith_dropdown.options = new List<Dropdown.OptionData>();
                                 Data.monolith_dropdown.options.Add(new Dropdown.OptionData { text = "Select" });
@@ -2862,77 +2863,26 @@ namespace LastEpoch_Hud.Scripts
                         soul_amount_input = inputClone.GetComponent<Il2CppTMPro.TMP_InputField>();
                         RectTransform inputRect = inputClone.GetComponent<RectTransform>();
 
-                        float totalWidth = Mathf.Max(180f, source.rect.width);
-                        float height = Mathf.Max(28f, source.rect.height);
-                        const float buttonWidth = 64f;
-                        const float gap = 6f;
-                        float inputWidth = Mathf.Max(100f, totalWidth - buttonWidth - gap);
-
                         if (!inputRect.IsNullOrDestroyed())
                         {
                             inputRect.anchorMin = source.anchorMin;
                             inputRect.anchorMax = source.anchorMax;
                             inputRect.pivot = source.pivot;
-                            inputRect.sizeDelta = new Vector2(inputWidth, height);
+                            inputRect.anchoredPosition = source.anchoredPosition;
+                            inputRect.sizeDelta = source.sizeDelta;
                             inputRect.localScale = Vector3.one;
-                            inputRect.anchoredPosition = source.anchoredPosition + new Vector2(-(buttonWidth + gap) * 0.5f, 0f);
                         }
 
-                        LayoutElement inputLayout = inputClone.GetComponent<LayoutElement>();
-                        if (!inputLayout.IsNullOrDestroyed()) { inputLayout.ignoreLayout = true; }
+                        PrepareNumericInput(soul_amount_input, "1000");
 
-                        if (!soul_amount_input.IsNullOrDestroyed())
-                        {
-                            soul_amount_input.enabled = true;
-                            soul_amount_input.interactable = true;
-                            soul_amount_input.readOnly = false;
-                            soul_amount_input.contentType = Il2CppTMPro.TMP_InputField.ContentType.IntegerNumber;
-                            soul_amount_input.characterLimit = 7;
-                            soul_amount_input.text = "1000";
-                            if (!soul_amount_input.textComponent.IsNullOrDestroyed())
-                            {
-                                soul_amount_input.textComponent.horizontalAlignment = Il2CppTMPro.HorizontalAlignmentOptions.Left;
-                                soul_amount_input.textComponent.verticalAlignment = Il2CppTMPro.VerticalAlignmentOptions.Middle;
-                            }
-                        }
-
-                        GameObject buttonClone = Object.Instantiate(save_button.gameObject, soul_row.transform);
+                        // Separate action row; this is moved to Scenes > Dungeons with
+                        // the Soul Embers value row once the Scenes references exist.
+                        GameObject buttonClone = Object.Instantiate(save_button.gameObject, soul_row.transform.parent);
                         buttonClone.name = "Btn_Character_Data_AddSoulEmbers";
                         soul_add_button = buttonClone.GetComponent<Button>();
-                        RectTransform buttonRect = buttonClone.GetComponent<RectTransform>();
-                        if (!buttonRect.IsNullOrDestroyed())
-                        {
-                            buttonRect.anchorMin = source.anchorMin;
-                            buttonRect.anchorMax = source.anchorMax;
-                            buttonRect.pivot = source.pivot;
-                            buttonRect.sizeDelta = new Vector2(buttonWidth, height);
-                            buttonRect.localScale = Vector3.one;
-                            buttonRect.anchoredPosition = source.anchoredPosition + new Vector2((inputWidth + gap) * 0.5f, 0f);
-                        }
-
-                        LayoutElement buttonLayout = buttonClone.GetComponent<LayoutElement>();
-                        if (!buttonLayout.IsNullOrDestroyed()) { buttonLayout.ignoreLayout = true; }
-                        if (!soul_add_button.IsNullOrDestroyed()) { soul_add_button.interactable = true; }
-
-                        Text buttonText = null;
-                        GameObject label = Functions.FindDescendant(buttonClone, "Label");
-                        if (!label.IsNullOrDestroyed()) { buttonText = label.GetComponent<Text>(); }
-                        if (buttonText.IsNullOrDestroyed()) { buttonText = buttonClone.GetComponentInChildren<Text>(true); }
-                        if (!buttonText.IsNullOrDestroyed())
-                        {
-                            RectTransform labelRect = buttonText.GetComponent<RectTransform>();
-                            if (!labelRect.IsNullOrDestroyed())
-                            {
-                                labelRect.anchorMin = Vector2.zero;
-                                labelRect.anchorMax = Vector2.one;
-                                labelRect.offsetMin = Vector2.zero;
-                                labelRect.offsetMax = Vector2.zero;
-                            }
-                            ModUI.Prefab.ApplyLabel(buttonText, "Add");
-                        }
+                        PrepareFullWidthActionButton(buttonClone, soul_add_button, "Add Soul Embers");
 
                         inputClone.transform.SetAsLastSibling();
-                        buttonClone.transform.SetAsLastSibling();
                         UpdateSoulEmberBalance();
                     }
 
@@ -3004,6 +2954,7 @@ namespace LastEpoch_Hud.Scripts
                         Mods.Factions.TheWoven.Faction_Woven_TreePoints.ApplyToPlayer();
                     }
 
+                    public static GameObject monolith_selector_go = null;
                     public static Dropdown monolith_dropdown = null;
                     public static bool monolith_inputs_ready = false;
                     static bool suppress_monolith_input = false;
@@ -3123,53 +3074,15 @@ namespace LastEpoch_Hud.Scripts
                             return;
                         }
 
-                        RectTransform inputRect = monolith_corruption_input.GetComponent<RectTransform>();
-                        if (inputRect.IsNullOrDestroyed()) { return; }
+                        GameObject parent = monolith_corruption_go.transform.parent != null
+                            ? monolith_corruption_go.transform.parent.gameObject
+                            : null;
+                        if (parent.IsNullOrDestroyed()) { return; }
 
-                        float originalWidth = Mathf.Max(160f, inputRect.rect.width);
-                        float height = Mathf.Max(28f, inputRect.rect.height);
-                        const float buttonWidth = 82f;
-                        const float gap = 6f;
-                        float inputWidth = Mathf.Max(80f, originalWidth - buttonWidth - gap);
-
-                        inputRect.sizeDelta = new Vector2(inputWidth, height);
-                        inputRect.anchoredPosition += new Vector2(-(buttonWidth + gap) * 0.5f, 0f);
-
-                        GameObject buttonClone = Object.Instantiate(save_button.gameObject, monolith_corruption_go.transform);
+                        GameObject buttonClone = Object.Instantiate(save_button.gameObject, parent.transform);
                         buttonClone.name = "Btn_Monolith_Corruption_ApplyAll";
                         monolith_corruption_all_button = buttonClone.GetComponent<Button>();
-                        LayoutElement buttonLayout = buttonClone.GetComponent<LayoutElement>();
-                        if (!buttonLayout.IsNullOrDestroyed()) { buttonLayout.ignoreLayout = true; }
-                        if (!monolith_corruption_all_button.IsNullOrDestroyed()) { monolith_corruption_all_button.interactable = true; }
-
-                        RectTransform buttonRect = buttonClone.GetComponent<RectTransform>();
-                        if (!buttonRect.IsNullOrDestroyed())
-                        {
-                            buttonRect.anchorMin = inputRect.anchorMin;
-                            buttonRect.anchorMax = inputRect.anchorMax;
-                            buttonRect.pivot = inputRect.pivot;
-                            buttonRect.sizeDelta = new Vector2(buttonWidth, height);
-                            buttonRect.localScale = Vector3.one;
-                            buttonRect.anchoredPosition = inputRect.anchoredPosition + new Vector2((inputWidth + buttonWidth + gap) * 0.5f, 0f);
-                        }
-
-                        Text buttonText = null;
-                        GameObject label = Functions.FindDescendant(buttonClone, "Label");
-                        if (!label.IsNullOrDestroyed()) { buttonText = label.GetComponent<Text>(); }
-                        if (buttonText.IsNullOrDestroyed()) { buttonText = buttonClone.GetComponentInChildren<Text>(true); }
-                        if (!buttonText.IsNullOrDestroyed())
-                        {
-                            RectTransform labelRect = buttonText.GetComponent<RectTransform>();
-                            if (!labelRect.IsNullOrDestroyed())
-                            {
-                                labelRect.anchorMin = Vector2.zero;
-                                labelRect.anchorMax = Vector2.one;
-                                labelRect.offsetMin = Vector2.zero;
-                                labelRect.offsetMax = Vector2.zero;
-                            }
-                            ModUI.Prefab.ApplyLabel(buttonText, "Apply All");
-                        }
-                        buttonClone.transform.SetAsLastSibling();
+                        PrepareFullWidthActionButton(buttonClone, monolith_corruption_all_button, "Apply to All Timelines");
                     }
 
                     public static void ApplyCorruptionToAllTimelines()
@@ -3219,6 +3132,104 @@ namespace LastEpoch_Hud.Scripts
                         Main.logger_instance?.Msg("Set corruption to " + result + " on " + changed + " empowered timelines");
                     }
 
+                    static void PrepareNumericInput(Il2CppTMPro.TMP_InputField input, string defaultText)
+                    {
+                        if (input.IsNullOrDestroyed()) { return; }
+                        input.enabled = true;
+                        input.interactable = true;
+                        input.readOnly = false;
+                        input.contentType = Il2CppTMPro.TMP_InputField.ContentType.IntegerNumber;
+                        input.characterLimit = 7;
+                        input.text = defaultText ?? "";
+
+                        if (!input.targetGraphic.IsNullOrDestroyed())
+                        {
+                            input.targetGraphic.raycastTarget = true;
+                        }
+                        if (!input.textComponent.IsNullOrDestroyed())
+                        {
+                            input.textComponent.raycastTarget = false;
+                            input.textComponent.horizontalAlignment = Il2CppTMPro.HorizontalAlignmentOptions.Left;
+                            input.textComponent.verticalAlignment = Il2CppTMPro.VerticalAlignmentOptions.Middle;
+                        }
+
+                        CanvasGroup group = input.GetComponent<CanvasGroup>();
+                        if (!group.IsNullOrDestroyed())
+                        {
+                            group.interactable = true;
+                            group.blocksRaycasts = true;
+                        }
+                    }
+
+                    static void PrepareFullWidthActionButton(GameObject buttonObject, Button button, string labelText)
+                    {
+                        if (buttonObject.IsNullOrDestroyed() || button.IsNullOrDestroyed()) { return; }
+                        button.interactable = true;
+
+                        LayoutElement layout = buttonObject.GetComponent<LayoutElement>();
+                        if (layout.IsNullOrDestroyed()) { layout = buttonObject.AddComponent<LayoutElement>(); }
+                        layout.ignoreLayout = false;
+                        layout.minHeight = 34f;
+                        layout.preferredHeight = 38f;
+                        layout.flexibleWidth = 1f;
+
+                        RectTransform rect = buttonObject.GetComponent<RectTransform>();
+                        if (!rect.IsNullOrDestroyed())
+                        {
+                            rect.localScale = Vector3.one;
+                        }
+
+                        Text buttonText = null;
+                        GameObject label = Functions.FindDescendant(buttonObject, "Label");
+                        if (!label.IsNullOrDestroyed()) { buttonText = label.GetComponent<Text>(); }
+                        if (buttonText.IsNullOrDestroyed()) { buttonText = buttonObject.GetComponentInChildren<Text>(true); }
+                        if (!buttonText.IsNullOrDestroyed())
+                        {
+                            RectTransform labelRect = buttonText.GetComponent<RectTransform>();
+                            if (!labelRect.IsNullOrDestroyed())
+                            {
+                                labelRect.anchorMin = Vector2.zero;
+                                labelRect.anchorMax = Vector2.one;
+                                labelRect.offsetMin = Vector2.zero;
+                                labelRect.offsetMax = Vector2.zero;
+                            }
+                            ModUI.Prefab.ApplyLabel(buttonText, labelText);
+                        }
+                    }
+
+                    static void MoveControl(GameObject control, GameObject target)
+                    {
+                        if (control.IsNullOrDestroyed() || target.IsNullOrDestroyed()) { return; }
+                        control.transform.SetParent(target.transform, false);
+                        control.transform.localScale = Vector3.one;
+                        control.transform.SetAsLastSibling();
+                    }
+
+                    public static void MoveEndgameControls(GameObject monolithTarget, GameObject dungeonTarget)
+                    {
+                        if (!monolithTarget.IsNullOrDestroyed())
+                        {
+                            MoveControl(monolith_selector_go, monolithTarget);
+                            MoveControl(monolith_stability_basic_go, monolithTarget);
+                            MoveControl(monolith_stability_empower_go, monolithTarget);
+                            MoveControl(monolith_corruption_go, monolithTarget);
+                            if (!monolith_corruption_all_button.IsNullOrDestroyed())
+                            {
+                                MoveControl(monolith_corruption_all_button.gameObject, monolithTarget);
+                            }
+                            MoveControl(monolith_gaze_go, monolithTarget);
+                        }
+
+                        if (!dungeonTarget.IsNullOrDestroyed())
+                        {
+                            MoveControl(soul_row, dungeonTarget);
+                            if (!soul_add_button.IsNullOrDestroyed())
+                            {
+                                MoveControl(soul_add_button.gameObject, dungeonTarget);
+                            }
+                        }
+                    }
+
                     public static void SetupMonolithInputs()
                     {
                         monolith_stability_basic_input = CreateMonolithInput(monolith_stability_basic_go, monolith_stability_basic_slider, monolith_stability_basic_text);
@@ -3255,22 +3266,12 @@ namespace LastEpoch_Hud.Scripts
                         Il2CppTMPro.TMP_InputField input = clone.GetComponent<Il2CppTMPro.TMP_InputField>();
                         if (!input.IsNullOrDestroyed())
                         {
-                            input.enabled = true;
-                            input.interactable = true;
-                            input.readOnly = false;
-                            input.contentType = Il2CppTMPro.TMP_InputField.ContentType.IntegerNumber;
-                            input.characterLimit = 7;
-                            input.text = "";
+                            PrepareNumericInput(input, "");
                             if (!input.textViewport.IsNullOrDestroyed())
                             {
                                 RectTransform view = input.textViewport;
                                 view.anchoredPosition = new Vector2(view.anchoredPosition.x, 0f);
                                 view.sizeDelta = new Vector2(view.sizeDelta.x, 0f);
-                            }
-                            if (!input.textComponent.IsNullOrDestroyed())
-                            {
-                                input.textComponent.horizontalAlignment = Il2CppTMPro.HorizontalAlignmentOptions.Left;
-                                input.textComponent.verticalAlignment = Il2CppTMPro.VerticalAlignmentOptions.Middle;
                             }
                         }
                         return input;
@@ -4725,6 +4726,11 @@ namespace LastEpoch_Hud.Scripts
                                 Monoliths.complete_objective_toggle = Functions.Get_ToggleInPanel(scene_monoliths_content, "CompleteObjective", "Toggle_Scenes_Monoliths_CompleteObjective");
                                 Monoliths.no_lost_when_die_toggle = Functions.Get_ToggleInPanel(scene_monoliths_content, "NoLostWhenDie", "Toggle_Scenes_Monoliths_NoLostWhenDie");
                             }
+
+                            // The editable character-data Monolith controls are much
+                            // easier to use in the dedicated Scenes sections than in the
+                            // cramped legacy Character Data viewport.
+                            Content.Character.Data.MoveEndgameControls(scene_monoliths_content, scene_dungeons_content);
                         }
                     }
                 }
