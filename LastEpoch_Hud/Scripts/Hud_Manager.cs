@@ -928,8 +928,12 @@ namespace LastEpoch_Hud.Scripts
                                         }
                                     case "Slider_Character_Cheats_MemoryAmberMultiplier":
                                         {
-                                            Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier = (uint)__0;
-                                            //Content.Character.Cheats.favor_text.text = "x " + (int)(Save_Manager.instance.data.Character.Cheats.FavorMultiplier);
+                                            uint multiplier = (uint)Mathf.Clamp(Mathf.RoundToInt(__0), 1, 10000);
+                                            Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier = multiplier;
+                                            if (!Content.Character.Cheats.memoryamber_text.IsNullOrDestroyed())
+                                            {
+                                                Content.Character.Cheats.memoryamber_text.text = "x " + multiplier;
+                                            }
                                             break;
                                         }
                                     case "Slider_Character_Cheats_ItemDropMultiplier":
@@ -1651,6 +1655,7 @@ namespace LastEpoch_Hud.Scripts
                                 Cheats.memoryamber_toggle = Functions.Get_ToggleInPanel(character_cheats_content, "MemoryAmberMultiplier", "Toggle_Character_Cheats_MemoryAmberMultiplier");
                                 Cheats.memoryamber_text = Functions.Get_TextInToggle(character_cheats_content, "MemoryAmberMultiplier", "Toggle_Character_Cheats_MemoryAmberMultiplier", "Value");
                                 Cheats.memoryamber_slider = Functions.Get_SliderInPanel(character_cheats_content, "MemoryAmberMultiplier", "Slider_Character_Cheats_MemoryAmberMultiplier");
+                                Cheats.PrepareMemoryAmberMultiplier();
 
                                 Cheats.itemdropmultiplier_toggle = Functions.Get_ToggleInPanel(character_cheats_content, "ItemDropMultiplier", "Toggle_Character_Cheats_ItemDropMultiplier");
                                 Cheats.itemdropmultiplier_text = Functions.Get_TextInToggle(character_cheats_content, "ItemDropMultiplier", "Toggle_Character_Cheats_ItemDropMultiplier", "Value");
@@ -1783,6 +1788,7 @@ namespace LastEpoch_Hud.Scripts
                                     Data.save_button = Functions.GetChild(panel_save, "Btn_Character_Data_Save").GetComponent<Button>();
                                 }
                                 Data.SetupSoulEmberControls();
+                                Data.SetupCorruptionAllButton();
                             }
 
                             //Faction Tracker
@@ -2018,6 +2024,10 @@ namespace LastEpoch_Hud.Scripts
                     if (!Data.soul_add_button.IsNullOrDestroyed())
                     {
                         Events.Set_Button_Event(Data.soul_add_button, Data.SoulEmbers_Add_Action);
+                    }
+                    if (!Data.monolith_corruption_all_button.IsNullOrDestroyed())
+                    {
+                        Events.Set_Button_Event(Data.monolith_corruption_all_button, Data.MonolithCorruptionAll_Action);
                     }
                     if (!Data.save_button.IsNullOrDestroyed())
                     {
@@ -2657,13 +2667,31 @@ namespace LastEpoch_Hud.Scripts
                     public static readonly System.Action<bool> memoryamber_Toggle_Action = new System.Action<bool>(Set_memoryamber_Enable);
                     private static void Set_memoryamber_Enable(bool enable)
                     {
-                        if ((!Save_Manager.instance.IsNullOrDestroyed()) && (!favor_toggle.IsNullOrDestroyed()))
+                        if ((!Save_Manager.instance.IsNullOrDestroyed()) && (!memoryamber_toggle.IsNullOrDestroyed()))
                         {
                             Save_Manager.instance.data.Character.Cheats.Enable_MemoryAmberMultiplier = memoryamber_toggle.isOn;
                         }
                     }
                     public static Text memoryamber_text = null;
                     public static Slider memoryamber_slider = null;
+
+                    public static void PrepareMemoryAmberMultiplier()
+                    {
+                        if (memoryamber_slider.IsNullOrDestroyed()) { return; }
+                        memoryamber_slider.wholeNumbers = true;
+                        memoryamber_slider.minValue = 1f;
+                        memoryamber_slider.maxValue = 10000f;
+
+                        if (!Save_Manager.instance.IsNullOrDestroyed())
+                        {
+                            uint value = Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier;
+                            if (value < 1) { value = 1; }
+                            if (value > 10000) { value = 10000; }
+                            Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier = value;
+                            memoryamber_slider.value = value;
+                            if (!memoryamber_text.IsNullOrDestroyed()) { memoryamber_text.text = "x " + value; }
+                        }
+                    }
 
                     public static Toggle itemdropmultiplier_toggle = null;
                     public static readonly System.Action<bool> ItemDropMulti_Toggle_Action = new System.Action<bool>(Set_ItemDropMulti_Enable);
@@ -3015,6 +3043,8 @@ namespace LastEpoch_Hud.Scripts
                     public static Text monolith_corruption_text = null;
                     public static Slider monolith_corruption_slider = null;
                     public static Il2CppTMPro.TMP_InputField monolith_corruption_input = null;
+                    public static Button monolith_corruption_all_button = null;
+                    public static readonly System.Action MonolithCorruptionAll_Action = new System.Action(ApplyCorruptionToAllTimelines);
                     public static readonly System.Action<float> monolith_corruption_slider_Action = new System.Action<float>(Set_monolith_corruption_slider);
                     public static readonly System.Action<string> monolith_corruption_input_Action = new System.Action<string>(Set_monolith_corruption_empower);
                     public static void Set_monolith_corruption_slider(float value) { Set_monolith_corruption_empower(((int)value).ToString()); }
@@ -3062,6 +3092,83 @@ namespace LastEpoch_Hud.Scripts
                         }
                         ApplyLiveGaze(index, result);
                         if (!monolith_gaze_text.IsNullOrDestroyed()) { monolith_gaze_text.text = result.ToString(); }
+                    }
+
+                    public static void SetupCorruptionAllButton()
+                    {
+                        if (monolith_corruption_go.IsNullOrDestroyed() || monolith_corruption_input.IsNullOrDestroyed() ||
+                            save_button.IsNullOrDestroyed() || !monolith_corruption_all_button.IsNullOrDestroyed())
+                        {
+                            return;
+                        }
+
+                        RectTransform inputRect = monolith_corruption_input.GetComponent<RectTransform>();
+                        if (inputRect.IsNullOrDestroyed()) { return; }
+
+                        float originalWidth = Mathf.Max(160f, inputRect.rect.width);
+                        float height = Mathf.Max(28f, inputRect.rect.height);
+                        const float buttonWidth = 82f;
+                        const float gap = 6f;
+                        float inputWidth = Mathf.Max(80f, originalWidth - buttonWidth - gap);
+
+                        inputRect.sizeDelta = new Vector2(inputWidth, height);
+                        inputRect.anchoredPosition += new Vector2(-(buttonWidth + gap) * 0.5f, 0f);
+
+                        GameObject buttonClone = Object.Instantiate(save_button.gameObject, monolith_corruption_go.transform);
+                        buttonClone.name = "Btn_Monolith_Corruption_ApplyAll";
+                        monolith_corruption_all_button = buttonClone.GetComponent<Button>();
+
+                        RectTransform buttonRect = buttonClone.GetComponent<RectTransform>();
+                        if (!buttonRect.IsNullOrDestroyed())
+                        {
+                            buttonRect.anchorMin = inputRect.anchorMin;
+                            buttonRect.anchorMax = inputRect.anchorMax;
+                            buttonRect.pivot = inputRect.pivot;
+                            buttonRect.sizeDelta = new Vector2(buttonWidth, height);
+                            buttonRect.localScale = Vector3.one;
+                            buttonRect.anchoredPosition = inputRect.anchoredPosition + new Vector2((inputWidth + buttonWidth + gap) * 0.5f, 0f);
+                        }
+
+                        Text buttonText = null;
+                        GameObject label = Functions.FindDescendant(buttonClone, "Label");
+                        if (!label.IsNullOrDestroyed()) { buttonText = label.GetComponent<Text>(); }
+                        if (buttonText.IsNullOrDestroyed()) { buttonText = buttonClone.GetComponentInChildren<Text>(true); }
+                        if (!buttonText.IsNullOrDestroyed()) { ModUI.Prefab.ApplyLabel(buttonText, "Apply All"); }
+                    }
+
+                    public static void ApplyCorruptionToAllTimelines()
+                    {
+                        int result;
+                        if (!monolith_corruption_input.IsNullOrDestroyed())
+                        {
+                            if (!TryReadMonolithValue(monolith_corruption_input.text, out result)) { return; }
+                        }
+                        else if (!monolith_corruption_slider.IsNullOrDestroyed())
+                        {
+                            result = Mathf.RoundToInt(monolith_corruption_slider.value);
+                        }
+                        else { return; }
+
+                        if (Refs_Manager.player_data.IsNullOrDestroyed()) { return; }
+
+                        int changed = 0;
+                        foreach (SavedMonolithRun saved in Refs_Manager.player_data.MonolithRuns)
+                        {
+                            if (saved.DifficultyIndex != 1 || saved.SavedEchoWeb.IsNullOrDestroyed()) { continue; }
+                            saved.SavedEchoWeb.Corruption = result;
+                            ApplyLiveCorruption(saved.TimelineID, result);
+                            changed++;
+                        }
+
+                        if (changed > 0 && Refs_Manager.player_data.MaxCorruption < result)
+                        {
+                            Refs_Manager.player_data.MaxCorruption = result;
+                        }
+
+                        if (!monolith_corruption_input.IsNullOrDestroyed()) { monolith_corruption_input.text = result.ToString(); }
+                        if (!monolith_corruption_text.IsNullOrDestroyed()) { monolith_corruption_text.text = result.ToString(); }
+
+                        Main.logger_instance?.Msg("Set corruption to " + result + " on " + changed + " empowered timelines");
                     }
 
                     public static void SetupMonolithInputs()
