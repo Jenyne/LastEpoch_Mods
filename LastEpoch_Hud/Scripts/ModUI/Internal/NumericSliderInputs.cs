@@ -227,7 +227,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 // Use the normal setter so existing config, labels and Harmony hooks run.
                 entry.slider.value = value;
             }
-            entry.input.SetTextWithoutNotify(Format(entry.slider));
+            entry.input.SetTextWithoutNotify(Format(entry));
         }
     }
 }
