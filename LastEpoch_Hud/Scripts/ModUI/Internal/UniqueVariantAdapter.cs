@@ -15,9 +15,9 @@ namespace LastEpoch_Hud.Scripts.ModUI
         }
         public static bool HasSingleVariant(UniqueList.Entry entry)
         {
-            return IsUnsated(entry) && entry.dropsSpecificLegendaryAffixes &&
-                entry.excludeSpecificAffixesFromPrefixSuffixLimits &&
-                entry.droppableLegendaryAffixCount == 1 &&
+            // These flags also govern legendary drop generation; they are not a
+            // capability test for selecting a variant from an explicit native pool.
+            return IsUnsated(entry) &&
                 !entry.droppableLegendaryAffixes.IsNullOrDestroyed() &&
                 entry.droppableLegendaryAffixes.Count > 0;
         }
@@ -41,7 +41,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             foreach (var id in entry.droppableLegendaryAffixes)
                 foreach (var definition in list.AllAffixes)
                     if (!definition.IsNullOrDestroyed() && definition.affixId == id &&
-                        definition.specialAffixType == AffixList.SpecialAffixType.FakeUniqueMod &&
+                        !CorruptedAffixAdapter.IsCorruption(definition) &&
                         !result.Exists(a => a.affixId == id))
                     { result.Add(definition); break; }
             return result;
@@ -61,18 +61,18 @@ namespace LastEpoch_Hud.Scripts.ModUI
                     entry.droppableLegendaryAffixes.Contains(existing.affixId))
                     throw new InvalidOperationException("The ring already has a variant modifier");
             var affix = new ItemAffix((ushort)id, 0, 255, item.itemType, SealedAffixType.None);
-            if (affix.affixId != id || affix.specialAffixType != AffixList.SpecialAffixType.FakeUniqueMod ||
+            if (affix.affixId != id || affix.specialAffixType != definition.specialAffixType ||
                 affix.sealedAffixType != SealedAffixType.None)
                 throw new InvalidOperationException("Native Rage constructor rejected the variant");
             byte rarity = item.rarity, potential = item.legendaryPotential;
-            // This is a non-sealed fake unique mod. It does not turn the unique into
-            // a legendary or consume LP; native metadata excludes it from slot limits.
+            // Keep the native definition's special type and a non-sealed variant.
+            // Adding the ring's fixed-pool modifier does not spend LP or change rarity.
             item.affixes.Add(affix);
             item.sockets = (byte)item.affixes.Count;
             item.RefreshIDAndValues();
             int count = 0;
             foreach (var saved in item.affixes)
-                if (saved.affixId == id && saved.specialAffixType == AffixList.SpecialAffixType.FakeUniqueMod &&
+                if (saved.affixId == id && saved.specialAffixType == definition.specialAffixType &&
                     saved.sealedAffixType == SealedAffixType.None) count++;
             if (count != 1 || item.rarity != rarity || item.legendaryPotential != potential ||
                 item.sockets != item.affixes.Count)
