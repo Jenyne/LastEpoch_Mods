@@ -6,10 +6,14 @@ In a zone, press **F3** to open and close the mod menu. Escape closes it.
 
 ## Install
 
+**Automatic: Use this repo to install the mod: https://github.com/TriSSec-Lab/LE-Hud-Installer**
+
+Manual:
+
 1. Install [MelonLoader 0.7.3 Open-Beta](https://github.com/LavaGang/MelonLoader/releases). Point the installer at the game folder.
 2. Start the game once, wait until the main menu, then close it.
-3. From the [latest release](https://github.com/Syncingoutt/LastEpoch_Mods/releases), download `LastEpoch_Hud.dll` and the HUD asset `lastepochmods`. Download `UnityEngine.CoreModule.dll` too if the release requires it.
-4. Put `LastEpoch_Hud.dll` directly in the game `Mods` folder. Create `Mods/LastEpoch_Hud/Assets` if needed and put `lastepochmods` there. You should have:
+3. From the [latest release](https://github.com/Syncingoutt/LastEpoch_Mods/releases), download `LastEpoch_Hud.zip` and `UnityEngine.CoreModule.dll`
+4. Put `LastEpoch_Hud.dll` and `LastEpoch_Hud` directly in the game `Mods` folder.
 
    ```text
    <Last Epoch>\Mods\LastEpoch_Hud.dll
@@ -18,11 +22,28 @@ In a zone, press **F3** to open and close the mod menu. Escape closes it.
 
    The DLL stays next to the `LastEpoch_Hud` folder, not inside it.
 
-5. If required by the release, replace the downloaded `UnityEngine.CoreModule.dll` in this folder:
+5. Replace the downloaded `UnityEngine.CoreModule.dll` in this folder:
 
    ```text
    <Last Epoch>\MelonLoader\Il2CppAssemblies\
    ```
+
+## Update
+
+1. From the [latest release](https://github.com/Syncingoutt/LastEpoch_Mods/releases), download `LastEpoch_Hud.dll`.
+2. Replace it here:
+
+   ```text
+   <Last Epoch>\MelonLoader\Il2CppAssemblies\
+   ```
+   
+3. Launch the game once and wait till menu screen then quit
+4. Replace the `LastEpoch_Hud.dll` file again here:
+
+   ```text
+   <Last Epoch>\MelonLoader\Il2CppAssemblies\
+   ```
+   
 
 ## In case of issues
 
@@ -48,6 +69,13 @@ In case this does not work, please contact me on Discord: sync0333 (attach a log
 * Assets - lastepochmods
 5. Head into the game and see if it works (F3)
 
+## Optional translations
+
+The HUD follows the language selected in the game. Without a matching translation, it uses English fallback.
+
+Available translations are: ```fr, ko, zh```
+
+Start the game and select your language under Settings → Gameplay → Interface → Language. The mod HUD follows that setting.
 
 ## Build
 
@@ -56,23 +84,3 @@ The project references assemblies from your Last Epoch install. If the game is n
 ```powershell
 dotnet build .\LastEpoch_Hud\LastEpoch_Hud.csproj -c Release -p:LastEpochPath="D:\SteamLibrary\steamapps\common\Last Epoch"
 ```
-
-## Optional translations
-
-Locale JSON files are supplied as individual release downloads. To use translated HUD labels, download the desired language file and `en.json` for English fallback, then place them manually in:
-
-```text
-<Last Epoch>/Mods/LastEpoch_Hud/Locales/
-```
-
-Create the folder if needed. Supported files are `en.json` (English), `fr.json` (French), `ko.json` (Korean), and `zh.json` (Simplified Chinese). Keep the filenames unchanged. `base.json` is a template for translation authors.
-
-The HUD follows the language selected in the game. Without a matching translation, it uses English fallback. Close the game before replacing locale files; restart afterward. When updating the mod, download and replace the locale files you use to get the latest labels. Back up any custom translations first.
-
-## Release files and updates
-
-Release builds copy the HUD asset and locale JSON files into `Build/Release/net6.0/LastEpoch_Hud/`, alongside `Build/Release/net6.0/LastEpoch_Hud.dll`. No ZIP is generated.
-
-For the next release, attach `LastEpoch_Hud.dll`, `lastepochmods`, and each locale JSON as separate assets from the same build. Users updating an existing install replace the DLL in `Mods`; those who use translations replace their JSON files manually in `Mods/LastEpoch_Hud/Locales`. Replace the HUD asset if it changed.
-
-Preparing these files does not publish a GitHub release automatically.
