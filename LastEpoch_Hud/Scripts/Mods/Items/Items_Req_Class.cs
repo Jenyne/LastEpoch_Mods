@@ -25,6 +25,22 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             }
         }
 
+        // Affix compatibility must use the original class even when equip restrictions
+        // are disabled in the HUD.
+        public static bool TryGetOriginalRequirement(int type, int subType,
+            ItemList.ClassRequirement current, out ItemList.ClassRequirement requirement)
+        {
+            requirement = current;
+            if (backup != null)
+                foreach (var entry in backup)
+                    if (entry.type == type && entry.base_id == subType)
+                    {
+                        requirement = entry.class_req;
+                        return true;
+                    }
+            return !req_removed;
+        }
+
         private static bool req_removed = false;
         private static System.Collections.Generic.List<req_class_structure> backup = null;
         private static void Backup()

@@ -35,10 +35,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                         else { roll = (byte)Random.RandomRange(Save_Manager.instance.data.Items.Drop.UniqueMods_Min, Save_Manager.instance.data.Items.Drop.UniqueMods_Max); }
                         __instance.uniqueRolls[k] = roll;
                     }
-                    // Preserve vanilla roll initialization. Avoid refreshing derived values
-                    // while a caller such as Ascendance is still converting the item.
-                    // Persist only the rolls we changed; the caller completes the conversion.
-                    __instance.RebuildID();
+                    // Only change the rolls here. Ascendance can call this before it has
+                    // finished assigning the unique identity; rebuilding or refreshing now
+                    // can serialize that intermediate base item. The caller owns finalization.
                 }
             }
         }

@@ -19,6 +19,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static readonly Dictionary<int, Action> clicks = new Dictionary<int, Action>();
         static GameObject root, basePage, affixPage, uniquePage, picker;
         static TMP_InputField template, search, pickerSearch;
+        static bool categoryPicker, rarityPicker;
+        static readonly List<Choice> visiblePicks = new List<Choice>();
+        static readonly List<Text> pickerHeaders = new List<Text>();
+        static readonly string[] groups = { "Weapons", "Armour", "Accessories", "Other" };
         static Font font;
         static Text preview, status, pickerTitle;
         static Button typeButton, rarityButton, dropButton, corruptButton, corruptionSelect;
@@ -37,13 +41,15 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static int itemPage, pickerPage;
         static string lastSearch = "", lastPickerSearch = "", lastItems = "";
         static bool corrupted, failed, metadataLogged;
+        static float nextCorruptionCheck;
         static string result = "";
         public static bool IsReady => !root.IsNullOrDestroyed();
 
-        sealed class Choice { public int id; public string name; public Action select; }
+        sealed class Choice { public int id; public int group; public string name; public Action select; }
         sealed class Number
         {
             public TMP_InputField input;
+            public GameObject group;
             public int min, max, value;
             public bool random;
             public Button mode;
@@ -90,10 +96,15 @@ namespace LastEpoch_Hud.Scripts.ModUI
             }
             Caption(typeButton, Selected(FD.type_dropdown, "Choose category"));
             Caption(rarityButton, Selected(FD.rarity_dropdown, "Choose rarity"));
-            lp.input.gameObject.SetActive(FD.item_rarity > 6 && FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential);
-            lp.mode.gameObject.SetActive(lp.input.gameObject.activeSelf);
-            ww.input.gameObject.SetActive(FD.item_rarity > 6 && FD.item_legendary_type != UniqueList.LegendaryType.LegendaryPotential);
-            ww.mode.gameObject.SetActive(ww.input.gameObject.activeSelf);
+            lp.group.SetActive(FD.item_rarity > 6 && FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential);
+            ww.group.SetActive(FD.item_rarity > 6 && FD.item_legendary_type != UniqueList.LegendaryType.LegendaryPotential);
+            uniquePage.SetActive(FD.item_rarity > 6);
+            if (Time.unscaledTime >= nextCorruptionCheck)
+            {
+                nextCorruptionCheck = Time.unscaledTime + 2f;
+                corruptionSelect.interactable = CorruptedAffixAdapter.IsSupported;
+                if (corruptionSelect.interactable && corruptionId < 0) Caption(corruptionSelect, "Corrupted affix: None");
+            }
             RefreshPreview();
             return true;
         }
@@ -108,61 +119,62 @@ namespace LastEpoch_Hud.Scripts.ModUI
             var texts = FD.content_obj.GetComponentsInChildren<Text>(true);
             foreach (var t in texts) if (!t.font.IsNullOrDestroyed()) { font = t.font; break; }
             if (font.IsNullOrDestroyed()) throw new InvalidOperationException("Menu font is unavailable");
-            clicks.Clear(); numbers.Clear(); itemButtons.Clear(); pickButtons.Clear();
+            clicks.Clear(); numbers.Clear(); itemButtons.Clear(); pickButtons.Clear(); pickerHeaders.Clear();
             root = Panel(FD.content_obj, "ForceDropBuilder", 0, 0, 1, 1);
-            Label(root, "Force Drop", 0.02f, 0.92f, 0.98f, 0.99f, 24);
-            var left = Panel(root, "Choose item", 0.01f, 0.02f, 0.29f, 0.91f);
-            var middle = Panel(root, "Customize", 0.30f, 0.02f, 0.73f, 0.91f);
-            var right = Panel(root, "Preview", 0.74f, 0.02f, 0.99f, 0.91f);
-            Label(left, "Choose item", .03f, .92f, .97f, .99f, 20);
-            Label(left, "Search items", .03f, .86f, .97f, .91f);
-            search = Input(left, "Item search", .03f, .80f, .97f, .86f, "", false);
-            typeButton = Button(left, "Choose category", .03f, .72f, .97f, .79f, () => CatalogPicker(FD.type_dropdown, FD.SelectType, true));
-            rarityButton = Button(left, "Choose rarity", .03f, .64f, .97f, .71f, () => CatalogPicker(FD.rarity_dropdown, FD.SelectRarity, true));
-            for (int i = 0; i < 9; i++)
+            Label(root, "Force Drop", 0.02f, 0.955f, 0.98f, 0.995f, 22);
+            var left = Panel(root, "Choose item", 0.01f, 0.02f, 0.29f, 0.945f);
+            var middle = Panel(root, "Customize", 0.30f, 0.02f, 0.73f, 0.945f);
+            var right = Panel(root, "Preview", 0.74f, 0.02f, 0.99f, 0.945f);
+            Label(left, "Choose item", .03f, .95f, .97f, .99f, 18);
+            Label(left, "Search items", .03f, .90f, .97f, .94f);
+            search = Input(left, "Item search", .03f, .84f, .97f, .89f, "", false);
+            typeButton = Button(left, "Choose category", .03f, .77f, .97f, .825f, () => CatalogPicker(FD.type_dropdown, FD.SelectType, true));
+            rarityButton = Button(left, "Choose rarity", .03f, .705f, .97f, .76f, () => CatalogPicker(FD.rarity_dropdown, FD.SelectRarity, true));
+            for (int i = 0; i < 12; i++)
             {
                 int slot = i;
-                itemButtons.Add(Button(left, "", .03f, .57f - i * .054f, .97f, .62f - i * .054f, () => ChooseItem(slot)));
+                itemButtons.Add(Button(left, "", .03f, .65f - i * .045f, .97f, .69f - i * .045f, () => ChooseItem(slot)));
             }
             Button(left, "Previous", .03f, .035f, .48f, .09f, () => { itemPage = Math.Max(0, itemPage - 1); RefreshItems(); });
-            Button(left, "Next", .52f, .035f, .97f, .09f, () => { if ((itemPage + 1) * 9 < itemIndexes.Count) itemPage++; RefreshItems(); });
-            Label(middle, "Customize", .03f, .92f, .97f, .99f, 20);
-            Button(middle, "Random", .03f, .84f, .32f, .91f, () => Preset(true));
-            Button(middle, "Maximum", .35f, .84f, .64f, .91f, () => Preset(false));
-            Button(middle, "Custom", .67f, .84f, .97f, .91f, () => { foreach (var n in numbers) n.random = false; RefreshModes(); });
-            Button(middle, "Base", .03f, .76f, .32f, .83f, () => Page(0));
-            Button(middle, "Affixes", .35f, .76f, .64f, .83f, () => Page(1));
-            Button(middle, "Unique", .67f, .76f, .97f, .83f, () => Page(2));
-            basePage = Panel(middle, "Base page", .02f, .04f, .98f, .74f);
-            affixPage = Panel(middle, "Affix page", .02f, .04f, .98f, .74f);
-            uniquePage = Panel(middle, "Unique page", .02f, .04f, .98f, .74f);
-            forging = Numeric(basePage, "Forging potential", .86f, 0, 255, 100, false, true);
-            for (int i = 0; i < 3; i++) implicits[i] = Numeric(basePage, "Implicit " + (i + 1), .70f - i * .14f, 0, 100, 100, true, true);
-            Label(basePage, "Corruption", .03f, .26f, .97f, .34f, 18);
-            corruptButton = Button(basePage, "Corrupted: No", .03f, .16f, .97f, .24f, () => { corrupted = !corrupted; Caption(corruptButton, corrupted ? "Corrupted: Yes" : "Corrupted: No"); });
-            corruptionSelect = Button(basePage, "Corrupted affix: None", .03f, .07f, .55f, .14f, CorruptionPicker);
-            corruptionTier = NumericCompact(basePage, .58f, .07f, .74f, .14f, 1, 7, 7);
-            corruptionRoll = NumericCompact(basePage, .77f, .07f, .96f, .14f, 0, 100, 100);
-            Label(basePage, "Tier / Roll %", .58f, .01f, .96f, .06f, 12);
-            corruptionSelect.interactable = CorruptedAffixAdapter.IsSupported;
-            if (!CorruptedAffixAdapter.IsSupported) Caption(corruptionSelect, "Corrupted affix API unavailable");
+            Button(left, "Next", .52f, .035f, .97f, .09f, () => { if ((itemPage + 1) * 12 < itemIndexes.Count) itemPage++; RefreshItems(); });
+            Label(middle, "Customize", .03f, .955f, .97f, .99f, 18);
+            Button(middle, "Random", .03f, .905f, .32f, .948f, () => Preset(true));
+            Button(middle, "Maximum", .35f, .905f, .64f, .948f, () => Preset(false));
+            Button(middle, "Custom", .67f, .905f, .97f, .948f, () => { foreach (var n in numbers) n.random = false; RefreshModes(); });
+            basePage = Panel(middle, "Base properties", .02f, .735f, .98f, .895f);
+            forging = NumericGrid(basePage, "Forging potential", 0, 1, 0, 255, 100, false);
+            for (int i = 0; i < 3; i++)
+                implicits[i] = NumericGrid(basePage, "Implicit " + (i + 1), (i + 1) % 2, i < 1 ? 1 : 0, 0, 100, 100, true);
+            affixPage = Panel(middle, "Affixes", .02f, .345f, .98f, .725f);
+            Label(affixPage, "Affix", .03f, .93f, .55f, .99f, 13);
+            Label(affixPage, "Tier", .59f, .93f, .72f, .99f, 13);
+            Label(affixPage, "Roll %", .75f, .93f, .88f, .99f, 13);
             for (int i = 0; i < 5; i++)
             {
                 int index = i;
-                float y = .87f - i * .17f;
+                float y = .79f - i * .17f;
                 var row = new AffixRow(); rows[i] = row;
-                Label(affixPage, i == 4 ? "Sealed affix" : (i < 2 ? "Prefix " + (i + 1) : "Suffix " + (i - 1)), .03f, y + .02f, .45f, y + .09f, 13);
-                row.select = Button(affixPage, "None", .03f, y - .06f, .57f, y + .02f, () => AffixPicker(index));
-                row.tier = NumericCompact(affixPage, .59f, y - .06f, .73f, y + .02f, 1, 7, 7);
-                row.roll = NumericCompact(affixPage, .75f, y - .06f, .86f, y + .02f, 0, 100, 100);
-                row.roll.mode = Button(affixPage, "Fixed", .87f, y - .06f, .98f, y + .02f, () => { row.roll.random = !row.roll.random; RefreshModes(); });
-                Label(affixPage, "T", .59f, y + .02f, .73f, y + .07f, 12);
-                Label(affixPage, "%", .76f, y + .02f, .94f, y + .07f, 12);
+                string slot = i == 4 ? "Sealed" : i < 2 ? "Prefix " + (i + 1) : "Suffix " + (i - 1);
+                Label(affixPage, slot, .03f, y, .17f, y + .12f, 12);
+                row.select = Button(affixPage, "None", .18f, y, .57f, y + .13f, () => AffixPicker(index));
+                row.tier = NumericCompact(affixPage, .59f, y, .72f, y + .13f, 1, 7, 7);
+                row.roll = NumericCompact(affixPage, .75f, y, .86f, y + .13f, 0, 100, 100);
+                row.roll.mode = Button(affixPage, "Fixed", .88f, y, .98f, y + .13f, () => { row.roll.random = !row.roll.random; RefreshModes(); });
             }
-            Label(affixPage, "Regular tiers 1–7. Primordial creation uses the rune.", .03f, .01f, .97f, .06f, 12);
-            lp = Numeric(uniquePage, "Legendary Potential", .87f, 0, 4, 0, false, true);
-            ww = Numeric(uniquePage, "Weaver's Will", .76f, 0, 28, 0, false, true);
-            for (int i = 0; i < 8; i++) uniqueRolls[i] = Numeric(uniquePage, "Unique roll " + (i + 1), .65f - i * .08f, 0, 100, 100, true, true);
+            var corruptionPanel = Panel(middle, "Corruption", .02f, .235f, .98f, .335f);
+            corruptButton = Button(corruptionPanel, "Corrupted: No", .02f, .25f, .24f, .80f, () => { corrupted = !corrupted; Caption(corruptButton, corrupted ? "Corrupted: Yes" : "Corrupted: No"); });
+            corruptionSelect = Button(corruptionPanel, "Corrupted affix: None", .26f, .25f, .61f, .80f, CorruptionPicker);
+            corruptionTier = NumericCompact(corruptionPanel, .64f, .25f, .77f, .80f, 1, 7, 7);
+            corruptionRoll = NumericCompact(corruptionPanel, .80f, .25f, .96f, .80f, 0, 100, 100);
+            Label(corruptionPanel, "Tier", .64f, .81f, .77f, .99f, 11);
+            Label(corruptionPanel, "Roll %", .80f, .81f, .96f, .99f, 11);
+            corruptionSelect.interactable = CorruptedAffixAdapter.IsSupported;
+            if (!CorruptedAffixAdapter.IsSupported) Caption(corruptionSelect, "Corruption data unavailable");
+            uniquePage = Panel(middle, "Unique properties", .02f, .025f, .98f, .225f);
+            lp = NumericGrid(uniquePage, "Legendary Potential", 0, 2, 0, 4, 0, false, 3);
+            ww = NumericGrid(uniquePage, "Weaver's Will", 1, 2, 0, 28, 0, false, 3);
+            for (int i = 0; i < 8; i++)
+                uniqueRolls[i] = NumericGrid(uniquePage, "Roll " + (i + 1), i % 4, i < 4 ? 1 : 0, 0, 100, 100, true, 3, 4);
             Label(right, "Item preview", .04f, .92f, .96f, .99f, 20);
             preview = Label(right, "Choose an item", .04f, .28f, .96f, .90f, 15);
             quantity = Numeric(right, "Quantity", .20f, 1, 99, 1, false, false);
@@ -172,10 +184,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
             BuildPicker();
             // Hide only after the entire replacement view has been built successfully.
             foreach (var child in Functions.GetAllChild(FD.content_obj)) if (child != root) child.SetActive(false);
-            Page(0); RefreshItems(); LogCorruptionMetadata();
+            RefreshItems(); LogCorruptionMetadata();
         }
 
-        static void Page(int page) { basePage.SetActive(page == 0); affixPage.SetActive(page == 1); uniquePage.SetActive(page == 2); }
+        
         static void Preset(bool random)
         {
             foreach (var n in numbers)
@@ -206,14 +218,14 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 if (FD.items_dropdown.options[i].text.IndexOf(search.text, StringComparison.OrdinalIgnoreCase) >= 0) itemIndexes.Add(i);
             for (int slot = 0; slot < itemButtons.Count; slot++)
             {
-                int index = itemPage * 9 + slot;
+                int index = itemPage * 12 + slot;
                 itemButtons[slot].gameObject.SetActive(index < itemIndexes.Count);
                 if (index < itemIndexes.Count) Caption(itemButtons[slot], FD.items_dropdown.options[itemIndexes[index]].text);
             }
         }
         static void ChooseItem(int slot)
         {
-            int i = itemPage * 9 + slot;
+            int i = itemPage * 12 + slot;
             if (i >= itemIndexes.Count) return;
             FD.items_dropdown.SetValueWithoutNotify(itemIndexes[i]); FD.SelectItem();
             foreach (var row in rows) { row.id = -1; row.name = "None"; Caption(row.select, "None"); }
@@ -227,7 +239,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             choices.Add(new Choice { name = "None", select = () => { corruptionId = -1; corruptionName = "None"; Caption(corruptionSelect, "Corrupted affix: None"); } });
             foreach (var a in CorruptedAffixAdapter.Catalog())
             {
-                if (!a.CanRollOn(FD.item_type, FD.item_subtype, ItemList.ClassRequirement.Any)) continue;
+                if (!CorruptedAffixAdapter.FitsItem(a, FD.item_type, FD.item_subtype)) continue;
                 int id = a.affixId; string name = a.getAffixDisplayName();
                 if (string.IsNullOrEmpty(name)) name = a.affixName;
                 choices.Add(new Choice { name = name, select = () => { corruptionId = id; corruptionName = name; corrupted = true; Caption(corruptButton, "Corrupted: Yes"); Caption(corruptionSelect, name); } });
@@ -245,9 +257,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
             for (int i = skipPlaceholder ? 1 : 0; i < catalog.options.Count; i++)
             {
                 int index = i;
-                choices.Add(new Choice { name = catalog.options[i].text, select = () => { catalog.SetValueWithoutNotify(index); changed(); foreach (var r in rows) { r.id = -1; r.name = "None"; Caption(r.select, "None"); } corruptionId = -1; corruptionName = "None"; lastItems = ""; } });
+                choices.Add(new Choice { group = CategoryGroup(catalog.options[i].text), name = catalog.options[i].text, select = () => { catalog.SetValueWithoutNotify(index); changed(); foreach (var r in rows) { r.id = -1; r.name = "None"; Caption(r.select, "None"); } corruptionId = -1; corruptionName = "None"; lastItems = ""; } });
             }
             OpenPicker(catalog == FD.type_dropdown ? "Category" : "Rarity");
+            categoryPicker = catalog == FD.type_dropdown; rarityPicker = !categoryPicker; RefreshPicker();
         }
         static void AffixPicker(int slot)
         {
@@ -263,19 +276,72 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static void AddAffixChoice(AffixList.Affix a, int slot)
         {
             if (a.IsNullOrDestroyed() || CorruptedAffixAdapter.IsCorruption(a) || FD.item_type < 0 || FD.item_subtype < 0) return;
+            if (a.type != AffixList.AffixType.PREFIX && a.type != AffixList.AffixType.SUFFIX) return;
             if (slot < 4 && a.type != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX)) return;
-            if (!a.CanRollOn(FD.item_type, FD.item_subtype, ItemList.ClassRequirement.Any)) return;
+            if (!CorruptedAffixAdapter.FitsItem(a, FD.item_type, FD.item_subtype)) return;
             int id = a.affixId;
             string name = a.getAffixDisplayName(); if (string.IsNullOrEmpty(name)) name = a.affixName;
             choices.Add(new Choice { id = id, name = name, select = () => { rows[slot].id = id; rows[slot].name = name; Caption(rows[slot].select, name); } });
         }
 
+        static AffixList.Affix FindAffix(int id)
+        {
+            var list = AffixList.get();
+            if (list.IsNullOrDestroyed()) return null;
+            foreach (var a in list.singleAffixes) if (!a.IsNullOrDestroyed() && a.affixId == id) return a;
+            foreach (var a in list.multiAffixes) if (!a.IsNullOrDestroyed() && a.affixId == id) return a;
+            return null;
+        }
+        static bool ValidSelectedItem()
+        {
+            var list = ItemList.get();
+            if (list.IsNullOrDestroyed() || FD.item_type < 0 || FD.item_subtype < 0) return false;
+            bool baseExists = false;
+            foreach (var type in list.EquippableItems)
+                if (type.baseTypeID == FD.item_type)
+                    foreach (var item in type.subItems) if (item.subTypeID == FD.item_subtype) { baseExists = true; break; }
+            foreach (var type in list.nonEquippableItems)
+                if (type.baseTypeID == FD.item_type)
+                    foreach (var item in type.subItems) if (item.subTypeID == FD.item_subtype) { baseExists = true; break; }
+            if (!baseExists) return false;
+            if (FD.item_rarity == 0) return true;
+            if (UniqueList.instance.IsNullOrDestroyed()) return false;
+            foreach (var entry in UniqueList.instance.uniques)
+                if (entry.uniqueID == FD.item_unique_id && entry.baseType == FD.item_type &&
+                    entry.isSetItem == (FD.item_rarity == 8))
+                    foreach (var subType in entry.subTypes) if (subType == FD.item_subtype) return true;
+            return false;
+        }
         static string Validate()
         {
             if (FD.type_dropdown.value <= 0 || FD.rarity_dropdown.value <= 0 || FD.items_dropdown.value <= 0 || FD.item_subtype < 0) return "Choose a category, rarity and item.";
             if (Refs_Manager.player_actor.IsNullOrDestroyed() || Refs_Manager.ground_item_manager.IsNullOrDestroyed()) return "Enter the game before dropping items.";
             var ids = new HashSet<int>();
             foreach (var r in rows) if (r.id >= 0 && !ids.Add(r.id)) return "Each affix must be different, including the sealed affix.";
+            if (!ValidSelectedItem()) return "The selected item does not match its category. Choose it again.";
+            for (int slot = 0; slot < rows.Length; slot++)
+            {
+                var row = rows[slot];
+                if (row.id < 0) continue;
+                var definition = FindAffix(row.id);
+                if (definition.IsNullOrDestroyed() || CorruptedAffixAdapter.IsCorruption(definition))
+                    return "Choose a regular affix for " + (slot == 4 ? "Sealed" : slot < 2 ? "Prefix" : "Suffix") + ".";
+                if (definition.type != AffixList.AffixType.PREFIX && definition.type != AffixList.AffixType.SUFFIX)
+                    return "Special modifiers belong in the Corruption row.";
+                if (slot < 4 && definition.type != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX))
+                    return "Affix type does not match its slot.";
+                if (!CorruptedAffixAdapter.FitsItem(definition, FD.item_type, FD.item_subtype))
+                    return "An affix cannot roll on the selected item. Choose it again.";
+            }
+            if (corrupted && corruptionId >= 0)
+            {
+                AffixList.Affix definition = null;
+                foreach (var entry in CorruptedAffixAdapter.Catalog()) if (entry.affixId == corruptionId) { definition = entry; break; }
+                if (!CorruptedAffixAdapter.IsSupported || definition.IsNullOrDestroyed() ||
+                    !CorruptedAffixAdapter.IsCorruption(definition) || !CorruptedAffixAdapter.FitsItem(definition, FD.item_type, FD.item_subtype))
+                    return "The corrupted affix is not valid for this item.";
+                if (!ids.Add(corruptionId)) return "Corruption cannot duplicate another affix.";
+            }
             foreach (var n in numbers) if (!int.TryParse(n.input.text, out int value) || value < n.min || value > n.max) return "Use whole numbers within each field's range.";
             if (FD.item_type >= 100 && corrupted) return "Corruption is available for equipment only.";
             return "";
@@ -349,34 +415,92 @@ namespace LastEpoch_Hud.Scripts.ModUI
             pickerTitle = Label(picker, "Select", .03f, .90f, .83f, .98f, 20);
             Button(picker, "Close", .84f, .90f, .97f, .98f, () => picker.SetActive(false));
             pickerSearch = Input(picker, "Search choices", .03f, .81f, .97f, .88f, "", false);
-            for (int i = 0; i < 10; i++)
+            for (int i = 0; i < 48; i++)
             {
                 int slot = i;
                 pickButtons.Add(Button(picker, "", .03f, .735f - i * .063f, .97f, .79f - i * .063f, () =>
                 {
-                    int index = pickerPage * 10 + slot;
-                    if (index >= filtered.Count) return;
-                    filtered[index].select(); picker.SetActive(false);
+                    int index = slot;
+                    if (index >= visiblePicks.Count) return;
+                    visiblePicks[index].select(); picker.SetActive(false);
                 }));
             }
             Button(picker, "Previous", .03f, .03f, .48f, .085f, () => { pickerPage = Math.Max(0, pickerPage - 1); RefreshPicker(); });
-            Button(picker, "Next", .52f, .03f, .97f, .085f, () => { if ((pickerPage + 1) * 10 < filtered.Count) pickerPage++; RefreshPicker(); });
+            Button(picker, "Next", .52f, .03f, .97f, .085f, () => { if (HasNextPickerPage()) pickerPage++; RefreshPicker(); });
+            for (int i = 0; i < 4; i++)
+                pickerHeaders.Add(Label(picker, groups[i], .03f + i * .24f, .74f, .255f + i * .24f, .795f, 16));
             picker.SetActive(false);
         }
         static void OpenPicker(string title)
         {
+            categoryPicker = rarityPicker = false;
             pickerTitle.text = title; pickerSearch.SetTextWithoutNotify(""); lastPickerSearch = ""; pickerPage = 0;
             picker.SetActive(true); picker.transform.SetAsLastSibling(); RefreshPicker();
         }
+        static int CategoryGroup(string name)
+        {
+            string n = name.ToLowerInvariant();
+            foreach (string token in new[] { "axe", "bow", "dagger", "mace", "scepter", "sceptre", "staff", "staves", "sword", "wand", "spear", "quiver" })
+                if (n.Contains(token)) return 0;
+            foreach (string token in new[] { "helmet", "body armor", "body armour", "belt", "boot", "glove", "shield" })
+                if (n.Contains(token)) return 1;
+            foreach (string token in new[] { "ring", "amulet", "relic" })
+                if (n.Contains(token)) return 2;
+            return 3;
+        }
+        static bool HasNextPickerPage()
+        {
+            if (!categoryPicker) return (pickerPage + 1) * 20 < filtered.Count;
+            for (int group = 0; group < 4; group++)
+                if (filtered.FindAll(x => x.group == group).Count > (pickerPage + 1) * 12) return true;
+            return false;
+        }
         static void RefreshPicker()
         {
-            filtered.Clear();
-            foreach (var c in choices) if ((c.name ?? "").IndexOf(pickerSearch.text, StringComparison.OrdinalIgnoreCase) >= 0) filtered.Add(c);
-            for (int slot = 0; slot < pickButtons.Count; slot++)
+            filtered.Clear(); visiblePicks.Clear();
+            foreach (var choice in choices) if ((choice.name ?? "").IndexOf(pickerSearch.text, StringComparison.OrdinalIgnoreCase) >= 0) filtered.Add(choice);
+            foreach (var header in pickerHeaders) header.gameObject.SetActive(categoryPicker);
+            foreach (var button in pickButtons) button.gameObject.SetActive(false);
+            if (categoryPicker)
             {
-                int index = pickerPage * 10 + slot; pickButtons[slot].gameObject.SetActive(index < filtered.Count);
-                if (index < filtered.Count) Caption(pickButtons[slot], filtered[index].name);
+                for (int group = 0; group < 4; group++)
+                {
+                    var column = filtered.FindAll(x => x.group == group);
+                    column.Sort((x, y) => string.Compare(x.name, y.name, StringComparison.OrdinalIgnoreCase));
+                    for (int row = 0; row < 12; row++)
+                    {
+                        int index = pickerPage * 12 + row;
+                        if (index >= column.Count) break;
+                        var button = pickButtons[visiblePicks.Count];
+                        Rect(button.gameObject, .03f + group * .24f, .69f - row * .047f, .255f + group * .24f, .733f - row * .047f);
+                        Caption(button, column[index].name); button.gameObject.SetActive(true); visiblePicks.Add(column[index]);
+                    }
+                }
             }
+            else
+            {
+                int count = rarityPicker ? Math.Min(4, filtered.Count) : 20;
+                for (int slot = 0; slot < count; slot++)
+                {
+                    int index = rarityPicker ? slot : pickerPage * 20 + slot;
+                    if (index >= filtered.Count) break;
+                    int col = rarityPicker ? slot : slot % 2, row = rarityPicker ? 0 : slot / 2;
+                    float width = rarityPicker ? .235f : .475f;
+                    var button = pickButtons[visiblePicks.Count];
+                    Rect(button.gameObject, .03f + col * width, .69f - row * .058f, .03f + col * width + width - .015f, .739f - row * .058f);
+                    Caption(button, filtered[index].name); button.gameObject.SetActive(true); visiblePicks.Add(filtered[index]);
+                }
+            }
+        }
+        static Number NumericGrid(GameObject parent, string name, int col, int row, int min, int max, int value, bool percent, int rowCount = 2, int columns = 2)
+        {
+            float width = .96f / columns, height = .92f / rowCount;
+            var cell = Panel(parent, name, .02f + col * width, .04f + row * height, .02f + (col + 1) * width - .01f, .04f + (row + 1) * height - .01f);
+            Label(cell, name + (percent ? " %" : ""), .025f, .60f, .97f, .97f, 12);
+            var n = NumericCompact(cell, .03f, .08f, .55f, .57f, min, max, value);
+            n.group = cell;
+            n.mode = Button(cell, "Fixed", .60f, .08f, .97f, .57f, () => { n.random = !n.random; RefreshModes(); });
+            return n;
         }
 
         static GameObject Panel(GameObject parent, string name, float x0, float y0, float x1, float y1)
@@ -442,6 +566,9 @@ namespace LastEpoch_Hud.Scripts.ModUI
         {
             if (metadataLogged) return; metadataLogged = true;
             Main.logger_instance.Msg("Force Drop affix types: " + string.Join(", ", Enum.GetNames(typeof(AffixList.AffixType))));
+            foreach (var member in typeof(AffixList).GetMembers())
+                if (member.MemberType == System.Reflection.MemberTypes.Field || member.MemberType == System.Reflection.MemberTypes.Property)
+                    Main.logger_instance.Msg("Force Drop catalog API: " + member);
             foreach (var type in new[] { typeof(ItemData), typeof(ItemDataUnpacked), typeof(ItemAffix), typeof(AffixList), typeof(AffixList.Affix) })
                 foreach (var member in type.GetMembers())
                     if (member.Name.IndexOf("corrupt", StringComparison.OrdinalIgnoreCase) >= 0)
