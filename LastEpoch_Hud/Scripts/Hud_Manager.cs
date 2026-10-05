@@ -2870,17 +2870,22 @@ namespace LastEpoch_Hud.Scripts
 
                         if (!inputRect.IsNullOrDestroyed())
                         {
-                            Vector2 anchor = (source.anchorMin + source.anchorMax) * 0.5f;
-                            inputRect.anchorMin = anchor;
-                            inputRect.anchorMax = anchor;
-                            inputRect.pivot = new Vector2(0.5f, 0.5f);
+                            inputRect.anchorMin = source.anchorMin;
+                            inputRect.anchorMax = source.anchorMax;
+                            inputRect.pivot = source.pivot;
                             inputRect.sizeDelta = new Vector2(inputWidth, height);
                             inputRect.localScale = Vector3.one;
-                            inputRect.localPosition = source.localPosition + new Vector3(-(buttonWidth + gap) * 0.5f, 0f, 0f);
+                            inputRect.anchoredPosition = source.anchoredPosition + new Vector2(-(buttonWidth + gap) * 0.5f, 0f);
                         }
+
+                        LayoutElement inputLayout = inputClone.GetComponent<LayoutElement>();
+                        if (!inputLayout.IsNullOrDestroyed()) { inputLayout.ignoreLayout = true; }
 
                         if (!soul_amount_input.IsNullOrDestroyed())
                         {
+                            soul_amount_input.enabled = true;
+                            soul_amount_input.interactable = true;
+                            soul_amount_input.readOnly = false;
                             soul_amount_input.contentType = Il2CppTMPro.TMP_InputField.ContentType.IntegerNumber;
                             soul_amount_input.characterLimit = 7;
                             soul_amount_input.text = "1000";
@@ -2897,21 +2902,37 @@ namespace LastEpoch_Hud.Scripts
                         RectTransform buttonRect = buttonClone.GetComponent<RectTransform>();
                         if (!buttonRect.IsNullOrDestroyed())
                         {
-                            Vector2 anchor = (source.anchorMin + source.anchorMax) * 0.5f;
-                            buttonRect.anchorMin = anchor;
-                            buttonRect.anchorMax = anchor;
-                            buttonRect.pivot = new Vector2(0.5f, 0.5f);
+                            buttonRect.anchorMin = source.anchorMin;
+                            buttonRect.anchorMax = source.anchorMax;
+                            buttonRect.pivot = source.pivot;
                             buttonRect.sizeDelta = new Vector2(buttonWidth, height);
                             buttonRect.localScale = Vector3.one;
-                            buttonRect.localPosition = source.localPosition + new Vector3((inputWidth + gap) * 0.5f, 0f, 0f);
+                            buttonRect.anchoredPosition = source.anchoredPosition + new Vector2((inputWidth + gap) * 0.5f, 0f);
                         }
+
+                        LayoutElement buttonLayout = buttonClone.GetComponent<LayoutElement>();
+                        if (!buttonLayout.IsNullOrDestroyed()) { buttonLayout.ignoreLayout = true; }
+                        if (!soul_add_button.IsNullOrDestroyed()) { soul_add_button.interactable = true; }
 
                         Text buttonText = null;
                         GameObject label = Functions.FindDescendant(buttonClone, "Label");
                         if (!label.IsNullOrDestroyed()) { buttonText = label.GetComponent<Text>(); }
                         if (buttonText.IsNullOrDestroyed()) { buttonText = buttonClone.GetComponentInChildren<Text>(true); }
-                        if (!buttonText.IsNullOrDestroyed()) { ModUI.Prefab.ApplyLabel(buttonText, "Add"); }
+                        if (!buttonText.IsNullOrDestroyed())
+                        {
+                            RectTransform labelRect = buttonText.GetComponent<RectTransform>();
+                            if (!labelRect.IsNullOrDestroyed())
+                            {
+                                labelRect.anchorMin = Vector2.zero;
+                                labelRect.anchorMax = Vector2.one;
+                                labelRect.offsetMin = Vector2.zero;
+                                labelRect.offsetMax = Vector2.zero;
+                            }
+                            ModUI.Prefab.ApplyLabel(buttonText, "Add");
+                        }
 
+                        inputClone.transform.SetAsLastSibling();
+                        buttonClone.transform.SetAsLastSibling();
                         UpdateSoulEmberBalance();
                     }
 
@@ -3117,6 +3138,9 @@ namespace LastEpoch_Hud.Scripts
                         GameObject buttonClone = Object.Instantiate(save_button.gameObject, monolith_corruption_go.transform);
                         buttonClone.name = "Btn_Monolith_Corruption_ApplyAll";
                         monolith_corruption_all_button = buttonClone.GetComponent<Button>();
+                        LayoutElement buttonLayout = buttonClone.GetComponent<LayoutElement>();
+                        if (!buttonLayout.IsNullOrDestroyed()) { buttonLayout.ignoreLayout = true; }
+                        if (!monolith_corruption_all_button.IsNullOrDestroyed()) { monolith_corruption_all_button.interactable = true; }
 
                         RectTransform buttonRect = buttonClone.GetComponent<RectTransform>();
                         if (!buttonRect.IsNullOrDestroyed())
@@ -3133,7 +3157,19 @@ namespace LastEpoch_Hud.Scripts
                         GameObject label = Functions.FindDescendant(buttonClone, "Label");
                         if (!label.IsNullOrDestroyed()) { buttonText = label.GetComponent<Text>(); }
                         if (buttonText.IsNullOrDestroyed()) { buttonText = buttonClone.GetComponentInChildren<Text>(true); }
-                        if (!buttonText.IsNullOrDestroyed()) { ModUI.Prefab.ApplyLabel(buttonText, "Apply All"); }
+                        if (!buttonText.IsNullOrDestroyed())
+                        {
+                            RectTransform labelRect = buttonText.GetComponent<RectTransform>();
+                            if (!labelRect.IsNullOrDestroyed())
+                            {
+                                labelRect.anchorMin = Vector2.zero;
+                                labelRect.anchorMax = Vector2.one;
+                                labelRect.offsetMin = Vector2.zero;
+                                labelRect.offsetMax = Vector2.zero;
+                            }
+                            ModUI.Prefab.ApplyLabel(buttonText, "Apply All");
+                        }
+                        buttonClone.transform.SetAsLastSibling();
                     }
 
                     public static void ApplyCorruptionToAllTimelines()
@@ -3152,12 +3188,24 @@ namespace LastEpoch_Hud.Scripts
                         if (Refs_Manager.player_data.IsNullOrDestroyed()) { return; }
 
                         int changed = 0;
+                        System.Collections.Generic.List<int> timelineIds = new System.Collections.Generic.List<int>();
+
+                        // Phase 1: update the saved data and snapshot timeline ids only.
+                        // ApplyLiveCorruption can load/save runs, which may mutate the
+                        // underlying MonolithRuns collection; never call it from inside
+                        // this enumeration.
                         foreach (SavedMonolithRun saved in Refs_Manager.player_data.MonolithRuns)
                         {
                             if (saved.DifficultyIndex != 1 || saved.SavedEchoWeb.IsNullOrDestroyed()) { continue; }
                             saved.SavedEchoWeb.Corruption = result;
-                            ApplyLiveCorruption(saved.TimelineID, result);
+                            timelineIds.Add(saved.TimelineID);
                             changed++;
+                        }
+
+                        // Phase 2: now that enumeration is finished, update live runs/UI.
+                        foreach (int timelineId in timelineIds)
+                        {
+                            ApplyLiveCorruption(timelineId, result);
                         }
 
                         if (changed > 0 && Refs_Manager.player_data.MaxCorruption < result)
@@ -3207,6 +3255,9 @@ namespace LastEpoch_Hud.Scripts
                         Il2CppTMPro.TMP_InputField input = clone.GetComponent<Il2CppTMPro.TMP_InputField>();
                         if (!input.IsNullOrDestroyed())
                         {
+                            input.enabled = true;
+                            input.interactable = true;
+                            input.readOnly = false;
                             input.contentType = Il2CppTMPro.TMP_InputField.ContentType.IntegerNumber;
                             input.characterLimit = 7;
                             input.text = "";
