@@ -67,58 +67,163 @@ namespace LastEpoch_Hud.Scripts.ModUI
             // No permissive fallback for an unknown category or subtype.
             return false;
         }
+        static IntPtr catalogPointer;
+        static int catalogCount = -1;
         static void LoadCatalog()
         {
-            if (catalogLoaded) return;
-            catalog.Clear();
             var list = AffixList.get();
-            if (list.IsNullOrDestroyed()) return;
-            foreach (var a in list.singleAffixes) if (!a.IsNullOrDestroyed() && IsCorruption(a)) catalog.Add(a);
-            foreach (var a in list.multiAffixes) if (!a.IsNullOrDestroyed() && IsCorruption(a)) catalog.Add(a);
-            // AllAffixes includes definitions omitted by the editor's single/multi views.
-            var all = list.AllAffixes;
-            if (!all.IsNullOrDestroyed()) foreach (var definition in all)
-                if (!definition.IsNullOrDestroyed() && IsCorruption(definition) &&
-                    !catalog.Exists(x => x.affixId == definition.affixId)) catalog.Add(definition);
-            // Also support separately exposed collections.
-            foreach (string name in new[] { "specialAffixes", "corruptedAffixes" })
-            {
-                object collection = null;
-                var property = typeof(AffixList).GetProperty(name);
-                if (property != null && property.CanRead) collection = property.GetValue(list);
-                var field = typeof(AffixList).GetField(name);
-                if (field != null) collection = field.GetValue(list);
-                if (collection == null) continue;
-                var countProperty = collection.GetType().GetProperty("Count") ?? collection.GetType().GetProperty("Length");
-                var indexer = collection.GetType().GetProperty("Item", new[] { typeof(int) });
-                if (countProperty == null || indexer == null) continue;
-                int count = (int)countProperty.GetValue(collection);
-                if (count < 0 || count > 10000) continue;
-                for (int i = 0; i < count; i++)
-                    if (indexer.GetValue(collection, new object[] { i }) is AffixList.Affix definition &&
-                        !definition.IsNullOrDestroyed() && IsCorruption(definition) &&
-                        !catalog.Exists(x => x.affixId == definition.affixId)) catalog.Add(definition);
-            }
-            // A catalog can still be loading when the menu is first opened; retry until populated.
+            if (list.IsNullOrDestroyed() || list.AllAffixes.IsNullOrDestroyed()) return;
+            if (catalogLoaded && catalogPointer == list.Pointer && catalogCount == list.AllAffixes.Count) return;
+            catalog.Clear();
+            foreach (var definition in list.AllAffixes)
+                if (!definition.IsNullOrDestroyed() && !catalog.Exists(a => a.affixId == definition.affixId))
+                    catalog.Add(definition);
+            catalogPointer = list.Pointer; catalogCount = list.AllAffixes.Count;
             catalogLoaded = catalog.Count > 0;
         }
-        public static IEnumerable<AffixList.Affix> Catalog() { LoadCatalog(); return catalog; }
-        public static void Apply(ItemDataUnpacked item, int id, int tier, int roll)
+        public static AffixList.Affix Definition(int id)
+        {
+            LoadCatalog();
+            return catalog.Find(a => a.affixId == id);
+        }
+        public static bool IsChampion(AffixList.Affix definition)
+        {
+            if (definition.IsNullOrDestroyed() || definition.specialAffixType != AffixList.SpecialAffixType.Personal)
+                return false;
+            var champions = ChampionDataList.Instance;
+            if (champions.IsNullOrDestroyed() || champions.mods.IsNullOrDestroyed()) return false;
+            foreach (var mod in champions.mods)
+                if (!mod.IsNullOrDestroyed() && mod.affixId == definition.affixId) return true;
+            return false;
+        }
+        public static string PoolLabel(AffixList.Affix definition)
+        {
+            if (IsCorruption(definition)) return "Corruption-exclusive";
+            if (IsChampion(definition)) return "Champion";
+            if (definition.IsNullOrDestroyed()) return "None";
+            switch (definition.specialAffixType)
+            {
+                case AffixList.SpecialAffixType.Standard: return "Standard";
+                case AffixList.SpecialAffixType.Experimental: return "Experimental";
+                case AffixList.SpecialAffixType.Set: return "Set";
+                case AffixList.SpecialAffixType.Personal: return "Personal";
+                case AffixList.SpecialAffixType.IdolEnchantment: return "Idol enchantment";
+                case AffixList.SpecialAffixType.IdolWeaver: return "Weaver idol";
+                default: return "Unique modifier";
+            }
+        }
+        static bool MatchesOutcome(AffixList.Affix definition, CorruptionOutcome outcome)
+        {
+            switch (definition.specialAffixType)
+            {
+                case AffixList.SpecialAffixType.Corrupted:
+                    return outcome == CorruptionOutcome.AddsCorruptedAffix
+                        || outcome == CorruptionOutcome.AddsLowTierCorruptedAffix;
+                case AffixList.SpecialAffixType.Standard:
+                    return definition.uniqueId == 0 && (definition.type == AffixList.AffixType.PREFIX
+                        || definition.type == AffixList.AffixType.SUFFIX)
+                        && (outcome == CorruptionOutcome.AddStandardAffix || outcome == CorruptionOutcome.AddLowTierStandardAffix);
+                case AffixList.SpecialAffixType.Personal:
+                    return IsChampion(definition) && outcome == CorruptionOutcome.AddChampionAffix;
+                case AffixList.SpecialAffixType.Experimental:
+                    return outcome == CorruptionOutcome.AddExperimentalAffix;
+                case AffixList.SpecialAffixType.Set:
+                    return outcome == CorruptionOutcome.AddSetAffix;
+                default: return false;
+            }
+        }
+        static bool HasPositiveWeight(WeightedCorruptionOutcome outcome)
+        {
+            return !outcome.IsNullOrDestroyed() && outcome.weight > 0
+                && (outcome.maximumChanceType.ToString() != "Custom" || outcome.maximumChance > 0);
+        }
+        static IEnumerable<WeightedCorruptionOutcome> LegalOutcomes(ItemDataUnpacked item)
+        {
+            // Fail closed if the live game cannot supply this item's configuration.
+            if (!item.TryGetCorruptionConfig(out CorruptionCategoryConfig category)
+                || category.IsNullOrDestroyed()) yield break;
+            if (!category.positiveOutcomes.IsNullOrDestroyed())
+                foreach (var outcome in category.positiveOutcomes)
+                    if (HasPositiveWeight(outcome) && item.CorruptionOutcomeCanApplyToItem(outcome)) yield return outcome;
+            if (category.cannotCombineWithType) yield break;
+            var list = ItemList.get();
+            if (list.IsNullOrDestroyed()) yield break;
+            var config = list.GetCorruptionOutcomeConfig();
+            if (config.IsNullOrDestroyed() || config.corruptionEquipmentTypeConfig.IsNullOrDestroyed()) yield break;
+            var equipmentType = list.GetEquipmentTypeForBaseType(item.itemType);
+            foreach (var equipment in config.corruptionEquipmentTypeConfig)
+                if (!equipment.IsNullOrDestroyed() && equipment.type == equipmentType
+                    && !equipment.positiveOutcomes.IsNullOrDestroyed())
+                    foreach (var outcome in equipment.positiveOutcomes)
+                        if (HasPositiveWeight(outcome) && item.CorruptionOutcomeCanApplyToItem(outcome)) yield return outcome;
+        }
+        static WeightedCorruptionOutcome LegalOutcome(ItemDataUnpacked item, AffixList.Affix definition, int tier)
+        {
+            if (!FitsItem(definition, item.itemType, item.subType)
+                || tier < 0 || tier > 6 || definition.tiers.IsNullOrDestroyed()
+                || tier >= definition.tiers.Count || !item.TierValidForCorruptionNoRestrictions(tier)) return null;
+            foreach (var outcome in LegalOutcomes(item))
+                if (MatchesOutcome(definition, outcome.corruptionOutcome)
+                    && !outcome.replacesAffix && !outcome.tierWeights.IsNullOrDestroyed()
+                    && tier < outcome.tierWeights.Length && outcome.tierWeights[tier] > 0) return outcome;
+            return null;
+        }
+        public static int MaximumTier(ItemDataUnpacked item, AffixList.Affix definition, bool illegal)
+        {
+            if (definition.IsNullOrDestroyed()) return 0;
+            if (illegal) return 8;
+            try
+            {
+                for (int tier = 6; tier >= 0; tier--)
+                    if (!LegalOutcome(item, definition, tier).IsNullOrDestroyed()) return tier + 1;
+            }
+            catch { /* Native configuration unavailable: hide this selection. */ }
+            return 0;
+        }
+        static IntPtr validatedItem, validatedDefinition;
+        static int validatedTier = -1;
+        static bool validatedResult;
+        public static bool SelectionAllowed(ItemDataUnpacked item, AffixList.Affix definition, int tier, bool illegal)
+        {
+            if (item.IsNullOrDestroyed() || definition.IsNullOrDestroyed()) return false;
+            if (illegal) return tier >= 0 && tier <= 7;
+            // The HUD validates every frame; the picker probe is immutable and replaced
+            // when item/affix selections change. Actual drops receive a fresh native item.
+            if (validatedItem == item.Pointer && validatedDefinition == definition.Pointer && validatedTier == tier)
+                return validatedResult;
+            bool allowed;
+            try { allowed = !LegalOutcome(item, definition, tier).IsNullOrDestroyed(); }
+            catch { allowed = false; }
+            validatedItem = item.Pointer; validatedDefinition = definition.Pointer;
+            validatedTier = tier; validatedResult = allowed;
+            return allowed;
+        }
+        public static IEnumerable<AffixList.Affix> Catalog(bool illegal = false)
+        {
+            LoadCatalog();
+            foreach (var definition in catalog)
+                if (illegal || IsCorruption(definition) || definition.specialAffixType == AffixList.SpecialAffixType.Standard
+                    || IsChampion(definition) || definition.specialAffixType == AffixList.SpecialAffixType.Set
+                    || definition.specialAffixType == AffixList.SpecialAffixType.Experimental) yield return definition;
+        }
+        public static void Apply(ItemDataUnpacked item, int id, int tier, int roll, bool illegal = false)
         {
             if (!IsSupported) throw new InvalidOperationException("Chosen corrupted affixes are unsupported by this game's item wrappers");
-            AffixList.Affix definition = null;
-            foreach (var a in catalog) if (a.affixId == id) { definition = a; break; }
-            if (definition.IsNullOrDestroyed() || !FitsItem(definition, item.itemType, item.subType))
+            var definition = Definition(id);
+            validatedItem = IntPtr.Zero;
+            if (!SelectionAllowed(item, definition, tier, illegal))
                 throw new InvalidOperationException("The corrupted affix cannot roll on this item");
             // Let the native constructor initialize item-type-dependent metadata.
-            var affix = new ItemAffix((ushort)id, (byte)Math.Max(0, Math.Min(6, tier)),
+            var affix = new ItemAffix((ushort)id, (byte)tier,
                 (byte)Math.Max(0, Math.Min(255, roll)), item.itemType, Il2Cpp.SealedAffixType.FromCorruption);
             if (affix.affixId != id || !affix.IsSealedCorrupted ||
-                affix.specialAffixType != AffixList.SpecialAffixType.Corrupted)
+                affix.specialAffixType != definition.specialAffixType)
                 throw new InvalidOperationException("Corruption constructor rejected affix " + id +
                     " (saved=" + affix.affixId + ", sealed=" + affix.sealedAffixType +
                     ", special=" + affix.specialAffixType + "); no item was dropped");
             var originalAffixes = SnapshotAffixes(item);
+            bool originalRegularSeal = item.hasSealedRegularAffix;
+            bool originalPrimordialSeal = item.hasSealedPrimordialAffix;
             ushort originalUniqueId = item.uniqueID;
             byte originalLP = item.legendaryPotential;
             byte originalWW = item.weaversWill;
@@ -127,7 +232,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 // The native operation owns sealed-affix ordering, socket counts and
                 // rarity-specific packing flags. Appending an affix manually causes
                 // the unpacker to put the corruption seal on an ordinary affix.
-                AddUsingNativeCorruptionSlot(item, affix);
+                AddUsingNativeCorruptionSlot(item, affix, definition, tier, illegal);
             }
             else if (storage is PropertyInfo property) property.SetValue(item, affix);
             else ((FieldInfo)storage).SetValue(item, affix);
@@ -135,30 +240,48 @@ namespace LastEpoch_Hud.Scripts.ModUI
             item.RefreshIDAndValues();
             VerifyStoredCorruption(item, id, "after packing");
             VerifyOriginalAffixes(item, originalAffixes, id);
+            if (item.hasSealedRegularAffix != originalRegularSeal || item.hasSealedPrimordialAffix != originalPrimordialSeal)
+                throw new InvalidOperationException("Corruption changed an existing seal flag; no item was dropped");
             if (item.uniqueID != originalUniqueId || item.legendaryPotential != originalLP || item.weaversWill != originalWW)
                 throw new InvalidOperationException("Corruption changed unique item properties; no item was dropped");
-            VerifySelection(item, id, tier, roll);
+            VerifySelection(item, id, tier, roll, illegal);
+            var restored = new ItemDataUnpacked(item.GetID());
+            VerifySelection(restored, id, tier, roll, illegal);
+            VerifyOriginalAffixes(restored, originalAffixes, id);
+            if (restored.uniqueID != originalUniqueId || restored.legendaryPotential != originalLP
+                || restored.weaversWill != originalWW || restored.hasSealedRegularAffix != originalRegularSeal
+                || restored.hasSealedPrimordialAffix != originalPrimordialSeal)
+                throw new InvalidOperationException("Corruption failed saved-byte round trip; no item was dropped");
         }
-        static void AddUsingNativeCorruptionSlot(ItemDataUnpacked item, ItemAffix selected)
+        static void AddUsingNativeCorruptionSlot(ItemDataUnpacked item, ItemAffix selected,
+            AffixList.Affix definition, int tier, bool illegal)
         {
             if (item.hasSealedAffixFromCorruption)
                 throw new InvalidOperationException("This item already has a corrupted affix; no item was dropped");
+            var legalOutcome = illegal ? null : LegalOutcome(item, definition, tier);
+            if (!illegal && legalOutcome.IsNullOrDestroyed())
+                throw new InvalidOperationException("No legal corruption outcome for this selection; no item was dropped");
+            var weights = new float[illegal ? 8 : 7];
+            weights[tier] = 1;
             var outcome = new WeightedCorruptionOutcome
             {
-                corruptionOutcome = CorruptionOutcome.AddsCorruptedAffix,
+                // Illegal mode reserves a native slot, then substitutes the requested definition.
+                corruptionOutcome = illegal ? CorruptionOutcome.AddsCorruptedAffix : legalOutcome.corruptionOutcome,
                 replacesAffix = false,
                 tierWeights = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<float>(
-                    new float[] { 1, 1, 1, 1, 1, 1, 1 })
+                    illegal ? new float[] { 1, 1, 1, 1, 1, 1, 1 } : weights)
             };
             // Do not use a forced unique-id match: that parameter filters unique
             // items, not affix ids. Replace only the native-created corruption slot.
-            if (!item.AddRandomSpecialAffix(outcome, AffixList.SpecialAffixType.Corrupted,
-                false, 100, out int addedId, out bool regularSealed, false,
+            if (!item.AddRandomSpecialAffix(outcome, illegal ? AffixList.SpecialAffixType.Corrupted : definition.specialAffixType,
+                false, 100, out int addedId, out _, !illegal && IsChampion(definition),
                 new Il2CppSystem.Nullable<ushort>(), false))
                 throw new InvalidOperationException("The game could not create a corrupted affix slot; no item was dropped");
+            // The regular-seal output is not a prohibition on a second, corruption seal.
+            // Validate the actual corruption and preserve existing seals independently.
             if (!item.TryGetSealedCorruptedAffixe(out ItemAffix generated) ||
                 generated.IsNullOrDestroyed() || generated.affixId != addedId ||
-                !generated.IsSealedCorrupted || regularSealed)
+                !generated.IsSealedCorrupted)
                 throw new InvalidOperationException("The game did not create a sealed corruption slot; no item was dropped");
             int index = -1;
             for (int i = 0; i < item.affixes.Count; i++)
@@ -202,20 +325,36 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 if (actual[i] != expected[i])
                     throw new InvalidOperationException("Corruption changed an existing affix; no item was dropped");
         }
-        public static void VerifySelection(ItemDataUnpacked item, int id, int tier, int roll)
+        public static void VerifySelection(ItemDataUnpacked item, int id, int tier, int roll, bool illegal = false)
         {
             VerifyStoredCorruption(item, id, "final packing");
+            VerifySealFlags(item);
             item.TryGetSealedCorruptedAffixe(out ItemAffix saved);
-            if (saved.affixTier != Math.Max(0, Math.Min(6, tier)) ||
+            if (saved.affixTier != tier ||
                 saved.affixRoll != Math.Max(0, Math.Min(255, roll)))
                 throw new InvalidOperationException("Corruption tier or roll changed during packing; no item was dropped");
+        }
+        static void VerifySealFlags(ItemDataUnpacked item)
+        {
+            int regular = 0, primordial = 0, corruption = 0;
+            foreach (var affix in item.affixes)
+            {
+                if (affix.IsNullOrDestroyed()) throw new InvalidOperationException("Invalid packed affix; no item was dropped");
+                if (affix.IsSealedRegular) regular++;
+                if (affix.IsSealedPrimordial) primordial++;
+                if (affix.IsSealedCorrupted) corruption++;
+            }
+            if (regular != (item.hasSealedRegularAffix ? 1 : 0) ||
+                primordial != (item.hasSealedPrimordialAffix ? 1 : 0) ||
+                corruption != (item.hasSealedAffixFromCorruption ? 1 : 0))
+                throw new InvalidOperationException("Packed seal flags do not match the affixes; no item was dropped");
         }
         static void VerifyStoredCorruption(ItemDataUnpacked item, int id, string stage)
         {
             // The generated game wrapper declares this parameter as out, not ref.
             bool recognized = item.TryGetSealedCorruptedAffixe(out ItemAffix saved);
             if (!recognized || saved.IsNullOrDestroyed() || saved.affixId != id || !saved.IsSealedCorrupted ||
-                saved.specialAffixType != AffixList.SpecialAffixType.Corrupted)
+                saved.specialAffixType != Definition(id)?.specialAffixType)
             {
                 string entries = "";
                 foreach (var entry in item.affixes)
@@ -229,3 +368,4 @@ namespace LastEpoch_Hud.Scripts.ModUI
         }
     }
 }
+

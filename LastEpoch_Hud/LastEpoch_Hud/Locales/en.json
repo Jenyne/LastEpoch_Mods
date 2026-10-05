@@ -335,5 +335,13 @@
   "Choose a set-piece modifier": "Choose a set-piece modifier",
   "T8 requires illegal mode and a standard affix with native T8 data.": "T8 requires illegal mode and a standard affix with native T8 data.",
   "Set-piece modifiers on uniques require illegal mode and a matching equipment category.": "Set-piece modifiers on uniques require illegal mode and a matching equipment category.",
-  "The set-piece modifier cannot duplicate another affix.": "The set-piece modifier cannot duplicate another affix."
+  "The set-piece modifier cannot duplicate another affix.": "The set-piece modifier cannot duplicate another affix.",
+  "Corruption-exclusive": "Corruption-exclusive",
+  "Champion": "Champion",
+  "Standard": "Standard",
+  "Experimental": "Experimental",
+  "Personal": "Personal",
+  "Idol enchantment": "Idol enchantment",
+  "Weaver idol": "Weaver idol",
+  "Unique modifier": "Unique modifier"
 }

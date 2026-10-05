@@ -335,5 +335,13 @@
   "Choose a set-piece modifier": "Choisir un modificateur de pièce d'ensemble",
   "T8 requires illegal mode and a standard affix with native T8 data.": "Le palier 8 nécessite le mode illégal et un affixe standard avec des données natives de palier 8.",
   "Set-piece modifiers on uniques require illegal mode and a matching equipment category.": "Les modificateurs de pièce d'ensemble sur les objets uniques nécessitent le mode illégal et une catégorie d'équipement correspondante.",
-  "The set-piece modifier cannot duplicate another affix.": "Le modificateur de pièce d'ensemble ne peut pas dupliquer un autre affixe."
+  "The set-piece modifier cannot duplicate another affix.": "Le modificateur de pièce d'ensemble ne peut pas dupliquer un autre affixe.",
+  "Corruption-exclusive": "Exclusif à la corruption",
+  "Champion": "Champion",
+  "Standard": "Standard",
+  "Experimental": "Expérimental",
+  "Personal": "Personnel",
+  "Idol enchantment": "Enchantement d’idole",
+  "Weaver idol": "Idole de la Tisseuse",
+  "Unique modifier": "Modificateur unique"
 }

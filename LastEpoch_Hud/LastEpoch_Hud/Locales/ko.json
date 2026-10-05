@@ -346,5 +346,13 @@
   "Choose a set-piece modifier": "세트 부위 속성 선택",
   "T8 requires illegal mode and a standard affix with native T8 data.": "T8에는 비정상 아이템 모드와 게임 데이터에 T8이 있는 일반 접사가 필요합니다.",
   "Set-piece modifiers on uniques require illegal mode and a matching equipment category.": "고유 아이템의 세트 부위 속성에는 비정상 아이템 모드와 일치하는 장비 분류가 필요합니다.",
-  "The set-piece modifier cannot duplicate another affix.": "세트 부위 속성은 다른 접사와 중복될 수 없습니다."
+  "The set-piece modifier cannot duplicate another affix.": "세트 부위 속성은 다른 접사와 중복될 수 없습니다.",
+  "Corruption-exclusive": "타락 전용",
+  "Champion": "챔피언",
+  "Standard": "일반",
+  "Experimental": "실험",
+  "Personal": "개인",
+  "Idol enchantment": "우상 마법부여",
+  "Weaver idol": "직조자 우상",
+  "Unique modifier": "고유 속성"
 }

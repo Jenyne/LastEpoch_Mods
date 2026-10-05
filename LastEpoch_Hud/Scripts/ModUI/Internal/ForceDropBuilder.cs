@@ -53,7 +53,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static string result = "";
         public static bool IsReady => !root.IsNullOrDestroyed();
 
-        sealed class Choice { public int id; public int group; public string name; public Action select; }
+        sealed class Choice { public int id; public int group; public string name; public Color? tint; public Action select; }
         sealed class Number
         {
             public TMP_InputField input;
@@ -237,6 +237,13 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static void ToggleIllegal()
         {
             allowIllegal = !allowIllegal;
+            picker.SetActive(false);
+            corruptionId = -1; corruptionName = "None";
+            Caption(corruptionSelect, "Corrupted affix: None");
+            corruptionSelect.GetComponentInChildren<Text>(true).color = gold;
+            corruptionTier.max = allowIllegal ? 8 : 7;
+            corruptionTier.value = Math.Min(corruptionTier.value, corruptionTier.max);
+            corruptionTier.input.SetTextWithoutNotify(corruptionTier.value.ToString());
             Caption(illegalButton, allowIllegal ? "Allow illegal items: On" : "Allow illegal items: Off");
             for (int slot = 0; slot < 4; slot++)
             {
@@ -343,21 +350,74 @@ namespace LastEpoch_Hud.Scripts.ModUI
             OpenPicker("Unsated Rage — exclusive ring modifier");
         }
 
+        static ItemDataUnpacked cachedCorruptionProbe;
+        static string probeSignature;
+        static ItemDataUnpacked CorruptionProbe()
+        {
+            string signature = FD.item_type + ":" + FD.item_subtype + ":" + FD.item_rarity + ":" +
+                FD.item_unique_id + ":" + FD.item_legendary_type + ":" + lp.value + ":" + ww.value;
+            foreach (var row in rows) signature += ":" + row.id + ":" + row.tier.value;
+            if (signature == probeSignature && !cachedCorruptionProbe.IsNullOrDestroyed()) return cachedCorruptionProbe;
+            var affixes = new Il2CppSystem.Collections.Generic.List<ItemAffix>();
+            int ordinary = 0;
+            for (int slot = 0; slot < rows.Length; slot++)
+                if (rows[slot].id >= 0)
+                {
+                    var row = rows[slot];
+                    affixes.Add(new ItemAffix((ushort)row.id, (byte)(row.tier.value - 1),
+                        255, (byte)FD.item_type, slot == 4 ? Il2Cpp.SealedAffixType.Regular : Il2Cpp.SealedAffixType.None));
+                    if (slot != 4) ordinary++;
+                }
+            byte rarity = FD.item_rarity < 7 ? (byte)ordinary :
+                ordinary > 0 ? (byte)9 : (byte)FD.item_rarity;
+            cachedCorruptionProbe = new ItemDataUnpacked
+            {
+                itemType = (byte)FD.item_type, subType = (ushort)FD.item_subtype,
+                rarity = rarity, classReq = ItemList.ClassRequirement.Any,
+                affixes = affixes, sockets = (byte)affixes.Count,
+                hasSealedRegularAffix = rows[4].id >= 0,
+                uniqueID = (ushort)FD.item_unique_id,
+                legendaryPotential = FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential ? (byte)lp.value : (byte)0,
+                weaversWill = FD.item_legendary_type != UniqueList.LegendaryType.LegendaryPotential ? (byte)ww.value : (byte)0
+            };
+            probeSignature = signature;
+            return cachedCorruptionProbe;
+        }
         static void CorruptionPicker()
         {
             choices.Clear();
-            choices.Add(new Choice { id = -1, name = "None", select = () => { corruptionId = -1; corruptionName = "None"; Caption(corruptionSelect, "Corrupted affix: None"); } });
-            foreach (var a in CorruptedAffixAdapter.Catalog())
+            choices.Add(new Choice { id = -1, name = "None", select = () =>
             {
-                if (!CorruptedAffixAdapter.FitsItem(a, FD.item_type, FD.item_subtype)) continue;
+                corruptionId = -1; corruptionName = "None";
+                Caption(corruptionSelect, "Corrupted affix: None");
+                corruptionSelect.GetComponentInChildren<Text>(true).color = gold;
+            } });
+            var probe = CorruptionProbe();
+            foreach (var a in CorruptedAffixAdapter.Catalog(allowIllegal))
+            {
+                int maximum = CorruptedAffixAdapter.MaximumTier(probe, a, allowIllegal);
+                if (maximum == 0) continue;
                 int id = a.affixId;
-                bool used = false;
+                bool used = id == rageId || id == setAffixId;
                 foreach (var row in rows) if (row.id == id) { used = true; break; }
                 if (used || choices.Exists(x => x.id == id)) continue;
                 string name = a.getAffixDisplayName();
                 if (string.IsNullOrEmpty(name)) name = a.affixName;
-                choices.Add(new Choice { id = id, name = name, select = () => { corruptionId = id; corruptionName = name; corrupted = true; Caption(corruptButton, "Corrupted: Yes"); Caption(corruptionSelect, name); } });
+                name = "[" + L(CorruptedAffixAdapter.PoolLabel(a)) + "] " + name;
+                Color tint = CorruptedAffixAdapter.IsCorruption(a) ? new Color(.78f, .52f, 1f) : gold;
+                choices.Add(new Choice { id = id, name = name, tint = tint, select = () =>
+                {
+                    corruptionId = id; corruptionName = name; corrupted = true;
+                    corruptionTier.max = maximum;
+                    // Tier weights can have gaps: choose the highest permitted tier initially.
+                    corruptionTier.value = maximum;
+                    corruptionTier.input.SetTextWithoutNotify(maximum.ToString());
+                    Caption(corruptButton, "Corrupted: Yes"); Caption(corruptionSelect, name);
+                    corruptionSelect.GetComponentInChildren<Text>(true).color = tint;
+                } });
             }
+            choices.Sort((a, b) => a.id < 0 ? -1 : b.id < 0 ? 1 :
+                string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
             OpenPicker("Corrupted affix");
         }
         public static void ApplySelectedCorruption(ItemDataUnpacked item)
@@ -367,7 +427,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 UniqueVariantAdapter.Apply(item, rageId);
             if (allowIllegal && setAffixId >= 0) IllegalItemAdapter.ApplySetPiece(item, setAffixId);
             if (!corrupted || corruptionId < 0) return;
-            CorruptedAffixAdapter.Apply(item, corruptionId, corruptionTier.value - 1, Roll(corruptionRoll));
+            CorruptedAffixAdapter.Apply(item, corruptionId, corruptionTier.value - 1, Roll(corruptionRoll), allowIllegal);
         }
         public static void VerifySelectedCorruption(ItemDataUnpacked item)
         {
@@ -382,7 +442,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
                     if (count != 1) throw new InvalidOperationException("T8 affix changed during packing; no item was dropped");
                 }
             if (corrupted && corruptionId >= 0)
-                CorruptedAffixAdapter.VerifySelection(item, corruptionId, corruptionTier.value - 1, Roll(corruptionRoll));
+                CorruptedAffixAdapter.VerifySelection(item, corruptionId, corruptionTier.value - 1, Roll(corruptionRoll), allowIllegal);
         }
         static void CatalogPicker(Dropdown catalog, Action changed, bool skipPlaceholder)
         {
@@ -493,10 +553,9 @@ namespace LastEpoch_Hud.Scripts.ModUI
             }
             if (corrupted && corruptionId >= 0)
             {
-                AffixList.Affix definition = null;
-                foreach (var entry in CorruptedAffixAdapter.Catalog()) if (entry.affixId == corruptionId) { definition = entry; break; }
-                if (!CorruptedAffixAdapter.IsSupported || definition.IsNullOrDestroyed() ||
-                    !CorruptedAffixAdapter.IsCorruption(definition) || !CorruptedAffixAdapter.FitsItem(definition, FD.item_type, FD.item_subtype))
+                var definition = CorruptedAffixAdapter.Definition(corruptionId);
+                if (!CorruptedAffixAdapter.IsSupported || !CorruptedAffixAdapter.SelectionAllowed(
+                    CorruptionProbe(), definition, corruptionTier.value - 1, allowIllegal))
                     return "The corrupted affix is not valid for this item.";
                 if (!ids.Add(corruptionId)) return "Corruption cannot duplicate another affix.";
             }
@@ -652,7 +711,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
                         if (index >= column.Count) break;
                         var button = pickButtons[visiblePicks.Count];
                         Rect(button.gameObject, .03f + group * .19f, .73f - (row + 1) * step, .21f + group * .19f, .73f - row * step - .004f);
-                        Caption(button, column[index].name); button.gameObject.SetActive(true); visiblePicks.Add(column[index]);
+                        PaintChoice(button, column[index]); button.gameObject.SetActive(true); visiblePicks.Add(column[index]);
                     }
                 }
             }
@@ -667,7 +726,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
                     float width = rarityPicker ? .235f : .475f;
                     var button = pickButtons[visiblePicks.Count];
                     Rect(button.gameObject, .03f + col * width, .69f - row * .058f, .03f + col * width + width - .015f, .739f - row * .058f);
-                    Caption(button, filtered[index].name); button.gameObject.SetActive(true); visiblePicks.Add(filtered[index]);
+                    PaintChoice(button, filtered[index]); button.gameObject.SetActive(true); visiblePicks.Add(filtered[index]);
                 }
             }
         }
@@ -708,6 +767,11 @@ namespace LastEpoch_Hud.Scripts.ModUI
             var label = Label(go, text, .025f, .04f, .975f, .96f); label.alignment = TextAnchor.MiddleLeft;
             clicks[button.GetInstanceID()] = action;
             return button;
+        }
+        static void PaintChoice(Button button, Choice choice)
+        {
+            Caption(button, choice.name);
+            button.GetComponentInChildren<Text>(true).color = choice.tint ?? gold;
         }
         static void Caption(Button button, string text) { LocaleRegistry.Apply(button.GetComponentInChildren<Text>(true), text); }
         static string L(string text) => LocaleRegistry.Translate(text);
@@ -770,3 +834,4 @@ namespace LastEpoch_Hud.Scripts.ModUI
         }
     }
 }
+
