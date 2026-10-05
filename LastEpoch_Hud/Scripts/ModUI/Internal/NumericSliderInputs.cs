@@ -105,6 +105,11 @@ namespace LastEpoch_Hud.Scripts.ModUI
         {
             bool percent = label.text.Contains("%");
             bool tier = slider.name.IndexOf("Tier", StringComparison.OrdinalIgnoreCase) >= 0;
+            // Only regular, unsealed tier controls are capped; sealed controls retain their range.
+            if (tier && slider.name.IndexOf("Seal", StringComparison.OrdinalIgnoreCase) < 0)
+            {
+                slider.maxValue = Mathf.Min(slider.maxValue, 6f);
+            }
             slider.wholeNumbers = true;
             slider.value = Mathf.Round(slider.value);
             GameObject clone = UnityEngine.Object.Instantiate(template.gameObject, label.transform.parent);
