@@ -160,6 +160,50 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
             finally { adding_blessings = false; }
         }
 
+        public static void UnlockBlessingSlots()
+        {
+            var manager = ItemContainersManager.Instance;
+            var tracker = Refs_Manager.player_data_tracker;
+            if (!Scenes.IsGameScene() || manager.IsNullOrDestroyed() ||
+                manager.blessings.IsNullOrDestroyed() || manager.blessingStorage.IsNullOrDestroyed() ||
+                tracker.IsNullOrDestroyed() || tracker.charData.IsNullOrDestroyed())
+            {
+                Main.logger_instance?.Msg("Enter the game before unlocking blessing slots.");
+                return;
+            }
+            try
+            {
+                int opened = 0, missing = 0;
+                for (int slot = 0; slot < manager.blessings.Containers.Count; slot++)
+                {
+                    var container = manager.blessings.Containers[slot];
+                    if (container.IsNullOrDestroyed() || container.HasContent()) continue;
+                    Il2CppLE.Data.BlessingData candidate = null;
+                    foreach (var saved in tracker.charData.OpenBlessings)
+                    {
+                        if (!manager.blessingStorage.BlessingIsUnlocked(saved.SubtypeId)) continue;
+                        var target = manager.blessings.GetContainerForBlessing(saved.SubtypeId);
+                        if (!target.IsNullOrDestroyed() && target.GetContainerID().Equals(container.GetContainerID()))
+                        { candidate = saved; break; }
+                    }
+                    if (candidate.IsNullOrDestroyed()) { missing++; continue; }
+                    // An empty slot has no separate unlock flag. Equip a compatible,
+                    // discovered blessing via the native path; preserve occupied slots.
+                    manager.SwapBlessing(slot, candidate);
+                    if (container.HasContent()) opened++;
+                    else throw new System.InvalidOperationException("Native swap did not populate timeline slot " + slot);
+                }
+                tracker.charData.SaveData();
+                Main.logger_instance?.Msg("Unlock Blessing Slots: opened " + opened + " slots." +
+                    (missing > 0 ? " Use Discover All Blessings first for the remaining " + missing + " slots." : ""));
+                ChooseBlessings();
+            }
+            catch (System.Exception ex)
+            {
+                Main.logger_instance?.Error("Unlock Blessing Slots: " + ex.Message);
+            }
+        }
+
         static void ApplyBlessing(InventoryPanelUI inventory, int blessingId)
         {
             if (inventory.IsNullOrDestroyed() || appliedFrame == Time.frameCount) return;
