@@ -119,6 +119,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
                     " (saved=" + affix.affixId + ", sealed=" + affix.sealedAffixType +
                     ", special=" + affix.specialAffixType + "); no item was dropped");
             var originalAffixes = SnapshotAffixes(item);
+            bool originalRegularSeal = item.hasSealedRegularAffix;
+            bool originalPrimordialSeal = item.hasSealedPrimordialAffix;
             ushort originalUniqueId = item.uniqueID;
             byte originalLP = item.legendaryPotential;
             byte originalWW = item.weaversWill;
@@ -135,6 +137,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
             item.RefreshIDAndValues();
             VerifyStoredCorruption(item, id, "after packing");
             VerifyOriginalAffixes(item, originalAffixes, id);
+            if (item.hasSealedRegularAffix != originalRegularSeal || item.hasSealedPrimordialAffix != originalPrimordialSeal)
+                throw new InvalidOperationException("Corruption changed an existing seal flag; no item was dropped");
             if (item.uniqueID != originalUniqueId || item.legendaryPotential != originalLP || item.weaversWill != originalWW)
                 throw new InvalidOperationException("Corruption changed unique item properties; no item was dropped");
             VerifySelection(item, id, tier, roll);
@@ -153,12 +157,14 @@ namespace LastEpoch_Hud.Scripts.ModUI
             // Do not use a forced unique-id match: that parameter filters unique
             // items, not affix ids. Replace only the native-created corruption slot.
             if (!item.AddRandomSpecialAffix(outcome, AffixList.SpecialAffixType.Corrupted,
-                false, 100, out int addedId, out bool regularSealed, false,
+                false, 100, out int addedId, out _, false,
                 new Il2CppSystem.Nullable<ushort>(), false))
                 throw new InvalidOperationException("The game could not create a corrupted affix slot; no item was dropped");
+            // The regular-seal output is not a prohibition on a second, corruption seal.
+            // Validate the actual corruption and preserve existing seals independently.
             if (!item.TryGetSealedCorruptedAffixe(out ItemAffix generated) ||
                 generated.IsNullOrDestroyed() || generated.affixId != addedId ||
-                !generated.IsSealedCorrupted || regularSealed)
+                !generated.IsSealedCorrupted)
                 throw new InvalidOperationException("The game did not create a sealed corruption slot; no item was dropped");
             int index = -1;
             for (int i = 0; i < item.affixes.Count; i++)
@@ -205,10 +211,26 @@ namespace LastEpoch_Hud.Scripts.ModUI
         public static void VerifySelection(ItemDataUnpacked item, int id, int tier, int roll)
         {
             VerifyStoredCorruption(item, id, "final packing");
+            VerifySealFlags(item);
             item.TryGetSealedCorruptedAffixe(out ItemAffix saved);
             if (saved.affixTier != Math.Max(0, Math.Min(6, tier)) ||
                 saved.affixRoll != Math.Max(0, Math.Min(255, roll)))
                 throw new InvalidOperationException("Corruption tier or roll changed during packing; no item was dropped");
+        }
+        static void VerifySealFlags(ItemDataUnpacked item)
+        {
+            int regular = 0, primordial = 0, corruption = 0;
+            foreach (var affix in item.affixes)
+            {
+                if (affix.IsNullOrDestroyed()) throw new InvalidOperationException("Invalid packed affix; no item was dropped");
+                if (affix.IsSealedRegular) regular++;
+                if (affix.IsSealedPrimordial) primordial++;
+                if (affix.IsSealedCorrupted) corruption++;
+            }
+            if (regular != (item.hasSealedRegularAffix ? 1 : 0) ||
+                primordial != (item.hasSealedPrimordialAffix ? 1 : 0) ||
+                corruption != (item.hasSealedAffixFromCorruption ? 1 : 0))
+                throw new InvalidOperationException("Packed seal flags do not match the affixes; no item was dropped");
         }
         static void VerifyStoredCorruption(ItemDataUnpacked item, int id, string stage)
         {
