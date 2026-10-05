@@ -40,17 +40,36 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 if (field != null && !field.IsInitOnly && field.FieldType == typeof(bool)) { storage = field; flagStorage = true; return; }
             }
         }
-        public static bool IsCorruption(AffixList.Affix affix)
+        static bool HasCorruptionMarker(object definition)
         {
-            if (affix.type == AffixList.AffixType.SPECIAL) return true;
-            foreach (string name in new[] { "isCorruptedAffix", "isCorruptionAffix" })
+            if (definition == null) return false;
+            foreach (var member in definition.GetType().GetMembers(BindingFlags.Public | BindingFlags.Instance))
             {
-                var property = affix.GetType().GetProperty(name);
-                if (property != null && property.PropertyType == typeof(bool) && property.CanRead && (bool)property.GetValue(affix)) return true;
-                var field = affix.GetType().GetField(name);
-                if (field != null && field.FieldType == typeof(bool) && (bool)field.GetValue(affix)) return true;
+                if (member.Name.IndexOf("corrupt", StringComparison.OrdinalIgnoreCase) < 0 &&
+                    member.Name.IndexOf("special", StringComparison.OrdinalIgnoreCase) < 0) continue;
+                try
+                {
+                    object value = null;
+                    if (member is PropertyInfo p && p.CanRead && p.GetIndexParameters().Length == 0) value = p.GetValue(definition);
+                    else if (member is FieldInfo f) value = f.GetValue(definition);
+                    if (value is bool flag && flag && member.Name.IndexOf("corrupt", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                    if (value != null && value.GetType().IsEnum &&
+                        value.ToString().IndexOf("corrupt", StringComparison.OrdinalIgnoreCase) >= 0) return true;
+                }
+                catch { }
             }
             return false;
+        }
+        public static bool IsCorruption(AffixList.Affix affix)
+        {
+            if (affix.IsNullOrDestroyed()) return false;
+            // Corruption can retain PREFIX/SUFFIX type. Its special classification is
+            // separate; SPECIAL alone is not proof that a modifier is a corruption.
+            if (HasCorruptionMarker(affix)) return true;
+            var single = affix.TryCast<AffixList.SingleAffix>();
+            if (!single.IsNullOrDestroyed() && HasCorruptionMarker(single)) return true;
+            var multi = affix.TryCast<AffixList.MultiAffix>();
+            return !multi.IsNullOrDestroyed() && HasCorruptionMarker(multi);
         }
         public static bool FitsItem(AffixList.Affix definition, int baseType, int subType)
         {
@@ -82,7 +101,12 @@ namespace LastEpoch_Hud.Scripts.ModUI
             if (list.IsNullOrDestroyed()) return;
             foreach (var a in list.singleAffixes) if (!a.IsNullOrDestroyed() && IsCorruption(a)) catalog.Add(a);
             foreach (var a in list.multiAffixes) if (!a.IsNullOrDestroyed() && IsCorruption(a)) catalog.Add(a);
-            // Some game versions keep SPECIAL definitions outside the normal collections.
+            // AllAffixes includes definitions omitted by the editor's single/multi views.
+            var all = list.AllAffixes;
+            if (!all.IsNullOrDestroyed()) foreach (var definition in all)
+                if (!definition.IsNullOrDestroyed() && IsCorruption(definition) &&
+                    !catalog.Exists(x => x.affixId == definition.affixId)) catalog.Add(definition);
+            // Also support separately exposed collections.
             foreach (string name in new[] { "specialAffixes", "corruptedAffixes" })
             {
                 object collection = null;

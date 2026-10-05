@@ -22,10 +22,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static bool categoryPicker, rarityPicker;
         static readonly List<Choice> visiblePicks = new List<Choice>();
         static readonly List<Text> pickerHeaders = new List<Text>();
-        static readonly string[] groups = { "Weapons", "Armour", "Accessories", "Other" };
+        static readonly string[] groups = { "Weapons", "Armour", "Accessories", "Idols", "Other" };
         static Font font;
         static Text preview, status, pickerTitle;
-        static Button typeButton, rarityButton, dropButton, corruptButton, corruptionSelect;
+        static Button typeButton, rarityButton, dropButton, corruptButton, corruptionSelect, pickerPrevious, pickerNext;
         static int corruptionId = -1;
         static string corruptionName = "None";
         static Number corruptionTier, corruptionRoll;
@@ -94,7 +94,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             {
                 lastPickerSearch = pickerSearch.text; pickerPage = 0; RefreshPicker();
             }
-            Caption(typeButton, Selected(FD.type_dropdown, "Choose category"));
+            Caption(typeButton, CategoryLabel(Selected(FD.type_dropdown, "Choose category")));
             Caption(rarityButton, Selected(FD.rarity_dropdown, "Choose rarity"));
             lp.group.SetActive(FD.item_rarity > 6 && FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential);
             ww.group.SetActive(FD.item_rarity > 6 && FD.item_legendary_type != UniqueList.LegendaryType.LegendaryPotential);
@@ -236,13 +236,17 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static void CorruptionPicker()
         {
             choices.Clear();
-            choices.Add(new Choice { name = "None", select = () => { corruptionId = -1; corruptionName = "None"; Caption(corruptionSelect, "Corrupted affix: None"); } });
+            choices.Add(new Choice { id = -1, name = "None", select = () => { corruptionId = -1; corruptionName = "None"; Caption(corruptionSelect, "Corrupted affix: None"); } });
             foreach (var a in CorruptedAffixAdapter.Catalog())
             {
                 if (!CorruptedAffixAdapter.FitsItem(a, FD.item_type, FD.item_subtype)) continue;
-                int id = a.affixId; string name = a.getAffixDisplayName();
+                int id = a.affixId;
+                bool used = false;
+                foreach (var row in rows) if (row.id == id) { used = true; break; }
+                if (used || choices.Exists(x => x.id == id)) continue;
+                string name = a.getAffixDisplayName();
                 if (string.IsNullOrEmpty(name)) name = a.affixName;
-                choices.Add(new Choice { name = name, select = () => { corruptionId = id; corruptionName = name; corrupted = true; Caption(corruptButton, "Corrupted: Yes"); Caption(corruptionSelect, name); } });
+                choices.Add(new Choice { id = id, name = name, select = () => { corruptionId = id; corruptionName = name; corrupted = true; Caption(corruptButton, "Corrupted: Yes"); Caption(corruptionSelect, name); } });
             }
             OpenPicker("Corrupted affix");
         }
@@ -256,8 +260,12 @@ namespace LastEpoch_Hud.Scripts.ModUI
             choices.Clear();
             for (int i = skipPlaceholder ? 1 : 0; i < catalog.options.Count; i++)
             {
+                string label = catalog.options[i].text;
+                if (string.IsNullOrWhiteSpace(label)) continue;
+                if (catalog == FD.type_dropdown && label.IndexOf("blessing", StringComparison.OrdinalIgnoreCase) >= 0) continue;
+                string display = catalog == FD.type_dropdown ? CategoryLabel(label) : label;
                 int index = i;
-                choices.Add(new Choice { group = CategoryGroup(catalog.options[i].text), name = catalog.options[i].text, select = () => { catalog.SetValueWithoutNotify(index); changed(); foreach (var r in rows) { r.id = -1; r.name = "None"; Caption(r.select, "None"); } corruptionId = -1; corruptionName = "None"; lastItems = ""; } });
+                choices.Add(new Choice { group = CategoryGroup(label), name = display, select = () => { catalog.SetValueWithoutNotify(index); changed(); foreach (var r in rows) { r.id = -1; r.name = "None"; Caption(r.select, "None"); } corruptionId = -1; corruptionName = "None"; lastItems = ""; } });
             }
             OpenPicker(catalog == FD.type_dropdown ? "Category" : "Rarity");
             categoryPicker = catalog == FD.type_dropdown; rarityPicker = !categoryPicker; RefreshPicker();
@@ -265,7 +273,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static void AffixPicker(int slot)
         {
             choices.Clear();
-            choices.Add(new Choice { name = "None", select = () => { rows[slot].id = -1; rows[slot].name = "None"; Caption(rows[slot].select, "None"); } });
+            choices.Add(new Choice { id = -1, name = "None", select = () => { rows[slot].id = -1; rows[slot].name = "None"; Caption(rows[slot].select, "None"); } });
             var list = AffixList.get();
             if (list.IsNullOrDestroyed()) return;
             foreach (var a in list.singleAffixes) AddAffixChoice(a, slot);
@@ -280,6 +288,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
             if (slot < 4 && a.type != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX)) return;
             if (!CorruptedAffixAdapter.FitsItem(a, FD.item_type, FD.item_subtype)) return;
             int id = a.affixId;
+            for (int other = 0; other < rows.Length; other++)
+                if (other != slot && rows[other].id == id) return;
+            if (corrupted && corruptionId == id) return;
+            if (choices.Exists(x => x.id == id)) return;
             string name = a.getAffixDisplayName(); if (string.IsNullOrEmpty(name)) name = a.affixName;
             choices.Add(new Choice { id = id, name = name, select = () => { rows[slot].id = id; rows[slot].name = name; Caption(rows[slot].select, name); } });
         }
@@ -415,7 +427,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             pickerTitle = Label(picker, "Select", .03f, .90f, .83f, .98f, 20);
             Button(picker, "Close", .84f, .90f, .97f, .98f, () => picker.SetActive(false));
             pickerSearch = Input(picker, "Search choices", .03f, .81f, .97f, .88f, "", false);
-            for (int i = 0; i < 48; i++)
+            for (int i = 0; i < 75; i++)
             {
                 int slot = i;
                 pickButtons.Add(Button(picker, "", .03f, .735f - i * .063f, .97f, .79f - i * .063f, () =>
@@ -425,10 +437,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
                     visiblePicks[index].select(); picker.SetActive(false);
                 }));
             }
-            Button(picker, "Previous", .03f, .03f, .48f, .085f, () => { pickerPage = Math.Max(0, pickerPage - 1); RefreshPicker(); });
-            Button(picker, "Next", .52f, .03f, .97f, .085f, () => { if (HasNextPickerPage()) pickerPage++; RefreshPicker(); });
-            for (int i = 0; i < 4; i++)
-                pickerHeaders.Add(Label(picker, groups[i], .03f + i * .24f, .74f, .255f + i * .24f, .795f, 16));
+            pickerPrevious = Button(picker, "Previous", .03f, .03f, .48f, .085f, () => { pickerPage = Math.Max(0, pickerPage - 1); RefreshPicker(); });
+            pickerNext = Button(picker, "Next", .52f, .03f, .97f, .085f, () => { if (HasNextPickerPage()) pickerPage++; RefreshPicker(); });
+            for (int i = 0; i < groups.Length; i++)
+                pickerHeaders.Add(Label(picker, groups[i], .03f + i * .19f, .74f, .21f + i * .19f, .795f, 15));
             picker.SetActive(false);
         }
         static void OpenPicker(string title)
@@ -437,42 +449,61 @@ namespace LastEpoch_Hud.Scripts.ModUI
             pickerTitle.text = title; pickerSearch.SetTextWithoutNotify(""); lastPickerSearch = ""; pickerPage = 0;
             picker.SetActive(true); picker.transform.SetAsLastSibling(); RefreshPicker();
         }
+        static string CategoryLabel(string name)
+        {
+            if (name.IndexOf("crafting modifier", StringComparison.OrdinalIgnoreCase) >= 0) return "Runes";
+            if (name.IndexOf("crafting support", StringComparison.OrdinalIgnoreCase) >= 0) return "Glyphs";
+            // Keep the lens family visible together; retain the subtype so each button is distinct.
+            if (name.EndsWith(" Lens", StringComparison.OrdinalIgnoreCase)) return "Lens: " + name.Substring(0, name.Length - 5);
+            return name;
+        }
         static int CategoryGroup(string name)
         {
             string n = name.ToLowerInvariant();
-            foreach (string token in new[] { "axe", "bow", "dagger", "mace", "scepter", "sceptre", "staff", "staves", "sword", "wand", "spear", "quiver" })
+            foreach (string token in new[] { "axe", "bow", "dagger", "mace", "scepter", "sceptre", "staff", "staves", "sword", "wand", "spear", "quiver", "fist", "polearm" })
                 if (n.Contains(token)) return 0;
             foreach (string token in new[] { "helmet", "body armor", "body armour", "belt", "boot", "glove", "shield" })
                 if (n.Contains(token)) return 1;
             foreach (string token in new[] { "ring", "amulet", "relic" })
                 if (n.Contains(token)) return 2;
-            return 3;
+            if (n.Contains("idol")) return 3;
+            return 4;
         }
-        static bool HasNextPickerPage()
-        {
-            if (!categoryPicker) return (pickerPage + 1) * 20 < filtered.Count;
-            for (int group = 0; group < 4; group++)
-                if (filtered.FindAll(x => x.group == group).Count > (pickerPage + 1) * 12) return true;
-            return false;
-        }
+        static bool HasNextPickerPage() => !categoryPicker && !rarityPicker && (pickerPage + 1) * 20 < filtered.Count;
         static void RefreshPicker()
         {
             filtered.Clear(); visiblePicks.Clear();
             foreach (var choice in choices) if ((choice.name ?? "").IndexOf(pickerSearch.text, StringComparison.OrdinalIgnoreCase) >= 0) filtered.Add(choice);
+            pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker);
+            pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker);
             foreach (var header in pickerHeaders) header.gameObject.SetActive(categoryPicker);
+            if (categoryPicker)
+                while (pickButtons.Count < filtered.Count)
+                {
+                    int slot = pickButtons.Count;
+                    pickButtons.Add(Button(picker, "", 0, 0, 1, 1, () =>
+                    {
+                        if (slot >= visiblePicks.Count) return;
+                        visiblePicks[slot].select(); picker.SetActive(false);
+                    }));
+                }
             foreach (var button in pickButtons) button.gameObject.SetActive(false);
             if (categoryPicker)
             {
-                for (int group = 0; group < 4; group++)
+                int rowCount = 15;
+                for (int group = 0; group < groups.Length; group++)
+                    rowCount = Math.Max(rowCount, filtered.FindAll(x => x.group == group).Count);
+                float step = .62f / rowCount;
+                for (int group = 0; group < groups.Length; group++)
                 {
                     var column = filtered.FindAll(x => x.group == group);
                     column.Sort((x, y) => string.Compare(x.name, y.name, StringComparison.OrdinalIgnoreCase));
-                    for (int row = 0; row < 12; row++)
+                    for (int row = 0; row < column.Count; row++)
                     {
-                        int index = pickerPage * 12 + row;
+                        int index = row;
                         if (index >= column.Count) break;
                         var button = pickButtons[visiblePicks.Count];
-                        Rect(button.gameObject, .03f + group * .24f, .69f - row * .047f, .255f + group * .24f, .733f - row * .047f);
+                        Rect(button.gameObject, .03f + group * .19f, .73f - (row + 1) * step, .21f + group * .19f, .73f - row * step - .004f);
                         Caption(button, column[index].name); button.gameObject.SetActive(true); visiblePicks.Add(column[index]);
                     }
                 }
@@ -565,13 +596,16 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static void LogCorruptionMetadata()
         {
             if (metadataLogged) return; metadataLogged = true;
+            foreach (var nested in typeof(AffixList).GetNestedTypes())
+                if (nested.IsEnum && nested.Name.IndexOf("special", StringComparison.OrdinalIgnoreCase) >= 0)
+                    Main.logger_instance.Msg("Force Drop " + nested.Name + ": " + string.Join(", ", Enum.GetNames(nested)));
             Main.logger_instance.Msg("Force Drop affix types: " + string.Join(", ", Enum.GetNames(typeof(AffixList.AffixType))));
             foreach (var member in typeof(AffixList).GetMembers())
                 if (member.MemberType == System.Reflection.MemberTypes.Field || member.MemberType == System.Reflection.MemberTypes.Property)
                     Main.logger_instance.Msg("Force Drop catalog API: " + member);
-            foreach (var type in new[] { typeof(ItemData), typeof(ItemDataUnpacked), typeof(ItemAffix), typeof(AffixList), typeof(AffixList.Affix) })
+            foreach (var type in new[] { typeof(ItemData), typeof(ItemDataUnpacked), typeof(ItemAffix), typeof(AffixList), typeof(AffixList.Affix), typeof(AffixList.SingleAffix), typeof(AffixList.MultiAffix) })
                 foreach (var member in type.GetMembers())
-                    if (member.Name.IndexOf("corrupt", StringComparison.OrdinalIgnoreCase) >= 0)
+                    if (member.Name.IndexOf("corrupt", StringComparison.OrdinalIgnoreCase) >= 0 || member.Name.IndexOf("special", StringComparison.OrdinalIgnoreCase) >= 0)
                         Main.logger_instance.Msg("Force Drop corruption API: " + type.Name + "." + member);
         }
         [HarmonyPatch(typeof(Button), "Press")]
