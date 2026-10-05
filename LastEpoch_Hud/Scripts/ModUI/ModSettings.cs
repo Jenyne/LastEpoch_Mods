@@ -208,7 +208,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
             public static readonly HeaderSetting Description = Group.Header(
                 "AutoCastDescription",
-                label: "Hold the modifier key and click an ability slot to toggle autocast on/off for that skill."
+                label: "Hold the modifier key and press the skill's normal keybind to toggle autocast on/off."
             );
 
             // Default per build config so a fresh install on either control scheme has a working modifier.
