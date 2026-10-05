@@ -83,12 +83,26 @@ namespace LastEpoch_Hud.Scripts.ModUI
             public static readonly SettingsGroup Group = new SettingsGroup("Cheats")
                 .Content("Character_Content")
                 .Viewport("Character_Cheats", "Character_Cheats_Content")
-                .Prefix("Character_Cheats_");
+                .Prefix("Character_Cheats_")
+                .OnBind((content, viewport) => SafeTeleportControls.Bind(content, viewport));
 
             public static readonly BoolSetting TwoHandeWithShield = Group.Bool(
                 "TwoHandeWithShield",
                 label: "Allow Shields With Two-Handed Weapons"
             );
+        }
+
+        public static class SafeTeleport
+        {
+            // UI is built at runtime for existing asset bundles, then bound from Cheats.
+            public static readonly SettingsGroup Group = new SettingsGroup("SafeTeleport")
+                .Viewport("Character_Cheats", "Character_Cheats_Content");
+            public static readonly BoolSetting Enabled = Group.Bool("Enabled",
+                label: "Enable Safe Teleport", path: "SafeTeleport/Enabled");
+            public static readonly KeybindSetting Key = Group.Keybind("Key", defaultBinding: "",
+                label: "Teleport Key", resetLabel: "Clear",
+                paths: new KeybindPaths(captureButton: "SafeTeleport/Key/Capture",
+                    resetButton: "SafeTeleport/Key/Reset", label: "SafeTeleport/Key/Label"));
         }
 
         //

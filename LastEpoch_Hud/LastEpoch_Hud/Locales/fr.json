@@ -326,5 +326,10 @@
   "Choose Blessings": "Choisir les bénédictions",
   "Unlock Blessing Slots": "Débloquer les emplacements de bénédiction",
   "Discover All Blessings": "Découvrir toutes les bénédictions",
-  "Max Out Blessings": "Maximiser les bénédictions"
+  "Max Out Blessings": "Maximiser les bénédictions",
+  "Safe Teleport": "Téléportation de secours",
+  "Enable Safe Teleport": "Activer la téléportation de secours",
+  "Teleport Key": "Touche de téléportation",
+  "Clear": "Effacer",
+  "Returns to the End of Time. Requires its waypoint. Unbound by default.": "Retourne à la Fin des Temps. Nécessite son point de passage. Aucune touche par défaut."
 }

@@ -326,5 +326,10 @@
   "Choose Blessings": "Choose Blessings",
   "Unlock Blessing Slots": "Unlock Blessing Slots",
   "Discover All Blessings": "Discover All Blessings",
-  "Max Out Blessings": "Max Out Blessings"
+  "Max Out Blessings": "Max Out Blessings",
+  "Safe Teleport": "Safe Teleport",
+  "Enable Safe Teleport": "Enable Safe Teleport",
+  "Teleport Key": "Teleport Key",
+  "Clear": "Clear",
+  "Returns to the End of Time. Requires its waypoint. Unbound by default.": "Returns to the End of Time. Requires its waypoint. Unbound by default."
 }

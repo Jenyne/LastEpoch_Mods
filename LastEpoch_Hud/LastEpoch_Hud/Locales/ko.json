@@ -337,5 +337,10 @@
   "Magic": "마법",
   "Rare": "희귀",
   "Reset Difficulty": "난이도 초기화",
-  "Max Out Blessings": "축복 수치 최대화"
+  "Max Out Blessings": "축복 수치 최대화",
+  "Safe Teleport": "안전 순간이동",
+  "Enable Safe Teleport": "안전 순간이동 활성화",
+  "Teleport Key": "순간이동 키",
+  "Clear": "해제",
+  "Returns to the End of Time. Requires its waypoint. Unbound by default.": "시간의 끝으로 돌아갑니다. 해당 웨이포인트가 필요합니다. 기본 단축키는 없습니다."
 }

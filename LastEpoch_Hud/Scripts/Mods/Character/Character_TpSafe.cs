@@ -1,63 +1,92 @@
-﻿using MelonLoader;
+using System;
+using LastEpoch_Hud.Scripts.ModUI;
+using MelonLoader;
 using UnityEngine;
+using UnityEngine.EventSystems;
+using UnityEngine.UI;
+using Il2CppTMPro;
 
 namespace LastEpoch_Hud.Scripts.Mods.Character
 {
     [RegisterTypeInIl2Cpp]
     public class Character_TpSafe : MonoBehaviour
     {
-        //You have to unlock Portal first to be able to use this
-
-        bool mod_enable = false;                //Disabled: Ctrl+Q conflicts with skill/AutoCast bindings.
-        KeyCode key_0 = KeyCode.LeftControl;    //Left Ctrl
-        KeyCode key_1 = KeyCode.Q;              //Q
-        string tp_waypoint = "EoT";            //Monolith Waypoint
-
+        const string Destination = "EoT";
+        bool focused = true;
+        bool wasHeld;
+        string previousBinding = "";
+        bool previousEnabled;
+        string pendingScene;
+        float retryAfter;
         public static Character_TpSafe instance { get; private set; }
-        public Character_TpSafe(System.IntPtr ptr) : base(ptr) { }
+        public Character_TpSafe(IntPtr ptr) : base(ptr) { }
+        void Awake() { instance = this; }
+        void OnApplicationFocus(bool value) { focused = value; wasHeld = true; }
 
-        void Awake()
-        {
-            instance = this;
-        }
         void Update()
         {
-            if (CanRun())
-            {
-                if (Input.GetKey(key_0) && Input.GetKeyDown(key_1)) { TpSafe(); }
-            }
-        }
-        bool CanRun()
-        {
-            if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed())  &&
-                (!Refs_Manager.game_uibase.IsNullOrDestroyed()) && (mod_enable))
-            {
-                if (!Save_Manager.instance.data.IsNullOrDestroyed()) { return true; }
-                else { return false; }
-            }
-            else { return false; }
-        }
-        void TpSafe()
-        {
-            bool backup_godmode = Save_Manager.instance.data.Character.Cheats.Enable_GodMode;
+            string binding = ModSettings.SafeTeleport.Key.Value ?? "";
+            bool enabled = ModSettings.SafeTeleport.Enabled.Value;
+            bool held = KeybindMatcher.IsHeld(binding);
+            bool changed = binding != previousBinding || enabled != previousEnabled;
+            previousBinding = binding;
+            previousEnabled = enabled;
+            bool pressed = held && !wasHeld && !changed;
+            // Track input even when blocked. Closing a menu while holding the key
+            // must not act as a fresh press.
+            wasHeld = held;
+            string scene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+            if (pendingScene != null && (scene != pendingScene || Time.unscaledTime >= retryAfter))
+                pendingScene = null;
+            if (!pressed || !enabled || string.IsNullOrEmpty(binding) || !CanRun(scene))
+                return;
+
+            pendingScene = scene;
+            retryAfter = Time.unscaledTime + 10f;
             try
             {
-                Save_Manager.instance.data.Character.Cheats.Enable_GodMode = true;
-                // Use the current transition service; opening the map with omitted
-                // nullable arguments fails in the generated IL2CPP wrapper.
-                LastEpoch_Hud.Scripts.Mods.Teleport.Teleport_ToScene.StartTpToScene(tp_waypoint);
+                // Reuse the same native transition service as the Scenes teleport UI.
+                // Never change the saved God Mode preference for an asynchronous trip.
+                Teleport.Teleport_ToScene.StartTpToScene(Destination);
             }
-            catch (System.Exception ex)
+            catch (Exception ex)
             {
                 Main.logger_instance?.Error("Safe teleport failed: " + ex.Message);
             }
-            finally
-            {
-                if (!Save_Manager.instance.IsNullOrDestroyed())
-                {
-                    Save_Manager.instance.data.Character.Cheats.Enable_GodMode = backup_godmode;
-                }
-            }
+        }
+
+        bool CanRun(string scene)
+        {
+            if (!focused || KeybindCapture.Active || Hud_Manager.mod_menu_open
+                || Hud_Manager.IsPauseOpen() || Time.timeScale <= 0f
+                || pendingScene != null || Time.unscaledTime < retryAfter
+                || !Scenes.IsGameScene() || scene == Destination
+                || Save_Manager.instance.IsNullOrDestroyed()
+                || !Save_Manager.instance.initialized
+                || Save_Manager.instance.data.IsNullOrDestroyed()
+                || Refs_Manager.game_uibase.IsNullOrDestroyed()
+                || Refs_Manager.player_actor.IsNullOrDestroyed()
+                || Refs_Manager.player_data.IsNullOrDestroyed()
+                || Teleport.Teleport_ToScene.instance.IsNullOrDestroyed())
+                return false;
+            var settings = ModUI.SaveManager.instance;
+            if (settings.IsNullOrDestroyed() || !settings.initialized) return false;
+            if (Typing()) return false;
+            var waypoints = Refs_Manager.player_data.UnlockedWaypointScenes;
+            // This shortcut must not unlock a destination on a fresh character.
+            return waypoints != null && waypoints.Contains(Destination);
+        }
+
+        static bool Typing()
+        {
+            var events = EventSystem.current;
+            if (events.IsNullOrDestroyed()) return false;
+            var selected = events.currentSelectedGameObject;
+            if (selected.IsNullOrDestroyed()) return false;
+            var input = selected.GetComponentInParent<InputField>();
+            if (!input.IsNullOrDestroyed() && input.isFocused) return true;
+            var tmp = selected.GetComponentInParent<TMP_InputField>();
+            return !tmp.IsNullOrDestroyed() && tmp.isFocused;
         }
     }
 }
