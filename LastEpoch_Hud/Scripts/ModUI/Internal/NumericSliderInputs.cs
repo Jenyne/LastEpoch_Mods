@@ -105,14 +105,38 @@ namespace LastEpoch_Hud.Scripts.ModUI
             TMP_InputField input = clone.GetComponent<TMP_InputField>();
             RectTransform source = label.GetComponent<RectTransform>();
             RectTransform rect = clone.GetComponent<RectTransform>();
-            rect.anchorMin = source.anchorMin;
-            rect.anchorMax = source.anchorMax;
-            rect.pivot = source.pivot;
-            rect.anchoredPosition = source.anchoredPosition;
+            // Fixed right-aligned dimensions avoid inheriting narrow label anchors.
+            rect.anchorMin = new Vector2(1f, source.anchorMin.y);
+            rect.anchorMax = new Vector2(1f, source.anchorMax.y);
+            rect.pivot = new Vector2(1f, source.pivot.y);
+            rect.anchoredPosition = new Vector2(-6f, source.anchoredPosition.y);
             rect.localScale = Vector3.one;
-            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 90f);
+            rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Horizontal, 100f);
             rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(24f, source.rect.height));
 
+            LayoutElement layout = clone.GetComponent<LayoutElement>();
+            if (!layout.IsNullOrDestroyed()) { layout.ignoreLayout = true; }
+            Image background = clone.GetComponent<Image>();
+            if (!background.IsNullOrDestroyed())
+            {
+                background.sprite = null;
+                background.type = Image.Type.Simple;
+                background.color = new Color(0.11f, 0.13f, 0.16f, 1f);
+            }
+            ColorBlock colors = input.colors;
+            colors.normalColor = Color.white;
+            colors.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f);
+            colors.selectedColor = colors.highlightedColor;
+            colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+            input.colors = colors;
+            if (!input.placeholder.IsNullOrDestroyed()) { input.placeholder.gameObject.SetActive(false); }
+            if (!input.textViewport.IsNullOrDestroyed())
+            {
+                input.textViewport.anchorMin = Vector2.zero;
+                input.textViewport.anchorMax = Vector2.one;
+                input.textViewport.offsetMin = new Vector2(4f, 1f);
+                input.textViewport.offsetMax = new Vector2(-4f, -1f);
+            }
             input.onValueChanged.RemoveAllListeners();
             input.onEndEdit = new TMP_InputField.SubmitEvent();
             input.enabled = true;
@@ -125,7 +149,17 @@ namespace LastEpoch_Hud.Scripts.ModUI
             if (!input.textComponent.IsNullOrDestroyed())
             {
                 input.textComponent.raycastTarget = false;
-                input.textComponent.fontSize = 14f;
+                input.textComponent.fontSize = Mathf.Max(14f, label.fontSize);
+                input.textComponent.enableAutoSizing = true;
+                input.textComponent.fontSizeMin = 10f;
+                input.textComponent.fontSizeMax = Mathf.Max(14f, label.fontSize);
+                input.textComponent.color = label.color;
+                input.textComponent.margin = Vector4.zero;
+                RectTransform textRect = input.textComponent.GetComponent<RectTransform>();
+                textRect.anchorMin = Vector2.zero;
+                textRect.anchorMax = Vector2.one;
+                textRect.offsetMin = Vector2.zero;
+                textRect.offsetMax = Vector2.zero;
                 input.textComponent.horizontalAlignment = HorizontalAlignmentOptions.Center;
                 input.textComponent.verticalAlignment = VerticalAlignmentOptions.Middle;
             }
@@ -146,7 +180,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
         static string Format(Slider slider)
         {
-            return slider.value.ToString(slider.wholeNumbers ? "0" : "0.######", CultureInfo.InvariantCulture);
+            return slider.value.ToString(slider.wholeNumbers ? "0" : "0.##", CultureInfo.InvariantCulture);
         }
 
         static void Commit(Entry entry, string text)
@@ -158,6 +192,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
             {
                 value = Mathf.Clamp(value, entry.slider.minValue, entry.slider.maxValue);
                 if (entry.slider.wholeNumbers) { value = Mathf.Round(value); }
+                else { value = (float)Math.Round(value, 2, MidpointRounding.AwayFromZero); }
+                value = Mathf.Clamp(value, entry.slider.minValue, entry.slider.maxValue);
                 // Use the normal setter so existing config, labels and Harmony hooks run.
                 entry.slider.value = value;
             }
