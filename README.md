@@ -1,6 +1,6 @@
 # Last Epoch HUD
 
-Updated build of [Ash's Last Epoch HUD](https://github.com/RCInet/LastEpoch_Mods) for the current game (Unity 6000.4.8) and MelonLoader 0.7.3 Open-Beta.
+Working Season 5 version of [Ash's Last Epoch HUD](https://github.com/RCInet/LastEpoch_Mods).
 
 In a zone, press **F3** to open and close the mod menu. Escape closes it.
 
