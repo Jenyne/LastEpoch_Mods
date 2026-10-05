@@ -28,6 +28,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static Button typeButton, rarityButton, dropButton, corruptButton, corruptionSelect, pickerPrevious, pickerNext;
         static int corruptionId = -1, rageId = -1;
         static ushort rageUniqueId;
+        static int rageMetadataId = -1;
         static string rageName = "Choose Rage";
         static Button rageSelect;
         static string corruptionName = "None";
@@ -109,9 +110,21 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 ResetRage(); rageUniqueId = (ushort)FD.item_unique_id;
             }
             ragePage.SetActive(showRage);
-            // Use the spare space beneath the item list; LP and unique rolls stay visible.
+            if (showRage && rageMetadataId != FD.item_unique_id)
+            {
+                rageMetadataId = FD.item_unique_id;
+                Main.logger_instance.Msg("Unsated Rage native pool: unique=" + rageEntry.uniqueID +
+                    ", specific=" + rageEntry.dropsSpecificLegendaryAffixes +
+                    ", count=" + rageEntry.droppableLegendaryAffixCount +
+                    ", excludesSlotLimits=" + rageEntry.excludeSpecificAffixesFromPrefixSuffixLimits +
+                    ", pool=" + (rageEntry.droppableLegendaryAffixes.IsNullOrDestroyed() ? "null" :
+                        rageEntry.droppableLegendaryAffixes.Count.ToString()) +
+                    ", resolved=" + UniqueVariantAdapter.Catalog(rageEntry).Count);
+            }
+            // Keep the exclusive modifier next to the item preview and outside the affix grid.
             rageSelect.interactable = UniqueVariantAdapter.HasSingleVariant(rageEntry);
-            Caption(rageSelect, rageSelect.interactable ? rageName : "Rage data unavailable");
+            Caption(rageSelect, rageSelect.interactable ? rageName : "Rage pool unavailable");
+            Rect(preview.gameObject, .04f, showRage ? .47f : .28f, .96f, .90f);
             if (Time.unscaledTime >= nextCorruptionCheck)
             {
                 nextCorruptionCheck = Time.unscaledTime + 2f;
@@ -188,8 +201,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
             ww = NumericGrid(uniquePage, "Weaver's Will", 1, 2, 0, 28, 0, false, 3);
             for (int i = 0; i < 8; i++)
                 uniqueRolls[i] = NumericGrid(uniquePage, "Roll " + (i + 1), i % 4, i < 4 ? 1 : 0, 0, 100, 100, true, 3, 4);
-            ragePage = Panel(left, "Unsated Rage variant", .03f, .095f, .97f, .155f);
-            rageSelect = Button(ragePage, "Choose Rage", .02f, .05f, .98f, .95f, RagePicker);
+            ragePage = Panel(right, "Unsated Rage variant", .04f, .28f, .96f, .45f);
+            Label(ragePage, "Unsated Rage modifier", .03f, .72f, .97f, .96f, 15);
+            rageSelect = Button(ragePage, "Choose Rage", .03f, .29f, .97f, .69f, RagePicker);
+            Label(ragePage, "Exclusive ring modifier · separate from LP", .03f, .04f, .97f, .25f, 11);
             ragePage.SetActive(false);
             Label(right, "Item preview", .04f, .92f, .96f, .99f, 20);
             preview = Label(right, "Choose an item", .04f, .28f, .96f, .90f, 15);
