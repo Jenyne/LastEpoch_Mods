@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
+using Il2CppInterop.Runtime;
 using MelonLoader;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -65,15 +66,27 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                     {
                         foreach (string name in Hud_Manager.asset_bundle.GetAllAssetNames())
                         {
-                            if (name.Contains("/headhunter/"))
+                            string path = name.Replace("\\", "/").ToLowerInvariant();
+                            if (path.Contains("/headhunter/"))
                             {
                                 if ((Functions.Check_Texture(name)) &&
-                                    (name.Replace("\\", "/").ToLowerInvariant().EndsWith("/headhunter/texture2d/icon.png")) &&
+                                    (path.EndsWith("/headhunter/texture2d/icon.png")) &&
                                     (Unique.Icon.IsNullOrDestroyed()))
                                 {
-                                    Texture2D texture = Hud_Manager.asset_bundle.LoadAsset(name).TryCast<Texture2D>();
-                                    Unique.Icon = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
-                                    //Object.DontDestroyOnLoad(Unique.Icon);
+                                    // The PNG has both Texture2D and Sprite entries in the bundle.
+                                    // An untyped load may return the Sprite and fail a Texture2D cast.
+                                    Unique.Icon = Hud_Manager.asset_bundle
+                                        .LoadAsset(name, Il2CppType.Of<Sprite>()).TryCast<Sprite>();
+                                    if (Unique.Icon.IsNullOrDestroyed())
+                                    {
+                                        Texture2D texture = Hud_Manager.asset_bundle
+                                            .LoadAsset(name, Il2CppType.Of<Texture2D>()).TryCast<Texture2D>();
+                                        if (!texture.IsNullOrDestroyed())
+                                        {
+                                            Unique.Icon = Sprite.Create(texture,
+                                                new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+                                        }
+                                    }
                                 }
                                 else if ((Functions.Check_Json(name)) && (name.Contains("hh_buffs")) && (Config.json.IsNullOrDestroyed()))
                                 {
@@ -85,7 +98,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                         if ((!Unique.Icon.IsNullOrDestroyed()) && (!Config.json.IsNullOrDestroyed())) { Loaded = true; }
                         else { Loaded = false; }
                     }
-                    catch { Main.logger_instance?.Error("Headhunter Asset Error"); }
+                    catch (System.Exception ex) { Main.logger_instance?.Error("Headhunter Asset Error: " + ex.Message); }
                     loading = false;
                 }
             }
@@ -393,6 +406,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 }
             }*/            
 
+            private static bool IsHeadhunter(ItemData item)
+            {
+                return !item.IsNullOrDestroyed() && item.isUniqueSetOrLegendary() && item.uniqueID == unique_id;
+            }
+
             //Fix for V1.2 (icon in inventory)
             [HarmonyPatch(typeof(InventoryItemUI), "SetImageSpritesAndColours")]
             public class InventoryItemUI_SetImageSpritesAndColours
@@ -400,7 +418,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 [HarmonyPostfix]
                 static void Postfix(ref Il2Cpp.InventoryItemUI __instance)
                 {
-                    if ((__instance.EntryRef.data.getAsUnpacked().FullName == Get_Unique_Name()) && (!Icon.IsNullOrDestroyed()) &&
+                    if (!__instance.IsNullOrDestroyed() && !__instance.EntryRef.IsNullOrDestroyed() &&
+                        IsHeadhunter(__instance.EntryRef.data) && !Icon.IsNullOrDestroyed() &&
                         !__instance.contentImage.IsNullOrDestroyed())
                     {
                         __instance.contentImage.sprite = Icon;
@@ -416,7 +435,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 static void Postfix(UITooltipItem __instance, ItemDataUnpacked __0, bool __2)
                 {
                     if (__instance.IsNullOrDestroyed() || __0.IsNullOrDestroyed() ||
-                        __0.FullName != Get_Unique_Name() || Icon.IsNullOrDestroyed()) { return; }
+                        !IsHeadhunter(__0) || Icon.IsNullOrDestroyed()) { return; }
 
                     var images = __2
                         ? new[] { __instance.compareItemImage, __instance.compareSmallItemImage,
