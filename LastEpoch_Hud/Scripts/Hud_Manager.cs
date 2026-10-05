@@ -1613,6 +1613,7 @@ public partial class Hud_Manager : MonoBehaviour
                                 )
                                 .GetComponent<Button>();
                             Cheats.BuildChooseBlessingsButton(character_cheats_content);
+                            Cheats.BuildUnlockBlessingSlotsButton();
                         }
                         else
                         {
@@ -2291,6 +2292,8 @@ public partial class Hud_Manager : MonoBehaviour
                 {
                     Events.Set_Toggle_Event(Cheats.lowlife_toggle, Cheats.Lowlife_Toggle_Action);
                 }
+                if (!Cheats.unlock_blessing_slots_button.IsNullOrDestroyed())
+                    Events.Set_Button_Event(Cheats.unlock_blessing_slots_button, Cheats.UnlockBlessingSlots_OnClick_Action);
                 if (!Cheats.choose_blessings_button.IsNullOrDestroyed())
                     Events.Set_Button_Event(Cheats.choose_blessings_button, Cheats.ChooseBlessings_OnClick_Action);
                 if (!Cheats.unlock_all_idols.IsNullOrDestroyed())
@@ -3698,6 +3701,45 @@ public partial class Hud_Manager : MonoBehaviour
                         Save_Manager.instance.data.Character.Cheats.Enable_LowLife =
                             lowlife_toggle.isOn;
                     }
+                }
+
+                public static Button unlock_blessing_slots_button = null;
+                public static readonly System.Action UnlockBlessingSlots_OnClick_Action =
+                    new System.Action(Mods.Character.Character_Blessings.UnlockBlessingSlots);
+
+                public static void BuildUnlockBlessingSlotsButton()
+                {
+                    if (!unlock_blessing_slots_button.IsNullOrDestroyed() || discover_blessings_button.IsNullOrDestroyed()) return;
+                    var original = discover_blessings_button.gameObject;
+                    var rect = original.GetComponent<RectTransform>();
+                    var row = new GameObject("Blessing discovery actions");
+                    var rowRect = row.AddComponent<RectTransform>();
+                    row.transform.SetParent(original.transform.parent, false);
+                    row.transform.SetSiblingIndex(original.transform.GetSiblingIndex());
+                    rowRect.anchorMin = rect.anchorMin; rowRect.anchorMax = rect.anchorMax;
+                    rowRect.pivot = rect.pivot; rowRect.anchoredPosition = rect.anchoredPosition;
+                    rowRect.sizeDelta = rect.sizeDelta;
+                    var layout = original.GetComponent<LayoutElement>();
+                    if (!layout.IsNullOrDestroyed())
+                    {
+                        var copy = row.AddComponent<LayoutElement>();
+                        copy.minWidth = layout.minWidth; copy.minHeight = layout.minHeight;
+                        copy.preferredWidth = layout.preferredWidth; copy.preferredHeight = layout.preferredHeight;
+                        copy.flexibleWidth = layout.flexibleWidth; copy.flexibleHeight = layout.flexibleHeight;
+                    }
+                    var button = UnityEngine.Object.Instantiate(original, row.transform, false);
+                    button.name = "Btn_Character_Cheats_UnlockBlessingSlots";
+                    unlock_blessing_slots_button = button.GetComponent<Button>();
+                    unlock_blessing_slots_button.onClick = new Button.ButtonClickedEvent();
+                    foreach (var label in button.GetComponentsInChildren<Text>(true)) label.text = "Unlock Blessing Slots";
+                    foreach (var label in button.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)) label.text = "Unlock Blessing Slots";
+                    original.transform.SetParent(row.transform, false);
+                    rect.anchorMin = Vector2.zero; rect.anchorMax = new Vector2(.49f, 1f);
+                    rect.offsetMin = rect.offsetMax = Vector2.zero;
+                    var buttonRect = button.GetComponent<RectTransform>();
+                    buttonRect.anchorMin = new Vector2(.51f, 0f); buttonRect.anchorMax = Vector2.one;
+                    buttonRect.offsetMin = buttonRect.offsetMax = Vector2.zero;
+                    button.SetActive(true);
                 }
 
                 public static Button choose_blessings_button = null;
