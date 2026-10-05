@@ -88,7 +88,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             foreach (LocalTreeData.SkillTreeData data in Refs_Manager.player_treedata.specialisedSkillTrees)
             {
                 if (data == null) { continue; }
-                data.level = EffectiveLevel(data);
+                data.level = BaseLevel(data);
             }
         }
 
@@ -114,28 +114,26 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             return LevelOn() ? ChosenLevel() : (byte)RawLevel(data);
         }
 
-        static byte EffectiveLevel(LocalTreeData.SkillTreeData data)
+        static byte EffectiveAdditional(LocalTreeData.SkillTreeData data, int rawAdditional)
         {
-            long level = BaseLevel(data);
-            if (MultiplierOn()) { level *= Multiplier(); }
-            if (level < 0) { level = 0; }
-            if (level > byte.MaxValue) { level = byte.MaxValue; }
-            return (byte)level;
+            long baseLevel = BaseLevel(data);
+            long total = baseLevel + rawAdditional;
+            if (MultiplierOn()) { total *= Multiplier(); }
+
+            // Keep the real/base skill level in data.level. The multiplier only
+            // expands the point-cap contribution stored in additionalMaxPointsFromStats.
+            // This prevents native XP/max-level/refund code from ever seeing a fake
+            // multiplied skill level while preserving the same effective total cap.
+            long additional = total - baseLevel;
+            if (additional < 0) { additional = 0; }
+            if (additional > byte.MaxValue) { additional = byte.MaxValue; }
+            return (byte)additional;
         }
 
         static string Key(LocalTreeData.SkillTreeData data)
         {
             if (data == null || data.ability.IsNullOrDestroyed()) { return null; }
             return data.slot + ":" + data.ability.abilityName;
-        }
-
-        static byte EffectiveAdditional(int real)
-        {
-            long additional = real;
-            if (MultiplierOn()) { additional *= Multiplier(); }
-            if (additional < 0) { additional = 0; }
-            if (additional > byte.MaxValue) { additional = byte.MaxValue; }
-            return (byte)additional;
         }
 
         static void ApplyPointBonus()
@@ -145,7 +143,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 string key = Key(data);
                 if (key == null) { continue; }
                 if (!real_additional.ContainsKey(key)) { real_additional[key] = data.additionalMaxPointsFromStats; }
-                data.additionalMaxPointsFromStats = EffectiveAdditional(real_additional[key]);
+                data.additionalMaxPointsFromStats = EffectiveAdditional(data, real_additional[key]);
             }
         }
 
@@ -341,20 +339,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                     if (data.ability.abilityName != __0.abilityName) { continue; }
 
                     // getAbilityLevel is used by LE for native skill-XP state,
-                    // max-level checks and manual point refunds. Those systems must
-                    // see the unmultiplied/base level. The multiplied value lives in
-                    // SkillTreeData.level to provide the expanded point cap.
-                    //
-                    // The only exception is the tightly-scoped native over-cap respec
-                    // transaction used when +skill gear is removed. Its prefix
-                    // deliberately exposes the effective cap so LE removes the correct
-                    // number of overflowed allocated nodes.
-                    if (effectiveRespec)
-                    {
-                        __result = EffectiveLevel(data);
-                        return;
-                    }
-
+                    // max-level checks and manual point refunds. It must always see
+                    // the unmultiplied/base level. The multiplier is represented only
+                    // as synthetic additional point capacity.
                     byte baseLevel = BaseLevel(data);
 
                     if (nativeAdditionalRefresh)
@@ -439,8 +426,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 real_additional[key] = __state.rawAdditional;
 
                 effectiveRespec = true;
-                __0.level = EffectiveLevel(__0);
-                __0.additionalMaxPointsFromStats = EffectiveAdditional(__state.rawAdditional);
+                __0.level = BaseLevel(__0);
+                __0.additionalMaxPointsFromStats = EffectiveAdditional(__0, __state.rawAdditional);
             }
 
             [HarmonyPostfix]
@@ -453,9 +440,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                 }
 
                 // Always restore the raw representation that belonged to this exact
-                // native respec call. This prevents effective +skills from leaking
-                // back into real_additional and being multiplied again on the next
-                // periodic stat refresh (e.g. 32 briefly becoming 44).
+                // native respec call. The effective cap is carried only by the
+                // temporary synthetic additional-points value above.
                 __0.level = __state.rawLevel;
                 __0.additionalMaxPointsFromStats = __state.rawAdditional;
 
