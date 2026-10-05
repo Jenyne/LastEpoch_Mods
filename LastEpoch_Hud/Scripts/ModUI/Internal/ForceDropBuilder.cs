@@ -44,7 +44,11 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static readonly Number[] implicits = new Number[3], uniqueRolls = new Number[8];
         static int itemPage, pickerPage;
         static string lastSearch = "", lastPickerSearch = "", lastItems = "";
-        static bool corrupted, failed, metadataLogged;
+        static bool corrupted, failed, metadataLogged, allowIllegal;
+        static GameObject setPage;
+        static Button illegalButton, setSelect;
+        static int setAffixId = -1;
+        static string setPieceName = "None";
         static float nextCorruptionCheck;
         static string result = "";
         public static bool IsReady => !root.IsNullOrDestroyed();
@@ -105,6 +109,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             uniquePage.SetActive(FD.item_rarity > 6);
             var rageEntry = SelectedRageEntry();
             bool showRage = UniqueVariantAdapter.IsUnsated(rageEntry);
+            bool showSet = allowIllegal && FD.item_rarity == 7;
             if (rageUniqueId != FD.item_unique_id)
             {
                 ResetRage(); rageUniqueId = (ushort)FD.item_unique_id;
@@ -124,7 +129,11 @@ namespace LastEpoch_Hud.Scripts.ModUI
             // Keep the exclusive modifier next to the item preview and outside the affix grid.
             rageSelect.interactable = UniqueVariantAdapter.HasSingleVariant(rageEntry);
             Caption(rageSelect, rageSelect.interactable ? rageName : "Rage pool unavailable");
-            Rect(preview.gameObject, .04f, showRage ? .47f : .28f, .96f, .90f);
+            setPage.SetActive(showSet);
+            setSelect.interactable = showSet && IllegalItemAdapter.SetCatalog(FD.item_type).Count > 0;
+            Caption(setSelect, setSelect.interactable ? setPieceName : "Set-piece modifiers unavailable");
+            Rect(ragePage, .04f, showSet ? .44f : .28f, .96f, showSet ? .61f : .45f);
+            Rect(preview.gameObject, .04f, showRage ? (showSet ? .63f : .47f) : showSet ? .45f : .28f, .96f, .90f);
             if (Time.unscaledTime >= nextCorruptionCheck)
             {
                 nextCorruptionCheck = Time.unscaledTime + 2f;
@@ -147,7 +156,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
             if (font.IsNullOrDestroyed()) throw new InvalidOperationException("Menu font is unavailable");
             clicks.Clear(); numbers.Clear(); itemButtons.Clear(); pickButtons.Clear(); pickerHeaders.Clear();
             root = Panel(FD.content_obj, "ForceDropBuilder", 0, 0, 1, 1);
-            Label(root, "Force Drop", 0.02f, 0.955f, 0.98f, 0.995f, 22);
+            Label(root, "Force Drop", 0.02f, 0.955f, 0.62f, 0.995f, 22);
+            illegalButton = Button(root, "Allow illegal items: Off", .65f, .955f, .98f, .995f, ToggleIllegal);
             var left = Panel(root, "Choose item", 0.01f, 0.02f, 0.29f, 0.945f);
             var middle = Panel(root, "Customize", 0.30f, 0.02f, 0.73f, 0.945f);
             var right = Panel(root, "Preview", 0.74f, 0.02f, 0.99f, 0.945f);
@@ -206,6 +216,11 @@ namespace LastEpoch_Hud.Scripts.ModUI
             rageSelect = Button(ragePage, "Choose Rage", .03f, .29f, .97f, .69f, RagePicker);
             Label(ragePage, "Exclusive ring modifier · separate from LP", .03f, .04f, .97f, .25f, 11);
             ragePage.SetActive(false);
+            setPage = Panel(right, "Illegal set-piece modifier", .04f, .28f, .96f, .43f);
+            Label(setPage, "Set-piece modifier", .03f, .74f, .97f, .96f, 14);
+            setSelect = Button(setPage, "None", .03f, .30f, .97f, .70f, SetPiecePicker);
+            Label(setPage, "Counts as the selected set piece", .03f, .04f, .97f, .25f, 11);
+            setPage.SetActive(false);
             Label(right, "Item preview", .04f, .92f, .96f, .99f, 20);
             preview = Label(right, "Choose an item", .04f, .28f, .96f, .90f, 15);
             quantity = Numeric(right, "Quantity", .20f, 1, 99, 1, false, false);
@@ -219,6 +234,36 @@ namespace LastEpoch_Hud.Scripts.ModUI
         }
 
         
+        static void ToggleIllegal()
+        {
+            allowIllegal = !allowIllegal;
+            Caption(illegalButton, allowIllegal ? "Allow illegal items: On" : "Allow illegal items: Off");
+            for (int slot = 0; slot < 4; slot++)
+            {
+                rows[slot].tier.max = allowIllegal ? 8 : 7;
+                rows[slot].tier.value = Math.Min(rows[slot].tier.value, rows[slot].tier.max);
+                rows[slot].tier.input.SetTextWithoutNotify(rows[slot].tier.value.ToString());
+            }
+            if (!allowIllegal) { setAffixId = -1; setPieceName = "None"; Caption(setSelect, setPieceName); }
+            foreach (var slider in new[] { FD.affix_0_tier_slider, FD.affix_1_tier_slider,
+                FD.affix_2_tier_slider, FD.affix_3_tier_slider })
+                if (!slider.IsNullOrDestroyed()) slider.maxValue = allowIllegal ? 7 : 6;
+        }
+        static void SetPiecePicker()
+        {
+            choices.Clear();
+            choices.Add(new Choice { id = -1, name = "None", select = () =>
+                { setAffixId = -1; setPieceName = "None"; Caption(setSelect, setPieceName); } });
+            foreach (var definition in IllegalItemAdapter.SetCatalog(FD.item_type))
+            {
+                int id = definition.affixId;
+                string name = IllegalItemAdapter.SetPieceName(definition);
+                choices.Add(new Choice { id = id, name = name, select = () =>
+                    { setAffixId = id; setPieceName = name; Caption(setSelect, name); } });
+            }
+            choices.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
+            OpenPicker("Choose a set-piece modifier");
+        }
         static void Preset(bool random)
         {
             foreach (var n in numbers)
@@ -279,6 +324,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static void ResetRage()
         {
             rageId = -1; rageName = "Choose Rage";
+            setAffixId = -1; setPieceName = "None";
+            if (!setSelect.IsNullOrDestroyed()) Caption(setSelect, setPieceName);
             if (!rageSelect.IsNullOrDestroyed()) Caption(rageSelect, rageName);
         }
         static void RagePicker()
@@ -318,13 +365,24 @@ namespace LastEpoch_Hud.Scripts.ModUI
             if (!IsReady) return;
             if (UniqueVariantAdapter.IsUnsated(SelectedRageEntry()))
                 UniqueVariantAdapter.Apply(item, rageId);
+            if (allowIllegal && setAffixId >= 0) IllegalItemAdapter.ApplySetPiece(item, setAffixId);
             if (!corrupted || corruptionId < 0) return;
             CorruptedAffixAdapter.Apply(item, corruptionId, corruptionTier.value - 1, Roll(corruptionRoll));
         }
         public static void VerifySelectedCorruption(ItemDataUnpacked item)
         {
-            if (!IsReady || !corrupted || corruptionId < 0) return;
-            CorruptedAffixAdapter.VerifySelection(item, corruptionId, corruptionTier.value - 1, Roll(corruptionRoll));
+            if (!IsReady) return;
+            if (allowIllegal && setAffixId >= 0) IllegalItemAdapter.VerifySetPiece(item, setAffixId);
+            foreach (var row in rows)
+                if (row.id >= 0 && row.tier.value == 8)
+                {
+                    int count = 0;
+                    foreach (var saved in item.affixes)
+                        if (!saved.IsNullOrDestroyed() && saved.affixId == row.id && saved.affixTier == 7 && !saved.IsSealed) count++;
+                    if (count != 1) throw new InvalidOperationException("T8 affix changed during packing; no item was dropped");
+                }
+            if (corrupted && corruptionId >= 0)
+                CorruptedAffixAdapter.VerifySelection(item, corruptionId, corruptionTier.value - 1, Roll(corruptionRoll));
         }
         static void CatalogPicker(Dropdown catalog, Action changed, bool skipPlaceholder)
         {
@@ -354,7 +412,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
         }
         static void AddAffixChoice(AffixList.Affix a, int slot)
         {
-            if (a.IsNullOrDestroyed() || CorruptedAffixAdapter.IsCorruption(a) || UniqueVariantAdapter.IsVariant(a) || FD.item_type < 0 || FD.item_subtype < 0) return;
+            if (a.IsNullOrDestroyed() || IllegalItemAdapter.IsSetAffix(a) || CorruptedAffixAdapter.IsCorruption(a) || UniqueVariantAdapter.IsVariant(a) || FD.item_type < 0 || FD.item_subtype < 0) return;
             if (a.type != AffixList.AffixType.PREFIX && a.type != AffixList.AffixType.SUFFIX) return;
             if (slot < 4 && a.type != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX)) return;
             if (!CorruptedAffixAdapter.FitsItem(a, FD.item_type, FD.item_subtype)) return;
@@ -415,14 +473,23 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 var row = rows[slot];
                 if (row.id < 0) continue;
                 var definition = FindAffix(row.id);
-                if (definition.IsNullOrDestroyed() || CorruptedAffixAdapter.IsCorruption(definition) || UniqueVariantAdapter.IsVariant(definition))
+                if (definition.IsNullOrDestroyed() || IllegalItemAdapter.IsSetAffix(definition) || CorruptedAffixAdapter.IsCorruption(definition) || UniqueVariantAdapter.IsVariant(definition))
                     return "Choose a regular affix for " + (slot == 4 ? "Sealed" : slot < 2 ? "Prefix" : "Suffix") + ".";
                 if (definition.type != AffixList.AffixType.PREFIX && definition.type != AffixList.AffixType.SUFFIX)
                     return "Special modifiers belong in the Corruption row.";
                 if (slot < 4 && definition.type != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX))
                     return "Affix type does not match its slot.";
+                if (row.tier.value > 7 && (!allowIllegal || slot == 4 || !IllegalItemAdapter.SupportsUnsealedT8(definition)))
+                    return "T8 requires illegal mode and a standard affix with native T8 data.";
                 if (!CorruptedAffixAdapter.FitsItem(definition, FD.item_type, FD.item_subtype))
                     return "An affix cannot roll on the selected item. Choose it again.";
+            }
+            if (setAffixId >= 0)
+            {
+                if (!allowIllegal || FD.item_rarity != 7 ||
+                    !IllegalItemAdapter.SetCatalog(FD.item_type).Exists(a => a.affixId == setAffixId))
+                    return "Set-piece modifiers on uniques require illegal mode and a matching equipment category.";
+                if (!ids.Add(setAffixId)) return "The set-piece modifier cannot duplicate another affix.";
             }
             if (corrupted && corruptionId >= 0)
             {
@@ -448,6 +515,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 if (FD.item_rarity > 6) s.Append("\n\n").Append(FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential ? L("LP") + ": " + (lp.random ? L("Random") : lp.value.ToString()) : L("Weaver's Will") + ": " + (ww.random ? L("Random") : ww.value.ToString()));
             }
             if (UniqueVariantAdapter.IsUnsated(SelectedRageEntry())) s.Append("\n\n").Append(L("Ring variant")).Append(": ").Append(L(rageName));
+            if (allowIllegal && setAffixId >= 0) s.Append("\n\n").Append(L("Set-piece modifier")).Append(": ").Append(setPieceName);
             s.Append("\n\n").Append(L("Corrupted")).Append(": ").Append(corrupted ? L("Yes") : L("No"));
             if (corrupted && corruptionId >= 0) s.Append("\n").Append(corruptionName).Append("\nT").Append(corruptionTier.value).Append(" · ").Append(corruptionRoll.value).Append(" %");
             preview.text = s.ToString();

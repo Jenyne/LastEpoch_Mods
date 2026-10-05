@@ -326,5 +326,14 @@
   "Choose Blessings": "Choose Blessings",
   "Unlock Blessing Slots": "Unlock Blessing Slots",
   "Discover All Blessings": "Discover All Blessings",
-  "Max Out Blessings": "Max Out Blessings"
+  "Max Out Blessings": "Max Out Blessings",
+  "Allow illegal items: Off": "Allow illegal items: Off",
+  "Allow illegal items: On": "Allow illegal items: On",
+  "Set-piece modifier": "Set-piece modifier",
+  "Counts as the selected set piece": "Counts as the selected set piece",
+  "Set-piece modifiers unavailable": "Set-piece modifiers unavailable",
+  "Choose a set-piece modifier": "Choose a set-piece modifier",
+  "T8 requires illegal mode and a standard affix with native T8 data.": "T8 requires illegal mode and a standard affix with native T8 data.",
+  "Set-piece modifiers on uniques require illegal mode and a matching equipment category.": "Set-piece modifiers on uniques require illegal mode and a matching equipment category.",
+  "The set-piece modifier cannot duplicate another affix.": "The set-piece modifier cannot duplicate another affix."
 }

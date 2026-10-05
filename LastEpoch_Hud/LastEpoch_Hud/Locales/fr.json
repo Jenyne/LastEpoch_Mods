@@ -326,5 +326,14 @@
   "Choose Blessings": "Choisir les bénédictions",
   "Unlock Blessing Slots": "Débloquer les emplacements de bénédiction",
   "Discover All Blessings": "Découvrir toutes les bénédictions",
-  "Max Out Blessings": "Maximiser les bénédictions"
+  "Max Out Blessings": "Maximiser les bénédictions",
+  "Allow illegal items: Off": "Autoriser les objets illégaux : non",
+  "Allow illegal items: On": "Autoriser les objets illégaux : oui",
+  "Set-piece modifier": "Modificateur de pièce d'ensemble",
+  "Counts as the selected set piece": "Compte comme la pièce d'ensemble choisie",
+  "Set-piece modifiers unavailable": "Modificateurs de pièce d'ensemble indisponibles",
+  "Choose a set-piece modifier": "Choisir un modificateur de pièce d'ensemble",
+  "T8 requires illegal mode and a standard affix with native T8 data.": "Le palier 8 nécessite le mode illégal et un affixe standard avec des données natives de palier 8.",
+  "Set-piece modifiers on uniques require illegal mode and a matching equipment category.": "Les modificateurs de pièce d'ensemble sur les objets uniques nécessitent le mode illégal et une catégorie d'équipement correspondante.",
+  "The set-piece modifier cannot duplicate another affix.": "Le modificateur de pièce d'ensemble ne peut pas dupliquer un autre affixe."
 }

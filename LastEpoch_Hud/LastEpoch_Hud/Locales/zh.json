@@ -337,5 +337,14 @@
   "Choose Blessings": "选择祝福",
   "Unlock Blessing Slots": "解锁祝福槽位",
   "Discover All Blessings": "发现所有祝福",
-  "Max Out Blessings": "最大化祝福数值"
+  "Max Out Blessings": "最大化祝福数值",
+  "Allow illegal items: Off": "允许非法物品：关",
+  "Allow illegal items: On": "允许非法物品：开",
+  "Set-piece modifier": "套装部件词缀",
+  "Counts as the selected set piece": "计为所选套装部件",
+  "Set-piece modifiers unavailable": "套装部件词缀不可用",
+  "Choose a set-piece modifier": "选择套装部件词缀",
+  "T8 requires illegal mode and a standard affix with native T8 data.": "T8 需要非法物品模式，且普通词缀必须包含原生 T8 数据。",
+  "Set-piece modifiers on uniques require illegal mode and a matching equipment category.": "独特物品上的套装部件词缀需要非法物品模式，且装备类别必须匹配。",
+  "The set-piece modifier cannot duplicate another affix.": "套装部件词缀不能与其他词缀重复。"
 }

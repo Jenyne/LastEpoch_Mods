@@ -9,6 +9,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Fixs
         #region Affixes
         public static bool Verify_AffixID(int affix_id)
         {
+            if (!ModUI.IllegalItemAdapter.Definition(affix_id).IsNullOrDestroyed()) return true;
             bool result = false;
             bool found = false;
             if (!AffixList.get().IsNullOrDestroyed())
@@ -76,10 +77,10 @@ namespace LastEpoch_Hud.Scripts.Mods.Fixs
                             remove_affix = true;
                             need_fix = true;
                         }
-                        if (affix.affixTier > 6)
+                        if (affix.affixTier > ModUI.IllegalItemAdapter.SafeUnsealedTier(affix.affixId))
                         {
-                            Main.logger_instance.Error("Fix : Affix > 7");
-                            affix.affixTier = 6;
+                            Main.logger_instance.Error("Fix : Affix tier exceeds available game data");
+                            affix.affixTier = ModUI.IllegalItemAdapter.SafeUnsealedTier(affix.affixId);
                             need_fix = true;
                         }                        
                         index++;
@@ -113,10 +114,10 @@ namespace LastEpoch_Hud.Scripts.Mods.Fixs
                             remove_affix = true;
                             need_fix = true;
                         }
-                        if (affix.affixTier > 6)
+                        if (affix.affixTier > ModUI.IllegalItemAdapter.SafeUnsealedTier(affix.affixId))
                         {
-                            Main.logger_instance.Error("Fix : Affix > 7");
-                            affix.affixTier = 6;
+                            Main.logger_instance.Error("Fix : Affix tier exceeds available game data");
+                            affix.affixTier = ModUI.IllegalItemAdapter.SafeUnsealedTier(affix.affixId);
                             need_fix = true;
                         }                        
                         index++;
