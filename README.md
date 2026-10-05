@@ -8,17 +8,17 @@ In a zone, press **F3** to open and close the mod menu. Escape closes it.
 
 1. Install [MelonLoader 0.7.3 Open-Beta](https://github.com/LavaGang/MelonLoader/releases). Point the installer at the game folder.
 2. Start the game once, wait until the main menu, then close it.
-3. From the [latest release](https://github.com/Syncingoutt/LastEpoch_Mods/releases), download `LastEpoch_Hud.zip` and `UnityEngine.CoreModule.dll`.
-4. Extract the entire `LastEpoch_Hud.zip` into the game `Mods` folder. The ZIP includes both the DLL and the `LastEpoch_Hud` folder. You should have:
+3. From the [latest release](https://github.com/Syncingoutt/LastEpoch_Mods/releases), download `LastEpoch_Hud.dll` and the HUD asset `lastepochmods`. Download `UnityEngine.CoreModule.dll` too if the release requires it.
+4. Put `LastEpoch_Hud.dll` directly in the game `Mods` folder. Create `Mods/LastEpoch_Hud/Assets` if needed and put `lastepochmods` there. You should have:
 
    ```text
    <Last Epoch>\Mods\LastEpoch_Hud.dll
-   <Last Epoch>\Mods\LastEpoch_Hud
+   <Last Epoch>\Mods\LastEpoch_Hud\Assets\lastepochmods
    ```
 
    The DLL stays next to the `LastEpoch_Hud` folder, not inside it.
 
-5. Replace the downloaded `UnityEngine.CoreModule.dll` in this folder:
+5. If required by the release, replace the downloaded `UnityEngine.CoreModule.dll` in this folder:
 
    ```text
    <Last Epoch>\MelonLoader\Il2CppAssemblies\
@@ -57,12 +57,22 @@ The project references assemblies from your Last Epoch install. If the game is n
 dotnet build .\LastEpoch_Hud\LastEpoch_Hud.csproj -c Release -p:LastEpochPath="D:\SteamLibrary\steamapps\common\Last Epoch"
 ```
 
-Every Release build also generates `Build/Release/net6.0/LastEpoch_Hud.zip`. Upload this generated ZIP as the release asset; it includes `LastEpoch_Hud.dll`, the HUD asset and all locale JSON files from the same checkout. The package is refreshed even when only a translation changes. Missing required locales or the HUD asset fail packaging instead of producing an incomplete release.
+## Optional translations
 
-## Updating
+Locale JSON files are supplied as individual release downloads. To use translated HUD labels, download the desired language file and `en.json` for English fallback, then place them manually in:
 
-Close the game before installing an update. Extract the **entire** new `LastEpoch_Hud.zip` into the game's `Mods` folder and allow it to replace the existing DLL, HUD asset and locale files. Replacing only the DLL leaves old translations installed.
+```text
+<Last Epoch>/Mods/LastEpoch_Hud/Locales/
+```
 
-The ZIP contains only the mod DLL, HUD asset and locales; it does not contain saved mod settings or character data. Custom translations of shipped locale files should be backed up before replacing them.
+Create the folder if needed. Supported files are `en.json` (English), `fr.json` (French), `ko.json` (Korean), and `zh.json` (Simplified Chinese). Keep the filenames unchanged. `base.json` is a template for translation authors.
 
-For release maintainers: attach the generated ZIP to the next GitHub release after the changes are merged. Building the ZIP does not publish a release or update anyone's installed files automatically.
+The HUD follows the language selected in the game. Without a matching translation, it uses English fallback. Close the game before replacing locale files; restart afterward. When updating the mod, download and replace the locale files you use to get the latest labels. Back up any custom translations first.
+
+## Release files and updates
+
+Release builds copy the HUD asset and locale JSON files into `Build/Release/net6.0/LastEpoch_Hud/`, alongside `Build/Release/net6.0/LastEpoch_Hud.dll`. No ZIP is generated.
+
+For the next release, attach `LastEpoch_Hud.dll`, `lastepochmods`, and each locale JSON as separate assets from the same build. Users updating an existing install replace the DLL in `Mods`; those who use translations replace their JSON files manually in `Mods/LastEpoch_Hud/Locales`. Replace the HUD asset if it changed.
+
+Preparing these files does not publish a GitHub release automatically.

@@ -251,30 +251,4 @@
       <FileWrites Include="$(BuildInfoKeyFile)" />
     </ItemGroup>
   </Target>
-
-  <!-- Always repack Release builds, even when only a locale JSON changed. -->
-  <Target Name="PackageHudRelease" AfterTargets="Build"
-          Condition="'$(Configuration)' == 'Release' and '$(DesignTimeBuild)' != 'true'">
-    <PropertyGroup>
-      <HudPackageDirectory>$(TargetDir)HudReleasePackage</HudPackageDirectory>
-      <HudReleaseArchive>$(TargetDir)LastEpoch_Hud.zip</HudReleaseArchive>
-    </PropertyGroup>
-    <ItemGroup>
-      <HudRequiredLocale Include="LastEpoch_Hud/Locales/base.json;LastEpoch_Hud/Locales/en.json;LastEpoch_Hud/Locales/fr.json;LastEpoch_Hud/Locales/ko.json;LastEpoch_Hud/Locales/zh.json" />
-      <HudPackageLocale Include="LastEpoch_Hud/Locales/*.json" />
-    </ItemGroup>
-    <Error Condition="!Exists('%(HudRequiredLocale.Identity)')"
-           Text="Required release locale is missing: %(HudRequiredLocale.Identity)" />
-    <Error Condition="!Exists('LastEpoch_Hud/Assets/lastepochmods')"
-           Text="Required HUD asset is missing: LastEpoch_Hud/Assets/lastepochmods" />
-    <Error Condition="!Exists('$(TargetPath)')" Text="Compiled HUD DLL is missing: $(TargetPath)" />
-    <RemoveDir Directories="$(HudPackageDirectory)" />
-    <MakeDir Directories="$(HudPackageDirectory)/LastEpoch_Hud/Locales;$(HudPackageDirectory)/LastEpoch_Hud/Assets" />
-    <Copy SourceFiles="$(TargetPath)" DestinationFolder="$(HudPackageDirectory)" />
-    <Copy SourceFiles="LastEpoch_Hud/Assets/lastepochmods" DestinationFolder="$(HudPackageDirectory)/LastEpoch_Hud/Assets" />
-    <Copy SourceFiles="@(HudPackageLocale)" DestinationFolder="$(HudPackageDirectory)/LastEpoch_Hud/Locales" />
-    <ZipDirectory SourceDirectory="$(HudPackageDirectory)" DestinationFile="$(HudReleaseArchive)" Overwrite="true" />
-    <RemoveDir Directories="$(HudPackageDirectory)" />
-    <Message Importance="high" Text="Release package: $(HudReleaseArchive) (DLL, HUD asset and locales)" />
-  </Target>
 </Project>
