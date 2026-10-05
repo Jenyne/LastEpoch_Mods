@@ -117,6 +117,7 @@ namespace LastEpoch_Hud
                     case "Portuguese (pt)": { current = Selected.Portuguese; dictionnary_filename = "pt"; break; }
                     case "Chinese (Simplified) (zh)": { current = Selected.Chinese; dictionnary_filename = "zh"; break; }
                     case "Spanish (Spain) (es-ES)": { current = Selected.Spanish; dictionnary_filename = "es"; break; }
+                    default: { current = Selected.English; dictionnary_filename = "en"; break; }
                 }
                 if (current != backup)
                 {
@@ -127,20 +128,48 @@ namespace LastEpoch_Hud
             }
         }
 
+        private static Dictionary<string, string> ReadDictionary(string filename)
+        {
+            string fullPath = dictionary_path + "/" + filename + Extensions.json;
+            if (!File.Exists(fullPath)) { return null; }
+            try
+            {
+                return JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(fullPath));
+            }
+            catch (System.Exception ex)
+            {
+                Main.logger_instance?.Warning("Could not load locale " + filename + ": " + ex.Message);
+                return null;
+            }
+        }
+
         private static bool LoadDictionary()
         {
-            string full_path = dictionary_path + "/" + dictionnary_filename + Extensions.json;
-            if ((Directory.Exists(dictionary_path)) && (File.Exists(full_path)))
+            // Start fresh so a failed load cannot retain the previous language.
+            // English also supplies corrected labels for missing translation keys.
+            Dictionary<string, string> english = ReadDictionary("en");
+            var dictionary = english ?? new Dictionary<string, string>();
+            if (english == null)
             {
-                current_dictionary = JsonConvert.DeserializeObject<Dictionary<string, string>>(File.ReadAllText(full_path));
-                return true;
+                Main.logger_instance?.Warning("English locale missing or invalid; using built-in labels.");
             }
-            else
+            if (dictionnary_filename != "en")
             {
-                Main.logger_instance?.Error("Dictionnary not found for " + current.ToString() + " (" + full_path + ")");
-                Main.logger_instance?.Error("If you want to use locale for hud, copy " + dictionary_path + "/base" + Extensions.json + " to " + dictionnary_filename + Extensions.json + ", then edit this file");
-                return false;
+                Dictionary<string, string> selected = ReadDictionary(dictionnary_filename);
+                if (selected == null)
+                {
+                    Main.logger_instance?.Warning("Locale " + dictionnary_filename + " missing or invalid; using English.");
+                }
+                else
+                {
+                    foreach (var entry in selected)
+                    {
+                        if (!string.IsNullOrEmpty(entry.Value)) { dictionary[entry.Key] = entry.Value; }
+                    }
+                }
             }
+            current_dictionary = dictionary;
+            return true;
         }
     }
     public class Base
