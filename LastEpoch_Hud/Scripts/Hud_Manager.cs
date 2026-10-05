@@ -2887,10 +2887,30 @@ namespace LastEpoch_Hud.Scripts
                         PrepareNumericInput(soul_amount_input, "1000");
 
                         // Keep the amount and action together in Character > Data.
-                        GameObject buttonClone = Object.Instantiate(save_button.gameObject, soul_row.transform.parent);
+                        GameObject buttonClone = Object.Instantiate(save_button.gameObject, soul_row.transform);
                         buttonClone.name = "Btn_Character_Data_AddSoulEmbers";
                         soul_add_button = buttonClone.GetComponent<Button>();
                         PrepareFullWidthActionButton(buttonClone, soul_add_button, "Add Soul Embers");
+
+                        // The Data panel uses positioned rows, so a sibling cloned from Save
+                        // can overlap other controls. Put the action beside its amount instead.
+                        RectTransform buttonRect = buttonClone.GetComponent<RectTransform>();
+                        if (!buttonRect.IsNullOrDestroyed() && !inputRect.IsNullOrDestroyed())
+                        {
+                            inputRect.anchorMin = new Vector2(0f, source.anchorMin.y);
+                            inputRect.anchorMax = new Vector2(0.64f, source.anchorMax.y);
+                            inputRect.anchoredPosition = new Vector2(0f, source.anchoredPosition.y);
+                            inputRect.sizeDelta = new Vector2(-8f, source.sizeDelta.y);
+                            buttonRect.anchorMin = new Vector2(0.65f, source.anchorMin.y);
+                            buttonRect.anchorMax = new Vector2(1f, source.anchorMax.y);
+                            buttonRect.pivot = source.pivot;
+                            buttonRect.anchoredPosition = new Vector2(0f, source.anchoredPosition.y);
+                            buttonRect.sizeDelta = new Vector2(-8f, source.sizeDelta.y);
+                        }
+                        LayoutElement actionLayout = buttonClone.GetComponent<LayoutElement>();
+                        if (!actionLayout.IsNullOrDestroyed()) { actionLayout.ignoreLayout = true; }
+                        buttonClone.SetActive(true);
+                        Events.Set_Button_Event(soul_add_button, SoulEmbers_Add_Action);
 
                         inputClone.transform.SetAsLastSibling();
                         UpdateSoulEmberBalance();
