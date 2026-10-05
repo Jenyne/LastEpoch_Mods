@@ -109,9 +109,14 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             return level;
         }
 
+        static byte BaseLevel(LocalTreeData.SkillTreeData data)
+        {
+            return LevelOn() ? ChosenLevel() : (byte)RawLevel(data);
+        }
+
         static byte EffectiveLevel(LocalTreeData.SkillTreeData data)
         {
-            long level = LevelOn() ? ChosenLevel() : RawLevel(data);
+            long level = BaseLevel(data);
             if (MultiplierOn()) { level *= Multiplier(); }
             if (level < 0) { level = 0; }
             if (level > byte.MaxValue) { level = byte.MaxValue; }
@@ -335,12 +340,27 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                     if (data == null || data.ability.IsNullOrDestroyed()) { continue; }
                     if (data.ability.abilityName != __0.abilityName) { continue; }
 
-                    // During the outer native gear/stat refresh, keep LE on the real
-                    // XP-derived level so the raw +skills contribution is calculated
-                    // correctly. The one exception is the actual native respec call:
-                    // there we intentionally expose the multiplied effective level.
-                    if (nativeAdditionalRefresh && !effectiveRespec)
+                    // getAbilityLevel is used by LE for native skill-XP state,
+                    // max-level checks and manual point refunds. Those systems must
+                    // see the unmultiplied/base level. The multiplied value lives in
+                    // SkillTreeData.level to provide the expanded point cap.
+                    //
+                    // The only exception is the tightly-scoped native over-cap respec
+                    // transaction used when +skill gear is removed. Its prefix
+                    // deliberately exposes the effective cap so LE removes the correct
+                    // number of overflowed allocated nodes.
+                    if (effectiveRespec)
                     {
+                        __result = EffectiveLevel(data);
+                        return;
+                    }
+
+                    byte baseLevel = BaseLevel(data);
+
+                    if (nativeAdditionalRefresh)
+                    {
+                        // Gear-stat recalculation specifically needs the true XP level,
+                        // even when the separate fixed Skill Level option is enabled.
                         byte raw = (byte)RawLevel(data);
                         writing = true;
                         data.level = raw;
@@ -349,32 +369,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                         return;
                     }
 
-                    if (LevelOn() || MultiplierOn())
-                    {
-                        byte level = EffectiveLevel(data);
-                        writing = true;
-                        data.level = level;
-                        writing = false;
-                        __result = level;
-
-                        if (MultiplierOn() && !nativeAdditionalRefresh)
-                        {
-                            writing = true;
-                            ApplyPointBonus();
-                            writing = false;
-                        }
-                    }
-                    else
-                    {
-                        byte real = (byte)RawLevel(data);
-                        if (data.level != real)
-                        {
-                            writing = true;
-                            data.level = real;
-                            writing = false;
-                        }
-                        __result = real;
-                    }
+                    __result = baseLevel;
                     return;
                 }
             }
