@@ -110,13 +110,14 @@ namespace LastEpoch_Hud.Scripts.ModUI
             foreach (var a in catalog) if (a.affixId == id) { definition = a; break; }
             if (definition.IsNullOrDestroyed() || !FitsItem(definition, item.itemType, item.subType))
                 throw new InvalidOperationException("The corrupted affix cannot roll on this item");
-            var affix = new ItemAffix
-            {
-                affixId = (ushort)id, affixName = definition.affixName, affixTitle = definition.affixTitle,
-                affixType = definition.type, specialAffixType = definition.specialAffixType,
-                titleType = definition.titleType, sealedAffixType = Il2Cpp.SealedAffixType.FromCorruption,
-                affixTier = (byte)Math.Max(0, Math.Min(6, tier)), affixRoll = (byte)Math.Max(0, Math.Min(255, roll))
-            };
+            // Let the native constructor initialize item-type-dependent metadata.
+            var affix = new ItemAffix((ushort)id, (byte)Math.Max(0, Math.Min(6, tier)),
+                (byte)Math.Max(0, Math.Min(255, roll)), item.itemType, Il2Cpp.SealedAffixType.FromCorruption);
+            if (affix.affixId != id || !affix.IsSealedCorrupted ||
+                affix.specialAffixType != AffixList.SpecialAffixType.Corrupted)
+                throw new InvalidOperationException("Corruption constructor rejected affix " + id +
+                    " (saved=" + affix.affixId + ", sealed=" + affix.sealedAffixType +
+                    ", special=" + affix.specialAffixType + "); no item was dropped");
             if (flagStorage)
             {
                 item.affixes.Insert((item.hasSealedRegularAffix ? 1 : 0) + (item.hasSealedPrimordialAffix ? 1 : 0), affix);
@@ -126,15 +127,26 @@ namespace LastEpoch_Hud.Scripts.ModUI
             }
             else if (storage is PropertyInfo property) property.SetValue(item, affix);
             else ((FieldInfo)storage).SetValue(item, affix);
+            VerifyStoredCorruption(item, id, "before packing");
             item.RefreshIDAndValues();
-            // Verify using the game's own accessor, rather than trusting our list position.
-            var accessor = typeof(ItemDataUnpacked).GetMethod("TryGetSealedCorruptedAffixe",
-                new[] { typeof(ItemAffix).MakeByRefType() });
-            object[] arguments = { null };
-            bool recognized = accessor != null && (bool)accessor.Invoke(item, arguments);
-            var saved = arguments[0] as ItemAffix;
-            if (!recognized || saved.IsNullOrDestroyed() || saved.affixId != id || !saved.IsSealedCorrupted)
-                throw new InvalidOperationException("The game did not recognize the selected corrupted affix; no item was dropped");
+            VerifyStoredCorruption(item, id, "after packing");
+        }
+        static void VerifyStoredCorruption(ItemDataUnpacked item, int id, string stage)
+        {
+            // The generated game wrapper declares this parameter as out, not ref.
+            bool recognized = item.TryGetSealedCorruptedAffixe(out ItemAffix saved);
+            if (!recognized || saved.IsNullOrDestroyed() || saved.affixId != id || !saved.IsSealedCorrupted ||
+                saved.specialAffixType != AffixList.SpecialAffixType.Corrupted)
+            {
+                string entries = "";
+                foreach (var entry in item.affixes)
+                    entries += entry.IsNullOrDestroyed() ? " null" :
+                        " " + entry.affixId + ":" + entry.sealedAffixType + ":" + entry.specialAffixType;
+                throw new InvalidOperationException("Corruption verification failed " + stage +
+                    " (requested=" + id + ", accessor=" + recognized +
+                    ", flag=" + item.hasSealedAffixFromCorruption + ", rarity=" + item.rarity +
+                    ", sockets=" + item.sockets + ", affixes=" + entries + "); no item was dropped");
+            }
         }
     }
 }
