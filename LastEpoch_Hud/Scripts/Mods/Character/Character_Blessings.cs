@@ -149,6 +149,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
                     }
                     break;
                 }
+                tracker.charData.SaveItems(manager);
                 tracker.charData.SaveData();
                 Main.logger_instance?.Msg("Discover All Blessings: unlocked " + unlocked + " blessings.");
                 ChooseBlessings();
@@ -189,9 +190,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
                     if (candidate.IsNullOrDestroyed()) { missing++; continue; }
                     // An empty slot has no separate unlock flag. Equip a compatible,
                     // discovered blessing via the native path; preserve occupied slots.
-                    manager.SwapBlessing(slot, candidate);
-                    if (container.HasContent()) opened++;
-                    else throw new System.InvalidOperationException("Native swap did not populate timeline slot " + slot);
+                    EquipBlessing(manager, slot, candidate);
+                    opened++;
                 }
                 tracker.charData.SaveData();
                 Main.logger_instance?.Msg("Unlock Blessing Slots: opened " + opened + " slots." +
@@ -202,6 +202,27 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
             {
                 Main.logger_instance?.Error("Unlock Blessing Slots: " + ex.Message);
             }
+        }
+
+        static void EquipBlessing(ItemContainersManager manager, int slot, Il2CppLE.Data.BlessingData blessing)
+        {
+            var container = manager.blessings.Containers[slot];
+            if (container.HasContent())
+                manager.SwapBlessing(slot, blessing);
+            else
+            {
+                // SwapBlessing replaces an existing entry; it does not initialize
+                // an empty slot. Add through the typed container so native equip
+                // events, stats and save tracking run for the first blessing too.
+                var item = Il2CppLE.Data.BlessingDataFactory.Convert(blessing);
+                if (item.IsNullOrDestroyed() || item.itemType != 34 || item.subType != blessing.SubtypeId ||
+                    !container.TryAddItem(item, 1, Context.DEFAULT))
+                    throw new System.InvalidOperationException("Native container rejected blessing " +
+                        blessing.SubtypeId + " for slot " + slot);
+            }
+            if (!container.TryGetContentItemData(out ItemData equipped) || equipped.IsNullOrDestroyed() ||
+                equipped.subType != blessing.SubtypeId)
+                throw new System.InvalidOperationException("Blessing was not equipped in slot " + slot);
         }
 
         static void ApplyBlessing(InventoryPanelUI inventory, int blessingId)
@@ -234,7 +255,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
                     if (requested.IsNullOrDestroyed())
                         throw new System.InvalidOperationException("No discovered roll data exists for this blessing");
                     // Native swap updates containers, stats and serialization together.
-                    manager.SwapBlessing(slot, requested);
+                    EquipBlessing(manager, slot, requested);
                     tracker.charData.SaveData();
                     inventory.SelectTimelineForBlessingDisplayAndUpdateDropdown(slot);
                     Main.logger_instance?.Msg("Choose Blessings: selected blessing " + requested.SubtypeId +
