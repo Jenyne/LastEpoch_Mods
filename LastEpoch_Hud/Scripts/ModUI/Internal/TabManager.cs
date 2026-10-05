@@ -41,12 +41,9 @@ namespace LastEpoch_Hud.Scripts.ModUI
         {
             if (!tabById.TryGetValue(tabId, out var tab)) return;
 
-            if (activeTab == tab)
-            {
-                tab.SetActive(false);
-                activeTab = null;
-                return;
-            }
+            // Legacy HUD handlers also control these panels and may hide one without
+            // changing activeTab. A menu click must always show the requested tab.
+            // Never toggle it off based on the remembered selection.
 
             DeactivateAll();
             tab.SetActive(true);
