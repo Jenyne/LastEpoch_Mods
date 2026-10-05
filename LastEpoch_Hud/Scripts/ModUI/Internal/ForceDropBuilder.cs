@@ -44,12 +44,17 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static readonly Number[] implicits = new Number[3], uniqueRolls = new Number[8];
         static int itemPage, pickerPage;
         static string lastSearch = "", lastPickerSearch = "", lastItems = "";
+        static string lastNativeLocale;
+        static object lastModLocale;
+        static int lastCategoryCount;
+        static Dictionary<int, NativeItemNames.Category> nativeCategories = new Dictionary<int, NativeItemNames.Category>();
+        static Dictionary<int, NativeItemNames.ItemChoice> nativeItems = new Dictionary<int, NativeItemNames.ItemChoice>();
         static bool corrupted, failed, metadataLogged;
         static float nextCorruptionCheck;
         static string result = "";
         public static bool IsReady => !root.IsNullOrDestroyed();
 
-        sealed class Choice { public int id; public int group; public string name; public Action select; }
+        sealed class Choice { public int id; public int group; public string name; public string aliases; public Action select; }
         sealed class Number
         {
             public TMP_InputField input;
@@ -88,6 +93,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 }
             }
             if (!IsReady) return false;
+            RefreshNativeLocale();
             foreach (var n in numbers) n.Read();
             string signature = FD.item_type + ":" + FD.item_rarity + ":" + FD.items_dropdown.options.Count;
             if (lastSearch != search.text || lastItems != signature)
@@ -98,8 +104,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
             {
                 lastPickerSearch = pickerSearch.text; pickerPage = 0; RefreshPicker();
             }
-            Caption(typeButton, CategoryLabel(Selected(FD.type_dropdown, "Choose category")));
-            Caption(rarityButton, Selected(FD.rarity_dropdown, "Choose rarity"));
+            Caption(typeButton, SelectedCategoryName("Choose category"));
+            Caption(rarityButton, NativeItemNames.RarityName(Selected(FD.rarity_dropdown, "Choose rarity")));
             lp.group.SetActive(FD.item_rarity > 6 && FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential);
             ww.group.SetActive(FD.item_rarity > 6 && FD.item_legendary_type != UniqueList.LegendaryType.LegendaryPotential);
             uniquePage.SetActive(FD.item_rarity > 6);
@@ -244,9 +250,15 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
         static void RefreshItems()
         {
+            nativeItems = NativeItemNames.Items(FD.items_dropdown, FD.item_type, FD.item_rarity);
             itemIndexes.Clear();
             for (int i = 1; i < FD.items_dropdown.options.Count; i++)
-                if (FD.items_dropdown.options[i].text.IndexOf(search.text, StringComparison.OrdinalIgnoreCase) >= 0) itemIndexes.Add(i);
+            {
+                string raw = FD.items_dropdown.options[i].text;
+                nativeItems.TryGetValue(i, out var item);
+                if (NativeItemNames.Matches(search.text, item == null ? raw : item.name,
+                    item == null ? raw : item.aliases)) itemIndexes.Add(i);
+            }
             for (int slot = 0; slot < itemButtons.Count; slot++)
             {
                 int index = itemPage * 12 + slot;
@@ -254,7 +266,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 if (index < itemIndexes.Count)
                 {
                     bool selected = itemIndexes[index] == FD.items_dropdown.value;
-                    Caption(itemButtons[slot], (selected ? "Selected: " : "") + FD.items_dropdown.options[itemIndexes[index]].text);
+                    Caption(itemButtons[slot], (selected ? "Selected: " : "") + ItemName(itemIndexes[index]));
                     itemButtons[slot].GetComponent<Image>().color = selected ? new Color(.29f, .24f, .13f) : dark;
                     itemButtons[slot].GetComponent<Outline>().effectColor = selected ? gold : new Color(gold.r, gold.g, gold.b, .65f);
                 }
@@ -264,7 +276,11 @@ namespace LastEpoch_Hud.Scripts.ModUI
         {
             int i = itemPage * 12 + slot;
             if (i >= itemIndexes.Count) return;
-            FD.items_dropdown.SetValueWithoutNotify(itemIndexes[i]); FD.SelectItem(); ResetRage();
+            int option = itemIndexes[i];
+            FD.items_dropdown.SetValueWithoutNotify(option);
+            if (nativeItems.TryGetValue(option, out var item)) NativeItemNames.SelectItem(item);
+            else FD.SelectItem();
+            ResetRage();
             RefreshItems();
             foreach (var row in rows) { row.id = -1; row.name = "None"; Caption(row.select, "None"); }
             corruptionId = -1; corruptionName = "None";
@@ -287,9 +303,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
             foreach (var definition in UniqueVariantAdapter.Catalog(SelectedRageEntry()))
             {
                 int id = definition.affixId;
-                string name = definition.getAffixDisplayName();
-                if (string.IsNullOrEmpty(name)) name = definition.affixName;
-                choices.Add(new Choice { id = id, name = name, select = () =>
+                string name = NativeItemNames.AffixName(definition);
+                choices.Add(new Choice { id = id, name = name, aliases = NativeItemNames.AffixAliases(definition), select = () =>
                 { rageId = id; rageName = name; Caption(rageSelect, name); } });
             }
             choices.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
@@ -307,9 +322,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 bool used = false;
                 foreach (var row in rows) if (row.id == id) { used = true; break; }
                 if (used || choices.Exists(x => x.id == id)) continue;
-                string name = a.getAffixDisplayName();
-                if (string.IsNullOrEmpty(name)) name = a.affixName;
-                choices.Add(new Choice { id = id, name = name, select = () => { corruptionId = id; corruptionName = name; corrupted = true; Caption(corruptButton, "Corrupted: Yes"); Caption(corruptionSelect, name); } });
+                string name = NativeItemNames.AffixName(a);
+                choices.Add(new Choice { id = id, name = name, aliases = NativeItemNames.AffixAliases(a), select = () => { corruptionId = id; corruptionName = name; corrupted = true; Caption(corruptButton, "Corrupted: Yes"); Caption(corruptionSelect, name); } });
             }
             OpenPicker("Corrupted affix");
         }
@@ -334,9 +348,11 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 string label = catalog.options[i].text;
                 if (string.IsNullOrWhiteSpace(label)) continue;
                 if (catalog == FD.type_dropdown && label.IndexOf("blessing", StringComparison.OrdinalIgnoreCase) >= 0) continue;
-                string display = catalog == FD.type_dropdown ? CategoryLabel(label) : label;
+                nativeCategories.TryGetValue(i, out var category);
+                string display = catalog == FD.type_dropdown ?
+                    CategoryName(i, label) : NativeItemNames.RarityName(label);
                 int index = i;
-                choices.Add(new Choice { group = CategoryGroup(label), name = display, select = () => { catalog.SetValueWithoutNotify(index); changed(); ResetRage(); foreach (var r in rows) { r.id = -1; r.name = "None"; Caption(r.select, "None"); } corruptionId = -1; corruptionName = "None"; lastItems = ""; } });
+                choices.Add(new Choice { group = CategoryGroup(label), name = display, aliases = label + "\n" + CategoryLabel(label), select = () => { catalog.SetValueWithoutNotify(index); if (catalog == FD.type_dropdown && category != null) NativeItemNames.SelectCategory(category); else changed(); ResetRage(); foreach (var r in rows) { r.id = -1; r.name = "None"; Caption(r.select, "None"); } corruptionId = -1; corruptionName = "None"; lastItems = ""; } });
             }
             OpenPicker(catalog == FD.type_dropdown ? "Category" : "Rarity");
             categoryPicker = catalog == FD.type_dropdown; rarityPicker = !categoryPicker; RefreshPicker();
@@ -363,8 +379,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 if (other != slot && rows[other].id == id) return;
             if (corrupted && corruptionId == id) return;
             if (choices.Exists(x => x.id == id)) return;
-            string name = a.getAffixDisplayName(); if (string.IsNullOrEmpty(name)) name = a.affixName;
-            choices.Add(new Choice { id = id, name = name, select = () => { rows[slot].id = id; rows[slot].name = name; Caption(rows[slot].select, name); } });
+            string name = NativeItemNames.AffixName(a);
+            choices.Add(new Choice { id = id, name = name, aliases = NativeItemNames.AffixAliases(a), select = () => { rows[slot].id = id; rows[slot].name = name; Caption(rows[slot].select, name); } });
         }
 
         static AffixList.Affix FindAffix(int id)
@@ -439,8 +455,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
         }
         static void RefreshPreview()
         {
-            var s = new StringBuilder(Selected(FD.items_dropdown, L("Choose an item")));
-            s.Append("\n\n").Append(L(CategoryLabel(Selected(FD.type_dropdown, "")))).Append("\n").Append(L(Selected(FD.rarity_dropdown, "")));
+            var s = new StringBuilder(FD.items_dropdown.value > 0 ? ItemName(FD.items_dropdown.value) : L("Choose an item"));
+            s.Append("\n\n").Append(SelectedCategoryName("")).Append("\n").Append(NativeItemNames.RarityName(Selected(FD.rarity_dropdown, "")));
             if (FD.item_type < 100)
             {
                 if (FD.item_rarity < 7) s.Append("\n").Append(L("Forging potential")).Append(": ").Append(forging.random ? L("Random") : forging.value.ToString());
@@ -529,6 +545,49 @@ namespace LastEpoch_Hud.Scripts.ModUI
             LocaleRegistry.Apply(pickerTitle, title); pickerSearch.SetTextWithoutNotify(""); lastPickerSearch = ""; pickerPage = 0;
             picker.SetActive(true); picker.transform.SetAsLastSibling(); RefreshPicker();
         }
+        static void RefreshNativeLocale()
+        {
+            string locale = NativeItemNames.Locale;
+            object modLocale = Locales.current_dictionary;
+            int categoryCount = FD.type_dropdown.options.Count;
+            if (lastNativeLocale == locale && ReferenceEquals(lastModLocale, modLocale) &&
+                lastCategoryCount == categoryCount) return;
+            lastNativeLocale = locale; lastModLocale = modLocale; lastCategoryCount = categoryCount;
+            nativeCategories = NativeItemNames.Categories(FD.type_dropdown);
+            lastItems = ""; lastSearch = ""; itemPage = 0;
+            // Picker actions keep stable ids; reopen to rebuild its translated labels.
+            if (!picker.IsNullOrDestroyed()) picker.SetActive(false);
+            foreach (var row in rows)
+            {
+                row.name = row.id < 0 ? "None" : NativeItemNames.AffixName(row.id, row.name);
+                Caption(row.select, row.name);
+            }
+            corruptionName = corruptionId < 0 ? "None" : NativeItemNames.AffixName(corruptionId, corruptionName);
+            Caption(corruptionSelect, corruptionId < 0 ? "Corrupted affix: None" : corruptionName);
+            if (rageId >= 0)
+            {
+                rageName = NativeItemNames.AffixName(rageId, rageName);
+                Caption(rageSelect, rageName);
+            }
+        }
+        static string ItemName(int index)
+        {
+            if (nativeItems.TryGetValue(index, out var item)) return item.name;
+            return index > 0 && index < FD.items_dropdown.options.Count ?
+                FD.items_dropdown.options[index].text : L("Choose an item");
+        }
+        static string CategoryName(int index, string fallback)
+        {
+            if (!nativeCategories.TryGetValue(index, out var category)) return L(CategoryLabel(fallback));
+            string label = CategoryLabel(category.raw);
+            if (label == "Runes" || label == "Glyphs") return L(label);
+            return category.name;
+        }
+        static string SelectedCategoryName(string fallback)
+        {
+            return FD.type_dropdown.value > 0 ?
+                CategoryName(FD.type_dropdown.value, Selected(FD.type_dropdown, fallback)) : L(fallback);
+        }
         static string CategoryLabel(string name)
         {
             if (name.IndexOf("crafting modifier", StringComparison.OrdinalIgnoreCase) >= 0) return "Runes";
@@ -553,7 +612,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
         static void RefreshPicker()
         {
             filtered.Clear(); visiblePicks.Clear();
-            foreach (var choice in choices) if ((choice.name ?? "").IndexOf(pickerSearch.text, StringComparison.OrdinalIgnoreCase) >= 0) filtered.Add(choice);
+            foreach (var choice in choices) if (NativeItemNames.Matches(pickerSearch.text, choice.name, choice.aliases)) filtered.Add(choice);
             pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker);
             pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker);
             foreach (var header in pickerHeaders) header.gameObject.SetActive(categoryPicker);
