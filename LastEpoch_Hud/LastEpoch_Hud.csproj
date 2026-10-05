@@ -128,6 +128,10 @@
       <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\UnityEngine.AssetBundleModule.dll</HintPath>
       <Private>False</Private>
     </Reference>
+    <Reference Include="UnityEngine.AIModule">
+      <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\UnityEngine.AIModule.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
     <Reference Include="UnityEngine.CoreModule">
       <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\UnityEngine.CoreModule.dll</HintPath>
       <Private>False</Private>

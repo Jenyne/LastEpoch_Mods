@@ -2885,8 +2885,7 @@ namespace LastEpoch_Hud.Scripts
 
                         PrepareNumericInput(soul_amount_input, "1000");
 
-                        // Separate action row; this is moved to Scenes > Dungeons with
-                        // the Soul Embers value row once the Scenes references exist.
+                        // Keep the amount and action together in Character > Data.
                         GameObject buttonClone = Object.Instantiate(save_button.gameObject, soul_row.transform.parent);
                         buttonClone.name = "Btn_Character_Data_AddSoulEmbers";
                         soul_add_button = buttonClone.GetComponent<Button>();
@@ -3238,14 +3237,6 @@ namespace LastEpoch_Hud.Scripts
                             ModUI.MonolithTimelineEditor.Build(monolithTarget);
                         }
 
-                        if (!dungeonTarget.IsNullOrDestroyed())
-                        {
-                            MoveControl(soul_row, dungeonTarget);
-                            if (!soul_add_button.IsNullOrDestroyed())
-                            {
-                                MoveControl(soul_add_button.gameObject, dungeonTarget);
-                            }
-                        }
                     }
 
                     public static void SetupMonolithInputs()
@@ -4970,6 +4961,7 @@ namespace LastEpoch_Hud.Scripts
                             GameObject skills_content = Functions.GetViewportContent(content_obj, "Left", "Skills_Content");
                             if (!skills_content.IsNullOrDestroyed())
                             {
+                                Mods.Summon.Summon_Options.BindUI(skills_content);
                                 SkillTree.enable_remove_mana_cost_toggle = Functions.Get_ToggleInPanel(skills_content, "RemoveManaCost", "Toggle_RemoveManaCost");
                                 SkillTree.enable_remove_channel_cost_toggle = Functions.Get_ToggleInPanel(skills_content, "RemoveChannelCost", "Toggle_RemoveChannelCost");
                                 SkillTree.enable_mana_regen_when_channeling_toggle = Functions.Get_ToggleInPanel(skills_content, "ManaRegenWhenChanneling", "Toggle_ManaRegenWhenChanneling");
@@ -5184,6 +5176,7 @@ namespace LastEpoch_Hud.Scripts
                     {
                         if ((Save_Manager.instance.initialized) && (!Save_Manager.instance.data.IsNullOrDestroyed()))
                         {
+                            Mods.Summon.Summon_Options.RefreshUI();
                             SkillTree.enable_remove_mana_cost_toggle.isOn = Save_Manager.instance.data.Skills.Enable_RemoveManaCost;
                             SkillTree.enable_remove_channel_cost_toggle.isOn = Save_Manager.instance.data.Skills.Enable_RemoveChannelCost;
                             SkillTree.enable_mana_regen_when_channeling_toggle.isOn = Save_Manager.instance.data.Skills.Enable_NoManaRegenWhileChanneling;

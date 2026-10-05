@@ -578,8 +578,15 @@ namespace LastEpoch_Hud.Scripts
                 public Items Items;
                 public Factions Factions;
                 public Scenes Scenes;
+                public Summon Summon;
                 public Skills Skills;
                 public DamageMeter DamageMeter;
+            }
+            public struct Summon
+            {
+                public bool Enable_GodMode;
+                public bool Enable_Forever;
+                public bool Enable_DontCollide;
             }
             public struct DamageMeter
             {

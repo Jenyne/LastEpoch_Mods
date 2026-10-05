@@ -139,6 +139,10 @@ namespace LastEpoch_Hud.Scripts
             teleport_to_scene_obj.AddComponent<Mods.Teleport.Teleport_ToScene>();
             Mods_Objects.Add(teleport_to_scene_obj);
 
+            GameObject summon_options = new GameObject { name = "Mod_Summon_Options" };
+            summon_options.AddComponent<Mods.Summon.Summon_Options>();
+            Mods_Objects.Add(summon_options);
+
             foreach (GameObject mod in Mods_Objects) { Object.DontDestroyOnLoad(mod); }
             Mods_Objects.Clear();
 
