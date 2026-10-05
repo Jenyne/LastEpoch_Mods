@@ -79,7 +79,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                             {
                                 if (affix.IsSealed)
                                 {
-                                    if (Save_Manager.instance.data.Items.CraftingSlot.Enable_Seal_Tier) { affix.affixTier = (byte)Scripts.Save_Manager.instance.data.Items.CraftingSlot.Seal_Tier; }
+                                    // Preserve existing primordial sealed tiers; ordinary overrides must not downgrade them.
+                                    if (Save_Manager.instance.data.Items.CraftingSlot.Enable_Seal_Tier && affix.affixTier < 7) { affix.affixTier = (byte)UnityEngine.Mathf.Clamp(UnityEngine.Mathf.Round(Scripts.Save_Manager.instance.data.Items.CraftingSlot.Seal_Tier), 0f, 6f); }
                                     if (Save_Manager.instance.data.Items.CraftingSlot.Enable_Seal_Value) { affix.affixRoll = (byte)Scripts.Save_Manager.instance.data.Items.CraftingSlot.Seal_Value; }
                                 }
                                 else
@@ -101,7 +102,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                                         if ((result < affix_tier_enables.Count) && (result < affix_tier_values.Count) &&
                                             (result < affix_value_enables.Count) && (result < affix_value_values.Count))
                                         {
-                                            if (affix_tier_enables[result]) { affix.affixTier = (byte)affix_tier_values[result]; }
+                                            if (affix_tier_enables[result]) { affix.affixTier = (byte)UnityEngine.Mathf.Clamp(UnityEngine.Mathf.Round(affix_tier_values[result]), 0f, 6f); }
                                             if (affix_value_enables[result]) { affix.affixRoll = (byte)affix_value_values[result]; }
 
                                         }
