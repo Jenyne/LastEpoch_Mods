@@ -46,7 +46,9 @@ These confirmations cover the reported tests. They do not establish coverage of 
 - Enabled the Temporalis runtime component; updated its unique ID, dynamic base subtype assignment, tooltip images, and modifier/tooltip entries.
 - Updated Headhunter to allocate its base subtype dynamically and use the current tooltip image API.
 - Hid the unfinished Headhunter menu button when the loaded HUD bundle has no corresponding page.
-- Changed Headhunter icon loading to request an explicit Sprite, with an explicit Texture2D fallback. The bundle contains both types under the same PNG path.
+- Changed Headhunter icon loading to request an explicit Texture2D and create a runtime sprite, with an explicit imported-Sprite fallback. The bundle contains both types under the same PNG path.
+- Added a targeted late-frame refresh for bound Headhunter inventory and tooltip images, including comparison images, to handle later native image updates and clear masking override sprites. Reused inventory/tooltip views stop tracking when bound to another item.
+- Added icon-load dimensions to the log for runtime diagnosis.
 - Changed Headhunter inventory/tooltip icon matching to use the unique ID instead of the displayed name; added null checks and more useful asset-error logging.
 
 ### Numeric inputs and crafting
@@ -106,7 +108,7 @@ These confirmations cover the reported tests. They do not establish coverage of 
 ### Validation status and remaining issues
 
 - **Soul Embers:** implementation present; in-game addition still needs testing.
-- **Headhunter icon:** reported broken before this patch; the explicit asset-type loading fix needs an in-game retest.
+- **Headhunter icon:** reported broken before this patch; the first explicit asset-type patch did not resolve the white placeholders. The revised runtime-sprite and late-frame refresh patch needs an in-game retest.
 - **Live skill-tree refresh:** previously failed testing; do not describe it as confirmed fixed.
 - **Skill-effect cosmetics:** no new cosmetics-loading fix in this comparison; affected users still need investigation.
 - **Summon toggle restoration, AutoCast, timeline Copy to All, numeric bounds, Memory Amber, Quad Stash, auto-store, fog of war, and Damage Meter changes:** present in source, but not all have explicit successful gameplay confirmation.
