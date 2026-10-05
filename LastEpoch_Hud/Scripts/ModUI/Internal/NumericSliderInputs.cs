@@ -15,7 +15,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             public Slider slider;
             public Text label;
             public TMP_InputField input;
-            public Action<string> submit;
+            public UnityEngine.Events.UnityAction<string> submit;
         }
 
         static readonly Dictionary<int, Entry> entries = new Dictionary<int, Entry>();
@@ -114,7 +114,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             rect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, Mathf.Max(24f, source.rect.height));
 
             input.onValueChanged.RemoveAllListeners();
-            input.onEndEdit.RemoveAllListeners();
+            input.onEndEdit = new TMP_InputField.SubmitEvent();
             input.enabled = true;
             input.readOnly = false;
             input.interactable = slider.interactable;
@@ -137,7 +137,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             }
 
             var entry = new Entry { slider = slider, label = label, input = input };
-            entry.submit = text => Commit(entry, text);
+            entry.submit = (UnityEngine.Events.UnityAction<string>)(text => Commit(entry, entry.input.text));
             input.onEndEdit.AddListener(entry.submit);
             entries.Add(slider.GetInstanceID(), entry);
             label.gameObject.SetActive(false);
