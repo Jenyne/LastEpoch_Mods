@@ -344,8 +344,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
                 if (content.Count != 1 || !container.TryGetContentItemData(out previous) ||
                     previous.IsNullOrDestroyed())
                     throw new System.InvalidOperationException("Could not read current blessing in slot " + slot);
-                container.RemoveItem(content[0], Context.DEFAULT);
-                if (container.HasContent())
+                if (!container.TryRemoveItem(content[0], 1, Context.DEFAULT) || container.HasContent())
                     throw new System.InvalidOperationException("Could not remove current blessing in slot " + slot);
             }
             try
