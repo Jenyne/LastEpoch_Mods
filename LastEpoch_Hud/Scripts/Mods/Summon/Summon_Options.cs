@@ -13,14 +13,18 @@ namespace LastEpoch_Hud.Scripts.Mods.Summon
     {
         public Summon_Options(IntPtr ptr) : base(ptr) { }
         static Toggle godMode, forever, dontCollide;
+        // Read the control itself: callback arguments can report true when toggled off.
         static readonly Action<bool> GodModeChanged = value => {
-            if (!Save_Manager.instance.IsNullOrDestroyed()) { Save_Manager.instance.data.Summon.Enable_GodMode = value; }
+            if (!Save_Manager.instance.IsNullOrDestroyed() && !godMode.IsNullOrDestroyed())
+            { Save_Manager.instance.data.Summon.Enable_GodMode = godMode.isOn; }
         };
         static readonly Action<bool> ForeverChanged = value => {
-            if (!Save_Manager.instance.IsNullOrDestroyed()) { Save_Manager.instance.data.Summon.Enable_Forever = value; }
+            if (!Save_Manager.instance.IsNullOrDestroyed() && !forever.IsNullOrDestroyed())
+            { Save_Manager.instance.data.Summon.Enable_Forever = forever.isOn; }
         };
         static readonly Action<bool> DontCollideChanged = value => {
-            if (!Save_Manager.instance.IsNullOrDestroyed()) { Save_Manager.instance.data.Summon.Enable_DontCollide = value; }
+            if (!Save_Manager.instance.IsNullOrDestroyed() && !dontCollide.IsNullOrDestroyed())
+            { Save_Manager.instance.data.Summon.Enable_DontCollide = dontCollide.isOn; }
         };
 
         public static void BindUI(GameObject content)
