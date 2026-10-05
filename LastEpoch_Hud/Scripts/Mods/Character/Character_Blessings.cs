@@ -10,11 +10,48 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
         public static Character_Blessings instance { get; private set; }
         public Character_Blessings(System.IntPtr ptr) : base(ptr) { }
 
+        static int openingStage, openingFrame;
+        static float openingDeadline;
         void Awake() { instance = this; }
+
+        void Update()
+        {
+            if (openingStage == 0 || Time.frameCount <= openingFrame) return;
+            if (!Scenes.IsGameScene() || Time.unscaledTime > openingDeadline)
+            {
+                Main.logger_instance?.Msg("Choose Blessings: inventory did not become ready.");
+                openingStage = 0;
+                return;
+            }
+            try
+            {
+                if (openingStage == 1)
+                {
+                    var ui = UIBase.instance;
+                    if (ui.IsNullOrDestroyed()) return;
+                    // Open the managed parent panel, including normal initialization.
+                    ui.openInventory(true, false, false, 0, true);
+                    openingStage = 2;
+                    openingFrame = Time.frameCount;
+                    return;
+                }
+                var inventory = Refs_Manager.InventoryPanelUI;
+                if (inventory.IsNullOrDestroyed() || !inventory.gameObject.activeInHierarchy) return;
+                openingStage = 0;
+                inventory.OpenBlessingPanel(false, false);
+                if (inventory.blessingPanel.IsNullOrDestroyed() || !inventory.blessingPanel.activeInHierarchy)
+                    Main.logger_instance?.Msg("Choose Blessings: inventory opened but blessing tab is not visible.");
+            }
+            catch (System.Exception ex)
+            {
+                openingStage = 0;
+                Main.logger_instance?.Error("Could not open Choose Blessings: " + ex.Message);
+            }
+        }
 
         public static void ChooseBlessings()
         {
-            if (!Scenes.IsGameScene() || Refs_Manager.InventoryPanelUI.IsNullOrDestroyed() ||
+            if (!Scenes.IsGameScene() || instance.IsNullOrDestroyed() || UIBase.instance.IsNullOrDestroyed() ||
                 Refs_Manager.player_data_tracker.IsNullOrDestroyed() ||
                 ItemContainersManager.Instance.IsNullOrDestroyed())
             {
@@ -23,11 +60,12 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
             }
             try
             {
-                // Open normally: entering respec immediately submits through the
-                // controller navigator before it has a selected blessing.
-                // The native panel handles selecting, changing and saving blessings.
+                if (openingStage != 0) return;
                 Hud_Manager.Hud_Base.Resume_Click();
-                Refs_Manager.InventoryPanelUI.OpenBlessingPanel(true, false);
+                // Let the mod HUD finish closing before opening the game window.
+                openingStage = 1;
+                openingFrame = Time.frameCount;
+                openingDeadline = Time.unscaledTime + 3f;
             }
             catch (System.Exception ex)
             {
