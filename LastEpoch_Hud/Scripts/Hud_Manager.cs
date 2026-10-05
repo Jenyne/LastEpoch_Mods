@@ -405,7 +405,7 @@ namespace LastEpoch_Hud.Scripts
             if ((Content.OdlForceDrop.enable) && (Content.OdlForceDrop.initialized))
             {
                 if (!Content.OdlForceDrop.Type_Initialized) { Content.OdlForceDrop.InitForcedrop(); }
-                else
+                else if (!ModUI.ForceDropBuilder.Tick())
                 {
                     Content.OdlForceDrop.implicits.active = Content.OdlForceDrop.implicits_enable;
                     Content.OdlForceDrop.implicits_border.active = Content.OdlForceDrop.implicits_enable;
@@ -6353,7 +6353,7 @@ namespace LastEpoch_Hud.Scripts
                             UpdateRarity();
                             UpdateItems();
                             shard_initialized = false; //Reset shards
-                            if (enable && !center_content.IsNullOrDestroyed()) { InitializeShardsView(); }
+                            if (enable && !ModUI.ForceDropBuilder.IsReady && !center_content.IsNullOrDestroyed()) { InitializeShardsView(); }
                             //UpdateUI();
                         }
                     }
@@ -6558,7 +6558,7 @@ namespace LastEpoch_Hud.Scripts
                                 }
                             }
                             shard_initialized = false;
-                            if (enable && !center_content.IsNullOrDestroyed()) { InitializeShardsView(); }
+                            if (enable && !ModUI.ForceDropBuilder.IsReady && !center_content.IsNullOrDestroyed()) { InitializeShardsView(); }
                             UpdateUI();
                         }
                     }
@@ -7207,6 +7207,7 @@ public static void SetShardsView(int affix_number, bool seal)
                                 item.CorruptWithoutEffect();
                                 item.SetAsCorrupted();
                             }
+                            ModUI.ForceDropBuilder.ApplySelectedCorruption(item);
                             item.RefreshIDAndValues(); //Refresh item for implicits, unique mods, and the saved id
                             if ((item_type < 100) && (ra < 7))
                             {
