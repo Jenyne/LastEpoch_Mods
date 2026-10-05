@@ -49,7 +49,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
 
         static bool writing;
         static bool nativeAdditionalRefresh;
-        static bool effectiveRespec;
         static readonly Dictionary<string, byte> real_additional = new Dictionary<string, byte>();
         static SkillsPanelManager activeSkillsPanel;
         static SkillTree activeSkillTree;
@@ -164,7 +163,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             try
             {
                 nativeAdditionalRefresh = true;
-                effectiveRespec = false;
                 before_effective_cap.Clear();
                 writing = true;
 
@@ -260,7 +258,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             finally
             {
                 nativeAdditionalRefresh = false;
-                effectiveRespec = false;
                 before_effective_cap.Clear();
 
                 if (capChanged) { RefreshOpenTree(); }
@@ -425,7 +422,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
 
                 real_additional[key] = __state.rawAdditional;
 
-                effectiveRespec = true;
                 __0.level = BaseLevel(__0);
                 __0.additionalMaxPointsFromStats = EffectiveAdditional(__0, __state.rawAdditional);
             }
@@ -435,7 +431,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
             {
                 if (!__state.active || __0 == null)
                 {
-                    effectiveRespec = false;
                     return;
                 }
 
@@ -450,7 +445,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills
                     real_additional[__state.key] = __state.rawAdditional;
                 }
 
-                effectiveRespec = false;
             }
         }
 
