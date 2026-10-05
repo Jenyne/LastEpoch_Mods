@@ -13,12 +13,17 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
 
         static int openingStage, openingFrame;
         static bool choosing;
+        static InventoryBlessingSlotUI hoveredBlessing;
+        static int appliedFrame = -1;
         static float openingDeadline;
         void Awake() { instance = this; }
 
         void Update()
         {
-            if (choosing && (!Scenes.IsGameScene() || !IsBlessingOpen())) choosing = false;
+            if (choosing && (!Scenes.IsGameScene() || !IsBlessingOpen()))
+            { choosing = false; hoveredBlessing = null; }
+            if (choosing && Input.GetKeyDown(KeyCode.Mouse0) && !hoveredBlessing.IsNullOrDestroyed())
+                ApplyBlessing(Refs_Manager.InventoryPanelUI, hoveredBlessing.referenceBlessingID);
             if (openingStage == 0 || Time.frameCount <= openingFrame) return;
             if (!Scenes.IsGameScene() || Time.unscaledTime > openingDeadline)
             {
@@ -82,7 +87,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
             Il2CppLE.Data.BlessingData result = new Il2CppLE.Data.BlessingData
             {
                 SubtypeId = subtype,
-                ImplicitRollByte0 = (byte)UnityEngine.Random.Range(0f, 255f),
+                ImplicitRollByte0 = (byte)255,
                 ImplicitRollByte1 = (byte)UnityEngine.Random.Range(0f, 255f),
                 ImplicitRollByte2 = (byte)UnityEngine.Random.Range(0f, 255f)
             };
@@ -134,7 +139,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
                             tracker.charData.BlessingsDiscovered.Add(id);
                         bool hasRolls = false;
                         foreach (var saved in tracker.charData.OpenBlessings)
-                            if (saved.SubtypeId == id) { hasRolls = true; break; }
+                            if (saved.SubtypeId == id)
+                            {
+                                saved.ImplicitRollByte0 = saved.ImplicitRollByte1 = saved.ImplicitRollByte2 = 255;
+                                hasRolls = true; break;
+                            }
                         if (!hasRolls)
                             tracker.charData.OpenBlessings.Add(CreateBlessingDataForSave((ushort)id));
                     }
@@ -151,29 +160,22 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
             finally { adding_blessings = false; }
         }
 
-        [HarmonyPatch(typeof(InventoryPanelUI), "SetSelectBlessingIndex")]
-        public class SelectBlessing
+        static void ApplyBlessing(InventoryPanelUI inventory, int blessingId)
         {
-            [HarmonyPrefix]
-            static bool Prefix(InventoryPanelUI __instance, int __0, ItemDataUnpacked __1)
-            {
-                // Only the screen opened by the mod gets direct selection behavior.
-                if (!choosing || !__instance.gameObject.activeInHierarchy ||
-                    __instance.blessingPanel.IsNullOrDestroyed() || !__instance.blessingPanel.activeInHierarchy)
-                    return true;
+            if (inventory.IsNullOrDestroyed() || appliedFrame == Time.frameCount) return;
+            appliedFrame = Time.frameCount;
                 try
                 {
                     var manager = ItemContainersManager.Instance;
                     var tracker = Refs_Manager.player_data_tracker;
-                    if (__1.IsNullOrDestroyed() || __1.itemType != 34 ||
-                        manager.IsNullOrDestroyed() || tracker.IsNullOrDestroyed() ||
+                    if (blessingId < 0 || manager.IsNullOrDestroyed() || tracker.IsNullOrDestroyed() ||
                         manager.blessingStorage.IsNullOrDestroyed() ||
-                        !manager.blessingStorage.BlessingIsUnlocked(__1.subType))
+                        !manager.blessingStorage.BlessingIsUnlocked(blessingId))
                     {
                         Main.logger_instance?.Msg("Discover this blessing before selecting it.");
-                        return false;
+                        return;
                     }
-                    var target = manager.blessings.GetContainerForBlessing(__1.subType);
+                    var target = manager.blessings.GetContainerForBlessing(blessingId);
                     if (target.IsNullOrDestroyed())
                         throw new System.InvalidOperationException("No timeline container accepts this blessing");
                     int slot = -1;
@@ -184,13 +186,13 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
                         throw new System.InvalidOperationException("Blessing timeline slot was not found");
                     Il2CppLE.Data.BlessingData requested = null;
                     foreach (var saved in tracker.charData.OpenBlessings)
-                        if (saved.SubtypeId == __1.subType) { requested = saved; break; }
+                        if (saved.SubtypeId == blessingId) { requested = saved; break; }
                     if (requested.IsNullOrDestroyed())
                         throw new System.InvalidOperationException("No discovered roll data exists for this blessing");
                     // Native swap updates containers, stats and serialization together.
                     manager.SwapBlessing(slot, requested);
                     tracker.charData.SaveData();
-                    __instance.SelectTimelineForBlessingDisplayAndUpdateDropdown(slot);
+                    inventory.SelectTimelineForBlessingDisplayAndUpdateDropdown(slot);
                     Main.logger_instance?.Msg("Choose Blessings: selected blessing " + requested.SubtypeId +
                         " for timeline slot " + slot + ".");
                 }
@@ -198,6 +200,46 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
                 {
                     Main.logger_instance?.Error("Choose Blessings selection: " + ex.Message);
                 }
+
+        }
+
+        [HarmonyPatch(typeof(InventoryBlessingSlotUI), "UnityEngine_EventSystems_IPointerEnterHandler_OnPointerEnter")]
+        public class HoverBlessing
+        {
+            [HarmonyPostfix]
+            static void Postfix(InventoryBlessingSlotUI __instance)
+            {
+                hoveredBlessing = null;
+                if (!choosing || Refs_Manager.InventoryPanelUI.IsNullOrDestroyed()) return;
+                // Accept only actual discovered-grid slots, never the equipped row.
+                foreach (var slot in Refs_Manager.InventoryPanelUI.discoveredBlessingsSlots)
+                    if (!slot.IsNullOrDestroyed() && slot.Pointer == __instance.Pointer)
+                    { hoveredBlessing = __instance; break; }
+            }
+        }
+        [HarmonyPatch(typeof(InventoryBlessingSlotUI), "UnityEngine_EventSystems_IPointerExitHandler_OnPointerExit")]
+        public class LeaveBlessing
+        {
+            [HarmonyPostfix]
+            static void Postfix(InventoryBlessingSlotUI __instance)
+            {
+                if (!hoveredBlessing.IsNullOrDestroyed() && hoveredBlessing.Pointer == __instance.Pointer)
+                    hoveredBlessing = null;
+            }
+        }
+
+        [HarmonyPatch(typeof(InventoryPanelUI), "SetSelectBlessingIndex")]
+        public class SelectBlessing
+        {
+            [HarmonyPrefix]
+            static bool Prefix(InventoryPanelUI __instance, int __0, ItemDataUnpacked __1)
+            {
+                // Only the screen opened by the mod gets direct selection behavior.
+                if (!choosing || !__instance.gameObject.activeInHierarchy ||
+                    __instance.blessingPanel.IsNullOrDestroyed() || !__instance.blessingPanel.activeInHierarchy)
+                    return true;
+                if (!__1.IsNullOrDestroyed() && __1.itemType == 34)
+                    ApplyBlessing(__instance, __1.subType);
                 return false;
             }
         }
