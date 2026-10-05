@@ -1,123 +1,122 @@
 # LastEpoch HUD v4.4.18 — Jenyne custom build
 
-This changelog describes the source differences between
-[Syncingoutt v4.4.17](https://github.com/Syncingoutt/LastEpoch_Mods/releases/tag/v4.4.17)
-(tag commit `b2399c7c521c02a20b83531a640e2f56e3708212`) and
-[Jenyne v4.4.18](https://github.com/Jenyne/LastEpoch_Mods/tree/v4.4.18).
-It includes earlier custom changes retained in this branch. Release packaging and publication are tracked separately from these source changes.
+Changes from [Syncingoutt v4.4.17](https://github.com/Syncingoutt/LastEpoch_Mods/releases/tag/v4.4.17) to [Jenyne v4.4.18](https://github.com/Jenyne/LastEpoch_Mods/tree/v4.4.18), including retained custom changes. Release publication is tracked separately.
 
-### Confirmed in game
+## For players
 
-The maintainer has confirmed the following behaviors as of October 5, 2026:
+### Confirmed fixes
 
-- **Rune of Ascendance names:** converted items now display the resulting unique's name instead of retaining the original base item's cached name.
-- **Corrupted Force Drop:** the previously failing test item now drops successfully after correcting corrupted-affix serialization order.
-- **Menu yellow screen:** the menu-tab fix resolves the reported yellow-screen/double-click problem.
-- **Temporalis:** reported working.
-- **Headhunter icon:** the final runtime-sprite and targeted image-refresh patch was confirmed working in game.
-- **Safe Teleport disabled:** the change removing the Ctrl+Q shortcut conflict was reported working.
+- **Rune of Ascendance:** items now display the correct unique name after conversion.
+- **Corrupted Force Drop:** fixed the failure that prevented the tested corrupted item from dropping.
+- **Menu yellow screen:** fixed the reported issue requiring a second click to open a tab.
+- **Temporalis:** restored and confirmed working.
+- **Headhunter:** fixed the white/missing inventory and tooltip icon.
+- **Ctrl+Q conflict:** disabled Safe Teleport so it no longer conflicts with skill bindings.
 
-These confirmations cover the reported tests. They do not establish coverage of every item, affix combination, language, or gameplay situation.
+### New and improved controls
 
-### Force Drop
+- **Force Drop redesign:** compact text-only editor, searchable items and affixes, clearer item/rarity selection, and highlighted selected items.
+- **Item categories:** Weapons, Armour, Accessories, Idols, and Other are grouped together without the old extra category page.
+- **Corruption selection:** choose a corrupted affix alongside the ordinary affix controls.
+- **Affix filtering:** hide already-selected affixes and reject incompatible or duplicate selections before dropping.
+- **Drop controls:** compact implicit, affix, unique-roll, Legendary Potential, Weaver's Will, quantity, and random-roll controls.
+- **Clearer names:** Runes, Glyphs, and Lens labels; Blessings removed from Force Drop.
+- **Numeric inputs:** type a value beside a slider; the field and slider stay synchronized. Values use whole numbers.
+- **Crafting percentages:** restored % labels and 0–100% editing.
+- **Affix tiers:** ordinary unsealed editors stop at T7; existing sealed primordial tier ranges are preserved.
+- **Soul Embers:** amount field and Add button restored to Character > Data. Addition still needs an in-game test.
+- **Summons:** restored God Mode, Forever, and Don't Collide controls.
+- **Memory Amber:** corrected multiplier control, with values from 1 to 10,000.
+- **Scenes / Monoliths:** revised layout, timeline editor, and Copy to All for timeline values.
+- **AutoCast:** restored its missing runtime component; instructions now say to hold the modifier and press the skill's normal keybind.
+- **Languages:** corrected English labels, English fallback for unavailable translations, and Korean locale content.
 
-- Replaced the legacy editor with a text-only, three-column item builder: item selection, customization, and preview/drop controls.
-- Added searchable, paginated item and affix lists.
-- Grouped item categories into Weapons, Armour, Accessories, Idols, and Other. Category choices appear together without the old extra category page.
-- Added a gold tint, stronger border, and a "Selected" label to the currently selected item.
-- Compacted the affix, implicit, unique-roll, Legendary Potential, and Weaver's Will controls.
-- Renamed Crafting Modifier to Runes and Crafting Support to Glyphs; clarified Lens labels.
-- Removed Blessings from the selection list.
-- Added a separate corrupted-affix selector alongside the ordinary affix rows, populated from game data.
-- Excluded corrupted affixes from ordinary prefix/suffix selection and excluded affixes already selected in another row.
-- Filtered affixes using native compatibility checks against the exact base type, subtype, and original class requirement, including when class restrictions are disabled.
-- Added validation for item/unique compatibility, affix slot type, duplicate affixes, and corrupted-affix support before dropping.
-- Constructed corrupted affixes through the game's ItemAffix constructor and appended corruption in the order expected by native packing.
-- Verified the requested corrupted affix before and after packing. Failed verification stops the drop and records the affix state in the log.
-- Restored native metadata when constructing ordinary sealed affixes.
-- Added quantity and roll controls, including random roll generation for repeated drops.
+### Map, stash, and other changes
 
-### Item names and custom items
+These changes are implemented; gameplay confirmation remains pending where noted below.
 
-- Refreshed the native full-name cache after Rune of Ascendance conversion.
-- Preserved native initialization when overriding implicit and unique-mod rolls.
-- Enabled the Temporalis runtime component; updated its unique ID, dynamic base subtype assignment, tooltip images, and modifier/tooltip entries.
-- Updated Headhunter to allocate its base subtype dynamically and use the current tooltip image API.
-- Hid the unfinished Headhunter menu button when the loaded HUD bundle has no corresponding page.
-- Changed Headhunter icon loading to request an explicit Texture2D and create a runtime sprite, with an explicit imported-Sprite fallback. The bundle contains both types under the same PNG path.
-- Added a targeted late-frame refresh for bound Headhunter inventory and tooltip images, including comparison images, to handle later native image updates and clear masking override sprites. Reused inventory/tooltip views stop tracking when bound to another item.
-- Added icon-load dimensions to the log for runtime diagnosis.
-- Changed Headhunter inventory/tooltip icon matching to use the unique ID instead of the displayed name; added null checks and more useful asset-error logging.
+- **Fog of war:** revised the reveal-map option so reveal coverage follows the map's size and is reapplied as the map loads and updates.
+- **Auto-store:** batches rapid material pickups and improves key/woven-echo storage and timer handling.
+- **Quad Stash:** improved grid and occupied-slot handling, preserves quad status when renaming, and requires an empty tab before changing its size.
+- **Damage Meter:** includes Mjolner-triggered abilities.
+- **Skill points:** revised multiplier and gear-bonus handling. Automatic refresh of an already-open skill tree remains unconfirmed.
+- **Settings:** restored ModUI settings initialization; the zone-level XP cap defaults off when settings are regenerated or upgraded.
 
-### Numeric inputs and crafting
+### Things to know
 
-- Added compact editable input boxes synchronized with HUD sliders.
-- Styled the fields and used the native input-submit event.
-- Enforced whole-number slider editing and synchronized fields using the displayed units.
-- Restored percentage signs and percentage input conversion, including 0–100% editing for crafting-affix rolls backed by 0–255 values.
-- Capped ordinary unsealed affix tier editors at T7.
-- Preserved existing sealed primordial tier ranges rather than offering unsealed T8 affixes.
+- **Summon Forever:** turning it off does not restore the lifetime timer on summons already made permanent.
+- **Memory Amber 10,000:** this is a multiplier setting, not a button that adds 10,000 Amber.
+- **Primordial tiers:** preserving existing sealed tiers does not mean every legal T8 item can be created.
+- **Soul Embers:** still awaiting a successful addition test.
+- **Skill-tree refresh:** previously failed testing; it is not listed as a confirmed fix.
+- **Skill-effect cosmetics:** this build contains no new fix for the reported loading issue.
+- Fog of war, summon toggle restoration, AutoCast, Copy to All, numeric bounds, Memory Amber, Quad Stash, auto-store, and Damage Meter still need broader gameplay verification.
+- Successful corrupted-drop testing does not cover every item, sealed-plus-corrupted combination, or save/reload scenario.
 
-### Character and summons
+## For developers
 
-- Restored Soul Embers to Character > Data, with an amount field and an adjacent Add Soul Embers button.
-- Routed Soul Ember balance reads and additions through the dungeon manager instead of directly assigning the old player-data field.
-- Restored summon God Mode, Forever, and Don't Collide controls and saved settings.
-- Read the actual summon toggle states when settings change.
-- Added restoration of tracked damageability and navigation-agent radii when God Mode or Don't Collide is disabled.
-- Forever removes the lifetime component from affected summons. Disabling it does not recreate that component on existing summons.
-- Revised Memory Amber pickup and multiplier hooks to act on the current player's pickup set, with overflow protection.
-- Corrected the Memory Amber multiplier toggle binding and exposed a whole-number multiplier range of 1–10,000. This is a multiplier, not an Add 10,000 Amber action.
+### Force Drop and item handling
 
-### Scenes, skills, and shortcuts
+- Added a runtime three-column builder with searchable/paginated catalogs and integration with the existing drop backend.
+- Built the corrupted-affix catalog from game data and separated special corruption classification from ordinary prefix/suffix selection.
+- Used native compatibility checks for exact base type, subtype, and original class requirement, including when class restrictions are disabled.
+- Added item/unique compatibility, slot-type, duplicate-affix, and corruption-support validation.
+- Constructed corruption through the native ItemAffix constructor and appended it in the serialization order expected by the current game.
+- Verified the requested corruption before and after packing; failed verification aborts the drop and logs the packed state.
+- Restored native metadata for ordinary sealed affixes.
+- Refreshed the cached full name after ChangeToUniqueOfSameItemType.
+- Preserved native initialization for implicit and unique-roll overrides.
+- Generated random rolls independently for repeated drops.
 
-- Changed menu clicks to explicitly open the requested tab instead of toggling its visibility.
-- Revised the Scenes panel layout and added a three-column Monolith timeline editor.
-- Moved timeline selection, stability, corruption, and gaze editing into the dedicated Scenes controls.
-- Added Copy to All for the selected timeline values.
-- Instantiated the missing AutoCast runtime component.
-- Corrected AutoCast instructions to hold the modifier and press the skill's normal keybind.
-- Added guards for Safe Teleport map-wrapper errors, then disabled Safe Teleport to remove the Ctrl+Q skill-binding conflict.
-- Revised skill-point multiplier arithmetic to keep native skill levels separate from multiplied point capacity.
-- Revised gear-derived skill-point recalculation and native overinvestment/respec handling.
-- Added an attempt to refresh the active skill tree when effective point capacity changes.
-- Removed the unused effectiveRespec field and dead assignments responsible for warning CS0414.
+### Custom item rendering
 
-### Stash, pickup, and map handling
+- Enabled the Temporalis runtime component; revised its unique ID, dynamic subtype assignment, modifiers, tooltip entries, and current tooltip image hooks.
+- Allocated Headhunter subtypes dynamically and hid its menu button when the loaded bundle lacks the corresponding page.
+- Loaded Headhunter's Texture2D explicitly and created a runtime sprite, with an explicitly typed imported-Sprite fallback. The PNG path contains both asset types.
+- Matched Headhunter by unique ID rather than localized display name.
+- Refreshed only bound Headhunter inventory/tooltip images in LateUpdate, including comparison images; cleared masking override sprites and stopped tracking reused views.
+- Added null guards, asset-error detail, and icon dimensions to diagnostics.
 
-- Debounced bursts of auto-store pickup requests into a single store pass.
-- Combined key and woven-echo inventory scans and revised periodic auto-store scheduling.
-- Kept the auto-store worker available to service queued requests when the periodic timer is disabled.
-- Revised Quad Stash occupancy tracking, tab/grid handling, and configuration binding.
-- Reconstructed occupancy from existing contents, rejected invalid placement coordinates, required empty tabs before resizing, and preserved quad status during renames.
-- Reworked fog-of-war reveal distances using map dimensions and applied reveal handling during map initialization and updates.
-- Included Mjolner-triggered abilities in Damage Meter ability tracking.
+### UI, locales, and settings
 
-### Locales, settings, and build
+- Added synchronized numeric inputs using native submit events and display-unit conversion.
+- Applied whole-number editing, 0–100% display conversion for 0–255 roll storage, ordinary T7 caps, and preserved sealed-tier ranges.
+- Changed tab actions to explicitly activate the requested content rather than toggle visibility.
+- Added the three-column Monolith timeline editor and timeline-copy action.
+- Routed Soul Ember balance/addition through DungeonRunManager.
+- Added persistent summon settings, actual-toggle-state callbacks, and restoration of tracked damageability/NavMeshAgent radii.
+- Forever removes UnsummonAfterDelay from affected summons.
+- Instantiated Skills_AutoCast and corrected its UI instructions.
+- Added Safe Teleport map-wrapper guards before disabling the conflicting shortcut.
+- Added canonical English label aliases, per-key English fallback, invalid-locale handling, and fresh dictionary loading.
+- Added Korean locale output, ModUI SaveManager bootstrap/HUD binding, and an off default for the zone-level cap during schema rewrites.
 
-- Added corrected English label aliases, including Strength, Mastery, Forging Potential, Legendary Potential, Wolves, and Affixes.
-- Added English fallback for missing, invalid, or incomplete selected locales; prevented a failed load from retaining the previous language dictionary.
-- Added Korean locale content and copied it into build output.
-- Added ModUI SaveManager initialization and HUD binding.
-- Defaulted the zone-level XP cap off when settings are regenerated or upgraded.
-- Expanded optional operation profiling and deferred profiler attachment until ModUI settings initialization.
-- Updated the version to 4.4.18, added the AI module assembly reference, and added detection of the local D: Steam game path.
+### Gameplay state and performance
 
-### Validation status and remaining issues
+- Kept native skill levels separate from multiplied point capacity; revised gear-derived additional-point recalculation and native respec/overinvestment handling.
+- Attempted to refresh the active skill tree when effective capacity changes; successful live refresh remains unverified.
+- Changed Memory Amber hooks to operate on the current player's pickup set with overflow protection.
+- Debounced auto-store pickup requests by 0.20 seconds, combined key/echo scans, and used realtime timer scheduling.
+- Kept the auto-store worker active to service queued requests even with the periodic timer disabled.
+- Revised Quad Stash occupancy caching and reconstructed occupancy from existing contents; rejected invalid placement coordinates and prevented resizing populated tabs.
+- Sized fog-of-war reveal distances from map data rather than int.MaxValue, and reapplied reveal handling during initialization and map updates.
+- Exposed Mjolner-triggered abilities to Damage Meter.
+- Added optional operation timing/allocation profiling and deferred attachment until settings initialization.
 
-- **Soul Embers:** implementation present; in-game addition still needs testing.
-- **Headhunter icon:** confirmed working after the runtime-sprite and targeted late-frame refresh patch.
-- **Live skill-tree refresh:** previously failed testing; do not describe it as confirmed fixed.
-- **Skill-effect cosmetics:** no new cosmetics-loading fix in this comparison; affected users still need investigation.
-- **Summon toggle restoration, AutoCast, timeline Copy to All, numeric bounds, Memory Amber, Quad Stash, auto-store, fog of war, and Damage Meter changes:** present in source, but not all have explicit successful gameplay confirmation.
-- **Force Drop:** corruption's reported failure is fixed; broad item/affix coverage, sealed-plus-corrupted combinations, and save/reload behavior still need testing.
-- **Primordial creation:** preserving existing sealed tier ranges does not establish support for creating every legal T8 combination.
+### Build and maintenance
 
-### Already included in upstream 4.4.17
+- Updated the version to 4.4.18.
+- Added the UnityEngine.AIModule reference.
+- Added conditional local D: Steam game-path detection; an explicit LastEpochPath takes precedence.
+- Removed the unused effectiveRespec field and dead assignments causing CS0414.
+- C# syntax and relevant game-wrapper metadata were checked during implementation. The development environment did not run a fresh .NET build or the full repository test suite; gameplay confirmations came from maintainer testing.
+- Comparison baseline: upstream tag commit `b2399c7c521c02a20b83531a640e2f56e3708212`.
 
-The following are inherited upstream changes, not new 4.4.18 fixes:
+## Inherited from upstream v4.4.17
+
+These are already in the baseline and are not new custom-build fixes:
 
 - Drop/Force Drop forging-potential fixes and Drop Legendary Potential fixes.
 - Removal of minimap loot icons.
 - French translation, Chinese translation completion, and build stamps.
-- Clean-checkout build work, the existing test project, and related repository housekeeping.
+- Clean-checkout build changes, existing tests, and repository housekeeping.
