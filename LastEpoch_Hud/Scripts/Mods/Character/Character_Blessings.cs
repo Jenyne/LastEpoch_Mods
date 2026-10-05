@@ -82,16 +82,21 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
             }
         }
 
-        public static Il2CppLE.Data.BlessingData CreateBlessingDataForSave(ushort subtype)
+        public static Il2CppLE.Data.BlessingData CreateBlessingDataForSave(ushort subtype, bool maxRolls = false)
         {
-            Il2CppLE.Data.BlessingData result = new Il2CppLE.Data.BlessingData
+            var result = new Il2CppLE.Data.BlessingData
             {
                 SubtypeId = subtype,
-                ImplicitRollByte0 = (byte)255,
-                ImplicitRollByte1 = (byte)UnityEngine.Random.Range(0f, 255f),
-                ImplicitRollByte2 = (byte)UnityEngine.Random.Range(0f, 255f)
+                ImplicitRollByte0 = 255,
+                ImplicitRollByte1 = 255,
+                ImplicitRollByte2 = 255
             };
-
+            if (!maxRolls)
+            {
+                result.ImplicitRollByte0 = (byte)UnityEngine.Random.Range(0, 256);
+                result.ImplicitRollByte1 = (byte)UnityEngine.Random.Range(0, 256);
+                result.ImplicitRollByte2 = (byte)UnityEngine.Random.Range(0, 256);
+            }
             return result;
         }
 
@@ -141,7 +146,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
                         foreach (var saved in tracker.charData.OpenBlessings)
                             if (saved.SubtypeId == id)
                             {
-                                saved.ImplicitRollByte0 = saved.ImplicitRollByte1 = saved.ImplicitRollByte2 = 255;
+                                // Discovery preserves rolls on blessings already owned.
                                 hasRolls = true; break;
                             }
                         if (!hasRolls)
@@ -157,6 +162,51 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
             catch (System.Exception ex)
             {
                 Main.logger_instance?.Error("Discover All Blessings: " + ex.Message);
+            }
+            finally { adding_blessings = false; }
+        }
+
+        public static void MaxOutBlessings()
+        {
+            if (adding_blessings) return;
+            var manager = ItemContainersManager.Instance;
+            var tracker = Refs_Manager.player_data_tracker;
+            if (!Scenes.IsGameScene() || manager.IsNullOrDestroyed() ||
+                manager.blessings.IsNullOrDestroyed() || manager.blessingStorage.IsNullOrDestroyed() ||
+                tracker.IsNullOrDestroyed() || tracker.charData.IsNullOrDestroyed())
+            {
+                Main.logger_instance?.Msg("Enter the game before maximizing blessings.");
+                return;
+            }
+            adding_blessings = true;
+            try
+            {
+                int equippedCount = 0, savedCount = 0;
+                // Use the native swap so equipped stats and save tracking update.
+                // Do this first: swapping can return the old rolls to OpenBlessings.
+                for (int slot = 0; slot < manager.blessings.Containers.Count; slot++)
+                {
+                    var container = manager.blessings.Containers[slot];
+                    if (container.IsNullOrDestroyed() || !container.HasContent() ||
+                        !container.TryGetContentItemData(out ItemData equipped) ||
+                        equipped.IsNullOrDestroyed() || equipped.itemType != 34) continue;
+                    EquipBlessing(manager, slot, CreateBlessingDataForSave((ushort)equipped.subType, true));
+                    equippedCount++;
+                }
+                foreach (var saved in tracker.charData.OpenBlessings)
+                {
+                    saved.ImplicitRollByte0 = saved.ImplicitRollByte1 = saved.ImplicitRollByte2 = 255;
+                    savedCount++;
+                }
+                tracker.charData.SaveItems(manager);
+                tracker.charData.SaveData();
+                Main.logger_instance?.Msg("Max Out Blessings: maximized " + savedCount +
+                    " discovered rolls and " + equippedCount + " equipped blessings.");
+                ChooseBlessings();
+            }
+            catch (System.Exception ex)
+            {
+                Main.logger_instance?.Error("Max Out Blessings: " + ex.Message);
             }
             finally { adding_blessings = false; }
         }

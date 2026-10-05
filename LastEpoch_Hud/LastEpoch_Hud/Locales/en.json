@@ -252,5 +252,6 @@
   "Reload Values": "Reload Values",
   "Edits apply immediately.\n\nCopy to All applies the visible values to existing timelines of the same difficulty.": "Edits apply immediately.\n\nCopy to All applies the visible values to existing timelines of the same difficulty.",
   "Only unlocked timeline values are shown.": "Only unlocked timeline values are shown.",
-  "This timeline has no saved run yet.": "This timeline has no saved run yet."
+  "This timeline has no saved run yet.": "This timeline has no saved run yet.",
+  "Max Out Blessings": "Max Out Blessings"
 }

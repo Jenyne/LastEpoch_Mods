@@ -2292,6 +2292,8 @@ public partial class Hud_Manager : MonoBehaviour
                 {
                     Events.Set_Toggle_Event(Cheats.lowlife_toggle, Cheats.Lowlife_Toggle_Action);
                 }
+                if (!Cheats.max_blessings_button.IsNullOrDestroyed())
+                    Events.Set_Button_Event(Cheats.max_blessings_button, Cheats.MaxOutBlessings_OnClick_Action);
                 if (!Cheats.unlock_blessing_slots_button.IsNullOrDestroyed())
                     Events.Set_Button_Event(Cheats.unlock_blessing_slots_button, Cheats.UnlockBlessingSlots_OnClick_Action);
                 if (!Cheats.choose_blessings_button.IsNullOrDestroyed())
@@ -3703,6 +3705,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
+                public static Button max_blessings_button = null;
+                public static readonly System.Action MaxOutBlessings_OnClick_Action =
+                    new System.Action(Mods.Character.Character_Blessings.MaxOutBlessings);
+
                 public static Button unlock_blessing_slots_button = null;
                 public static readonly System.Action UnlockBlessingSlots_OnClick_Action =
                     new System.Action(Mods.Character.Character_Blessings.UnlockBlessingSlots);
@@ -3734,11 +3740,29 @@ public partial class Hud_Manager : MonoBehaviour
                     foreach (var label in button.GetComponentsInChildren<Text>(true)) label.text = "Unlock Blessing Slots";
                     foreach (var label in button.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)) label.text = "Unlock Blessing Slots";
                     original.transform.SetParent(row.transform, false);
-                    rect.anchorMin = Vector2.zero; rect.anchorMax = new Vector2(.49f, 1f);
+                    rect.anchorMin = Vector2.zero; rect.anchorMax = new Vector2(.32f, 1f);
                     rect.offsetMin = rect.offsetMax = Vector2.zero;
                     var buttonRect = button.GetComponent<RectTransform>();
-                    buttonRect.anchorMin = new Vector2(.51f, 0f); buttonRect.anchorMax = Vector2.one;
+                    buttonRect.anchorMin = new Vector2(.68f, 0f); buttonRect.anchorMax = Vector2.one;
                     buttonRect.offsetMin = buttonRect.offsetMax = Vector2.zero;
+                    var maxButtonObject = UnityEngine.Object.Instantiate(original, row.transform, false);
+                    maxButtonObject.name = "Btn_Character_Cheats_MaxOutBlessings";
+                    max_blessings_button = maxButtonObject.GetComponent<Button>();
+                    max_blessings_button.onClick = new Button.ButtonClickedEvent();
+                    foreach (var label in maxButtonObject.GetComponentsInChildren<Text>(true))
+                        ModUI.Prefab.ApplyLabel(label, "Max Out Blessings");
+                    foreach (var label in maxButtonObject.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
+                        label.text = Locales.TryGetTranslation("Max Out Blessings", out string translated) ? translated : "Max Out Blessings";
+                    var maxRect = maxButtonObject.GetComponent<RectTransform>();
+                    maxRect.anchorMin = new Vector2(.34f, 0f); maxRect.anchorMax = new Vector2(.66f, 1f);
+                    maxRect.offsetMin = maxRect.offsetMax = Vector2.zero;
+                    foreach (var label in row.GetComponentsInChildren<Text>(true))
+                    {
+                        label.resizeTextForBestFit = true;
+                        label.resizeTextMinSize = 9;
+                        label.resizeTextMaxSize = 14;
+                    }
+                    maxButtonObject.SetActive(true);
                     button.SetActive(true);
                 }
 
