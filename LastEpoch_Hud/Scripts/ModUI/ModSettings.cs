@@ -87,7 +87,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
             public static readonly BoolSetting TwoHandeWithShield = Group.Bool(
                 "TwoHandeWithShield",
-                label: "Allow Shields With Two-Handed Weapons"
+                label: "Ignore Weapon Restrictions"
             );
         }
 

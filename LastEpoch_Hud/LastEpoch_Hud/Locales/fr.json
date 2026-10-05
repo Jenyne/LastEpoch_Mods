@@ -213,7 +213,7 @@
   "Weaver": "Tisseur",
   "Weaver Tree Points": "Points d'arbre de la Tisseuse",
   "Free Weaver Respec": "Respécialisation gratuite de la Tisseuse",
-  "Allow Shields With Two-Handed Weapons": "Autoriser les boucliers avec les armes à deux mains",
+  "Allow Shields With Two-Handed Weapons": "Ignorer les restrictions d’armes",
   "AutoCast": "AutoCast",
   "Hold the modifier key and click an ability slot to toggle autocast on/off for that skill.": "Maintenez la touche modificatrice et cliquez sur une compétence pour activer/désactiver l'autocast.",
   "Hold the modifier key and press the skill's normal keybind to toggle autocast on/off.": "Maintenez la touche modificatrice et appuyez sur le raccourci normal de la compétence pour activer/désactiver l'autocast.",
@@ -326,5 +326,6 @@
   "Choose Blessings": "Choisir les bénédictions",
   "Unlock Blessing Slots": "Débloquer les emplacements de bénédiction",
   "Discover All Blessings": "Découvrir toutes les bénédictions",
-  "Max Out Blessings": "Maximiser les bénédictions"
+  "Max Out Blessings": "Maximiser les bénédictions",
+  "Ignore Weapon Restrictions": "Ignorer les restrictions d’armes"
 }

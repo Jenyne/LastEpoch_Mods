@@ -224,7 +224,7 @@
   "Weaver": "编织者",
   "Weaver Tree Points": "编织者天赋点",
   "Free Weaver Respec": "免费编织者重置",
-  "Allow Shields With Two-Handed Weapons": "允许双手武器搭配盾牌",
+  "Allow Shields With Two-Handed Weapons": "忽略武器限制",
   "AutoCast": "自动施放",
   "Hold the modifier key and click an ability slot to toggle autocast on/off for that skill.": "按住修饰键并点击技能槽，即可切换该技能的自动施放。",
   "Hold the modifier key and press the skill's normal keybind to toggle autocast on/off.": "按住修饰键并按下该技能的正常快捷键，即可切换自动施放。",
@@ -337,5 +337,6 @@
   "Choose Blessings": "选择祝福",
   "Unlock Blessing Slots": "解锁祝福槽位",
   "Discover All Blessings": "发现所有祝福",
-  "Max Out Blessings": "最大化祝福数值"
+  "Max Out Blessings": "最大化祝福数值",
+  "Ignore Weapon Restrictions": "忽略武器限制"
 }

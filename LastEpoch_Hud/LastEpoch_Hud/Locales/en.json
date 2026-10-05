@@ -213,7 +213,7 @@
   "Weaver": "Weaver",
   "Weaver Tree Points": "Weaver Tree Points",
   "Free Weaver Respec": "Free Weaver Respec",
-  "Allow Shields With Two-Handed Weapons": "Allow Shields With Two-Handed Weapons",
+  "Allow Shields With Two-Handed Weapons": "Ignore Weapon Restrictions",
   "AutoCast": "AutoCast",
   "Hold the modifier key and click an ability slot to toggle autocast on/off for that skill.": "Hold the modifier key and click an ability slot to toggle autocast on/off for that skill.",
   "Hold the modifier key and press the skill's normal keybind to toggle autocast on/off.": "Hold the modifier key and press the skill's normal keybind to toggle autocast on/off.",
@@ -326,5 +326,6 @@
   "Choose Blessings": "Choose Blessings",
   "Unlock Blessing Slots": "Unlock Blessing Slots",
   "Discover All Blessings": "Discover All Blessings",
-  "Max Out Blessings": "Max Out Blessings"
+  "Max Out Blessings": "Max Out Blessings",
+  "Ignore Weapon Restrictions": "Ignore Weapon Restrictions"
 }

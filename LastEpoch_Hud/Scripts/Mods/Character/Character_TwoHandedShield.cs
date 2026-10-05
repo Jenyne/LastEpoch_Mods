@@ -12,10 +12,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
 
         public static Character_TwoHandedShield instance { get; private set; }
 
-        private const int SHIELD_BASE_TYPE = (int)Il2Cpp.EquipmentType.SHIELD;
         private static int lastMainHandType = -1;
         private static int lastOffHandType = -1;
         private static bool applied;
+        private static Il2CppSystem.Collections.Generic.List<int> originalShieldTypes;
+        private static Il2CppSystem.Collections.Generic.List<int> allHandTypes;
         private static Il2CppSystem.Collections.Generic.List<int> allowedTypes;
 
         void Awake()
@@ -54,13 +55,144 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
         {
             if (Enabled())
             {
+                if (!applied) originalShieldTypes = Il2Cpp.CharacterMutator.global2hWeaponWithShieldBaseTypes;
                 Il2Cpp.CharacterMutator.global2hWeaponWithShieldBaseTypes = AllowedTypes();
                 applied = true;
             }
             else if (applied)
             {
-                Il2Cpp.CharacterMutator.global2hWeaponWithShieldBaseTypes = new Il2CppSystem.Collections.Generic.List<int>();
+                Il2Cpp.CharacterMutator.global2hWeaponWithShieldBaseTypes = originalShieldTypes;
+                originalShieldTypes = null;
                 applied = false;
+            }
+        }
+
+
+        // Keep the legacy component and save key for existing installations.
+        static bool IsWeapon(int type) => Il2Cpp.ItemList.isWeapon(type);
+        static bool IsHandItem(int type) => IsWeapon(type)
+            || type == (int)Il2Cpp.EquipmentType.SHIELD
+            || type == (int)Il2Cpp.EquipmentType.CATALYST
+            || type == (int)Il2Cpp.EquipmentType.QUIVER;
+        static bool IsTwoHander(int type) => AllowedTypes().Contains(type);
+        static Il2CppSystem.Collections.Generic.List<int> AllHandTypes()
+        {
+            if (allHandTypes == null)
+            {
+                allHandTypes = new Il2CppSystem.Collections.Generic.List<int>();
+                foreach (Il2Cpp.EquipmentType type in System.Enum.GetValues(typeof(Il2Cpp.EquipmentType)))
+                    if (IsHandItem((int)type)) allHandTypes.Add((int)type);
+            }
+            return allHandTypes;
+        }
+
+        [HarmonyPatch(typeof(Il2Cpp.CharacterMutator), "AdditionalBaseTypeProvider_getAdditionalBaseTypes")]
+        public class CharacterMutator_AdditionalOffhandTypes
+        {
+            [HarmonyPostfix]
+            static void Postfix(Il2Cpp.ContainerID __0,
+                ref Il2CppSystem.Collections.Generic.List<int> __result)
+            {
+                if (Enabled() && __0 == Il2Cpp.ContainerID.EQ_OFFHAND) __result = AllHandTypes();
+            }
+        }
+
+        [HarmonyPatch(typeof(Il2Cpp.SimpleAdditionalBaseTypeProvider), "getAdditionalBaseTypes")]
+        public class SimpleProvider_AdditionalOffhandTypes
+        {
+            [HarmonyPostfix]
+            static void Postfix(Il2Cpp.ContainerID __0,
+                ref Il2CppSystem.Collections.Generic.List<int> __result)
+            {
+                if (Enabled() && __0 == Il2Cpp.ContainerID.EQ_OFFHAND) __result = AllHandTypes();
+            }
+        }
+
+        // Change type acceptance only; the container still checks level/class,
+        // faction and item-count restrictions through its normal receive path.
+        [HarmonyPatch(typeof(Il2Cpp.OneSlotItemContainer), "CanAddItemType")]
+        public class OneSlotItemContainer_HandTypes
+        {
+            [HarmonyPostfix]
+            static void Postfix(Il2Cpp.OneSlotItemContainer __instance, int __0, ref bool __result)
+            {
+                if (Enabled() && __instance.GetContainerID() == Il2Cpp.ContainerID.EQ_OFFHAND
+                    && IsHandItem(__0)) __result = true;
+            }
+        }
+
+        [HarmonyPatch(typeof(Il2Cpp.ItemContainersManager), "CanEquipInOffhand")]
+        public class ItemContainersManager_OffhandTypes
+        {
+            [HarmonyPostfix]
+            static void Postfix(Il2Cpp.ItemContainerEntry __0, ref bool __result)
+            {
+                if (Enabled() && !__0.IsNullOrDestroyed()
+                    && !__0.data.IsNullOrDestroyed() && IsHandItem(__0.data.itemType))
+                    __result = true;
+            }
+        }
+
+        [HarmonyPatch(typeof(Il2Cpp.PaperDollContainer), "checkWeaponSlotCompatibility")]
+        public class PaperDollContainer_HandCompatibility
+        {
+            [HarmonyPrefix]
+            static bool Prefix(Il2Cpp.PaperDollContainer __instance, Il2Cpp.ItemData __0,
+                int __1, ref bool __result)
+            {
+                if (!Enabled() || __0.IsNullOrDestroyed()
+                    || __1 < 0 || __1 >= __instance.Containers.Count) return true;
+                var id = __instance.Containers[__1].GetContainerID();
+                if ((id == Il2Cpp.ContainerID.EQ_WEAPON && IsWeapon(__0.itemType))
+                    || (id == Il2Cpp.ContainerID.EQ_OFFHAND && IsHandItem(__0.itemType)))
+                {
+                    __result = true;
+                    return false;
+                }
+                return true;
+            }
+        }
+
+        [HarmonyPatch(typeof(Il2Cpp.WeaponItemContainer), "EnforceWeaponLimitations")]
+        public class WeaponItemContainer_EnforceWeaponLimitations
+        {
+            [HarmonyPrefix]
+            static bool Prefix() => !Enabled();
+        }
+
+        [HarmonyPatch(typeof(Il2Cpp.ItemContainersManager), "HasDualWieldingWeaponEquipped")]
+        public class ItemContainersManager_DualWieldingWeapon
+        {
+            [HarmonyPostfix]
+            static void Postfix(Il2Cpp.ItemContainersManager __instance,
+                ref Il2Cpp.ItemContainerEntry __0, ref bool __result)
+            {
+                if (!Enabled() || __result || __instance.equipment.IsNullOrDestroyed()
+                    || __instance.equipment.offhand.IsNullOrDestroyed()) return;
+                if (__instance.equipment.offhand.TryGetContent(out var entry)
+                    && !entry.IsNullOrDestroyed() && !entry.data.IsNullOrDestroyed()
+                    && IsWeapon(entry.data.itemType))
+                {
+                    __0 = entry;
+                    __result = true;
+                }
+            }
+        }
+
+        [HarmonyPatch(typeof(Il2Cpp.ItemContainersManager), "DualWielding")]
+        public class ItemContainersManager_DualWielding
+        {
+            [HarmonyPostfix]
+            static void Postfix(Il2Cpp.ItemContainersManager __instance, ref bool __result)
+            {
+                if (!Enabled() || __result || __instance.equipment.IsNullOrDestroyed()) return;
+                var main = __instance.equipment.weapon;
+                var off = __instance.equipment.offhand;
+                if (main.IsNullOrDestroyed() || off.IsNullOrDestroyed()) return;
+                if (main.TryGetContentItemData(out var mainItem)
+                    && off.TryGetContentItemData(out var offItem)
+                    && !mainItem.IsNullOrDestroyed() && !offItem.IsNullOrDestroyed())
+                    __result = IsWeapon(mainItem.itemType) && IsWeapon(offItem.itemType);
             }
         }
 
@@ -129,8 +261,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
             }
         }
 
-        // Equipping a shield calls this and drops the two-hander. Equipping the two-hander
-        // afterwards does not drop the shield, so only the offhand path is skipped.
+        // Preserve the off-hand item when the native weapon-combination check runs.
         [HarmonyPatch(typeof(Il2Cpp.OffhandItemContainer), "EnforceWeaponLimitations")]
         public class OffhandItemContainer_EnforceWeaponLimitations
         {
@@ -152,7 +283,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
                     return true;
                 }
 
-                return id != Il2Cpp.ContainerID.EQ_OFFHAND;
+                return id != Il2Cpp.ContainerID.EQ_OFFHAND && id != Il2Cpp.ContainerID.EQ_WEAPON;
             }
         }
 
@@ -160,15 +291,16 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
         public class EquipmentVisualsManager_EquipWeapon
         {
             [HarmonyPrefix]
-            static bool Prefix(int itemType, Il2Cpp.IMSlotType slotType)
+            static bool Prefix(Il2Cpp.EquipmentVisualsManager __instance, int itemType, Il2Cpp.IMSlotType slotType)
             {
                 if (!Enabled())
                 {
                     return true;
                 }
 
-                if (slotType == Il2Cpp.IMSlotType.OffHand && itemType == SHIELD_BASE_TYPE && IsNonMeleeTwoHander(lastMainHandType))
+                if (slotType == Il2Cpp.IMSlotType.OffHand && (IsTwoHander(itemType) || IsNonMeleeTwoHander(lastMainHandType)))
                 {
+                    __instance.RemoveWeapon(true, false); // Visual only; preserve equipped item.
                     lastOffHandType = itemType;
                     return false;
                 }
@@ -193,7 +325,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
                     return;
                 }
 
-                if (slotType == Il2Cpp.IMSlotType.MainHand && IsNonMeleeTwoHander(itemType) && lastOffHandType == SHIELD_BASE_TYPE)
+                if (slotType == Il2Cpp.IMSlotType.MainHand && IsNonMeleeTwoHander(itemType) && lastOffHandType >= 0)
                 {
                     __instance.RemoveWeapon(true, false);
                 }

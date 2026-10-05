@@ -316,7 +316,7 @@
   "Weaver": "직조자",
   "Weaver Tree Points": "직조자 트리 포인트",
   "Free Weaver Respec": "직조자 무료 초기화",
-  "Allow Shields With Two-Handed Weapons": "양손 무기와 방패 동시 사용",
+  "Allow Shields With Two-Handed Weapons": "무기 제한 무시",
   "AutoCast": "자동 시전",
   "Hold the modifier key and click an ability slot to toggle autocast on/off for that skill.": "보조 키를 누른 채 스킬 슬롯을 클릭하면 해당 스킬의 자동 시전을 켜거나 끕니다.",
   "Hold the modifier key and press the skill's normal keybind to toggle autocast on/off.": "보조 키를 누른 채 스킬 단축키를 누르면 자동 시전을 켜거나 끕니다.",
@@ -337,5 +337,6 @@
   "Magic": "마법",
   "Rare": "희귀",
   "Reset Difficulty": "난이도 초기화",
-  "Max Out Blessings": "축복 수치 최대화"
+  "Max Out Blessings": "축복 수치 최대화",
+  "Ignore Weapon Restrictions": "무기 제한 무시"
 }
