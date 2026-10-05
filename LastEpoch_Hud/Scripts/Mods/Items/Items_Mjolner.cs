@@ -4,6 +4,7 @@
 
 using HarmonyLib;
 using Il2Cpp;
+using Il2CppInterop.Runtime;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -29,6 +30,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             Unique.Update();
             Events.Update();
         }
+        void LateUpdate()
+        {
+            Icon.RefreshVisibleIcons();
+        }
+
         void OnSceneLoaded(Scene scene, LoadSceneMode mode)
         {
             if (Scenes.IsGameScene())
@@ -169,7 +175,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         {
             internal static void Update()
             {
-                if (!attempted && Icon.sprite.IsNullOrDestroyed()) { Icon.Get_UniqueIcon(); }
+                if (!attempted && sprite.IsNullOrDestroyed()) { Get_UniqueIcon(); }
             }
 
             private static Sprite sprite = null;
@@ -177,51 +183,149 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             private static bool attempted = false;
             private static void Get_UniqueIcon()
             {
-                if ((!loading) && (!attempted) && (!Hud_Manager.asset_bundle.IsNullOrDestroyed()))
+                if (loading || attempted || Hud_Manager.asset_bundle.IsNullOrDestroyed()) { return; }
+                loading = true;
+                attempted = true;
+                try
                 {
-                    loading = true;
-                    attempted = true;
                     foreach (string name in Hud_Manager.asset_bundle.GetAllAssetNames())
                     {
-                        if (name.Contains("mjolner.png"))
+                        string path = name.Replace("\\", "/").ToLowerInvariant();
+                        if (!path.EndsWith("/mjolner.png")) { continue; }
+                        Texture2D texture = Hud_Manager.asset_bundle
+                            .LoadAsset(name, Il2CppType.Of<Texture2D>()).TryCast<Texture2D>();
+                        if (!texture.IsNullOrDestroyed())
                         {
-                            Texture2D texture = Hud_Manager.asset_bundle.LoadAsset(name).TryCast<Texture2D>();
-                            Icon.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), Vector2.zero);
-                            break;
+                            sprite = Sprite.Create(texture,
+                                new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
                         }
+                        else
+                        {
+                            sprite = Hud_Manager.asset_bundle
+                                .LoadAsset(name, Il2CppType.Of<Sprite>()).TryCast<Sprite>();
+                        }
+                        if (!sprite.IsNullOrDestroyed())
+                        {
+                            Main.logger_instance?.Msg("Mjolner icon loaded: " + path +
+                                " (" + sprite.rect.width + "x" + sprite.rect.height + ")");
+                        }
+                        break;
                     }
-                    loading = false;
+                    if (sprite.IsNullOrDestroyed()) { Main.logger_instance?.Warning("Mjolner icon unavailable in HUD bundle"); }
+                }
+                catch (System.Exception ex) { Main.logger_instance?.Error("Mjolner Asset Error: " + ex.Message); }
+                finally { loading = false; }
+            }
+
+            private static bool IsMjolner(ItemData item)
+            {
+                return !item.IsNullOrDestroyed() && item.isUniqueSetOrLegendary() && item.uniqueID == Unique.unique_id;
+            }
+
+            private static readonly System.Collections.Generic.List<InventoryItemUI> inventoryIcons =
+                new System.Collections.Generic.List<InventoryItemUI>();
+            private sealed class TooltipIcons
+            {
+                public UITooltipItem owner;
+                public bool comparison;
+                public UnityEngine.UI.Image[] images;
+            }
+            private static readonly System.Collections.Generic.List<TooltipIcons> tooltipIcons =
+                new System.Collections.Generic.List<TooltipIcons>();
+
+            private static void ApplyIcon(UnityEngine.UI.Image image)
+            {
+                if (image.IsNullOrDestroyed() || sprite.IsNullOrDestroyed()) { return; }
+                // A native override sprite can mask Image.sprite entirely.
+                image.overrideSprite = null;
+                image.sprite = sprite;
+            }
+
+            private static void BindInventoryIcon(InventoryItemUI ui)
+            {
+                if (ui.IsNullOrDestroyed()) { return; }
+                bool matches = !ui.EntryRef.IsNullOrDestroyed() && IsMjolner(ui.EntryRef.data);
+                if (matches)
+                {
+                    if (!inventoryIcons.Contains(ui)) { inventoryIcons.Add(ui); }
+                    ApplyIcon(ui.contentImage);
+                }
+                else { inventoryIcons.Remove(ui); }
+            }
+
+            private static void BindTooltipIcon(UITooltipItem ui, ItemData item, bool comparison)
+            {
+                if (ui.IsNullOrDestroyed()) { return; }
+                for (int i = tooltipIcons.Count - 1; i >= 0; i--)
+                {
+                    if (tooltipIcons[i].owner == ui && tooltipIcons[i].comparison == comparison)
+                    { tooltipIcons.RemoveAt(i); }
+                }
+                if (!IsMjolner(item)) { return; }
+                var images = comparison
+                    ? new[] { ui.compareItemImage, ui.compareSmallItemImage,
+                        ui.compareMediumItemImage, ui.compareTallMediumItemImage,
+                        ui.compareLargeItemImage, ui.compareSpearItemImage, ui.compareWideItemImage }
+                    : new[] { ui.itemImage, ui.smallItemImage, ui.mediumItemImage,
+                        ui.tallMediumItemImage, ui.largeItemImage, ui.spearItemImage, ui.wideItemImage };
+                tooltipIcons.Add(new TooltipIcons { owner = ui, comparison = comparison, images = images });
+                foreach (var image in images) { ApplyIcon(image); }
+            }
+
+            public static void RefreshVisibleIcons()
+            {
+                // Native addressable image loads may finish after our Harmony postfix.
+                // Track only bound Mjolner views; never scan all UI objects.
+                for (int i = inventoryIcons.Count - 1; i >= 0; i--)
+                {
+                    var ui = inventoryIcons[i];
+                    if (ui.IsNullOrDestroyed() || ui.EntryRef.IsNullOrDestroyed() ||
+                        !IsMjolner(ui.EntryRef.data))
+                    { inventoryIcons.RemoveAt(i); continue; }
+                    if (ui.gameObject.activeInHierarchy) { ApplyIcon(ui.contentImage); }
+                }
+                for (int i = tooltipIcons.Count - 1; i >= 0; i--)
+                {
+                    var binding = tooltipIcons[i];
+                    if (binding.owner.IsNullOrDestroyed())
+                    { tooltipIcons.RemoveAt(i); continue; }
+                    if (!binding.owner.gameObject.activeInHierarchy) { continue; }
+                    foreach (var image in binding.images) { ApplyIcon(image); }
                 }
             }
 
-            private class Hooks
+            [HarmonyPatch(typeof(InventoryItemUI), "SetImageSpritesAndColours")]
+            public class InventoryItemUI_SetImageSpritesAndColours
             {
-                [HarmonyPatch(typeof(InventoryItemUI), "SetImageSpritesAndColours")]
-                private class InventoryItemUI_SetImageSpritesAndColours
+                [HarmonyPostfix]
+                static void Postfix(InventoryItemUI __instance)
                 {
-                    [HarmonyPostfix]
-                    static void Postfix(ref Il2Cpp.InventoryItemUI __instance)
-                    {
-                        if ((__instance.EntryRef.data.getAsUnpacked().FullName == Locales.Get_UniqueName()) && (!sprite.IsNullOrDestroyed()))
-                        {
-                            __instance.contentImage.sprite = sprite;
-                        }
-                    }
+                    BindInventoryIcon(__instance);
                 }
+            }
 
-                private class UITooltipItem_GetItemSprite
+            [HarmonyPatch(typeof(InventoryItemUI), "SetItemSprite")]
+            public class InventoryItemUI_SetItemSprite
+            {
+                [HarmonyPostfix]
+                static void Postfix(InventoryItemUI __instance)
                 {
-                    [HarmonyPostfix]
-                    static void Postfix(ref UnityEngine.Sprite __result, ItemData __0)
-                    {
-                        if ((__0.getAsUnpacked().FullName == Locales.Get_UniqueName()) && (!sprite.IsNullOrDestroyed()))
-                        {
-                            __result = sprite;
-                        }
-                    }
+                    BindInventoryIcon(__instance);
+                }
+            }
+
+            [HarmonyPatch(typeof(UITooltipItem), "SetItemImage", new System.Type[] {
+                typeof(ItemDataUnpacked), typeof(UITooltipItem.ItemTooltipInfo), typeof(bool) })]
+            public class UITooltipItem_SetItemImage
+            {
+                [HarmonyPostfix]
+                static void Postfix(UITooltipItem __instance, ItemDataUnpacked __0, bool __2)
+                {
+                    BindTooltipIcon(__instance, __0, __2);
                 }
             }
         }
+
         private class Locales
         {
             internal static string Get_UniqueName()
