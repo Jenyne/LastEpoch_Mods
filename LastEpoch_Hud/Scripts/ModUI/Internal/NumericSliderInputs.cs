@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Il2CppTMPro;
+using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -13,6 +14,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
         sealed class Entry
         {
             public Slider slider;
+            public bool percent;
+            public bool tier;
             public Text label;
             public TMP_InputField input;
             public UnityEngine.Events.UnityAction<string> submit;
@@ -48,7 +51,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 entry.input.interactable = entry.slider.interactable;
                 if (!entry.input.isFocused)
                 {
-                    string value = Format(entry.slider);
+                    string value = Format(entry);
                     if (entry.input.text != value) { entry.input.SetTextWithoutNotify(value); }
                 }
             }
@@ -100,6 +103,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
         static void Attach(Slider slider, Text label, TMP_InputField template)
         {
+            bool percent = label.text.Contains("%");
+            bool tier = slider.name.IndexOf("Tier", StringComparison.OrdinalIgnoreCase) >= 0;
+            slider.wholeNumbers = true;
+            slider.value = Mathf.Round(slider.value);
             GameObject clone = UnityEngine.Object.Instantiate(template.gameObject, label.transform.parent);
             clone.name = "NumericInput_" + slider.GetInstanceID();
             TMP_InputField input = clone.GetComponent<TMP_InputField>();
@@ -142,9 +149,9 @@ namespace LastEpoch_Hud.Scripts.ModUI
             input.enabled = true;
             input.readOnly = false;
             input.interactable = slider.interactable;
-            input.contentType = slider.wholeNumbers ? TMP_InputField.ContentType.IntegerNumber : TMP_InputField.ContentType.DecimalNumber;
+            input.contentType = TMP_InputField.ContentType.IntegerNumber;
             input.characterLimit = 16;
-            input.SetTextWithoutNotify(Format(slider));
+            // Populate after the display units have been recorded.
             if (!input.targetGraphic.IsNullOrDestroyed()) { input.targetGraphic.raycastTarget = true; }
             if (!input.textComponent.IsNullOrDestroyed())
             {
@@ -170,7 +177,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 group.blocksRaycasts = true;
             }
 
-            var entry = new Entry { slider = slider, label = label, input = input };
+            var entry = new Entry { slider = slider, label = label, input = input, percent = percent, tier = tier };
+            input.SetTextWithoutNotify(Format(entry));
             entry.submit = (UnityEngine.Events.UnityAction<string>)(text => Commit(entry, entry.input.text));
             input.onEndEdit.AddListener(entry.submit);
             entries.Add(slider.GetInstanceID(), entry);
@@ -178,22 +186,44 @@ namespace LastEpoch_Hud.Scripts.ModUI
             clone.SetActive(slider.gameObject.activeInHierarchy);
         }
 
-        static string Format(Slider slider)
+        static float DisplayValue(Entry entry)
         {
-            return slider.value.ToString(slider.wholeNumbers ? "0" : "0.##", CultureInfo.InvariantCulture);
+            if (entry.percent && entry.slider.maxValue > 0f)
+                return entry.slider.value / entry.slider.maxValue * 100f;
+            return entry.slider.value + (entry.tier ? 1f : 0f);
+        }
+
+        static string Format(Entry entry)
+        {
+            return Mathf.Round(DisplayValue(entry)).ToString("0", CultureInfo.InvariantCulture)
+                + (entry.percent ? " %" : "");
+        }
+
+        // Normalize before the existing handlers receive the value, including while dragging.
+        [HarmonyPatch(typeof(Slider), "set_value")]
+        public class WholeNumberPatch
+        {
+            [HarmonyPrefix]
+            static void Prefix(Slider __instance, ref float value)
+            {
+                if (entries.ContainsKey(__instance.GetInstanceID()))
+                    value = Mathf.Clamp(Mathf.Round(value), __instance.minValue, __instance.maxValue);
+            }
         }
 
         static void Commit(Entry entry, string text)
         {
             if (entry.slider.IsNullOrDestroyed() || entry.input.IsNullOrDestroyed()) { return; }
             if (entry.slider.interactable &&
-                float.TryParse(text, NumberStyles.Float, CultureInfo.InvariantCulture, out float value) &&
+                float.TryParse(text.Replace("%", "").Trim(), NumberStyles.Float, CultureInfo.InvariantCulture, out float value) &&
                 !float.IsNaN(value) && !float.IsInfinity(value))
             {
-                value = Mathf.Clamp(value, entry.slider.minValue, entry.slider.maxValue);
-                if (entry.slider.wholeNumbers) { value = Mathf.Round(value); }
-                else { value = (float)Math.Round(value, 2, MidpointRounding.AwayFromZero); }
-                value = Mathf.Clamp(value, entry.slider.minValue, entry.slider.maxValue);
+                value = Mathf.Round(value);
+                if (entry.percent)
+                    value = Mathf.Clamp(value, 0f, 100f) / 100f * entry.slider.maxValue;
+                else if (entry.tier)
+                    value -= 1f;
+                value = Mathf.Clamp(Mathf.Round(value), entry.slider.minValue, entry.slider.maxValue);
                 // Use the normal setter so existing config, labels and Harmony hooks run.
                 entry.slider.value = value;
             }
