@@ -239,5 +239,17 @@
   "Add": "",
   "Apply All": "",
   "Add Soul Embers": "",
-  "Apply to All Timelines": ""
+  "Apply to All Timelines": "",
+  "Timelines": "",
+  "Selected Timeline": "",
+  "Actions": "",
+  "Normal Stability": "",
+  "Empowered Stability": "",
+  "Corruption": "",
+  "Gazes": "",
+  "Copy to All": "",
+  "Reload Values": "",
+  "Edits apply immediately.\n\nCopy to All applies the visible values to existing timelines of the same difficulty.": "",
+  "Only unlocked timeline values are shown.": "",
+  "This timeline has no saved run yet.": ""
 }

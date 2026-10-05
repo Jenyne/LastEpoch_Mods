@@ -2364,7 +2364,16 @@ namespace LastEpoch_Hud.Scripts
                     }
                 }
                 public static void Update_Monoliths_Data()
-                {                    
+                {
+                    if (Refs_Manager.player_data.IsNullOrDestroyed())
+                    {
+                        Data.ShowMonolithValue(Data.monolith_stability_basic_go, Data.monolith_stability_basic_input, Data.monolith_stability_basic_slider, Data.monolith_stability_basic_text, -1, false);
+                        Data.ShowMonolithValue(Data.monolith_stability_empower_go, Data.monolith_stability_empower_input, Data.monolith_stability_empower_slider, Data.monolith_stability_empower_text, -1, false);
+                        Data.ShowMonolithValue(Data.monolith_corruption_go, Data.monolith_corruption_input, Data.monolith_corruption_slider, Data.monolith_corruption_text, -1, false);
+                        Data.ShowMonolithValue(Data.monolith_gaze_go, Data.monolith_gaze_input, Data.monolith_gaze_slider, Data.monolith_gaze_text, -1, false);
+                        ModUI.MonolithTimelineEditor.RefreshSelection();
+                        return;
+                    }
                     if ((!Refs_Manager.player_data.IsNullOrDestroyed()) && (!Data.monolith_dropdown.IsNullOrDestroyed())
                         && (!Data.monolith_stability_basic_go.IsNullOrDestroyed())
                         && (!Data.monolith_stability_basic_slider.IsNullOrDestroyed())
@@ -2431,6 +2440,7 @@ namespace LastEpoch_Hud.Scripts
                             }
                         }
                     }
+                    ModUI.MonolithTimelineEditor.RefreshSelection();
                 }
                 public static void Update_Faction_Data()
                 {
@@ -3016,7 +3026,7 @@ namespace LastEpoch_Hud.Scripts
                     public static Slider monolith_corruption_slider = null;
                     public static Il2CppTMPro.TMP_InputField monolith_corruption_input = null;
                     public static Button monolith_corruption_all_button = null;
-                    public static readonly System.Action MonolithCorruptionAll_Action = new System.Action(ApplyCorruptionToAllTimelines);
+                    public static readonly System.Action MonolithCorruptionAll_Action = new System.Action(CopySelectedTimelineToAll);
                     public static readonly System.Action<float> monolith_corruption_slider_Action = new System.Action<float>(Set_monolith_corruption_slider);
                     public static readonly System.Action<string> monolith_corruption_input_Action = new System.Action<string>(Set_monolith_corruption_empower);
                     public static void Set_monolith_corruption_slider(float value) { Set_monolith_corruption_empower(((int)value).ToString()); }
@@ -3085,51 +3095,67 @@ namespace LastEpoch_Hud.Scripts
                         PrepareFullWidthActionButton(buttonClone, monolith_corruption_all_button, "Apply to All Timelines");
                     }
 
-                    public static void ApplyCorruptionToAllTimelines()
+                    public static void CopySelectedTimelineToAll()
                     {
-                        int result;
-                        if (!monolith_corruption_input.IsNullOrDestroyed())
-                        {
-                            if (!TryReadMonolithValue(monolith_corruption_input.text, out result)) { return; }
-                        }
-                        else if (!monolith_corruption_slider.IsNullOrDestroyed())
-                        {
-                            result = Mathf.RoundToInt(monolith_corruption_slider.value);
-                        }
-                        else { return; }
+                        if (Refs_Manager.player_data.IsNullOrDestroyed() || monolith_dropdown.IsNullOrDestroyed()
+                            || monolith_dropdown.value <= 0) { return; }
 
-                        if (Refs_Manager.player_data.IsNullOrDestroyed()) { return; }
+                        bool copyBasic = !monolith_stability_basic_go.IsNullOrDestroyed() && monolith_stability_basic_go.activeSelf;
+                        bool copyEmpowered = !monolith_stability_empower_go.IsNullOrDestroyed() && monolith_stability_empower_go.activeSelf;
+                        bool copyCorruption = !monolith_corruption_go.IsNullOrDestroyed() && monolith_corruption_go.activeSelf;
+                        bool copyGaze = !monolith_gaze_go.IsNullOrDestroyed() && monolith_gaze_go.activeSelf;
+                        int basic = 0, empowered = 0, corruption = 0, gaze = 0;
+                        // Validate every visible field before changing any run. Hidden fields
+                        // may contain the previous selection's values and must never be copied.
+                        if (copyBasic && !ReadMonolithControl(monolith_stability_basic_input, monolith_stability_basic_slider, out basic)) { return; }
+                        if (copyEmpowered && !ReadMonolithControl(monolith_stability_empower_input, monolith_stability_empower_slider, out empowered)) { return; }
+                        if (copyCorruption && !ReadMonolithControl(monolith_corruption_input, monolith_corruption_slider, out corruption)) { return; }
+                        if (copyGaze && !ReadMonolithControl(monolith_gaze_input, monolith_gaze_slider, out gaze)) { return; }
 
-                        int changed = 0;
-                        System.Collections.Generic.List<int> timelineIds = new System.Collections.Generic.List<int>();
-
-                        // Phase 1: update the saved data and snapshot timeline ids only.
-                        // ApplyLiveCorruption can load/save runs, which may mutate the
-                        // underlying MonolithRuns collection; never call it from inside
-                        // this enumeration.
+                        var runs = new System.Collections.Generic.List<(int TimelineId, int Difficulty)>();
+                        // Snapshot IDs before live updates: loading/saving can change MonolithRuns.
                         foreach (SavedMonolithRun saved in Refs_Manager.player_data.MonolithRuns)
                         {
-                            if (saved.DifficultyIndex != 1 || saved.SavedEchoWeb.IsNullOrDestroyed()) { continue; }
-                            saved.SavedEchoWeb.Corruption = result;
-                            timelineIds.Add(saved.TimelineID);
-                            changed++;
+                            if (saved.DifficultyIndex == 0 && copyBasic)
+                            {
+                                saved.Stability = basic;
+                                runs.Add((saved.TimelineID, 0));
+                            }
+                            else if (saved.DifficultyIndex == 1 && (copyEmpowered || copyCorruption || copyGaze))
+                            {
+                                if (copyEmpowered) { saved.Stability = empowered; }
+                                if (!saved.SavedEchoWeb.IsNullOrDestroyed())
+                                {
+                                    if (copyCorruption) { saved.SavedEchoWeb.Corruption = corruption; }
+                                    if (copyGaze) { saved.SavedEchoWeb.GazeOfOrobyss = gaze; }
+                                }
+                                runs.Add((saved.TimelineID, 1));
+                            }
                         }
-
-                        // Phase 2: now that enumeration is finished, update live runs/UI.
-                        foreach (int timelineId in timelineIds)
+                        foreach (var run in runs)
                         {
-                            ApplyLiveCorruption(timelineId, result);
+                            if (run.Difficulty == 0) { ApplyLiveStability(run.TimelineId, 0, basic); }
+                            else
+                            {
+                                if (copyEmpowered) { ApplyLiveStability(run.TimelineId, 1, empowered); }
+                                if (copyCorruption) { ApplyLiveCorruption(run.TimelineId, corruption); }
+                                if (copyGaze) { ApplyLiveGaze(run.TimelineId, gaze); }
+                            }
                         }
-
-                        if (changed > 0 && Refs_Manager.player_data.MaxCorruption < result)
+                        if (copyCorruption && runs.Count > 0 && Refs_Manager.player_data.MaxCorruption < corruption)
                         {
-                            Refs_Manager.player_data.MaxCorruption = result;
+                            Refs_Manager.player_data.MaxCorruption = corruption;
                         }
+                        Content.Character.Update_Monoliths_Data();
+                        Main.logger_instance?.Msg("Copied selected values to " + runs.Count + " existing timeline runs");
+                    }
 
-                        if (!monolith_corruption_input.IsNullOrDestroyed()) { monolith_corruption_input.text = result.ToString(); }
-                        if (!monolith_corruption_text.IsNullOrDestroyed()) { monolith_corruption_text.text = result.ToString(); }
-
-                        Main.logger_instance?.Msg("Set corruption to " + result + " on " + changed + " empowered timelines");
+                    static bool ReadMonolithControl(Il2CppTMPro.TMP_InputField input, Slider slider, out int value)
+                    {
+                        value = 0;
+                        if (!input.IsNullOrDestroyed()) { return TryReadMonolithValue(input.text, out value); }
+                        if (slider.IsNullOrDestroyed()) { return false; }
+                        return TryReadMonolithValue(Mathf.RoundToInt(slider.value).ToString(), out value);
                     }
 
                     static void PrepareNumericInput(Il2CppTMPro.TMP_InputField input, string defaultText)
@@ -3209,15 +3235,7 @@ namespace LastEpoch_Hud.Scripts
                     {
                         if (!monolithTarget.IsNullOrDestroyed())
                         {
-                            MoveControl(monolith_selector_go, monolithTarget);
-                            MoveControl(monolith_stability_basic_go, monolithTarget);
-                            MoveControl(monolith_stability_empower_go, monolithTarget);
-                            MoveControl(monolith_corruption_go, monolithTarget);
-                            if (!monolith_corruption_all_button.IsNullOrDestroyed())
-                            {
-                                MoveControl(monolith_corruption_all_button.gameObject, monolithTarget);
-                            }
-                            MoveControl(monolith_gaze_go, monolithTarget);
+                            ModUI.MonolithTimelineEditor.Build(monolithTarget);
                         }
 
                         if (!dungeonTarget.IsNullOrDestroyed())
@@ -4743,8 +4761,10 @@ namespace LastEpoch_Hud.Scripts
                 {
                     if (!content_obj.IsNullOrDestroyed())
                     {
+                        bool wasEnabled = enable;
                         content_obj.active = show;
                         enable = show;
+                        if (show && !wasEnabled) { Content.Character.Update_Monoliths_Data(); }
                     }
                 }
                 public static void Toggle_Active()

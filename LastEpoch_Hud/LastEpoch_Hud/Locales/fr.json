@@ -239,5 +239,17 @@
   "Add": "Ajouter",
   "Apply All": "Appliquer à tous",
   "Add Soul Embers": "Ajouter des braises d'âme",
-  "Apply to All Timelines": "Appliquer à toutes les chronologies"
+  "Apply to All Timelines": "Appliquer à toutes les chronologies",
+  "Timelines": "Chronologies",
+  "Selected Timeline": "Chronologie sélectionnée",
+  "Actions": "Actions disponibles",
+  "Normal Stability": "Stabilité normale",
+  "Empowered Stability": "Stabilité renforcée",
+  "Corruption": "Corruption des échos",
+  "Gazes": "Regards",
+  "Copy to All": "Copier vers toutes",
+  "Reload Values": "Recharger les valeurs",
+  "Edits apply immediately.\n\nCopy to All applies the visible values to existing timelines of the same difficulty.": "Les modifications sont appliquées immédiatement.\n\nCopier vers toutes applique les valeurs visibles aux chronologies existantes de même difficulté.",
+  "Only unlocked timeline values are shown.": "Seules les valeurs des chronologies débloquées sont affichées.",
+  "This timeline has no saved run yet.": "Cette chronologie n’a pas encore de progression enregistrée."
 }

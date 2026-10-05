@@ -239,5 +239,17 @@
   "Add": "Add",
   "Apply All": "Apply All",
   "Add Soul Embers": "Add Soul Embers",
-  "Apply to All Timelines": "Apply to All Timelines"
+  "Apply to All Timelines": "Apply to All Timelines",
+  "Timelines": "Timelines",
+  "Selected Timeline": "Selected Timeline",
+  "Actions": "Actions",
+  "Normal Stability": "Normal Stability",
+  "Empowered Stability": "Empowered Stability",
+  "Corruption": "Corruption",
+  "Gazes": "Gazes",
+  "Copy to All": "Copy to All",
+  "Reload Values": "Reload Values",
+  "Edits apply immediately.\n\nCopy to All applies the visible values to existing timelines of the same difficulty.": "Edits apply immediately.\n\nCopy to All applies the visible values to existing timelines of the same difficulty.",
+  "Only unlocked timeline values are shown.": "Only unlocked timeline values are shown.",
+  "This timeline has no saved run yet.": "This timeline has no saved run yet."
 }
