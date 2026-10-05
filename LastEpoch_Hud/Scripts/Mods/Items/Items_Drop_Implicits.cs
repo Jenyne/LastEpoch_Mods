@@ -23,10 +23,10 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         [HarmonyPatch(typeof(ItemData), "randomiseImplicitRolls")]
         public class ItemData_randomiseImplicitRolls
         {
-            [HarmonyPrefix]
-            static bool Prefix(ref ItemData __instance)
+            [HarmonyPostfix]
+            static void Postfix(ItemData __instance)
             {
-                if (CanRun())
+                if (CanRun() && !__instance.IsNullOrDestroyed())
                 {
                     for (int z = 0; z < __instance.implicitRolls.Count; z++)
                     {
@@ -35,11 +35,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                         else { roll = (byte)Random.RandomRange(Save_Manager.instance.data.Items.Drop.Implicits_Min, Save_Manager.instance.data.Items.Drop.Implicits_Max); }
                         __instance.implicitRolls[z] = roll;
                     }
-                    __instance.RefreshIDAndValues();
-                    
-                    return false;
+                    // Preserve vanilla roll initialization. Avoid refreshing derived values
+                    // while a caller such as Ascendance is still converting the item.
+                    // Persist only the rolls we changed; the caller completes the conversion.
+                    __instance.RebuildID();
                 }
-                else { return true; }
             }
         }
     }
