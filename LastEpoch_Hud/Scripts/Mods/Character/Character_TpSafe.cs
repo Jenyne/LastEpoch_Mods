@@ -8,7 +8,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
     {
         //You have to unlock Portal first to be able to use this
 
-        bool mod_enable = true;                 //Set here if you want this mod to start
+        bool mod_enable = false;                //Disabled: Ctrl+Q conflicts with skill/AutoCast bindings.
         KeyCode key_0 = KeyCode.LeftControl;    //Left Ctrl
         KeyCode key_1 = KeyCode.Q;              //Q
         string tp_waypoint = "EoT";            //Monolith Waypoint
