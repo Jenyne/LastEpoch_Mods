@@ -212,5 +212,6 @@
   "Reload Values": "값 다시 불러오기",
   "Edits apply immediately.\n\nCopy to All applies the visible values to existing timelines of the same difficulty.": "수정 사항은 즉시 적용됩니다.\n\n모두에 복사는 표시된 값을 같은 난이도의 기존 타임라인에 적용합니다.",
   "Only unlocked timeline values are shown.": "해금된 타임라인의 값만 표시됩니다.",
-  "This timeline has no saved run yet.": "이 타임라인에는 아직 저장된 진행 상황이 없습니다."
+  "This timeline has no saved run yet.": "이 타임라인에는 아직 저장된 진행 상황이 없습니다.",
+  "Max Out Blessings": "축복 수치 최대화"
 }

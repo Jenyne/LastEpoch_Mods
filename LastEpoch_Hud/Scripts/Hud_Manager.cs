@@ -1368,11 +1368,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "ForceLowLife",
                                 "Toggle_Character_Cheats_LowLife"
                             );
-                            Cheats.allow_choosing_blessing = Functions.Get_ToggleInPanel(
-                                character_cheats_content,
-                                "AllowChoosingBlessings",
-                                "Toggle_Character_Cheats_AllowChooseBlessings"
-                            );
                             Cheats.unlock_all_idols = Functions.Get_ToggleInPanel(
                                 character_cheats_content,
                                 "UnlockAllIdolsSlots",
@@ -1617,6 +1612,8 @@ public partial class Hud_Manager : MonoBehaviour
                                     "Btn_Character_Cheats_DicoverAllBlessings"
                                 )
                                 .GetComponent<Button>();
+                            Cheats.BuildChooseBlessingsButton(character_cheats_content);
+                            Cheats.BuildUnlockBlessingSlotsButton();
                         }
                         else
                         {
@@ -2295,13 +2292,12 @@ public partial class Hud_Manager : MonoBehaviour
                 {
                     Events.Set_Toggle_Event(Cheats.lowlife_toggle, Cheats.Lowlife_Toggle_Action);
                 }
-                if (!Cheats.allow_choosing_blessing.IsNullOrDestroyed())
-                {
-                    Events.Set_Toggle_Event(
-                        Cheats.allow_choosing_blessing,
-                        Cheats.AllowChooseBlessings_Toggle_Action
-                    );
-                }
+                if (!Cheats.max_blessings_button.IsNullOrDestroyed())
+                    Events.Set_Button_Event(Cheats.max_blessings_button, Cheats.MaxOutBlessings_OnClick_Action);
+                if (!Cheats.unlock_blessing_slots_button.IsNullOrDestroyed())
+                    Events.Set_Button_Event(Cheats.unlock_blessing_slots_button, Cheats.UnlockBlessingSlots_OnClick_Action);
+                if (!Cheats.choose_blessings_button.IsNullOrDestroyed())
+                    Events.Set_Button_Event(Cheats.choose_blessings_button, Cheats.ChooseBlessings_OnClick_Action);
                 if (!Cheats.unlock_all_idols.IsNullOrDestroyed())
                 {
                     Events.Set_Toggle_Event(
@@ -2615,15 +2611,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 .Character
                                 .Cheats
                                 .Enable_LowLife;
-                        }
-                        if (!Cheats.allow_choosing_blessing.IsNullOrDestroyed())
-                        {
-                            Cheats.allow_choosing_blessing.isOn = Save_Manager
-                                .instance
-                                .data
-                                .Character
-                                .Cheats
-                                .Enable_CanChooseBlessing;
                         }
                         if (!Cheats.unlock_all_idols.IsNullOrDestroyed())
                         {
@@ -3718,20 +3705,107 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static Toggle allow_choosing_blessing = null;
-                public static readonly System.Action<bool> AllowChooseBlessings_Toggle_Action =
-                    new System.Action<bool>(Set_AllowChooseBlessings_Enable);
+                public static Button max_blessings_button = null;
+                public static readonly System.Action MaxOutBlessings_OnClick_Action =
+                    new System.Action(Mods.Character.Character_Blessings.MaxOutBlessings);
 
-                private static void Set_AllowChooseBlessings_Enable(bool enable)
+                public static Button unlock_blessing_slots_button = null;
+                public static readonly System.Action UnlockBlessingSlots_OnClick_Action =
+                    new System.Action(Mods.Character.Character_Blessings.UnlockBlessingSlots);
+
+                public static void BuildUnlockBlessingSlotsButton()
                 {
-                    if (
-                        (!Save_Manager.instance.IsNullOrDestroyed())
-                        && (!allow_choosing_blessing.IsNullOrDestroyed())
-                    )
+                    if (!unlock_blessing_slots_button.IsNullOrDestroyed() || discover_blessings_button.IsNullOrDestroyed()) return;
+                    var original = discover_blessings_button.gameObject;
+                    var rect = original.GetComponent<RectTransform>();
+                    var row = new GameObject("Blessing discovery actions");
+                    var rowRect = row.AddComponent<RectTransform>();
+                    row.transform.SetParent(original.transform.parent, false);
+                    row.transform.SetSiblingIndex(original.transform.GetSiblingIndex());
+                    rowRect.anchorMin = rect.anchorMin; rowRect.anchorMax = rect.anchorMax;
+                    rowRect.pivot = rect.pivot; rowRect.anchoredPosition = rect.anchoredPosition;
+                    rowRect.sizeDelta = rect.sizeDelta;
+                    var layout = original.GetComponent<LayoutElement>();
+                    if (!layout.IsNullOrDestroyed())
                     {
-                        Save_Manager.instance.data.Character.Cheats.Enable_CanChooseBlessing =
-                            allow_choosing_blessing.isOn;
+                        var copy = row.AddComponent<LayoutElement>();
+                        copy.minWidth = layout.minWidth; copy.minHeight = layout.minHeight;
+                        copy.preferredWidth = layout.preferredWidth; copy.preferredHeight = layout.preferredHeight;
+                        copy.flexibleWidth = layout.flexibleWidth; copy.flexibleHeight = layout.flexibleHeight;
                     }
+                    var button = UnityEngine.Object.Instantiate(original, row.transform, false);
+                    button.name = "Btn_Character_Cheats_UnlockBlessingSlots";
+                    unlock_blessing_slots_button = button.GetComponent<Button>();
+                    unlock_blessing_slots_button.onClick = new Button.ButtonClickedEvent();
+                    foreach (var label in button.GetComponentsInChildren<Text>(true)) label.text = "Unlock Blessing Slots";
+                    foreach (var label in button.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)) label.text = "Unlock Blessing Slots";
+                    original.transform.SetParent(row.transform, false);
+                    rect.anchorMin = Vector2.zero; rect.anchorMax = new Vector2(.32f, 1f);
+                    rect.offsetMin = rect.offsetMax = Vector2.zero;
+                    var buttonRect = button.GetComponent<RectTransform>();
+                    buttonRect.anchorMin = new Vector2(.68f, 0f); buttonRect.anchorMax = Vector2.one;
+                    buttonRect.offsetMin = buttonRect.offsetMax = Vector2.zero;
+                    var maxButtonObject = UnityEngine.Object.Instantiate(original, row.transform, false);
+                    maxButtonObject.name = "Btn_Character_Cheats_MaxOutBlessings";
+                    max_blessings_button = maxButtonObject.GetComponent<Button>();
+                    max_blessings_button.onClick = new Button.ButtonClickedEvent();
+                    foreach (var label in maxButtonObject.GetComponentsInChildren<Text>(true))
+                        ModUI.Prefab.ApplyLabel(label, "Max Out Blessings");
+                    foreach (var label in maxButtonObject.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
+                        label.text = Locales.TryGetTranslation("Max Out Blessings", out string translated) ? translated : "Max Out Blessings";
+                    var maxRect = maxButtonObject.GetComponent<RectTransform>();
+                    maxRect.anchorMin = new Vector2(.34f, 0f); maxRect.anchorMax = new Vector2(.66f, 1f);
+                    maxRect.offsetMin = maxRect.offsetMax = Vector2.zero;
+                    foreach (var label in row.GetComponentsInChildren<Text>(true))
+                    {
+                        label.resizeTextForBestFit = true;
+                        label.resizeTextMinSize = 9;
+                        label.resizeTextMaxSize = 14;
+                    }
+                    maxButtonObject.SetActive(true);
+                    button.SetActive(true);
+                }
+
+                public static Button choose_blessings_button = null;
+                public static readonly System.Action ChooseBlessings_OnClick_Action =
+                    new System.Action(Mods.Character.Character_Blessings.ChooseBlessings);
+
+                public static void BuildChooseBlessingsButton(GameObject content)
+                {
+                    var oldRow = Functions.GetChild(content, "AllowChoosingBlessings");
+                    if (oldRow.IsNullOrDestroyed() || discover_blessings_button.IsNullOrDestroyed()) return;
+                    if (choose_blessings_button.IsNullOrDestroyed())
+                    {
+                        var replacement = UnityEngine.Object.Instantiate(
+                            discover_blessings_button.gameObject, oldRow.transform.parent, false);
+                        replacement.name = "Btn_Character_Cheats_ChooseBlessings";
+                        replacement.transform.SetSiblingIndex(oldRow.transform.GetSiblingIndex());
+                        var sourceRect = oldRow.GetComponent<RectTransform>();
+                        var targetRect = replacement.GetComponent<RectTransform>();
+                        targetRect.anchorMin = sourceRect.anchorMin;
+                        targetRect.anchorMax = sourceRect.anchorMax;
+                        targetRect.pivot = sourceRect.pivot;
+                        targetRect.anchoredPosition = sourceRect.anchoredPosition;
+                        targetRect.sizeDelta = sourceRect.sizeDelta;
+                        targetRect.localScale = Vector3.one;
+                        var oldLayout = oldRow.GetComponent<LayoutElement>();
+                        var newLayout = replacement.GetComponent<LayoutElement>();
+                        if (!oldLayout.IsNullOrDestroyed())
+                        {
+                            if (newLayout.IsNullOrDestroyed()) newLayout = replacement.AddComponent<LayoutElement>();
+                            newLayout.minWidth = oldLayout.minWidth; newLayout.minHeight = oldLayout.minHeight;
+                            newLayout.preferredWidth = oldLayout.preferredWidth; newLayout.preferredHeight = oldLayout.preferredHeight;
+                            newLayout.flexibleWidth = oldLayout.flexibleWidth; newLayout.flexibleHeight = oldLayout.flexibleHeight;
+                        }
+                        choose_blessings_button = replacement.GetComponent<Button>();
+                        choose_blessings_button.onClick = new Button.ButtonClickedEvent();
+                        foreach (var label in replacement.GetComponentsInChildren<Text>(true))
+                            label.text = "Choose Blessings";
+                        foreach (var label in replacement.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
+                            label.text = "Choose Blessings";
+                        replacement.SetActive(true);
+                    }
+                    oldRow.SetActive(false);
                 }
 
                 public static Toggle unlock_all_idols = null;

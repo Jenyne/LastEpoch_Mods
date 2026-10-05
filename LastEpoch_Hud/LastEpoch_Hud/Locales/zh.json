@@ -263,5 +263,6 @@
   "Reload Values": "重新加载数值",
   "Edits apply immediately.\n\nCopy to All applies the visible values to existing timelines of the same difficulty.": "修改立即生效。\n\n复制到全部会将可见数值应用于相同难度的已有时间线。",
   "Only unlocked timeline values are shown.": "仅显示已解锁时间线的数值。",
-  "This timeline has no saved run yet.": "此时间线尚无已保存的进度。"
+  "This timeline has no saved run yet.": "此时间线尚无已保存的进度。",
+  "Max Out Blessings": "最大化祝福数值"
 }
