@@ -77,6 +77,7 @@ namespace LastEpoch_Hud.Scripts
                         Update_Hud_Content();
                         hud_object.active = true;
                         Content.Set_Active();
+                        ModUI.NumericSliderInputs.Tick(hud_object);
                         if (!Refs_Manager.epoch_input_manager.IsNullOrDestroyed())
                         {
                             if (!Refs_Manager.epoch_input_manager.isControllerActive) //Keyboard
