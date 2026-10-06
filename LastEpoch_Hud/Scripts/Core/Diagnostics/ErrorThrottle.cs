@@ -1,42 +1,43 @@
+using System;
 using System.Collections.Generic;
 
 namespace LastEpoch_Hud.Scripts.Core.Diagnostics;
 
-/// <summary>Decides per context whether an error is logged now or only counted.</summary>
+/// <summary>Decides per context whether an error is reported now: first at once, then after 1 min, 10 min, 60 min gaps.</summary>
 public sealed class ErrorThrottle
 {
-    public const long DefaultWindowMs = 60_000;
+    private static readonly long[] _backoffMs = { 60_000, 600_000, 3_600_000 };
 
-    private readonly Dictionary<string, long> _lastLoggedMs = new();
-    private readonly Dictionary<string, int> _suppressedCounts = new();
-    private readonly long _windowMs;
+    private readonly Dictionary<string, Entry> _entries = new();
 
-    public ErrorThrottle(long windowMs)
-    {
-        _windowMs = windowMs;
-    }
-
-    /// <summary>True when the error must be logged now; suppressed is the number of repeats skipped since the last logged one.</summary>
-    public bool TryReport(string context, long nowMs, out int suppressed)
+    /// <summary>True when the error must be reported now. repeats is 0 for the first report, otherwise the occurrences since the last report, current one included.</summary>
+    public bool TryReport(string context, long nowMs, out int repeats)
     {
         context ??= string.Empty;
-        suppressed = 0;
-        if (!_lastLoggedMs.TryGetValue(context, out long last))
+        repeats = 0;
+        if (!_entries.TryGetValue(context, out Entry entry))
         {
-            _lastLoggedMs[context] = nowMs;
+            _entries[context] = new Entry { LastReportMs = nowMs };
             return true;
         }
 
-        _suppressedCounts.TryGetValue(context, out int count);
-        if (nowMs - last < _windowMs)
+        entry.Pending++;
+        if (nowMs - entry.LastReportMs < _backoffMs[entry.Step])
         {
-            _suppressedCounts[context] = count + 1;
             return false;
         }
 
-        suppressed = count;
-        _suppressedCounts[context] = 0;
-        _lastLoggedMs[context] = nowMs;
+        repeats = entry.Pending;
+        entry.Pending = 0;
+        entry.LastReportMs = nowMs;
+        entry.Step = Math.Min(entry.Step + 1, _backoffMs.Length - 1);
         return true;
+    }
+
+    private sealed class Entry
+    {
+        public long LastReportMs;
+        public int Step;
+        public int Pending;
     }
 }
