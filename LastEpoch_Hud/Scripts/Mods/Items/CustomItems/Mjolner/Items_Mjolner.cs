@@ -1,7 +1,3 @@
-//______________________________________________________________________//
-//https://discord.com/channels/1366160878579351756/1372660677491036272
-//https://github.com/zakt4n
-
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 using MelonLoader;
