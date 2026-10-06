@@ -61,6 +61,14 @@ namespace LastEpoch_Hud.Scripts.ModUI
         // CHARACTER TAB
         //
 
+        public static class InfiniteForgingPotential
+        {
+            public static readonly SettingsGroup Group = new SettingsGroup("InfiniteForgingPotential")
+                .Content("Items_Content").Viewport("Items_Craft", "Items_Craft_Content")
+                .OnBind((content, viewport) => InfiniteForgingPotentialControls.Bind(content, viewport));
+            public static readonly BoolSetting Enabled = Group.Bool("Enabled");
+        }
+
         public static class Weaver
         {
             public static readonly SettingsGroup Group = new SettingsGroup("Weaver")
