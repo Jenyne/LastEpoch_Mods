@@ -1,57 +1,60 @@
 ﻿using MelonLoader;
 using UnityEngine;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items
+namespace LastEpoch_Hud.Scripts.Mods.Items;
+
+[RegisterTypeInIl2Cpp]
+public class Items_AutoStore_WithTimer : MonoBehaviour
 {
-    [RegisterTypeInIl2Cpp]
-    public class Items_AutoStore_WithTimer : MonoBehaviour
+    public static Items_AutoStore_WithTimer instance { get; private set; }
+
+    public Items_AutoStore_WithTimer(System.IntPtr ptr)
+        : base(ptr) { }
+
+    public static bool running = false;
+    static float nextStoreAt;
+
+    void Awake()
     {
-        public static Items_AutoStore_WithTimer instance { get; private set; }
-        public Items_AutoStore_WithTimer(System.IntPtr ptr) : base(ptr) { }
+        instance = this;
+    }
 
-        public static bool running = false;
-        static float nextStoreAt;
+    void Update()
+    {
+        // Always service the cheap debounced on-drop queue. The GameObject stays
+        // active even when the periodic timer feature itself is disabled.
+        Items_AutoStore_OnPickup.FlushPending();
 
-        void Awake()
+        if (
+            (!Scenes.IsGameScene())
+            || Save_Manager.instance.IsNullOrDestroyed()
+            || Save_Manager.instance.data.IsNullOrDestroyed()
+        )
         {
-            instance = this;
+            running = false;
+            return;
         }
 
-        void Update()
+        if (!Save_Manager.instance.data.Items.Pickup.Enable_AutoStore_Timer)
         {
-            // Always service the cheap debounced on-drop queue. The GameObject stays
-            // active even when the periodic timer feature itself is disabled.
-            Items_AutoStore_OnPickup.FlushPending();
+            running = false;
+            return;
+        }
 
-            if ((!Scenes.IsGameScene()) ||
-                Save_Manager.instance.IsNullOrDestroyed() ||
-                Save_Manager.instance.data.IsNullOrDestroyed())
-            {
-                running = false;
-                return;
-            }
+        float interval = Mathf.Max(1f, Save_Manager.instance.data.Items.Pickup.AutoStore_Timer);
+        float now = Time.realtimeSinceStartup;
 
-            if (!Save_Manager.instance.data.Items.Pickup.Enable_AutoStore_Timer)
-            {
-                running = false;
-                return;
-            }
+        if (!running)
+        {
+            nextStoreAt = now + interval;
+            running = true;
+            return;
+        }
 
-            float interval = Mathf.Max(1f, Save_Manager.instance.data.Items.Pickup.AutoStore_Timer);
-            float now = Time.realtimeSinceStartup;
-
-            if (!running)
-            {
-                nextStoreAt = now + interval;
-                running = true;
-                return;
-            }
-
-            if (now >= nextStoreAt)
-            {
-                Items_AutoStore_OnPickup.StoreNow();
-                nextStoreAt = now + interval;
-            }
+        if (now >= nextStoreAt)
+        {
+            Items_AutoStore_OnPickup.StoreNow();
+            nextStoreAt = now + interval;
         }
     }
 }

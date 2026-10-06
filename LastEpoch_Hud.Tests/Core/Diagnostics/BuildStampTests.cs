@@ -10,13 +10,19 @@ public sealed class BuildStampTests
     [Fact]
     public void Format_CleanCommit_ReturnsCommitAndTime()
     {
-        Assert.Equal("Build 0bd3576 (2026-10-04 10:30)", BuildStamp.Format("0bd3576", false, BuiltAt));
+        Assert.Equal(
+            "Build 0bd3576 (2026-10-04 10:30)",
+            BuildStamp.Format("0bd3576", false, BuiltAt)
+        );
     }
 
     [Fact]
     public void Format_DirtyCommit_AddsDirtySuffix()
     {
-        Assert.Equal("Build 0bd3576+dirty (2026-10-04 10:30)", BuildStamp.Format("0bd3576", true, BuiltAt));
+        Assert.Equal(
+            "Build 0bd3576+dirty (2026-10-04 10:30)",
+            BuildStamp.Format("0bd3576", true, BuiltAt)
+        );
     }
 
     [Theory]

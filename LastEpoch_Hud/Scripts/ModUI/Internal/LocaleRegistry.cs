@@ -1,118 +1,157 @@
-using System.Collections.Generic;
-using UnityEngine.UI;
-using Il2CppTMPro;
 using System;
+using System.Collections.Generic;
 using System.Text.RegularExpressions;
+using Il2CppTMPro;
+using UnityEngine.UI;
 
-namespace LastEpoch_Hud.Scripts.ModUI
+namespace LastEpoch_Hud.Scripts.ModUI;
+
+// Tracks (Text, canonical English label) pairs. On language change we re-translate
+// from the canonical key instead of the current Text content (which has already been
+// translated once and so is no longer a key in any locale dictionary).
+internal static class LocaleRegistry
 {
-    // Tracks (Text, canonical English label) pairs. On language change we re-translate
-    // from the canonical key instead of the current Text content (which has already been
-    // translated once and so is no longer a key in any locale dictionary).
-    internal static class LocaleRegistry
+    private static readonly List<(Text Text, string EnglishLabel)> entries = new();
+    private static System.Collections.Generic.Dictionary<string, string> lastDict;
+
+    private static readonly List<(TMP_Text Text, string EnglishLabel)> tmpEntries = new();
+    private static readonly string[] formats =
     {
-        private static readonly List<(Text Text, string EnglishLabel)> entries = new();
-        private static System.Collections.Generic.Dictionary<string, string> lastDict;
+        "Implicit {0}",
+        "Roll {0}",
+        "Prefix {0}",
+        "Suffix {0}",
+        "Selected: {0}",
+        "Lens: {0}",
+        "Corrupted: {0}",
+        "Corrupted affix: {0}",
+        "Choose a regular affix for {0}.",
+        "Dropped {0} item(s).",
+        "Drop failed: {0}",
+    };
 
-        private static readonly List<(TMP_Text Text, string EnglishLabel)> tmpEntries = new();
-        private static readonly string[] formats = {
-            "Implicit {0}", "Roll {0}", "Prefix {0}", "Suffix {0}",
-            "Selected: {0}", "Lens: {0}", "Corrupted: {0}", "Corrupted affix: {0}",
-            "Choose a regular affix for {0}.", "Dropped {0} item(s).", "Drop failed: {0}"
-        };
-
-        public static string Translate(string english)
+    public static string Translate(string english)
+    {
+        if (string.IsNullOrEmpty(english))
+            return english;
+        string canonical = Locales.CanonicalKey(english);
+        if (Locales.TryGetTranslation(canonical, out string translated))
+            return translated;
+        if (canonical.EndsWith(" %", StringComparison.Ordinal))
+            return Translate(canonical.Substring(0, canonical.Length - 2)) + " %";
+        if (canonical.EndsWith(" (%)", StringComparison.Ordinal))
+            return Translate(canonical.Substring(0, canonical.Length - 4)) + " (%)";
+        foreach (var format in formats)
         {
-            if (string.IsNullOrEmpty(english)) return english;
-            string canonical = Locales.CanonicalKey(english);
-            if (Locales.TryGetTranslation(canonical, out string translated)) return translated;
-            if (canonical.EndsWith(" %", StringComparison.Ordinal))
-                return Translate(canonical.Substring(0, canonical.Length - 2)) + " %";
-            if (canonical.EndsWith(" (%)", StringComparison.Ordinal))
-                return Translate(canonical.Substring(0, canonical.Length - 4)) + " (%)";
-            foreach (var format in formats)
+            string pattern = "^" + Regex.Escape(format).Replace(Regex.Escape("{0}"), "(.*?)") + "$";
+            var match = Regex.Match(canonical, pattern);
+            if (!match.Success)
+                continue;
+            string value = match.Groups[1].Value;
+            if (Locales.TryGetTranslation(value, out string localizedValue))
+                value = localizedValue;
+            string template = Locales.TryGetTranslation(format, out string localizedFormat)
+                ? localizedFormat
+                : format;
+            try
             {
-                string pattern = "^" + Regex.Escape(format).Replace(Regex.Escape("{0}"), "(.*?)") + "$";
-                var match = Regex.Match(canonical, pattern);
-                if (!match.Success) continue;
-                string value = match.Groups[1].Value;
-                if (Locales.TryGetTranslation(value, out string localizedValue)) value = localizedValue;
-                string template = Locales.TryGetTranslation(format, out string localizedFormat) ? localizedFormat : format;
-                try { return string.Format(template, value); }
-                catch (FormatException) { return string.Format(format, value); }
+                return string.Format(template, value);
             }
-            return canonical;
-        }
-
-        public static void Apply(Text text, string english)
-        {
-            if (text.IsNullOrDestroyed()) return;
-            if (string.IsNullOrEmpty(english)) entries.RemoveAll(e => e.Text == text);
-            else Register(text, english);
-            text.text = Translate(english);
-        }
-        public static void Apply(TMP_Text text, string english)
-        {
-            if (text.IsNullOrDestroyed()) return;
-            if (string.IsNullOrEmpty(english)) { tmpEntries.RemoveAll(e => e.Text == text); text.text = english; return; }
-            int index = tmpEntries.FindIndex(e => e.Text == text);
-            if (index < 0) tmpEntries.Add((text, english));
-            else tmpEntries[index] = (text, english);
-            text.text = Translate(english);
-        }
-
-        public static void Register(Text text, string englishLabel)
-        {
-            if (text == null || string.IsNullOrEmpty(englishLabel)) return;
-            for (int i = 0; i < entries.Count; i++)
+            catch (FormatException)
             {
-                if (entries[i].Text == text)
-                {
-                    entries[i] = (text, englishLabel);
-                    return;
-                }
-            }
-            entries.Add((text, englishLabel));
-        }
-
-        public static void TickIfLocaleChanged()
-        {
-            var current = Locales.current_dictionary;
-            if (ReferenceEquals(current, lastDict)) return;
-            lastDict = current;
-            ReapplyAll();
-        }
-
-        public static void SweepDead()
-        {
-            for (int i = tmpEntries.Count - 1; i >= 0; i--)
-                if (tmpEntries[i].Text.IsNullOrDestroyed()) tmpEntries.RemoveAt(i);
-            for (int i = entries.Count - 1; i >= 0; i--)
-            {
-                var t = entries[i].Text;
-                if (t == null || t.IsNullOrDestroyed())
-                    entries.RemoveAt(i);
+                return string.Format(format, value);
             }
         }
+        return canonical;
+    }
 
-        private static void ReapplyAll()
+    public static void Apply(Text text, string english)
+    {
+        if (text.IsNullOrDestroyed())
+            return;
+        if (string.IsNullOrEmpty(english))
+            entries.RemoveAll(e => e.Text == text);
+        else
+            Register(text, english);
+        text.text = Translate(english);
+    }
+
+    public static void Apply(TMP_Text text, string english)
+    {
+        if (text.IsNullOrDestroyed())
+            return;
+        if (string.IsNullOrEmpty(english))
         {
-            for (int i = tmpEntries.Count - 1; i >= 0; i--)
+            tmpEntries.RemoveAll(e => e.Text == text);
+            text.text = english;
+            return;
+        }
+        int index = tmpEntries.FindIndex(e => e.Text == text);
+        if (index < 0)
+            tmpEntries.Add((text, english));
+        else
+            tmpEntries[index] = (text, english);
+        text.text = Translate(english);
+    }
+
+    public static void Register(Text text, string englishLabel)
+    {
+        if (text == null || string.IsNullOrEmpty(englishLabel))
+            return;
+        for (int i = 0; i < entries.Count; i++)
+        {
+            if (entries[i].Text == text)
             {
-                var entry = tmpEntries[i];
-                if (entry.Text.IsNullOrDestroyed()) { tmpEntries.RemoveAt(i); continue; }
-                entry.Text.text = Translate(entry.EnglishLabel);
+                entries[i] = (text, englishLabel);
+                return;
             }
-            for (int i = entries.Count - 1; i >= 0; i--)
+        }
+        entries.Add((text, englishLabel));
+    }
+
+    public static void TickIfLocaleChanged()
+    {
+        var current = Locales.current_dictionary;
+        if (ReferenceEquals(current, lastDict))
+            return;
+        lastDict = current;
+        ReapplyAll();
+    }
+
+    public static void SweepDead()
+    {
+        for (int i = tmpEntries.Count - 1; i >= 0; i--)
+            if (tmpEntries[i].Text.IsNullOrDestroyed())
+                tmpEntries.RemoveAt(i);
+        for (int i = entries.Count - 1; i >= 0; i--)
+        {
+            var t = entries[i].Text;
+            if (t == null || t.IsNullOrDestroyed())
+                entries.RemoveAt(i);
+        }
+    }
+
+    private static void ReapplyAll()
+    {
+        for (int i = tmpEntries.Count - 1; i >= 0; i--)
+        {
+            var entry = tmpEntries[i];
+            if (entry.Text.IsNullOrDestroyed())
             {
-                var entry = entries[i];
-                if (entry.Text == null || entry.Text.IsNullOrDestroyed())
-                {
-                    entries.RemoveAt(i);
-                    continue;
-                }
-                entry.Text.text = Translate(entry.EnglishLabel);
+                tmpEntries.RemoveAt(i);
+                continue;
             }
+            entry.Text.text = Translate(entry.EnglishLabel);
+        }
+        for (int i = entries.Count - 1; i >= 0; i--)
+        {
+            var entry = entries[i];
+            if (entry.Text == null || entry.Text.IsNullOrDestroyed())
+            {
+                entries.RemoveAt(i);
+                continue;
+            }
+            entry.Text.text = Translate(entry.EnglishLabel);
         }
     }
 }

@@ -1,32 +1,38 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
 
-namespace LastEpoch_Hud.Scripts.Mods.Character
+namespace LastEpoch_Hud.Scripts.Mods.Character;
+
+public class Character_Favor_Experience_Multiplier
 {
-    public class Character_Favor_Experience_Multiplier
+    public static bool CanRun()
     {
-        public static bool CanRun()
+        if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()))
         {
-            if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()))
+            if (!Save_Manager.instance.data.IsNullOrDestroyed())
             {
-                if (!Save_Manager.instance.data.IsNullOrDestroyed())
-                {
-                    return Save_Manager.instance.data.Character.Cheats.Enable_FavorMultiplier;
-                }
-                else { return false; }
+                return Save_Manager.instance.data.Character.Cheats.Enable_FavorMultiplier;
             }
-            else { return false; }
-        }
-        [HarmonyPatch(typeof(ExperienceTracker), "GainExp")]
-        public class ExperienceTracker_GainExp
-        {
-            [HarmonyPrefix]
-            static void Prefix(ref long __2)
+            else
             {
-                if (CanRun())
-                {
-                    __2 *= (long)Save_Manager.instance.data.Character.Cheats.FavorMultiplier;
-                }
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(ExperienceTracker), "GainExp")]
+    public class ExperienceTracker_GainExp
+    {
+        [HarmonyPrefix]
+        static void Prefix(ref long __2)
+        {
+            if (CanRun())
+            {
+                __2 *= (long)Save_Manager.instance.data.Character.Cheats.FavorMultiplier;
             }
         }
     }
