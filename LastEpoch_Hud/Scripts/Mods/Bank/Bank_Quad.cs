@@ -927,7 +927,10 @@ public class Bank_Quad : MonoBehaviour
                     }
                 }
             }
-            catch { }
+            catch (System.Exception ex)
+            {
+                ErrorLog.Report(ex, "Bank_Quad.ActiveTabName");
+            }
 
             return r;
         }
@@ -949,7 +952,10 @@ public class Bank_Quad : MonoBehaviour
                     }
                 }
             }
-            catch { }
+            catch (System.Exception ex)
+            {
+                ErrorLog.Report(ex, "Bank_Quad.ActiveTabName(index)");
+            }
 
             return r;
         }
@@ -990,7 +996,10 @@ public class Bank_Quad : MonoBehaviour
                     }
                 }
             }
-            catch { }
+            catch (System.Exception ex)
+            {
+                ErrorLog.Report(ex, "Bank_Quad.TryGetTab");
+            }
             return false;
         }
 
@@ -1117,8 +1126,9 @@ public class Bank_Quad : MonoBehaviour
                 string tab_name = TabName(index);
                 return (tab_name != "") && Save.Data.UserTabs.names.Contains(tab_name);
             }
-            catch
+            catch (System.Exception ex)
             {
+                ErrorLog.Report(ex, "Bank_Quad.IsQuadStash");
                 return false;
             }
         }
@@ -1206,9 +1216,10 @@ public class Bank_Quad : MonoBehaviour
                         }
                         Main.logger_instance.Msg("QuadStashs : Loaded");
                     }
-                    catch
+                    catch (System.Exception ex)
                     {
-                        Main.logger_instance.Error(
+                        ErrorLog.Report(
+                            ex,
                             "QuadStashs : Error loading file : " + Data.path + filename
                         );
                     }
