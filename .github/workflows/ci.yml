@@ -7,6 +7,7 @@ on:
   pull_request:
   push:
     branches: [master]
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -27,5 +28,7 @@ jobs:
       - name: Check formatting (fix locally with "csharpier format LastEpoch_Hud LastEpoch_Hud.Tests")
         run: csharpier check LastEpoch_Hud LastEpoch_Hud.Tests
 
+      # xUnit v3 test projects are executables; `dotnet run` works on every SDK
+      # (`dotnet test` with VSTest is rejected by the runner's .NET 10 SDK).
       - name: Run tests
-        run: dotnet test LastEpoch_Hud.Tests
+        run: dotnet run --project LastEpoch_Hud.Tests
