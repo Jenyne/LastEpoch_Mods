@@ -22,16 +22,15 @@ namespace LastEpoch_Hud.Scripts.Mods.Dungeons
             if (!enabled || !Enabled || pulse.IsNullOrDestroyed() || pulse.activated
                 || pulse.dungeonZoneManager.IsNullOrDestroyed()) return;
             var manager = pulse.dungeonZoneManager;
-            // Entrance areas can initialise pulse components before a run is entered.
-            // Only reveal an unlocked, ordinary dungeon floor.
-            if (manager.zoneType.ToString() != "Default"
-                || manager.zoneState.ToString() != "Unlocked") return;
+            // The dungeon's entry-unlock state is not a reveal-readiness signal.
+            // Native pulse Start has finished and the dungeon manager is present.
             IntPtr pointer = pulse.Pointer;
             // Mark BEFORE the native call: activation can synchronously invoke other
             // native callbacks before its activated field has been updated.
             if (!requested.Add(pointer)) return;
             Main.logger_instance?.Msg("Dungeon objective reveal: requesting pulse " + pointer
-                + " in " + manager.gameObject.scene.name);
+                + " in " + manager.gameObject.scene.name + " (type=" + manager.zoneType
+                + ", state=" + manager.zoneState + ")");
             pulse.activate();
             Main.logger_instance?.Msg("Dungeon objective reveal: completed request for pulse " + pointer);
         }
