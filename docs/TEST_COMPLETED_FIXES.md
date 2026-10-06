@@ -4,7 +4,7 @@ Branch: `test/completed-fixes-integration`
 
 Base: Syncingoutt/master at `35c6a14efd3afa77ebd57a892bb0db15c46673e2`.
 
-This is a combined regression build. The individual completed features were tested in game; their interaction in this build still needs testing. The original task branches remain available.
+This is a combined regression build. The individual completed features were tested in game; their interaction in the initial combined build was also confirmed working by the user. The currency/blessing layout follow-up still needs testing. The original task branches remain available.
 
 ## Included changes and checks
 
@@ -16,7 +16,8 @@ This is a combined regression build. The individual completed features were test
 | Safe Teleport | Scenes → Minimap | Capture Shift+Q or Ctrl+Q, teleport, restart and confirm the binding persists. Verify AutoCast and Safe Teleport reject conflicting bindings. |
 | Infinite Forging Potential | Items → crafting controls | Craft with the option enabled and confirm potential stays unchanged. Disable it and confirm normal cost resumes. Deselect All should clear other crafting cheats while leaving Infinite untouched. |
 | Add 10,000 Memory Amber | Character → Cheats | As a Woven member, click once and confirm exactly +10,000, including with the multiplier enabled. Check save/reload. |
-| Soul Embers amount fix | Character | Enter a known amount and confirm a single click grants exactly that amount. Reopen the HUD and repeat. This fix still needs explicit gameplay confirmation. |
+| Add 1,000 Soul Embers | Character → Cheats → Currencies | Click once and confirm +1,000, reopen the HUD and repeat. Confirm the old input/slider row is gone from Data. |
+| Blessing actions layout | Character → Data, bottom | Confirm Choose, Discover All, Max Out and Unlock Slots are visible and functional, and no longer appear in Cheats. |
 | Withstand the Elements | Force Drop → unique gloves | Choose two distinct exclusive modifiers and LP, drop, equip, and save/reload. Confirm Unsated Rage still uses one separate modifier. |
 | Native item translations | Force Drop | In Korean or another supported game language, check categories, base items, uniques, affixes, both glove modifier labels, and search using translated and English names. |
 
@@ -77,4 +78,4 @@ The historical changelogs describe each task separately. This document is the cu
 
 ## Integration validation
 
-CSharpier formatting, whitespace checks, and locale JSON/key checks were run locally. MSBuild cannot initialize process-information APIs in this execution environment, so the full build and automated .NET suite remain unverified here. The combined build requires a Windows build and in-game testing.
+CSharpier formatting, whitespace checks, and locale JSON/key checks were run locally. MSBuild cannot initialize process-information APIs in this execution environment, so the full build and automated .NET suite remain unverified here. The initial combined build was confirmed working in game. The user reported the intermittent Mjölner icon problem, which is left to the custom-item maintainer. This layout follow-up requires a Windows build and in-game testing.

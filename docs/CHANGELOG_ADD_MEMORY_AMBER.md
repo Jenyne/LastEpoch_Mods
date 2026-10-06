@@ -10,3 +10,11 @@
 Validation: C# syntax, locale JSON, and native wrapper API checks completed. Full compilation and in-game verification remain pending.
 
 In-game checks: click once and verify +10,000, including with the Memory Amber multiplier enabled; verify Ancient Bones still works independently; enter 1,000 Soul Embers and verify exactly +1,000, then reopen the HUD and repeat; verify save/reload persistence and translated button layout.
+
+## Currency and blessing layout follow-up
+
+- Group all Add buttons into a compact two-column Currencies section in Character → Cheats.
+- Replace the Soul Ember input and Data row with Add 1,000 Soul Embers. Each click uses one native +1,000 grant.
+- Move Choose Blessings, Discover All Blessings, Max Out Blessings and Unlock Blessing Slots to the bottom of Character → Data.
+- Match native button appearance and gold section dividers; translate the new labels in English, French, Korean and Chinese.
+- Initial integration gameplay was confirmed; this layout follow-up remains pending in-game testing.

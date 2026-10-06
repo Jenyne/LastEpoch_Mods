@@ -12,6 +12,8 @@ internal static class Character_MemoryAmber
     const string RowName = "CharacterCurrencyActions";
     const string Caption = "Add 10,000 Memory Amber";
 
+    public static Button AddButton { get; private set; }
+
     public static void BuildButton(Button ancientBones)
     {
         if (ancientBones.IsNullOrDestroyed())
@@ -56,6 +58,7 @@ internal static class Character_MemoryAmber
         var clone = UnityEngine.Object.Instantiate(original, row.transform, false);
         clone.name = "Btn_Character_Cheats_AddMemoryAmber";
         var button = clone.GetComponent<Button>();
+        AddButton = button;
         // Discard cloned runtime actions before binding the currency grant.
         button.onClick.RemoveAllListeners();
         Hud_Manager.Events.Set_Button_Event(button, new Action(Add10000));

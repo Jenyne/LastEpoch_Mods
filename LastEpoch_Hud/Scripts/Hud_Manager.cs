@@ -1576,6 +1576,10 @@ public partial class Hud_Manager : MonoBehaviour
                             }
                             Data.SetupSoulEmberControls();
                             Data.SetupCorruptionAllButton();
+                            ModUI.CharacterActionControls.Bind(
+                                character_cheats_content,
+                                character_data_content
+                            );
                         }
 
                         //Faction Tracker
@@ -3871,7 +3875,6 @@ public partial class Hud_Manager : MonoBehaviour
                 public static GameObject soul_row = null;
                 public static Text soul_text = null;
                 public static Slider soul_slider = null;
-                public static Il2CppTMPro.TMP_InputField soul_amount_input = null;
                 public static Button soul_add_button = null;
                 public static readonly System.Action SoulEmbers_Add_Action = new System.Action(
                     AddSoulEmbers
@@ -3888,100 +3891,29 @@ public partial class Hud_Manager : MonoBehaviour
 
                 public static void SetupSoulEmberControls()
                 {
+                    if (!soul_row.IsNullOrDestroyed())
+                        soul_row.SetActive(false);
                     if (
-                        soul_row.IsNullOrDestroyed()
-                        || soul_slider.IsNullOrDestroyed()
-                        || save_button.IsNullOrDestroyed()
-                        || !soul_amount_input.IsNullOrDestroyed()
+                        !soul_add_button.IsNullOrDestroyed()
+                        || Cheats.add_ancient_bones_button.IsNullOrDestroyed()
                     )
-                    {
                         return;
-                    }
-
-                    GameObject inputTemplate = FindShardNameInput(hud_object);
-                    if (inputTemplate.IsNullOrDestroyed())
-                    {
-                        return;
-                    }
-
-                    RectTransform source = soul_slider.GetComponent<RectTransform>();
-                    if (source.IsNullOrDestroyed())
-                    {
-                        return;
-                    }
-
-                    soul_slider.gameObject.SetActive(false);
-
-                    GameObject inputClone = Object.Instantiate(inputTemplate, soul_row.transform);
-                    inputClone.name = "SoulEmberAmountInput";
-                    soul_amount_input = inputClone.GetComponent<Il2CppTMPro.TMP_InputField>();
-                    RectTransform inputRect = inputClone.GetComponent<RectTransform>();
-
-                    if (!inputRect.IsNullOrDestroyed())
-                    {
-                        inputRect.anchorMin = source.anchorMin;
-                        inputRect.anchorMax = source.anchorMax;
-                        inputRect.pivot = source.pivot;
-                        inputRect.anchoredPosition = source.anchoredPosition;
-                        inputRect.sizeDelta = source.sizeDelta;
-                        inputRect.localScale = Vector3.one;
-                    }
-
-                    PrepareNumericInput(soul_amount_input, "1000");
-
-                    GameObject buttonClone = Object.Instantiate(
-                        save_button.gameObject,
-                        soul_row.transform
+                    var clone = Object.Instantiate(
+                        Cheats.add_ancient_bones_button.gameObject,
+                        Cheats.add_ancient_bones_button.transform.parent,
+                        false
                     );
-                    buttonClone.name = "Btn_Character_Data_AddSoulEmbers";
-                    soul_add_button = buttonClone.GetComponent<Button>();
-                    PrepareFullWidthActionButton(buttonClone, soul_add_button, "Add Soul Embers");
-
-                    RectTransform buttonRect = buttonClone.GetComponent<RectTransform>();
-                    if (!buttonRect.IsNullOrDestroyed() && !inputRect.IsNullOrDestroyed())
-                    {
-                        inputRect.anchorMin = new Vector2(0f, source.anchorMin.y);
-                        inputRect.anchorMax = new Vector2(0.64f, source.anchorMax.y);
-                        inputRect.anchoredPosition = new Vector2(0f, source.anchoredPosition.y);
-                        inputRect.sizeDelta = new Vector2(-8f, source.sizeDelta.y);
-                        buttonRect.anchorMin = new Vector2(0.65f, source.anchorMin.y);
-                        buttonRect.anchorMax = new Vector2(1f, source.anchorMax.y);
-                        buttonRect.pivot = source.pivot;
-                        buttonRect.anchoredPosition = new Vector2(0f, source.anchoredPosition.y);
-                        buttonRect.sizeDelta = new Vector2(-8f, source.sizeDelta.y);
-                    }
-                    LayoutElement actionLayout = buttonClone.GetComponent<LayoutElement>();
-                    if (!actionLayout.IsNullOrDestroyed())
-                    {
-                        actionLayout.ignoreLayout = true;
-                    }
-                    buttonClone.SetActive(true);
-                    soul_add_button.onClick.RemoveAllListeners(); // Bound once in Character.Set_Events.
-
-                    inputClone.transform.SetAsLastSibling();
-                    UpdateSoulEmberBalance();
+                    clone.name = "Btn_Character_Cheats_AddSoulEmbers";
+                    soul_add_button = clone.GetComponent<Button>();
+                    soul_add_button.onClick = new Button.ButtonClickedEvent();
+                    PrepareFullWidthActionButton(clone, soul_add_button, "Add 1,000 Soul Embers");
+                    clone.SetActive(true);
                 }
 
                 public static void AddSoulEmbers()
                 {
-                    if (soul_amount_input.IsNullOrDestroyed())
-                    {
-                        return;
-                    }
-                    if (!int.TryParse(soul_amount_input.text, out int amount) || amount <= 0)
-                    {
-                        soul_amount_input.text = "1000";
-                        return;
-                    }
-                    if (amount > 9999999)
-                    {
-                        amount = 9999999;
-                    }
-
-                    if (Mods.Character.Character_SoulEmbers.Add(amount))
-                    {
+                    if (Mods.Character.Character_SoulEmbers.Add(1000))
                         UpdateSoulEmberBalance();
-                    }
                 }
 
                 public static void UpdateSoulEmberBalance()
