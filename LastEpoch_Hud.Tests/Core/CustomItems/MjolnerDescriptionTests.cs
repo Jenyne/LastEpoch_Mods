@@ -5,74 +5,40 @@ namespace LastEpoch_Hud.Tests.Core.CustomItems;
 
 public sealed class MjolnerDescriptionTests
 {
-    private const string EnglishProc =
-        "If you have at least 105 Strength and 95 Intelligence, 50 to 100% chance to Trigger a Lightning Spell on Hit with an Attack";
-    private const string FrenchProc =
-        "Si vous avez au moins 105 de Force et 95 d'Intelligence, 50 à 100% de chance de déclencher un sort de foudre lors d'une attaque réussie";
-    private const string GermanProc =
-        "Wenn Sie mindestens 105 Stärke und 95 Intelligenz haben, 50 bis 100% Chance, bei Treffer mit einem Angriff einen Blitzzauber auszulösen";
-    private const string PortugueseProc =
-        "Se você tiver pelo menos 105 de Força e 95 de Inteligência, ganhe 50 a 100% de chance para Ativar uma Magia de Raio ao Acertar um Ataque";
-    private const string EnglishSocketed =
-        "If you have at least 105 Strength and 95 Intelligence, Trigger Lightning Nova, Smite and Static on Hit, with a 2 second Cooldown";
-    private const string FrenchSocketed =
-        "Si vous avez au moins 105 de Force et 95 d'Intelligence, déclenche Lightning Nova, Smite et Static à l'impact, avec un temps de recharge de 2 seconde";
-
-    [Theory]
-    [InlineData("en", EnglishProc)]
-    [InlineData("ru", EnglishProc)]
-    [InlineData("ko", EnglishProc)]
-    [InlineData("pl", EnglishProc)]
-    [InlineData("zh", EnglishProc)]
-    [InlineData("es", EnglishProc)]
-    [InlineData("xx", EnglishProc)]
-    [InlineData("fr", FrenchProc)]
-    [InlineData("de", GermanProc)]
-    [InlineData("pt", PortugueseProc)]
-    public void LightningProc_Language_MatchesLegacyText(string language, string expected)
+    private static readonly Dictionary<string, string> _texts = new()
     {
-        Assert.Equal(expected, Proc(language));
-    }
+        [CustomItemLocaleKeys.MjolnerDescriptionProc] = "{0}|{1}|{2}|{3}",
+        [CustomItemLocaleKeys.MjolnerDescriptionSocketed] = "{0}|{1}|{2}|{3}|{4}|{5}",
+    };
 
-    [Theory]
-    [InlineData("fr", FrenchSocketed)]
-    [InlineData("en", EnglishSocketed)]
-    [InlineData("de", EnglishSocketed)] // German is not translated, English on purpose
-    [InlineData("ru", EnglishSocketed)]
-    [InlineData("pt", EnglishSocketed)]
-    [InlineData("ko", EnglishSocketed)]
-    [InlineData("pl", EnglishSocketed)]
-    [InlineData("zh", EnglishSocketed)]
-    [InlineData("es", EnglishSocketed)]
-    [InlineData("xx", EnglishSocketed)]
-    public void SocketedSkills_Language_MatchesLegacyText(string language, string expected)
+    [Fact]
+    public void LightningProc_Template_FilledFromSettings()
     {
-        Assert.Equal(expected, Socketed(language));
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData(null)]
-    public void LightningProc_MissingLanguage_ReturnsEmpty(string language)
-    {
-        Assert.Equal("", Proc(language));
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData(null)]
-    public void SocketedSkills_MissingLanguage_ReturnsEmpty(string language)
-    {
-        Assert.Equal("", Socketed(language));
+        Assert.Equal("105|95|50|100", Proc(_texts, 127.5f, 255f));
     }
 
     [Fact]
     public void LightningProc_Chance_ScaledFrom255AndTruncated()
     {
-        Assert.Equal(
-            "If you have at least 105 Strength and 95 Intelligence, 50 to 0% chance to Trigger a Lightning Spell on Hit with an Attack",
-            Proc("en", 130f, 2f)
-        );
+        Assert.Equal("105|95|50|0", Proc(_texts, 130f, 2f));
+    }
+
+    [Fact]
+    public void LightningProc_MissingTemplate_ReturnsNull()
+    {
+        Assert.Null(Proc(new Dictionary<string, string>(), 127.5f, 255f));
+    }
+
+    [Fact]
+    public void LightningProc_NullTexts_ReturnsNull()
+    {
+        Assert.Null(Proc(null, 127.5f, 255f));
+    }
+
+    [Fact]
+    public void SocketedSkills_Template_FilledFromSettings()
+    {
+        Assert.Equal("105|95|a|b|c|2", Socketed(_texts, 2000));
     }
 
     [Fact]
@@ -82,10 +48,7 @@ public sealed class MjolnerDescriptionTests
         CultureInfo.CurrentCulture = CultureInfo.InvariantCulture;
         try
         {
-            Assert.Equal(
-                "If you have at least 105 Strength and 95 Intelligence, Trigger Lightning Nova, Smite and Static on Hit, with a 0.25 second Cooldown",
-                Socketed("en", 250)
-            );
+            Assert.Equal("105|95|a|b|c|0.25", Socketed(_texts, 250));
         }
         finally
         {
@@ -93,17 +56,15 @@ public sealed class MjolnerDescriptionTests
         }
     }
 
-    private static string Proc(string language, float min = 127.5f, float max = 255f) =>
-        MjolnerDescription.LightningProc(language, 105, 95, min, max);
+    [Fact]
+    public void SocketedSkills_MissingTemplate_ReturnsNull()
+    {
+        Assert.Null(Socketed(new Dictionary<string, string>(), 2000));
+    }
 
-    private static string Socketed(string language, double cooldownMs = 2000) =>
-        MjolnerDescription.SocketedSkills(
-            language,
-            105,
-            95,
-            cooldownMs,
-            "Lightning Nova",
-            "Smite",
-            "Static"
-        );
+    private static string Proc(IReadOnlyDictionary<string, string> texts, float min, float max) =>
+        MjolnerDescription.LightningProc(texts, 105, 95, min, max);
+
+    private static string Socketed(IReadOnlyDictionary<string, string> texts, double cooldownMs) =>
+        MjolnerDescription.SocketedSkills(texts, 105, 95, cooldownMs, "a", "b", "c");
 }

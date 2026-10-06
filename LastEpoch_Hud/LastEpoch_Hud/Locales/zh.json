@@ -338,5 +338,20 @@
   "Choose Blessings": "选择祝福",
   "Unlock Blessing Slots": "解锁祝福槽位",
   "Discover All Blessings": "发现所有祝福",
-  "Max Out Blessings": "最大化祝福数值"
+  "Max Out Blessings": "最大化祝福数值",
+  "CustomItem.Headhunter.Subtype": "HH 皮腰带",
+  "CustomItem.Headhunter.Name": "猎头者",
+  "CustomItem.Headhunter.Lore": "人的灵魂统治着白骨洞穴,\r\n透过血肉之窗学习与审判。心脏不过是肉。\r\n头颅才是人之所在。\"\r\n- 卡奥姆的顾问拉维安加",
+  "CustomItem.Headhunter.Description": "当你或你的召唤物击杀怪物时, 你获得{0}至{1}个随机词缀, 持续{2}秒",
+  "CustomItem.Mjolner.Name": "妙尔尼尔",
+  "CustomItem.Mjolner.Lore": "直视风暴之眼, 你便能赢得它的敬意。",
+  "CustomItem.Mjolner.DescriptionProc": "如果你至少拥有{0}点力量和{1}点智力, 则有{2}%至{3}%的几率在攻击命中时触发一个闪电法术",
+  "CustomItem.Mjolner.DescriptionSocketed": "如果你至少拥有{0}点力量和{1}点智力, 命中时触发{2}、{3}和{4}, 冷却时间为{5}秒",
+  "CustomItem.EssentiaSanguis.Subtype": "隐秘裹布",
+  "CustomItem.EssentiaSanguis.Name": "血之精华",
+  "CustomItem.EssentiaSanguis.Description": "生命偷取转化为能量护盾偷取",
+  "CustomItem.EssentiaSanguis.Lore": "最黑暗的乌云碰撞交合,\r\n诞下四个憎恨的闪电之子。",
+  "CustomItem.SandsOfSilk.Subtype": "遮蔽长衣",
+  "CustomItem.SandsOfSilk.Name": "流丝之沙",
+  "CustomItem.SandsOfSilk.Lore": "沙漠永远在流动。"
 }

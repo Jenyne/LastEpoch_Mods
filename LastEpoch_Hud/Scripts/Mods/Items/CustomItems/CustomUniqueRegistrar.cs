@@ -86,11 +86,11 @@ public sealed class CustomUniqueRegistrar
         }
 
         BaseId = baseId;
-        subItems.Add(CreateBase(_definition.Flags()));
-        CustomItemLocalization.Table.Register(
+        CustomItemLocalization.Table.RegisterLocaleKey(
             CustomItemKeys.SubtypeName(_definition.Spec.BaseType, BaseId),
-            _definition.SubtypeName
+            _definition.SubtypeNameKey
         );
+        subItems.Add(CreateBase(_definition.Flags()));
         _progress.Complete();
     }
 
@@ -125,8 +125,8 @@ public sealed class CustomUniqueRegistrar
     {
         CustomItemTextTable table = CustomItemLocalization.Table;
         ushort uniqueId = _definition.Spec.UniqueId;
-        table.Register(CustomItemKeys.UniqueName(uniqueId), _definition.UniqueName);
-        table.Register(CustomItemKeys.UniqueLore(uniqueId), _definition.Lore);
+        table.RegisterLocaleKey(CustomItemKeys.UniqueName(uniqueId), _definition.UniqueNameKey);
+        table.RegisterLocaleKey(CustomItemKeys.UniqueLore(uniqueId), _definition.LoreKey);
         if (_definition.Description == null)
         {
             return;
@@ -145,7 +145,9 @@ public sealed class CustomUniqueRegistrar
             cannotDrop = flags.BaseCannotDrop,
             itemTags = ItemLocationTag.None,
             levelRequirement = _definition.Spec.LevelRequirement,
-            name = CustomItemLocalization.Text(_definition.SubtypeName),
+            name = CustomItemLocalization.Text(
+                CustomItemKeys.SubtypeName(_definition.Spec.BaseType, BaseId)
+            ),
             subTypeID = BaseId,
         };
     }
@@ -153,7 +155,7 @@ public sealed class CustomUniqueRegistrar
     private UniqueList.Entry CreateEntry(CustomUniqueFlags flags)
     {
         CustomUniqueSpec spec = _definition.Spec;
-        string name = CustomItemLocalization.Text(_definition.UniqueName);
+        string name = CustomItemLocalization.Text(CustomItemKeys.UniqueName(spec.UniqueId));
         var entry = new UniqueList.Entry
         {
             name = name,
@@ -173,7 +175,7 @@ public sealed class CustomUniqueRegistrar
             baseType = spec.BaseType,
             subTypes = SubTypes(),
             mods = _definition.Mods(),
-            loreText = CustomItemLocalization.Text(_definition.Lore),
+            loreText = CustomItemLocalization.Text(CustomItemKeys.UniqueLore(spec.UniqueId)),
             tooltipEntries = _definition.TooltipEntries(),
             oldSubTypeID = 0,
             oldUniqueID = 0,
@@ -189,7 +191,9 @@ public sealed class CustomUniqueRegistrar
             return;
         }
 
-        string description = _definition.Description(CustomItemLocalization.Language());
+        string description = CustomItemLocalization.Resolve(
+            CustomItemKeys.UniqueTooltip(_definition.Spec.UniqueId)
+        );
         if (string.IsNullOrEmpty(description))
         {
             return;

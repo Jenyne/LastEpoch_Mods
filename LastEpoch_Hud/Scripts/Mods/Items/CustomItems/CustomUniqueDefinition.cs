@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 
@@ -10,12 +11,12 @@ public sealed class CustomUniqueDefinition
     public CustomUniqueSpec Spec { get; init; }
 
     /// <summary>Null when the item uses a base the game already has.</summary>
-    public LocalizedText SubtypeName { get; init; }
-    public LocalizedText UniqueName { get; init; }
-    public LocalizedText Lore { get; init; }
+    public string SubtypeNameKey { get; init; }
+    public string UniqueNameKey { get; init; }
+    public string LoreKey { get; init; }
 
-    /// <summary>Language to text; null when the item has no description.</summary>
-    public Func<string, string> Description { get; init; }
+    /// <summary>Mod texts to description; null when the item has no description.</summary>
+    public Func<IReadOnlyDictionary<string, string>, string> Description { get; init; }
     public Func<CustomUniqueFlags> Flags { get; init; }
 
     /// <summary>Null when the item uses a base the game already has.</summary>

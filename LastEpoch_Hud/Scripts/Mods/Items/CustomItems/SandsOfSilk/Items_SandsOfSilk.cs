@@ -24,9 +24,9 @@ public class Items_SandsOfSilk : MonoBehaviour
         return new CustomUniqueDefinition
         {
             Spec = CustomUniqueSpecs.SandsOfSilk,
-            SubtypeName = SandsOfSilkTexts.SubtypeName,
-            UniqueName = SandsOfSilkTexts.UniqueName,
-            Lore = SandsOfSilkTexts.Lore,
+            SubtypeNameKey = CustomItemLocaleKeys.SandsOfSilkSubtype,
+            UniqueNameKey = CustomItemLocaleKeys.SandsOfSilkName,
+            LoreKey = CustomItemLocaleKeys.SandsOfSilkLore,
             Flags = () => CustomUniqueFlags.NoSettings,
             Implicits = Implicits,
             Mods = Mods,

@@ -2,23 +2,18 @@ using LastEpoch_Hud.Scripts.Core.CustomItems;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 
-/// <summary>Shared text table and current game language for custom items.</summary>
+/// <summary>Shared text table for custom items, resolved against the current mod locale.</summary>
 public static class CustomItemLocalization
 {
     public static CustomItemTextTable Table { get; } = new();
 
-    public static string Language()
+    public static string Resolve(string gameKey)
     {
-        return Locales.current == Locales.Selected.Unknow ? "" : Locales.dictionnary_filename;
+        return Table.Resolve(gameKey, Locales.current_dictionary);
     }
 
-    public static string Text(LocalizedText text)
+    public static string Text(string gameKey)
     {
-        return text.For(Language());
-    }
-
-    public static string Resolve(string key)
-    {
-        return Table.Resolve(key, Language());
+        return Resolve(gameKey) ?? "";
     }
 }

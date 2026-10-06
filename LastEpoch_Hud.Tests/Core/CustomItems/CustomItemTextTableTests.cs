@@ -4,57 +4,76 @@ namespace LastEpoch_Hud.Tests.Core.CustomItems;
 
 public sealed class CustomItemTextTableTests
 {
-    private static readonly LocalizedText _text = new("english", ("fr", "francais"));
+    private static readonly Dictionary<string, string> _english = new() { ["loc"] = "text-a" };
+    private static readonly Dictionary<string, string> _french = new() { ["loc"] = "text-b" };
 
     [Fact]
     public void Resolve_UnknownKey_ReturnsNull()
     {
-        Assert.Null(new CustomItemTextTable().Resolve("missing", "en"));
+        Assert.Null(new CustomItemTextTable().Resolve("missing", _english));
     }
 
     [Fact]
     public void Resolve_NullKey_ReturnsNull()
     {
-        Assert.Null(new CustomItemTextTable().Resolve(null, "en"));
+        Assert.Null(new CustomItemTextTable().Resolve(null, _english));
     }
 
     [Fact]
-    public void Resolve_LocalizedText_ReturnsTextForLanguage()
+    public void Resolve_LocaleKey_ReturnsDictionaryValue()
     {
         var table = new CustomItemTextTable();
-        table.Register("key", _text);
+        table.RegisterLocaleKey("key", "loc");
 
-        Assert.Equal("francais", table.Resolve("key", "fr"));
+        Assert.Equal("text-a", table.Resolve("key", _english));
     }
 
     [Fact]
-    public void Resolve_LocalizedTextUnknownLanguage_ReturnsNull()
+    public void Resolve_OtherDictionary_ReturnsOtherText()
     {
         var table = new CustomItemTextTable();
-        table.Register("key", _text);
+        table.RegisterLocaleKey("key", "loc");
 
-        Assert.Null(table.Resolve("key", ""));
+        table.Resolve("key", _english);
+
+        Assert.Equal("text-b", table.Resolve("key", _french));
     }
 
     [Fact]
-    public void Resolve_PassesLanguageToResolver()
+    public void Resolve_NullTexts_ReturnsNull()
     {
         var table = new CustomItemTextTable();
-        string received = null;
+        table.Register("key", _ => "text");
+
+        Assert.Null(table.Resolve("key", null));
+    }
+
+    [Fact]
+    public void Resolve_LocaleKeyMissing_ReturnsNull()
+    {
+        var table = new CustomItemTextTable();
+        table.RegisterLocaleKey("key", "other");
+
+        Assert.Null(table.Resolve("key", _english));
+    }
+
+    [Fact]
+    public void Resolve_PassesTextsToResolver()
+    {
+        var table = new CustomItemTextTable();
+        IReadOnlyDictionary<string, string> received = null;
         table.Register(
             "key",
-            (Func<string, string>)(
-                language =>
-                {
-                    received = language;
-                    return "text";
-                }
-            )
+            texts =>
+            {
+                received = texts;
+                return "text";
+            }
         );
 
-        table.Resolve("key", "de");
+        table.Resolve("key", _french);
 
-        Assert.Equal("de", received);
+        Assert.Same(_french, received);
     }
 
     [Theory]
@@ -63,19 +82,29 @@ public sealed class CustomItemTextTableTests
     public void Resolve_ResolverReturnsNullOrEmpty_ReturnsNull(string result)
     {
         var table = new CustomItemTextTable();
-        table.Register("key", (Func<string, string>)(_ => result));
+        table.Register("key", _ => result);
 
-        Assert.Null(table.Resolve("key", "en"));
+        Assert.Null(table.Resolve("key", _english));
     }
 
     [Fact]
     public void Register_SameKeyTwice_LastWins()
     {
         var table = new CustomItemTextTable();
-        table.Register("key", (Func<string, string>)(_ => "first"));
-        table.Register("key", (Func<string, string>)(_ => "second"));
+        table.Register("key", _ => "first");
+        table.Register("key", _ => "second");
 
-        Assert.Equal("second", table.Resolve("key", "en"));
+        Assert.Equal("second", table.Resolve("key", _english));
+    }
+
+    [Fact]
+    public void RegisterLocaleKey_AfterRegister_LastWins()
+    {
+        var table = new CustomItemTextTable();
+        table.Register("key", _ => "first");
+        table.RegisterLocaleKey("key", "loc");
+
+        Assert.Equal("text-a", table.Resolve("key", _english));
     }
 
     [Theory]
@@ -85,9 +114,33 @@ public sealed class CustomItemTextTableTests
     {
         var table = new CustomItemTextTable();
 
-        table.Register(key, (Func<string, string>)(_ => "text"));
+        table.Register(key, _ => "text");
 
-        Assert.Null(table.Resolve("", "en"));
+        Assert.Null(table.Resolve("", _english));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void RegisterLocaleKey_NullOrEmptyGameKey_Ignored(string key)
+    {
+        var table = new CustomItemTextTable();
+
+        table.RegisterLocaleKey(key, "loc");
+
+        Assert.Null(table.Resolve("", _english));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void RegisterLocaleKey_NullOrEmptyLocaleKey_Ignored(string localeKey)
+    {
+        var table = new CustomItemTextTable();
+
+        table.RegisterLocaleKey("key", localeKey);
+
+        Assert.Null(table.Resolve("key", _english));
     }
 
     [Fact]
@@ -95,18 +148,8 @@ public sealed class CustomItemTextTableTests
     {
         var table = new CustomItemTextTable();
 
-        table.Register("key", (Func<string, string>)null);
+        table.Register("key", null);
 
-        Assert.Null(table.Resolve("key", "en"));
-    }
-
-    [Fact]
-    public void Register_NullLocalizedText_Ignored()
-    {
-        var table = new CustomItemTextTable();
-
-        table.Register("key", (LocalizedText)null);
-
-        Assert.Null(table.Resolve("key", "en"));
+        Assert.Null(table.Resolve("key", _english));
     }
 }

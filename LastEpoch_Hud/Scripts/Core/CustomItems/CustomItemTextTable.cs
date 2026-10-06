@@ -6,38 +6,49 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems;
 /// <summary>Maps game localization keys to custom item text resolvers.</summary>
 public sealed class CustomItemTextTable
 {
-    private readonly Dictionary<string, Func<string, string>> _resolvers = new(
-        StringComparer.Ordinal
-    );
+    private readonly Dictionary<
+        string,
+        Func<IReadOnlyDictionary<string, string>, string>
+    > _resolvers = new(StringComparer.Ordinal);
 
-    public void Register(string key, Func<string, string> resolve)
+    public void Register(string gameKey, Func<IReadOnlyDictionary<string, string>, string> resolve)
     {
-        if (string.IsNullOrEmpty(key) || resolve == null)
+        if (string.IsNullOrEmpty(gameKey) || resolve == null)
         {
             return;
         }
 
-        _resolvers[key] = resolve;
+        _resolvers[gameKey] = resolve;
     }
 
-    public void Register(string key, LocalizedText text)
+    public void RegisterLocaleKey(string gameKey, string localeKey)
     {
-        if (text == null)
+        if (string.IsNullOrEmpty(localeKey))
         {
             return;
         }
 
-        Register(key, text.For);
+        Register(gameKey, texts => LocaleText.Get(texts, localeKey));
     }
 
-    public string Resolve(string key, string language)
+    public string Resolve(string gameKey, IReadOnlyDictionary<string, string> texts)
     {
-        if (key == null || !_resolvers.TryGetValue(key, out Func<string, string> resolve))
+        if (texts == null || gameKey == null)
         {
             return null;
         }
 
-        string text = resolve(language);
+        if (
+            !_resolvers.TryGetValue(
+                gameKey,
+                out Func<IReadOnlyDictionary<string, string>, string> resolve
+            )
+        )
+        {
+            return null;
+        }
+
+        string text = resolve(texts);
         return string.IsNullOrEmpty(text) ? null : text;
     }
 }

@@ -327,5 +327,20 @@
   "Choose Blessings": "",
   "Unlock Blessing Slots": "",
   "Discover All Blessings": "",
-  "Max Out Blessings": ""
+  "Max Out Blessings": "",
+  "CustomItem.Headhunter.Subtype": "",
+  "CustomItem.Headhunter.Name": "",
+  "CustomItem.Headhunter.Lore": "",
+  "CustomItem.Headhunter.Description": "",
+  "CustomItem.Mjolner.Name": "",
+  "CustomItem.Mjolner.Lore": "",
+  "CustomItem.Mjolner.DescriptionProc": "",
+  "CustomItem.Mjolner.DescriptionSocketed": "",
+  "CustomItem.EssentiaSanguis.Subtype": "",
+  "CustomItem.EssentiaSanguis.Name": "",
+  "CustomItem.EssentiaSanguis.Description": "",
+  "CustomItem.EssentiaSanguis.Lore": "",
+  "CustomItem.SandsOfSilk.Subtype": "",
+  "CustomItem.SandsOfSilk.Name": "",
+  "CustomItem.SandsOfSilk.Lore": ""
 }

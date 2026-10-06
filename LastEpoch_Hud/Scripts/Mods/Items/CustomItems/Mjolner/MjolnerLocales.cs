@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 using MelonLoader;
@@ -6,7 +7,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Mjolner;
 
 internal static class MjolnerLocales
 {
-    internal static string CurrentDescription(string language)
+    internal static string CurrentDescription(IReadOnlyDictionary<string, string> texts)
     {
         if (Save_Manager.instance.IsNullOrDestroyed() || !Save_Manager.instance.initialized)
         {
@@ -17,7 +18,7 @@ internal static class MjolnerLocales
         if (mjolner.ProcAnyLightningSpell)
         {
             return MjolnerDescription.LightningProc(
-                language,
+                texts,
                 mjolner.StrRequirement,
                 mjolner.IntRequirement,
                 mjolner.MinTriggerChance,
@@ -26,7 +27,7 @@ internal static class MjolnerLocales
         }
 
         return MjolnerDescription.SocketedSkills(
-            language,
+            texts,
             mjolner.StrRequirement,
             mjolner.IntRequirement,
             mjolner.SocketedCooldown,

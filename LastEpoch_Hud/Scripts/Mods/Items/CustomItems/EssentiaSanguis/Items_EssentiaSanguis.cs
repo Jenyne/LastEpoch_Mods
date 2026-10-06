@@ -24,10 +24,11 @@ public class Items_EssentiaSanguis : MonoBehaviour
         return new CustomUniqueDefinition
         {
             Spec = CustomUniqueSpecs.EssentiaSanguis,
-            SubtypeName = EssentiaSanguisTexts.SubtypeName,
-            UniqueName = EssentiaSanguisTexts.UniqueName,
-            Lore = EssentiaSanguisTexts.Lore,
-            Description = EssentiaSanguisTexts.Description.For,
+            SubtypeNameKey = CustomItemLocaleKeys.EssentiaSanguisSubtype,
+            UniqueNameKey = CustomItemLocaleKeys.EssentiaSanguisName,
+            LoreKey = CustomItemLocaleKeys.EssentiaSanguisLore,
+            Description = texts =>
+                LocaleText.Get(texts, CustomItemLocaleKeys.EssentiaSanguisDescription),
             Flags = () => CustomUniqueFlags.NoSettings,
             Implicits = Implicits,
             Mods = Mods,

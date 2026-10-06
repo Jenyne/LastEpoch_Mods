@@ -70,10 +70,10 @@ public class Items_HeadHunter : MonoBehaviour
         return new CustomUniqueDefinition
         {
             Spec = CustomUniqueSpecs.Headhunter,
-            SubtypeName = HeadhunterTexts.SubtypeName,
-            UniqueName = HeadhunterTexts.UniqueName,
-            Lore = HeadhunterTexts.Lore,
-            Description = _ => HeadhunterLocales.DescriptionWhenSaveReady(),
+            SubtypeNameKey = CustomItemLocaleKeys.HeadhunterSubtype,
+            UniqueNameKey = CustomItemLocaleKeys.HeadhunterName,
+            LoreKey = CustomItemLocaleKeys.HeadhunterLore,
+            Description = HeadhunterLocales.Description,
             Flags = () =>
                 new CustomUniqueFlags(
                     Save_Manager.instance.data.Items.Headhunter.WeaverWill,

@@ -58,8 +58,8 @@ public class Items_Mjolner : MonoBehaviour
         return new CustomUniqueDefinition
         {
             Spec = CustomUniqueSpecs.Mjolner,
-            UniqueName = MjolnerTexts.UniqueName,
-            Lore = MjolnerTexts.Lore,
+            UniqueNameKey = CustomItemLocaleKeys.MjolnerName,
+            LoreKey = CustomItemLocaleKeys.MjolnerLore,
             Description = MjolnerLocales.CurrentDescription,
             Flags = () =>
                 new CustomUniqueFlags(
