@@ -65,12 +65,12 @@ internal static class ScenesSectionControls
             foreach (var text in title.GetComponentsInChildren<Text>(true))
             {
                 text.font = headerStyle.font;
-                text.fontSize = Mathf.Clamp(headerStyle.fontSize, 14, 20);
+                text.fontSize = Mathf.Clamp(headerStyle.fontSize, 20, 24);
                 text.fontStyle = headerStyle.fontStyle;
                 text.color = headerStyle.color;
             }
         // Keep the native full-height frame, with compact sections at the top.
-        const float header = 28;
+        const float header = 32;
         const float dungeonHeight = 108;
         const float miscHeight = 104;
         const float minimapHeight = 52;
@@ -172,13 +172,8 @@ internal static class ScenesSectionControls
             MatchText(text, sourceText);
         foreach (var text in misc.GetComponentsInChildren<Text>(true))
             MatchText(text, sourceText);
-        // Dungeon header and description share the left edge of native labels.
         foreach (var text in dungeonTitle.GetComponentsInChildren<Text>(true))
-        {
-            text.alignment = TextAnchor.MiddleLeft;
-            var rect = text.GetComponent<RectTransform>();
-            rect.offsetMin = new Vector2(8, rect.offsetMin.y);
-        }
+            text.alignment = TextAnchor.MiddleCenter;
     }
 
     static void MatchText(Text text, Text source)
@@ -246,10 +241,10 @@ internal static class ScenesSectionControls
     {
         foreach (var label in node.GetComponentsInChildren<Text>(true))
         {
-            label.fontSize = 20;
+            label.fontSize = 24;
             label.resizeTextForBestFit = true;
-            label.resizeTextMinSize = 14;
-            label.resizeTextMaxSize = 20;
+            label.resizeTextMinSize = 20;
+            label.resizeTextMaxSize = 24;
             label.verticalOverflow = VerticalWrapMode.Overflow;
             var rect = label.GetComponent<RectTransform>();
             rect.anchorMin = Vector2.zero;
@@ -260,10 +255,10 @@ internal static class ScenesSectionControls
         }
         foreach (var label in node.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
         {
-            label.fontSize = 20;
+            label.fontSize = 24;
             label.enableAutoSizing = true;
-            label.fontSizeMin = 14;
-            label.fontSizeMax = 20;
+            label.fontSizeMin = 20;
+            label.fontSizeMax = 24;
             LocaleRegistry.Apply(label, caption);
         }
     }
