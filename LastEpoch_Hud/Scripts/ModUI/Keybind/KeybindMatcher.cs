@@ -11,7 +11,12 @@ namespace LastEpoch_Hud.Scripts.ModUI
         {
             if (string.IsNullOrEmpty(binding)) return false;
             if (binding.StartsWith("kb:"))
-                return System.Enum.TryParse(binding.Substring(3), out KeyCode kc) && Input.GetKey(kc);
+            {
+                foreach (var part in binding.Substring(3).Split('+'))
+                    if (!System.Enum.TryParse(part, out KeyCode key) || !Input.GetKey(key))
+                        return false;
+                return true;
+            }
             if (binding.StartsWith("gp:"))
                 return KeybindRewired.ButtonHeldByName(binding.Substring(3));
             return false;
