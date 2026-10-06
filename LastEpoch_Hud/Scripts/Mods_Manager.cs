@@ -144,7 +144,7 @@ public class Mods_Manager : MonoBehaviour
             Vector3.zero,
             Quaternion.identity
         );
-        items_headhunter_obj.AddComponent<Mods.Items.Items_HeadHunter>();
+        items_headhunter_obj.AddComponent<Mods.Items.CustomItems.Headhunter.Items_HeadHunter>();
         Mods_Objects.Add(items_headhunter_obj);
 
         items_mjolner_obj = Object.Instantiate(
