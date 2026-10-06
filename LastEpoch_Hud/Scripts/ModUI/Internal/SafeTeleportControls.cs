@@ -114,7 +114,7 @@ internal static class SafeTeleportControls
             for (int i = 0; i < viewport.transform.childCount; i++)
             {
                 var child = viewport.transform.GetChild(i).gameObject;
-                if (child == section || !child.activeSelf)
+                if (child == section || child.name == "IdolRerollOptions" || !child.activeSelf)
                     continue;
                 var childRect = child.GetComponent<RectTransform>();
                 if (childRect.IsNullOrDestroyed())

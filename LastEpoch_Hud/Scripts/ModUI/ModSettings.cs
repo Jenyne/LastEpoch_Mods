@@ -146,6 +146,30 @@ public static class ModSettings
         }
     }
 
+    public static class IdolReroll
+    {
+        // Built by ScenesSectionControls before the settings groups bind.
+        public static readonly SettingsGroup Group = new SettingsGroup("IdolReroll")
+            .Content("Scenes_Content")
+            .Viewport("Center", "Scenes_Misc_Content");
+        public static readonly BoolSetting FreeMemoryAmber = Group.Bool(
+            "FreeMemoryAmber",
+            label: "No Memory Amber Cost",
+            path: "IdolRerollOptions/FreeAmber"
+        );
+        public static readonly BoolSetting UnlimitedUses = Group.Bool(
+            "UnlimitedUses",
+            label: "Unlimited Idol Altar Uses",
+            path: "IdolRerollOptions/UnlimitedUses"
+        );
+
+        static IdolReroll()
+        {
+            FreeMemoryAmber.Changed += _ => Mods.Items.Items_IdolReroll.RefreshUI();
+            UnlimitedUses.Changed += _ => Mods.Items.Items_IdolReroll.RefreshUI();
+        }
+    }
+
     public static class Difficulty
     {
         public static readonly SettingsGroup Group = new SettingsGroup("ScenesDifficulty")

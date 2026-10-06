@@ -368,5 +368,9 @@
   "CustomItem.SandsOfSilk.Subtype": "Veste voilée",
   "CustomItem.SandsOfSilk.Name": "Sables de soie",
   "CustomItem.SandsOfSilk.Lore": "Le désert coule sans cesse.",
-  "End of Time waypoint required. Bind a key or modifier + key.": "Le point de passage de la Fin des Temps est requis. Assignez une touche ou un modificateur + une touche."
+  "End of Time waypoint required. Bind a key or modifier + key.": "Le point de passage de la Fin des Temps est requis. Assignez une touche ou un modificateur + une touche.",
+  "Idol Rerolling": "Relance des idoles",
+  "No Memory Amber Cost": "Aucun coût en ambre mémoriel",
+  "Unlimited Idol Altar Uses": "Utilisations illimitées de l’autel des idoles",
+  "Unlimited": "Illimité"
 }

@@ -45,7 +45,7 @@ internal static class ScenesSectionControls
         var miscContent = Prefab.Child(miscViewport, "Content");
         if (miscContent.IsNullOrDestroyed())
             miscContent = Node(miscViewport, "Content");
-        Place(miscContent, 0, 88);
+        Place(miscContent, 0, 184);
         var miscTitle = Prefab.Child(center, "MiscTitle");
         if (miscTitle.IsNullOrDestroyed())
         {
@@ -72,7 +72,7 @@ internal static class ScenesSectionControls
         // Keep the native full-height frame, with compact sections at the top.
         const float header = 32;
         const float dungeonHeight = 108;
-        const float miscHeight = 104;
+        const float miscHeight = 192;
         const float minimapHeight = 52;
         const float gap = 8;
         var centerRect = center.GetComponent<RectTransform>();
@@ -109,11 +109,12 @@ internal static class ScenesSectionControls
         if (!safe.IsNullOrDestroyed())
         {
             safe.transform.SetParent(miscContent.transform, false);
-            Place(safe, 0, miscHeight);
+            Place(safe, 0, 88);
             ModSettings.SafeTeleport.Group.ResolveAndBind(content);
         }
         else
             SafeTeleportControls.Bind(content, miscContent);
+        IdolRerollControls.Bind(miscContent, minimap);
         MelonLoader.MelonCoroutines.Start(
             MatchNativeRows(center, dungeons, minimap, miscContent, dungeonTitle)
         );
@@ -147,7 +148,8 @@ internal static class ScenesSectionControls
         var corners = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<Vector3>(4);
         var sourceBox = sample.targetGraphic.GetComponent<RectTransform>();
         sourceBox.GetWorldCorners(corners);
-        foreach (var toggle in dungeons.GetComponentsInChildren<Toggle>(true))
+        foreach (var group in new[] { dungeons, misc })
+        foreach (var toggle in group.GetComponentsInChildren<Toggle>(true))
         {
             if (!toggle.gameObject.activeInHierarchy || toggle.targetGraphic.IsNullOrDestroyed())
                 continue;

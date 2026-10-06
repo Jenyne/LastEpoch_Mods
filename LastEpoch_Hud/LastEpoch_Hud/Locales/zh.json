@@ -379,5 +379,9 @@
   "CustomItem.SandsOfSilk.Subtype": "遮蔽长衣",
   "CustomItem.SandsOfSilk.Name": "流丝之沙",
   "CustomItem.SandsOfSilk.Lore": "沙漠永远在流动。",
-  "End of Time waypoint required. Bind a key or modifier + key.": "需要解锁时间终焉传送点。绑定按键或组合键。"
+  "End of Time waypoint required. Bind a key or modifier + key.": "需要解锁时间终焉传送点。绑定按键或组合键。",
+  "Idol Rerolling": "重置神像",
+  "No Memory Amber Cost": "不消耗记忆琥珀",
+  "Unlimited Idol Altar Uses": "神像祭坛无限使用",
+  "Unlimited": "无限"
 }
