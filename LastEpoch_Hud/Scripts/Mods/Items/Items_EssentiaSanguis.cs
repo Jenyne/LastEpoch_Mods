@@ -11,6 +11,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Items;
 [RegisterTypeInIl2Cpp]
 public class Items_EssentiaSanguis : MonoBehaviour
 {
+    private static readonly CustomUniqueRegistrar _registrar = new(CreateDefinition());
+
     public static Items_EssentiaSanguis instance { get; private set; }
 
     public Items_EssentiaSanguis(System.IntPtr ptr)
@@ -19,7 +21,6 @@ public class Items_EssentiaSanguis : MonoBehaviour
     void Awake()
     {
         instance = this;
-        ESLocales.Register();
     }
 
     void Update()
@@ -28,22 +29,116 @@ public class Items_EssentiaSanguis : MonoBehaviour
         {
             Assets.Load();
         }
-        if ((Locales.current != Locales.Selected.Unknow) && (!Basic.AddedToBasicList))
+        _registrar.Update();
+    }
+
+    private static CustomUniqueDefinition CreateDefinition()
+    {
+        return new CustomUniqueDefinition
         {
-            Basic.AddToBasicList();
-        }
-        if ((Locales.current != Locales.Selected.Unknow) && (!Unique.AddedToUniqueList))
-        {
-            Unique.AddToUniqueList();
-        }
-        if (
-            (Locales.current != Locales.Selected.Unknow)
-            && (Unique.AddedToUniqueList)
-            && (!Unique.AddedToDictionary)
-        )
-        {
-            Unique.AddToDictionary();
-        }
+            Spec = CustomUniqueSpecs.EssentiaSanguis,
+            SubtypeName = EssentiaSanguisTexts.SubtypeName,
+            UniqueName = EssentiaSanguisTexts.UniqueName,
+            Lore = EssentiaSanguisTexts.Lore,
+            Description = EssentiaSanguisTexts.Description.For,
+            Flags = () => CustomUniqueFlags.NoSettings,
+            Implicits = Implicits,
+            Mods = Mods,
+            TooltipEntries = TooltipEntries,
+        };
+    }
+
+    private static Il2CppSystem.Collections.Generic.List<ItemList.EquipmentImplicit> Implicits()
+    {
+        var implicits = new Il2CppSystem.Collections.Generic.List<ItemList.EquipmentImplicit>();
+        implicits.Add(
+            new ItemList.EquipmentImplicit
+            {
+                implicitMaxValue = 50,
+                implicitValue = 50,
+                property = SP.DodgeRating,
+                specialTag = 0,
+                tags = AT.None,
+                type = BaseStats.ModType.ADDED,
+            }
+        );
+
+        return implicits;
+    }
+
+    private static Il2CppSystem.Collections.Generic.List<UniqueItemMod> Mods()
+    {
+        var result = new Il2CppSystem.Collections.Generic.List<UniqueItemMod>();
+        result.Add(
+            new UniqueItemMod
+            {
+                canRoll = true,
+                property = SP.DodgeRating,
+                tags = AT.None,
+                type = BaseStats.ModType.INCREASED,
+                maxValue = 0.7f,
+                value = 0.5f,
+            }
+        );
+        result.Add(
+            new UniqueItemMod
+            {
+                canRoll = true,
+                property = SP.HealthLeech,
+                tags = AT.None,
+                type = BaseStats.ModType.ADDED,
+                maxValue = 1f,
+                value = 0.5f,
+            }
+        );
+        result.Add(
+            new UniqueItemMod
+            {
+                canRoll = true,
+                property = SP.Damage,
+                tags = AT.Lightning,
+                type = BaseStats.ModType.ADDED,
+                maxValue = 50,
+                value = 30,
+            }
+        );
+        result.Add(
+            new UniqueItemMod
+            {
+                canRoll = true,
+                property = SP.Intelligence,
+                tags = AT.None,
+                type = BaseStats.ModType.ADDED,
+                maxValue = 25,
+                value = 15,
+            }
+        );
+        result.Add(
+            new UniqueItemMod
+            {
+                canRoll = true,
+                property = SP.LightningResistance,
+                tags = AT.None,
+                type = BaseStats.ModType.INCREASED,
+                maxValue = 0.35f,
+                value = 0.25f,
+            }
+        );
+
+        return result;
+    }
+
+    private static Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry> TooltipEntries()
+    {
+        var result = new Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry>();
+        result.Add(new UniqueModDisplayListEntry(0));
+        result.Add(new UniqueModDisplayListEntry(1));
+        result.Add(new UniqueModDisplayListEntry(2));
+        result.Add(new UniqueModDisplayListEntry(3));
+        result.Add(new UniqueModDisplayListEntry(4));
+        result.Add(new UniqueModDisplayListEntry(128));
+
+        return result;
     }
 
     public class Assets
@@ -104,273 +199,14 @@ public class Items_EssentiaSanguis : MonoBehaviour
         }
     }
 
-    public class Basic
-    {
-        public static bool AddedToBasicList = false;
-        public static readonly byte base_type = 4; //Gloves
-        public static readonly int base_id = 15;
-
-        public static ItemList.EquipmentItem Item()
-        {
-            ItemList.EquipmentItem item = new ItemList.EquipmentItem
-            {
-                classRequirement = ItemList.ClassRequirement.None,
-                implicits = implicits(),
-                subClassRequirement = ItemList.SubClassRequirement.None,
-                cannotDrop = true,
-                itemTags = ItemLocationTag.None,
-                levelRequirement = 52,
-                name = Get_Subtype_Name(),
-                subTypeID = base_id,
-            };
-
-            return item;
-        }
-
-        public static void AddToBasicList()
-        {
-            if ((!AddedToBasicList) && (!Refs_Manager.item_list.IsNullOrDestroyed()))
-            {
-                Refs_Manager.item_list.EquippableItems[base_type].subItems.Add(Item());
-                AddedToBasicList = true;
-            }
-        }
-
-        public static string Get_Subtype_Name()
-        {
-            return CustomItemLocalization.Text(EssentiaSanguisTexts.SubtypeName);
-        }
-
-        private static Il2CppSystem.Collections.Generic.List<ItemList.EquipmentImplicit> implicits()
-        {
-            Il2CppSystem.Collections.Generic.List<ItemList.EquipmentImplicit> implicits =
-                new Il2CppSystem.Collections.Generic.List<ItemList.EquipmentImplicit>();
-            implicits.Add(
-                new ItemList.EquipmentImplicit
-                {
-                    implicitMaxValue = 50,
-                    implicitValue = 50,
-                    property = SP.DodgeRating,
-                    specialTag = 0,
-                    tags = AT.None,
-                    type = BaseStats.ModType.ADDED,
-                }
-            );
-
-            return implicits;
-        }
-    }
-
     public class Unique
     {
-        public static bool AddedToUniqueList = false;
-        public static bool AddedToDictionary = false;
         public static Sprite Icon = null;
-        public static readonly ushort unique_id = 503;
-
-        public static UniqueList.Entry Item()
-        {
-            UniqueList.Entry item = new UniqueList.Entry
-            {
-                name = Get_Unique_Name(),
-                displayName = Get_Unique_Name(),
-                uniqueID = unique_id,
-                isSetItem = false,
-                setID = 0,
-                overrideLevelRequirement = true,
-                levelRequirement = 52,
-                legendaryType = UniqueList.LegendaryType.LegendaryPotential,
-                overrideEffectiveLevelForLegendaryPotential = true,
-                effectiveLevelForLegendaryPotential = 0,
-                canDropRandomly = true,
-                rerollChance = 1,
-                itemModelType = UniqueList.ItemModelType.Unique,
-                subTypeForIM = 0,
-                baseType = Basic.base_type,
-                subTypes = SubType(),
-                mods = Mods(),
-                tooltipDescriptions = TooltipDescription(),
-                loreText = Get_Unique_Lore(), //lore,
-                tooltipEntries = TooltipEntries(),
-                oldSubTypeID = 0,
-                oldUniqueID = 0,
-            };
-
-            return item;
-        }
-
-        public static void AddToUniqueList()
-        {
-            if ((!AddedToUniqueList) && (!Refs_Manager.unique_list.IsNullOrDestroyed()))
-            {
-                try
-                {
-                    UniqueList.getUnique(0); //force initialize uniquelist
-                    Refs_Manager.unique_list.uniques.Add(Item());
-                    AddedToUniqueList = true;
-                }
-                catch
-                {
-                    Main.logger_instance?.Error("Sands of Silks Unique List Error");
-                }
-            }
-        }
-
-        public static void AddToDictionary()
-        {
-            if (
-                (AddedToUniqueList)
-                && (!AddedToDictionary)
-                && (!Refs_Manager.unique_list.IsNullOrDestroyed())
-            )
-            {
-                try
-                {
-                    UniqueList.Entry item = null;
-                    if (Refs_Manager.unique_list.uniques.Count > 1)
-                    {
-                        foreach (UniqueList.Entry unique in Refs_Manager.unique_list.uniques)
-                        {
-                            if (
-                                (unique.uniqueID == unique_id) && (unique.name == Get_Unique_Name())
-                            )
-                            {
-                                item = unique;
-                                break;
-                            }
-                        }
-                    }
-                    if (!item.IsNullOrDestroyed())
-                    {
-                        Refs_Manager.unique_list.entryDictionary.Add(unique_id, item);
-                        AddedToDictionary = true;
-                    }
-                }
-                catch
-                {
-                    Main.logger_instance?.Error("Sands of Silks Unique Dictionary Error");
-                }
-            }
-        }
 
         public static string Get_Unique_Name()
         {
             return CustomItemLocalization.Text(EssentiaSanguisTexts.UniqueName);
         }
-
-        public static string Get_Unique_Description()
-        {
-            return CustomItemLocalization.Text(EssentiaSanguisTexts.Description);
-        }
-
-        public static string Get_Unique_Lore()
-        {
-            return CustomItemLocalization.Text(EssentiaSanguisTexts.Lore);
-        }
-
-        private static Il2CppSystem.Collections.Generic.List<byte> SubType()
-        {
-            Il2CppSystem.Collections.Generic.List<byte> result =
-                new Il2CppSystem.Collections.Generic.List<byte>();
-            byte r = (byte)Basic.base_id;
-            result.Add(r);
-
-            return result;
-        }
-
-        private static Il2CppSystem.Collections.Generic.List<UniqueItemMod> Mods()
-        {
-            Il2CppSystem.Collections.Generic.List<UniqueItemMod> result =
-                new Il2CppSystem.Collections.Generic.List<UniqueItemMod>();
-            result.Add(
-                new UniqueItemMod
-                {
-                    canRoll = true,
-                    property = SP.DodgeRating,
-                    tags = AT.None,
-                    type = BaseStats.ModType.INCREASED,
-                    maxValue = 0.7f,
-                    value = 0.5f,
-                }
-            );
-            result.Add(
-                new UniqueItemMod
-                {
-                    canRoll = true,
-                    property = SP.HealthLeech,
-                    tags = AT.None,
-                    type = BaseStats.ModType.ADDED,
-                    maxValue = 1f,
-                    value = 0.5f,
-                }
-            );
-            result.Add(
-                new UniqueItemMod
-                {
-                    canRoll = true,
-                    property = SP.Damage,
-                    tags = AT.Lightning,
-                    type = BaseStats.ModType.ADDED,
-                    maxValue = 50,
-                    value = 30,
-                }
-            );
-            result.Add(
-                new UniqueItemMod
-                {
-                    canRoll = true,
-                    property = SP.Intelligence,
-                    tags = AT.None,
-                    type = BaseStats.ModType.ADDED,
-                    maxValue = 25,
-                    value = 15,
-                }
-            );
-            result.Add(
-                new UniqueItemMod
-                {
-                    canRoll = true,
-                    property = SP.LightningResistance,
-                    tags = AT.None,
-                    type = BaseStats.ModType.INCREASED,
-                    maxValue = 0.35f,
-                    value = 0.25f,
-                }
-            );
-
-            return result;
-        }
-
-        private static Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry> TooltipEntries()
-        {
-            Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry> result =
-                new Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry>();
-            result.Add(new UniqueModDisplayListEntry(0));
-            result.Add(new UniqueModDisplayListEntry(1));
-            result.Add(new UniqueModDisplayListEntry(2));
-            result.Add(new UniqueModDisplayListEntry(3));
-            result.Add(new UniqueModDisplayListEntry(4));
-            result.Add(new UniqueModDisplayListEntry(128));
-
-            return result;
-        }
-
-        private static Il2CppSystem.Collections.Generic.List<ItemTooltipDescription> TooltipDescription()
-        {
-            Il2CppSystem.Collections.Generic.List<ItemTooltipDescription> result =
-                new Il2CppSystem.Collections.Generic.List<ItemTooltipDescription>();
-            result.Add(new ItemTooltipDescription { description = Get_Unique_Description() });
-
-            return result;
-        }
-
-        /*private static UniqueList.LegendaryType LegendaryType()
-        {
-            UniqueList.LegendaryType legendaryType = UniqueList.LegendaryType.LegendaryPotential;
-            if (Save_Manager.instance.data.Items.Headhunter.WeaverWill) { legendaryType = UniqueList.LegendaryType.WeaversWill; }
-
-            return legendaryType;
-        }*/
 
         [HarmonyPatch(typeof(InventoryItemUI), "SetImageSpritesAndColours")]
         public class InventoryItemUI_SetImageSpritesAndColours
@@ -414,8 +250,8 @@ public class Items_EssentiaSanguis : MonoBehaviour
             {
                 if (
                     (__0.EquipmentType == EquipmentType.GLOVES)
-                    && (__0.SubType == Basic.base_id)
-                    && (__0.UniqueID == Unique.unique_id)
+                    && (__0.SubType == CustomUniqueSpecs.EssentiaSanguis.BaseId)
+                    && (__0.UniqueID == CustomUniqueSpecs.EssentiaSanguis.UniqueId)
                 )
                 {
                     __0.SubType = 0;
@@ -441,7 +277,7 @@ public class Items_EssentiaSanguis : MonoBehaviour
                 {
                     if (
                         Refs_Manager.player_actor.itemContainersManager.hasUniqueEquipped(
-                            Unique.unique_id
+                            CustomUniqueSpecs.EssentiaSanguis.UniqueId
                         )
                     )
                     {
@@ -452,27 +288,6 @@ public class Items_EssentiaSanguis : MonoBehaviour
                 }
                 return r;
             }
-        }
-    }
-
-    public class ESLocales
-    {
-        public static void Register()
-        {
-            CustomItemTextTable table = CustomItemLocalization.Table;
-            table.Register(
-                CustomItemKeys.SubtypeName(Basic.base_type, Basic.base_id),
-                EssentiaSanguisTexts.SubtypeName
-            );
-            table.Register(
-                CustomItemKeys.UniqueName(Unique.unique_id),
-                EssentiaSanguisTexts.UniqueName
-            );
-            table.Register(
-                CustomItemKeys.UniqueTooltip(Unique.unique_id),
-                EssentiaSanguisTexts.Description
-            );
-            table.Register(CustomItemKeys.UniqueLore(Unique.unique_id), EssentiaSanguisTexts.Lore);
         }
     }
 }

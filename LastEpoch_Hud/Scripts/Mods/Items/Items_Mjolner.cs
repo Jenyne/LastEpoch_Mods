@@ -15,6 +15,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Items;
 [RegisterTypeInIl2Cpp]
 public class Items_Mjolner : MonoBehaviour
 {
+    private static readonly CustomUniqueRegistrar _registrar = new(CreateDefinition());
+
     public static Items_Mjolner instance { get; private set; }
 
     public Items_Mjolner(System.IntPtr ptr)
@@ -25,14 +27,13 @@ public class Items_Mjolner : MonoBehaviour
     void Awake()
     {
         instance = this;
-        Locales.Register();
         SceneManager.add_sceneLoaded(new System.Action<Scene, LoadSceneMode>(OnSceneLoaded));
     }
 
     void Update()
     {
         Icon.Update();
-        Unique.Update();
+        _registrar.Update();
         Events.Update();
     }
 
@@ -58,177 +59,66 @@ public class Items_Mjolner : MonoBehaviour
         }
     }
 
-    private class Basic
+    private static CustomUniqueDefinition CreateDefinition()
     {
-        internal static readonly byte base_type = 7; //Mace
-        internal static readonly int base_id = 10; //Rune hammer
+        return new CustomUniqueDefinition
+        {
+            Spec = CustomUniqueSpecs.Mjolner,
+            UniqueName = MjolnerTexts.UniqueName,
+            Lore = MjolnerTexts.Lore,
+            Description = _ => Locales.DescriptionWhenSaveReady(),
+            Flags = () =>
+                new CustomUniqueFlags(
+                    Save_Manager.instance.data.Items.Mjolner.WeaverWill,
+                    Save_Manager.instance.data.Items.Mjolner.UniqueDrop,
+                    true
+                ),
+            Mods = Mods,
+            TooltipEntries = TooltipEntries,
+        };
     }
 
-    private class Unique
+    private static Il2CppSystem.Collections.Generic.List<UniqueItemMod> Mods()
     {
-        internal static readonly ushort unique_id = 501;
+        var mods = new Il2CppSystem.Collections.Generic.List<UniqueItemMod>();
+        mods.Add(
+            new UniqueItemMod
+            {
+                canRoll = true,
+                property = SP.Damage,
+                tags = AT.Lightning,
+                type = BaseStats.ModType.INCREASED,
+                maxValue = 1.0f,
+                value = 0.8f,
+            }
+        );
+        mods.Add(
+            new UniqueItemMod
+            {
+                canRoll = true,
+                property = SP.Damage,
+                tags = AT.Physical,
+                type = BaseStats.ModType.INCREASED,
+                maxValue = 1.2f,
+                value = 0.8f,
+            }
+        );
 
-        internal static void Update()
+        return mods;
+    }
+
+    private static Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry> TooltipEntries()
+    {
+        var entries = new Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry>();
+        entries.Add(new UniqueModDisplayListEntry(0));
+        entries.Add(new UniqueModDisplayListEntry(1));
+        if (Save_Manager.instance.data.Items.Mjolner.ProcAnyLightningSpell)
         {
-            if (
-                (LastEpoch_Hud.Locales.current != LastEpoch_Hud.Locales.Selected.Unknow)
-                && (!AddedToUniqueList)
-            )
-            {
-                AddToUniqueList();
-            }
-            if (
-                (LastEpoch_Hud.Locales.current != LastEpoch_Hud.Locales.Selected.Unknow)
-                && (AddedToUniqueList)
-                && (!AddedToDictionary)
-            )
-            {
-                AddToDictionary();
-            }
+            entries.Add(new UniqueModDisplayListEntry(2));
         }
+        entries.Add(new UniqueModDisplayListEntry(128));
 
-        private static bool AddedToUniqueList = false;
-        private static bool AddedToDictionary = false;
-
-        private static UniqueList.Entry Item()
-        {
-            string name = Locales.Get_UniqueName();
-
-            UniqueList.LegendaryType legendaryType = UniqueList.LegendaryType.LegendaryPotential;
-            if (Save_Manager.instance.data.Items.Mjolner.WeaverWill)
-            {
-                legendaryType = UniqueList.LegendaryType.WeaversWill;
-            }
-
-            Il2CppSystem.Collections.Generic.List<byte> subtypes =
-                new Il2CppSystem.Collections.Generic.List<byte>();
-            byte r = (byte)Basic.base_id;
-            subtypes.Add(r);
-
-            Il2CppSystem.Collections.Generic.List<UniqueItemMod> mods =
-                new Il2CppSystem.Collections.Generic.List<UniqueItemMod>();
-            mods.Add(
-                new UniqueItemMod
-                {
-                    canRoll = true,
-                    property = SP.Damage,
-                    tags = AT.Lightning,
-                    type = BaseStats.ModType.INCREASED,
-                    maxValue = 1.0f,
-                    value = 0.8f,
-                }
-            );
-            mods.Add(
-                new UniqueItemMod
-                {
-                    canRoll = true,
-                    property = SP.Damage,
-                    tags = AT.Physical,
-                    type = BaseStats.ModType.INCREASED,
-                    maxValue = 1.2f,
-                    value = 0.8f,
-                }
-            );
-
-            Il2CppSystem.Collections.Generic.List<ItemTooltipDescription> tooltip_description =
-                new Il2CppSystem.Collections.Generic.List<ItemTooltipDescription>();
-            tooltip_description.Add(
-                new ItemTooltipDescription { description = Locales.Get_UniqueDescription() }
-            );
-
-            Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry> entries =
-                new Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry>();
-            entries.Add(new UniqueModDisplayListEntry(0));
-            entries.Add(new UniqueModDisplayListEntry(1));
-            if (Save_Manager.instance.data.Items.Mjolner.ProcAnyLightningSpell)
-            {
-                entries.Add(new UniqueModDisplayListEntry(2));
-            }
-            entries.Add(new UniqueModDisplayListEntry(128));
-
-            UniqueList.Entry item = new UniqueList.Entry
-            {
-                name = name,
-                displayName = name,
-                uniqueID = unique_id,
-                isSetItem = false,
-                setID = 0,
-                overrideLevelRequirement = false,
-                levelRequirement = 78,
-                legendaryType = legendaryType,
-                overrideEffectiveLevelForLegendaryPotential = true,
-                effectiveLevelForLegendaryPotential = 60,
-                canDropRandomly = Save_Manager.instance.data.Items.Mjolner.UniqueDrop,
-                rerollChance = 1,
-                itemModelType = UniqueList.ItemModelType.Unique,
-                subTypeForIM = 0,
-                baseType = Basic.base_type,
-                subTypes = subtypes,
-                mods = mods,
-                tooltipDescriptions = tooltip_description,
-                loreText = Locales.Get_UniqueLore(),
-                tooltipEntries = entries,
-                oldSubTypeID = 0,
-                oldUniqueID = 0,
-            };
-
-            return item;
-        }
-
-        private static void AddToUniqueList()
-        {
-            if ((!AddedToUniqueList) && (!Refs_Manager.unique_list.IsNullOrDestroyed()))
-            {
-                try
-                {
-                    UniqueList.getUnique(0); //force initialize uniquelist
-                    Refs_Manager.unique_list.uniques.Add(Item());
-                    AddedToUniqueList = true;
-                }
-                catch
-                {
-                    Main.logger_instance?.Error("Mjolner Unique List Error");
-                }
-            }
-        }
-
-        private static void AddToDictionary()
-        {
-            if (
-                (AddedToUniqueList)
-                && (!AddedToDictionary)
-                && (!Refs_Manager.unique_list.IsNullOrDestroyed())
-            )
-            {
-                try
-                {
-                    UniqueList.Entry item = null;
-                    if (Refs_Manager.unique_list.uniques.Count > 1)
-                    {
-                        foreach (UniqueList.Entry unique in Refs_Manager.unique_list.uniques)
-                        {
-                            if (
-                                (unique.uniqueID == unique_id)
-                                && (unique.name == Locales.Get_UniqueName())
-                            )
-                            {
-                                item = unique;
-                                break;
-                            }
-                        }
-                    }
-                    if (!item.IsNullOrDestroyed())
-                    {
-                        Refs_Manager.unique_list.entryDictionary.Add(unique_id, item);
-                        AddedToDictionary = true;
-                    }
-                }
-                catch
-                {
-                    Main.logger_instance?.Error("Mjolner Unique Dictionary Error");
-                }
-            }
-        }
+        return entries;
     }
 
     private class Icon
@@ -312,7 +202,7 @@ public class Items_Mjolner : MonoBehaviour
         {
             return !item.IsNullOrDestroyed()
                 && item.isUniqueSetOrLegendary()
-                && item.uniqueID == Unique.unique_id;
+                && item.uniqueID == CustomUniqueSpecs.Mjolner.UniqueId;
         }
 
         private static readonly System.Collections.Generic.List<InventoryItemUI> inventoryIcons =
@@ -494,11 +384,6 @@ public class Items_Mjolner : MonoBehaviour
 
     private class Locales
     {
-        internal static string Get_UniqueName()
-        {
-            return CustomItemLocalization.Text(MjolnerTexts.UniqueName);
-        }
-
         internal static string Get_UniqueDescription()
         {
             string description = "";
@@ -820,23 +705,7 @@ public class Items_Mjolner : MonoBehaviour
             return description;
         }
 
-        internal static string Get_UniqueLore()
-        {
-            return CustomItemLocalization.Text(MjolnerTexts.Lore);
-        }
-
-        internal static void Register()
-        {
-            CustomItemTextTable table = CustomItemLocalization.Table;
-            table.Register(CustomItemKeys.UniqueName(Unique.unique_id), MjolnerTexts.UniqueName);
-            table.Register(
-                CustomItemKeys.UniqueTooltip(Unique.unique_id),
-                (System.Func<string, string>)(_ => DescriptionWhenSaveReady())
-            );
-            table.Register(CustomItemKeys.UniqueLore(Unique.unique_id), MjolnerTexts.Lore);
-        }
-
-        private static string DescriptionWhenSaveReady()
+        internal static string DescriptionWhenSaveReady()
         {
             if (Save_Manager.instance.IsNullOrDestroyed() || !Save_Manager.instance.initialized)
             {
@@ -1032,7 +901,7 @@ public class Items_Mjolner : MonoBehaviour
             {
                 if (
                     Refs_Manager.player_actor.itemContainersManager.hasUniqueEquipped(
-                        Unique.unique_id
+                        CustomUniqueSpecs.Mjolner.UniqueId
                     )
                     && (
                         Refs_Manager.player_actor.stats.GetAttributeValue(
