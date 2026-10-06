@@ -133,16 +133,38 @@ namespace LastEpoch_Hud.Scripts.Mods.Character
             }
         }
 
-        [HarmonyPatch(typeof(Il2Cpp.PaperDollContainer), "checkWeaponSlotCompatibility")]
+        [HarmonyPatch]
         public class PaperDollContainer_HandCompatibility
         {
+            static System.Collections.Generic.IEnumerable<System.Reflection.MethodBase> TargetMethods()
+            {
+                // This wrapper is absent in some generated assembly sets.
+                // Resolve its native compatibility method without a compile-time dependency.
+                foreach (var type in typeof(Il2Cpp.ItemContainersManager).Assembly.GetTypes())
+                {
+                    if (type.Name != "PaperDollContainer") continue;
+                    var method = AccessTools.DeclaredMethod(type, "checkWeaponSlotCompatibility",
+                        new[] { typeof(Il2Cpp.ItemData), typeof(int) });
+                    if (method != null) yield return method;
+                }
+            }
+
             [HarmonyPrefix]
-            static bool Prefix(Il2Cpp.PaperDollContainer __instance, Il2Cpp.ItemData __0,
+            static bool Prefix(object __instance, Il2Cpp.ItemData __0,
                 int __1, ref bool __result)
             {
-                if (!Enabled() || __0.IsNullOrDestroyed()
-                    || __1 < 0 || __1 >= __instance.Containers.Count) return true;
-                var id = __instance.Containers[__1].GetContainerID();
+                if (!Enabled() || __0.IsNullOrDestroyed() || __1 < 0) return true;
+                var containers = AccessTools.Property(__instance.GetType(), "Containers")
+                    ?.GetValue(__instance);
+                if (containers == null) return true;
+                var count = AccessTools.Property(containers.GetType(), "Count")?.GetValue(containers);
+                if (!(count is int length) || __1 >= length) return true;
+                var container = AccessTools.Property(containers.GetType(), "Item")
+                    ?.GetValue(containers, new object[] { __1 });
+                if (container == null) return true;
+                var containerId = AccessTools.Method(container.GetType(), "GetContainerID")
+                    ?.Invoke(container, null);
+                if (!(containerId is Il2Cpp.ContainerID id)) return true;
                 if ((id == Il2Cpp.ContainerID.EQ_WEAPON && IsWeapon(__0.itemType))
                     || (id == Il2Cpp.ContainerID.EQ_OFFHAND && IsHandItem(__0.itemType)))
                 {
