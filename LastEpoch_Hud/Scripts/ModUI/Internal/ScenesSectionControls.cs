@@ -55,18 +55,45 @@ internal static class ScenesSectionControls
         Title(dungeonTitle, "Dungeons");
         Title(miscTitle, "Misc");
         Title(minimapTitle, "Minimap");
-        // Fit the center column to its actual controls instead of filling the screen.
+        var camera = Prefab.Child(content, "Camera");
+        var cameraTitle = camera.IsNullOrDestroyed() ? null : Prefab.Child(camera, "Title");
+        var headerStyle = cameraTitle.IsNullOrDestroyed()
+            ? null
+            : cameraTitle.GetComponentInChildren<Text>(true);
+        if (!headerStyle.IsNullOrDestroyed())
+            foreach (var title in new[] { dungeonTitle, miscTitle, minimapTitle })
+            foreach (var text in title.GetComponentsInChildren<Text>(true))
+            {
+                text.font = headerStyle.font;
+                text.fontSize = headerStyle.fontSize;
+                text.fontStyle = headerStyle.fontStyle;
+                text.color = headerStyle.color;
+            }
+        // Keep the native full-height frame, with compact sections at the top.
         const float header = 28;
         const float dungeonHeight = 108;
         const float miscHeight = 104;
         const float minimapHeight = 52;
         const float gap = 8;
-        const float total = 3 * header + dungeonHeight + miscHeight + minimapHeight + 2 * gap + 8;
         var centerRect = center.GetComponent<RectTransform>();
-        centerRect.anchorMin = new Vector2(centerRect.anchorMin.x, centerRect.anchorMax.y);
-        centerRect.pivot = new Vector2(.5f, 1);
+        centerRect.anchorMin = new Vector2(centerRect.anchorMin.x, .010475103f);
+        centerRect.pivot = new Vector2(.5f, .5f);
         centerRect.anchoredPosition = Vector2.zero;
-        centerRect.sizeDelta = new Vector2(0, total);
+        centerRect.sizeDelta = Vector2.zero;
+        var background = Prefab.Child(center, "SectionBackground");
+        if (background.IsNullOrDestroyed())
+        {
+            background = Node(center, "SectionBackground");
+            var image = background.AddComponent<Image>();
+            var source = minimapPanel.GetComponent<Image>();
+            image.color = source.IsNullOrDestroyed() ? new Color(.14f, .14f, .14f) : source.color;
+            image.raycastTarget = false;
+        }
+        var backgroundRect = background.GetComponent<RectTransform>();
+        backgroundRect.anchorMin = new Vector2(.007f, .004f);
+        backgroundRect.anchorMax = new Vector2(.993f, .996f);
+        backgroundRect.offsetMin = backgroundRect.offsetMax = Vector2.zero;
+        background.transform.SetAsFirstSibling();
         float top = 4;
         Place(dungeonTitle, top, header);
         Place(dungeonPanel, top += header, dungeonHeight);
@@ -87,6 +114,80 @@ internal static class ScenesSectionControls
         }
         else
             SafeTeleportControls.Bind(content, miscContent);
+        MelonLoader.MelonCoroutines.Start(
+            MatchNativeRows(center, dungeons, minimap, miscContent, dungeonTitle)
+        );
+    }
+
+    static System.Collections.IEnumerator MatchNativeRows(
+        GameObject center,
+        GameObject dungeons,
+        GameObject minimap,
+        GameObject misc,
+        GameObject dungeonTitle
+    )
+    {
+        while (!center.IsNullOrDestroyed() && !center.activeInHierarchy)
+            yield return null;
+        yield return null;
+        yield return null;
+        if (
+            center.IsNullOrDestroyed()
+            || dungeons.IsNullOrDestroyed()
+            || minimap.IsNullOrDestroyed()
+        )
+            yield break;
+        Canvas.ForceUpdateCanvases();
+        var sample = minimap.GetComponentInChildren<Toggle>(true);
+        if (sample.IsNullOrDestroyed() || sample.targetGraphic.IsNullOrDestroyed())
+            yield break;
+        var sourceText = sample.GetComponentInChildren<Text>(true);
+        if (sourceText.IsNullOrDestroyed())
+            yield break;
+        var corners = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<Vector3>(4);
+        var sourceBox = sample.targetGraphic.GetComponent<RectTransform>();
+        sourceBox.GetWorldCorners(corners);
+        foreach (var toggle in dungeons.GetComponentsInChildren<Toggle>(true))
+        {
+            if (!toggle.gameObject.activeInHierarchy || toggle.targetGraphic.IsNullOrDestroyed())
+                continue;
+            var row = toggle.GetComponent<RectTransform>();
+            var box = toggle.targetGraphic.GetComponent<RectTransform>();
+            box.anchoredPosition = new Vector2(
+                row.InverseTransformPoint(corners[0]).x - row.rect.xMin,
+                0
+            );
+            box.sizeDelta = sourceBox.rect.size;
+            var label = Prefab.Child(toggle.gameObject, "Label");
+            if (!label.IsNullOrDestroyed())
+            {
+                var rect = label.GetComponent<RectTransform>();
+                rect.anchorMin = Vector2.zero;
+                rect.anchorMax = Vector2.one;
+                rect.offsetMin = new Vector2(box.anchoredPosition.x + box.rect.width + 3, 0);
+                rect.offsetMax = Vector2.zero;
+            }
+        }
+        foreach (var text in dungeons.GetComponentsInChildren<Text>(true))
+            MatchText(text, sourceText);
+        foreach (var text in misc.GetComponentsInChildren<Text>(true))
+            MatchText(text, sourceText);
+        // Dungeon header and description share the left edge of native labels.
+        foreach (var text in dungeonTitle.GetComponentsInChildren<Text>(true))
+        {
+            text.alignment = TextAnchor.MiddleLeft;
+            var rect = text.GetComponent<RectTransform>();
+            rect.offsetMin = new Vector2(8, rect.offsetMin.y);
+        }
+    }
+
+    static void MatchText(Text text, Text source)
+    {
+        text.font = source.font;
+        text.fontSize = source.fontSize;
+        text.fontStyle = source.fontStyle;
+        text.color = source.color;
+        text.alignment = TextAnchor.MiddleLeft;
     }
 
     static GameObject Node(GameObject parent, string name)

@@ -138,7 +138,7 @@ internal static class DungeonRevealControls
         bool value
     )
     {
-        var row = Node(section, name, .03f, bottom, .97f, top);
+        var row = Node(section, name, 0, bottom, 1, top);
         var toggle = row.AddComponent<Toggle>();
         var box = Node(row, "Box", 0, .5f, 0, .5f).AddComponent<Image>();
         var rect = box.GetComponent<RectTransform>();
@@ -174,6 +174,11 @@ internal static class DungeonRevealControls
         toggle.graphic = check;
         Label(row, "Label", font, label, .1f, 0, 1, 1);
         toggle.SetIsOnWithoutNotify(value);
+        var separator = Node(row, "Separator", 0, 0, 1, 0);
+        separator.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 1);
+        var line = separator.AddComponent<Image>();
+        line.color = new Color(.83f, .69f, .36f);
+        line.raycastTarget = false;
     }
 
     static void Save(Toggle toggle)

@@ -39,3 +39,6 @@ CSharpier 1.3.0 formatting and check passed for all 156 C# files. The normal bui
 - Correct panel positioning to target the outer scroll panels, keep inner content at the top, and provide the standard Misc/Viewport/Content hierarchy for Safe Teleport binding. Hide unused scrollbars in the compact panels.
 
 - Give Dungeons and Misc panels additional bottom room so their descriptions are not clipped by the native viewport.
+
+- Restore the center column outer frame to full available height, with a grey interior below the compact sections.
+- Match dungeon/Misc text to native Minimap labels, left-align dungeon text, align dungeon checkboxes with native rows, and add gold row dividers.
