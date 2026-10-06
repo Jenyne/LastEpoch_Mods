@@ -378,5 +378,6 @@
   "CustomItem.EssentiaSanguis.Lore": "最黑暗的乌云碰撞交合,\r\n诞下四个憎恨的闪电之子。",
   "CustomItem.SandsOfSilk.Subtype": "遮蔽长衣",
   "CustomItem.SandsOfSilk.Name": "流丝之沙",
-  "CustomItem.SandsOfSilk.Lore": "沙漠永远在流动。"
+  "CustomItem.SandsOfSilk.Lore": "沙漠永远在流动。",
+  "End of Time waypoint required. Bind a key or modifier + key.": "需要解锁时间终焉传送点。绑定按键或组合键。"
 }

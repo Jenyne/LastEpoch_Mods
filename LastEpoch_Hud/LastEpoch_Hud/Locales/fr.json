@@ -367,5 +367,6 @@
   "CustomItem.EssentiaSanguis.Lore": "Les nuages les plus sombres s'entrechoquèrent et s'accouplèrent,\r\nenfantant quatre enfants de foudre et de haine.",
   "CustomItem.SandsOfSilk.Subtype": "Veste voilée",
   "CustomItem.SandsOfSilk.Name": "Sables de soie",
-  "CustomItem.SandsOfSilk.Lore": "Le désert coule sans cesse."
+  "CustomItem.SandsOfSilk.Lore": "Le désert coule sans cesse.",
+  "End of Time waypoint required. Bind a key or modifier + key.": "Le point de passage de la Fin des Temps est requis. Assignez une touche ou un modificateur + une touche."
 }

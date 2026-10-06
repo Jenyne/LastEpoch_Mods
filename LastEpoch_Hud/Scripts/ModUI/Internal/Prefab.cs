@@ -183,22 +183,6 @@ public static class Prefab
 
     public static void ReplaceAllText(GameObject root)
     {
-        if (Locales.current_dictionary == null)
-            return;
-        ForEachDescendant(
-            root,
-            go =>
-            {
-                var text = go.GetComponent<Text>();
-                if (text == null)
-                    return;
-                if (text.text.Length == 0)
-                    return;
-                if (Array.IndexOf(Locales.igrone_str, text.text[0]) >= 0)
-                    return;
-                if (Locales.TryGetTranslation(text.text, out string translated))
-                    text.text = translated;
-            }
-        );
+        LocaleRegistry.RefreshTree(root);
     }
 }
