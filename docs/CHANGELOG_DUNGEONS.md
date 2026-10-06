@@ -27,3 +27,11 @@ The integrated branch needs a brief in-game regression check: reveal on multiple
 Use the existing MakeRelease.ps1 and docs/RELEASING.md for publishing. This change does not alter the installer asset names or packaging.
 
 CSharpier 1.3.0 formatting and check passed for all 156 C# files. The normal build and test suite could not run here because MSBuild failed during process-information initialization. A direct compiler attempt was also blocked by the local Il2CppLE.dll being unreadable as managed metadata. These are verification limitations; a normal Windows build, `dotnet run --project LastEpoch_Hud.Tests`, and the integration gameplay check remain required.
+
+## Scenes layout follow-up
+
+- Replace the oversized Teleport/Minimap arrangement with compact Dungeons, Misc and Minimap panels.
+- Keep dungeon reveal and keyless entry in Dungeons; move Safe Teleport to Misc.
+- Minimap contains only Max Zoom Out and Remove Fog of War.
+- Reuse native gold panel headers and borders, with translated section labels.
+- Preserve saved settings and keybinds. This layout follow-up needs in-game verification.

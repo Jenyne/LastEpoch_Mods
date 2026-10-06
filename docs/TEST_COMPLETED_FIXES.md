@@ -13,7 +13,7 @@ This is a combined regression build. The individual completed features were test
 | Dungeon objective reveal | Scenes → Dungeons | Reveal on multiple floors, complete a run, and leave enabled for several minutes without a crash. Toggle on while already on a floor. |
 | Enter Without Key | Scenes → Dungeons | Enter without a key; select an optional portal charm before continuing; confirm the charm modifier applies. |
 | Ignore Weapon Restrictions | Character → Cheats | Equip 2H + 2H, 2H + shield, and 2H + 1H; confirm both items contribute stats and survive save/reload. |
-| Safe Teleport | Scenes → Minimap | Capture Shift+Q or Ctrl+Q, teleport, restart and confirm the binding persists. Verify AutoCast and Safe Teleport reject conflicting bindings. |
+| Safe Teleport | Scenes → Misc | Capture Shift+Q or Ctrl+Q, teleport, restart and confirm the binding persists. Verify AutoCast and Safe Teleport reject conflicting bindings. |
 | Infinite Forging Potential | Items → crafting controls | Craft with the option enabled and confirm potential stays unchanged. Disable it and confirm normal cost resumes. Deselect All should clear other crafting cheats while leaving Infinite untouched. |
 | Add 10,000 Memory Amber | Character → Cheats | As a Woven member, click once and confirm exactly +10,000, including with the multiplier enabled. Check save/reload. |
 | Add 1,000 Soul Embers | Character → Cheats → Currencies | Click once and confirm +1,000, reopen the HUD and repeat. Confirm the old input/slider row is gone from Data. |
@@ -79,3 +79,7 @@ The historical changelogs describe each task separately. This document is the cu
 ## Integration validation
 
 CSharpier formatting, whitespace checks, and locale JSON/key checks were run locally. MSBuild cannot initialize process-information APIs in this execution environment, so the full build and automated .NET suite remain unverified here. The initial combined build was confirmed working in game. The user reported the intermittent Mjölner icon problem, which is left to the custom-item maintainer. This layout follow-up requires a Windows build and in-game testing.
+
+## Scenes layout follow-up
+
+Dungeons, Misc and Minimap are compact separate sections in the center column. Misc contains Safe Teleport; Minimap contains only Zoom and Fog of War. Verify all controls remain clickable, modifier binding still persists, and section borders/labels fit at the usual HUD scale.

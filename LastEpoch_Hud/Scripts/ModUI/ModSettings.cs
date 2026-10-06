@@ -100,10 +100,10 @@ public static class ModSettings
 
     public static class SafeTeleport
     {
-        // UI is built below Minimap in Scenes; keep the same save group and keys.
+        // UI is built in Scenes Misc; keep the same save group and keys.
         public static readonly SettingsGroup Group = new SettingsGroup("SafeTeleport").Viewport(
             "Center",
-            "Scenes_Minimap_Content"
+            "Scenes_Misc_Content"
         );
         public static readonly BoolSetting Enabled = Group.Bool(
             "Enabled",
@@ -152,10 +152,7 @@ public static class ModSettings
             .OnBind(
                 (contentObj, _) =>
                 {
-                    SafeTeleportControls.Bind(
-                        contentObj,
-                        Prefab.ViewportContent(contentObj, "Center", "Scenes_Minimap_Content")
-                    );
+                    ScenesSectionControls.Bind(contentObj);
                     // Apply to existing asset bundles as well as the updated prefab.
                     LayoutPanel(contentObj, "Camera", 0.006f, 0.505f, 0.33229983f, 0.9895249f);
                     LayoutPanel(

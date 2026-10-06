@@ -9,11 +9,13 @@ internal static class SafeTeleportControls
     {
         if (viewport.IsNullOrDestroyed() || Prefab.Child(viewport, "SafeTeleport") != null)
             return;
-        var sample = viewport.GetComponentInChildren<Text>(true);
+        var minimap = Prefab.ViewportContent(content, "Center", "Scenes_Minimap_Content");
+        var styleSource = minimap.IsNullOrDestroyed() ? viewport : minimap;
+        var sample = styleSource.GetComponentInChildren<Text>(true);
         if (sample.IsNullOrDestroyed())
             return;
         Font font = sample.font;
-        var styleToggle = viewport.GetComponentInChildren<Toggle>(true);
+        var styleToggle = styleSource.GetComponentInChildren<Toggle>(true);
         var section = Node(viewport, "SafeTeleport", 0, 0, 1, 1);
         var rect = section.GetComponent<RectTransform>();
         var layout = section.AddComponent<LayoutElement>();

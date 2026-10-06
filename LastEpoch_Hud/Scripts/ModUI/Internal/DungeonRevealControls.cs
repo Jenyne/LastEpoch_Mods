@@ -32,20 +32,19 @@ internal static class DungeonRevealControls
         rect.anchorMin = new Vector2(0, 1);
         rect.anchorMax = new Vector2(1, 1);
         rect.pivot = new Vector2(.5f, 1);
-        rect.sizeDelta = new Vector2(0, 120);
+        rect.sizeDelta = new Vector2(0, 88);
         var layout = section.AddComponent<LayoutElement>();
-        layout.minHeight = 120;
-        layout.preferredHeight = 120;
+        layout.minHeight = 88;
+        layout.preferredHeight = 88;
         layout.flexibleHeight = 0;
-        Label(section, "Title", sample.font, "Dungeons", .03f, .78f, .97f, 1);
         Checkbox(
             section,
             RevealName,
             "Reveal Dungeon Objectives",
             sample.font,
             style,
-            .51f,
-            .76f,
+            .56f,
+            .96f,
             ModSettings.DungeonReveal.Enabled.Value
         );
         bool keyless =
@@ -59,7 +58,7 @@ internal static class DungeonRevealControls
             sample.font,
             style,
             .25f,
-            .50f,
+            .55f,
             keyless
         );
         var line = Node(section, "Separator", .01f, .22f, .99f, .22f);
@@ -122,7 +121,7 @@ internal static class DungeonRevealControls
             rect.anchoredPosition = new Vector2(0, bottom - parent.rect.yMax - 8);
             parent.SetSizeWithCurrentAnchors(
                 RectTransform.Axis.Vertical,
-                Mathf.Max(parent.rect.height, -rect.anchoredPosition.y + 120)
+                Mathf.Max(parent.rect.height, -rect.anchoredPosition.y + 88)
             );
         }
         LayoutRebuilder.ForceRebuildLayoutImmediate(viewport.GetComponent<RectTransform>());
