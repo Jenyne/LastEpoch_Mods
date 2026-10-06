@@ -22,6 +22,18 @@ namespace LastEpoch_Hud.Scripts.Mods.Dungeons
             }
         }
 
+        [HarmonyPatch(typeof(DungeonEnterPanelUI), "onKeyExit")]
+        static class KeyRemoved
+        {
+            [HarmonyPostfix]
+            static void Postfix(DungeonEnterPanelUI __instance)
+            {
+                // Removing an inserted key must not disable free entry.
+                if (CanRun() && !__instance.keysEnterDungeonButton.IsNullOrDestroyed())
+                    __instance.keysEnterDungeonButton.interactable = true;
+            }
+        }
+
         [HarmonyPatch(typeof(DungeonEnterPanelUI), "Open")]
         static class OpenEntryPanel
         {
@@ -31,10 +43,10 @@ namespace LastEpoch_Hud.Scripts.Mods.Dungeons
                 if (!CanRun()) return;
                 if (!__instance.tierSelectionHolder.IsNullOrDestroyed()
                     && __instance.tierSelectionHolder.activeSelf) return;
-                // Without a key insertion there is no onKeyEnter event to advance
-                // the entry UI. Use its normal request/unlocked-tier flow instead.
-                __instance.ProceedToTierSelection();
-                Main.logger_instance?.Msg("Keyless dungeon entry: requested native tier selection");
+                // Leave the key/charm screen open. The existing button requests
+                // tier selection after the player has chosen an optional charm.
+                if (!__instance.keysEnterDungeonButton.IsNullOrDestroyed())
+                    __instance.keysEnterDungeonButton.interactable = true;
             }
         }
     }
