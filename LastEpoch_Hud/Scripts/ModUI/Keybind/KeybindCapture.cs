@@ -107,6 +107,14 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
         private static void Commit(string binding)
         {
+            if (KeybindMatcher.Rejects(current, binding))
+            {
+                Main.logger_instance?.Warning("Binding rejected: AutoCast and Safe Teleport cannot share a key or modifier combination.");
+                if (displayText != null)
+                    displayText.text = "Conflict with AutoCast / Safe Teleport. Press another key.";
+                pendingModifier = KeyCode.None;
+                return;
+            }
             ModSettings.Trace("KeybindCapture committed: " + binding);
             var s = current;
             current = null;
