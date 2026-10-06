@@ -59,39 +59,59 @@ public sealed class CustomUniqueLookupTests
         Assert.Equal(-1, CustomUniqueLookup.IconIndexOf(assetName));
     }
 
-    [Theory]
-    [InlineData(4, 15, 503, 0, 22)]
-    [InlineData(1, 71, 502, 0, 7)]
-    public void VisualSource_EsAndSos_ReturnBorrowedItem(
-        int equipmentType,
-        int subType,
-        int uniqueId,
-        int sourceSubType,
-        int sourceUniqueId
-    )
+    [Fact]
+    public void VisualSource_RegisteredEs_ReturnsEsVisual()
     {
-        CustomItemVisualSource source = CustomUniqueLookup.VisualSource(
-            equipmentType,
-            subType,
-            uniqueId
-        );
+        CustomItemVisualSource source = CustomUniqueLookup.VisualSource(4, 40, 503, FilledTable());
 
-        Assert.NotNull(source);
-        Assert.Equal(sourceSubType, source.SubType);
-        Assert.Equal((ushort)sourceUniqueId, source.UniqueId);
+        Assert.Same(CustomUniqueSpecs.EssentiaSanguis.VisualSource, source);
+    }
+
+    [Fact]
+    public void VisualSource_RegisteredSos_ReturnsSosVisual()
+    {
+        CustomItemVisualSource source = CustomUniqueLookup.VisualSource(1, 41, 502, FilledTable());
+
+        Assert.Same(CustomUniqueSpecs.SandsOfSilk.VisualSource, source);
     }
 
     [Theory]
-    [InlineData(1, 15, 503)]
-    [InlineData(4, 0, 503)]
-    [InlineData(2, 0, 500)]
+    [InlineData(4, 40, 503)]
+    [InlineData(4, -1, 503)]
+    public void VisualSource_NotRegistered_ReturnsNull(int equipmentType, int subType, int uniqueId)
+    {
+        Assert.Null(
+            CustomUniqueLookup.VisualSource(
+                equipmentType,
+                subType,
+                uniqueId,
+                new CustomUniqueSubtypes()
+            )
+        );
+    }
+
+    [Theory]
+    [InlineData(4, 15, 503)]
+    [InlineData(1, 40, 503)]
+    [InlineData(4, 41, 503)]
+    [InlineData(4, 40, 22)]
+    [InlineData(4, 40, 0)]
+    [InlineData(2, 42, 500)]
     [InlineData(7, 10, 501)]
-    [InlineData(4, 0, 22)]
-    [InlineData(4, 15, 0)]
-    [InlineData(1, 71, 0)]
-    [InlineData(4, 15, 22)]
     public void VisualSource_NoMatch_ReturnsNull(int equipmentType, int subType, int uniqueId)
     {
-        Assert.Null(CustomUniqueLookup.VisualSource(equipmentType, subType, uniqueId));
+        Assert.Null(
+            CustomUniqueLookup.VisualSource(equipmentType, subType, uniqueId, FilledTable())
+        );
+    }
+
+    private static CustomUniqueSubtypes FilledTable()
+    {
+        var table = new CustomUniqueSubtypes();
+        table.Set(503, 40);
+        table.Set(502, 41);
+        table.Set(500, 42);
+        table.Set(501, 10);
+        return table;
     }
 }

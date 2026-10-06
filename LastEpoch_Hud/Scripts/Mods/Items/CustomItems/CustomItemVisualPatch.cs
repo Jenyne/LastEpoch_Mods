@@ -14,7 +14,8 @@ public class CustomItemVisualPatch
         CustomItemVisualSource source = CustomUniqueLookup.VisualSource(
             (int)__0.EquipmentType,
             __0.SubType,
-            __0.UniqueID
+            __0.UniqueID,
+            CustomUniqueItems.Subtypes
         );
         if (source == null)
         {

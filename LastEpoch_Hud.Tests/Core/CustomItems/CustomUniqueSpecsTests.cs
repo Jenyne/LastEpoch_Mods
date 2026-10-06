@@ -7,8 +7,8 @@ public sealed class CustomUniqueSpecsTests
     [Theory]
     [InlineData("Headhunter", 500, 2, -1, true, 40, true, 0)]
     [InlineData("Mjolner", 501, 7, 10, false, 78, false, 60)]
-    [InlineData("Sands of Silk", 502, 1, 71, true, 16, true, 0)]
-    [InlineData("Essentia Sanguis", 503, 4, 15, true, 52, true, 0)]
+    [InlineData("Sands of Silk", 502, 1, -1, true, 16, true, 0)]
+    [InlineData("Essentia Sanguis", 503, 4, -1, true, 52, true, 0)]
     public void Spec_HoldsTodaysValues(
         string name,
         int uniqueId,
@@ -52,6 +52,22 @@ public sealed class CustomUniqueSpecsTests
         var ids = CustomUniqueSpecs.All.Select(s => s.UniqueId).ToList();
 
         Assert.Equal(CustomUniqueSpecs.All.Count, ids.Distinct().Count());
+    }
+
+    [Fact]
+    public void AddsBase_AllocatesBaseId()
+    {
+        var adding = CustomUniqueSpecs.All.Where(s => s.AddsBase).ToList();
+
+        Assert.All(adding, spec => Assert.Equal(CustomUniqueSpec.AllocateBaseId, spec.BaseId));
+    }
+
+    [Fact]
+    public void ReusedBase_HasFixedBaseId()
+    {
+        var reusing = CustomUniqueSpecs.All.Where(s => !s.AddsBase).ToList();
+
+        Assert.All(reusing, spec => Assert.True(spec.BaseId >= 0));
     }
 
     [Fact]
@@ -115,11 +131,10 @@ public sealed class CustomUniqueSpecsTests
     }
 
     [Fact]
-    public void VisualSources_UseFixedBaseAndGameUnique()
+    public void VisualSources_BorrowGameUnique()
     {
         var withSource = CustomUniqueSpecs.All.Where(s => s.VisualSource != null).ToList();
 
-        Assert.All(withSource, spec => Assert.True(spec.BaseId >= 0));
         Assert.All(
             withSource,
             spec => Assert.Equal(-1, CustomUniqueLookup.IndexOf(spec.VisualSource.UniqueId))

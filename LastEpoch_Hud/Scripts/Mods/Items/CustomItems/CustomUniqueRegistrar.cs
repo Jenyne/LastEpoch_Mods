@@ -81,7 +81,7 @@ public sealed class CustomUniqueRegistrar
         );
         if (baseId == CustomItemIds.None)
         {
-            Fail("no free subtype id for base " + _definition.Spec.BaseId);
+            Fail("no free subtype id for base type " + _definition.Spec.BaseType);
             return;
         }
 
@@ -118,6 +118,7 @@ public sealed class CustomUniqueRegistrar
         }
 
         Refs_Manager.unique_list.entryDictionary.Add(_definition.Spec.UniqueId, _entry);
+        CustomUniqueItems.Subtypes.Set(_definition.Spec.UniqueId, BaseId);
         _progress.Complete();
     }
 

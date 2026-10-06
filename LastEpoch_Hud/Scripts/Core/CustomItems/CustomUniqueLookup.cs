@@ -41,21 +41,32 @@ public static class CustomUniqueLookup
         return -1;
     }
 
-    /// <summary>Visual borrowed by the item matching all three keys, null if none.</summary>
-    public static CustomItemVisualSource VisualSource(int equipmentType, int subType, int uniqueId)
+    /// <summary>Visual borrowed by our registered unique matching all keys, null if none.</summary>
+    public static CustomItemVisualSource VisualSource(
+        int equipmentType,
+        int subType,
+        int uniqueId,
+        CustomUniqueSubtypes registered
+    )
     {
-        for (int i = 0; i < CustomUniqueSpecs.All.Count; i++)
+        int index = IndexOf(uniqueId);
+        if (index < 0)
         {
-            CustomUniqueSpec spec = CustomUniqueSpecs.All[i];
-            if (
-                spec.BaseType == equipmentType
-                && spec.BaseId == subType
-                && spec.UniqueId == uniqueId
-            )
-            {
-                return spec.VisualSource;
-            }
+            return null;
         }
-        return null;
+
+        CustomUniqueSpec spec = CustomUniqueSpecs.All[index];
+        if (spec.BaseType != equipmentType)
+        {
+            return null;
+        }
+
+        int registeredSubType = registered.Get(uniqueId);
+        if (registeredSubType == CustomItemIds.None || registeredSubType != subType)
+        {
+            return null;
+        }
+
+        return spec.VisualSource;
     }
 }

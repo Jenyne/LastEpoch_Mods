@@ -36,7 +36,7 @@ public static class CustomUniqueSpecs
         Name = "Sands of Silk",
         UniqueId = 502,
         BaseType = 1, // Body armor
-        BaseId = 71,
+        BaseId = CustomUniqueSpec.AllocateBaseId,
         AddsBase = true,
         LevelRequirement = 16,
         OverrideLevelRequirement = true,
@@ -50,7 +50,7 @@ public static class CustomUniqueSpecs
         Name = "Essentia Sanguis",
         UniqueId = 503,
         BaseType = 4, // Gloves
-        BaseId = 15,
+        BaseId = CustomUniqueSpec.AllocateBaseId,
         AddsBase = true,
         LevelRequirement = 52,
         OverrideLevelRequirement = true,
