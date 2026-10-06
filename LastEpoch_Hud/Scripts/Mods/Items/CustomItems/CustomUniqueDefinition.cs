@@ -2,7 +2,7 @@ using System;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 
 /// <summary>Everything one custom unique hands to the registrar.</summary>
 public sealed class CustomUniqueDefinition

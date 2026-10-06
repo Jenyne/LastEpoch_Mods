@@ -2,7 +2,7 @@ using System;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 
 /// <summary>Adds one custom unique to the game's item and unique lists.</summary>
 public sealed class CustomUniqueRegistrar

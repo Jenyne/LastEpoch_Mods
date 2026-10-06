@@ -4,6 +4,7 @@
 
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.SceneManagement;

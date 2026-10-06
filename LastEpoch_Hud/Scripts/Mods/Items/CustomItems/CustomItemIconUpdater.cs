@@ -1,7 +1,7 @@
 using MelonLoader;
 using UnityEngine;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 
 /// <summary>Loads the custom item icons and keeps them on the views each frame.</summary>
 [RegisterTypeInIl2Cpp]

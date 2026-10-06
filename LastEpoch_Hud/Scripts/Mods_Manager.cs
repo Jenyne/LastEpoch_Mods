@@ -160,7 +160,7 @@ public class Mods_Manager : MonoBehaviour
             Vector3.zero,
             Quaternion.identity
         );
-        items_sandsofsilk_obj.AddComponent<Mods.Items.Items_SandsOfSilk>();
+        items_sandsofsilk_obj.AddComponent<Mods.Items.CustomItems.SandsOfSilk.Items_SandsOfSilk>();
         Mods_Objects.Add(items_sandsofsilk_obj);
 
         items_essentiasanguis_obj = Object.Instantiate(
@@ -168,7 +168,7 @@ public class Mods_Manager : MonoBehaviour
             Vector3.zero,
             Quaternion.identity
         );
-        items_essentiasanguis_obj.AddComponent<Mods.Items.Items_EssentiaSanguis>();
+        items_essentiasanguis_obj.AddComponent<Mods.Items.CustomItems.EssentiaSanguis.Items_EssentiaSanguis>();
         Mods_Objects.Add(items_essentiasanguis_obj);
 
         GameObject customIconsObj = Object.Instantiate(
@@ -176,7 +176,7 @@ public class Mods_Manager : MonoBehaviour
             Vector3.zero,
             Quaternion.identity
         );
-        customIconsObj.AddComponent<Mods.Items.CustomItemIconUpdater>();
+        customIconsObj.AddComponent<Mods.Items.CustomItems.CustomItemIconUpdater>();
         Mods_Objects.Add(customIconsObj);
 
         items_temporalis_obj = Object.Instantiate(

@@ -1,7 +1,7 @@
 using System.Collections.Generic;
 using Il2Cpp;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 
 /// <summary>Keeps our icon on the inventory and stash views that show a custom unique.</summary>
 public static class CustomItemInventoryIcons

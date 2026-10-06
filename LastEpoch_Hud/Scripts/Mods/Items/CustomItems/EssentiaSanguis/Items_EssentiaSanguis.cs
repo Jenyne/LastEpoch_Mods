@@ -1,27 +1,20 @@
-﻿using HarmonyLib;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 using MelonLoader;
 using UnityEngine;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.EssentiaSanguis;
 
 [RegisterTypeInIl2Cpp]
 public class Items_EssentiaSanguis : MonoBehaviour
 {
     private static readonly CustomUniqueRegistrar _registrar = new(CreateDefinition());
 
-    public static Items_EssentiaSanguis instance { get; private set; }
-
     public Items_EssentiaSanguis(System.IntPtr ptr)
         : base(ptr) { }
 
-    void Awake()
-    {
-        instance = this;
-    }
-
-    void Update()
+    private void Update()
     {
         _registrar.Update();
     }
@@ -133,35 +126,5 @@ public class Items_EssentiaSanguis : MonoBehaviour
         result.Add(new UniqueModDisplayListEntry(128));
 
         return result;
-    }
-
-    public class Hooks
-    {
-        [HarmonyPatch(typeof(PlayerLeechTracker), "AddLifeLeech")]
-        public class PlayerLeechTracker_AddLifeLeech
-        {
-            [HarmonyPrefix]
-            static bool Prefix(PlayerLeechTracker __instance, float __0)
-            {
-                bool r = true;
-                if (
-                    (!Refs_Manager.player_actor.IsNullOrDestroyed())
-                    && (!Refs_Manager.player_protection_class.IsNullOrDestroyed())
-                )
-                {
-                    if (
-                        Refs_Manager.player_actor.itemContainersManager.hasUniqueEquipped(
-                            CustomUniqueSpecs.EssentiaSanguis.UniqueId
-                        )
-                    )
-                    {
-                        float ward = Refs_Manager.player_protection_class.CurrentWard;
-                        Refs_Manager.player_protection_class.CurrentWard += __0;
-                        r = false;
-                    }
-                }
-                return r;
-            }
-        }
     }
 }

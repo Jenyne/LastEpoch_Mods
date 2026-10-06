@@ -1,7 +1,7 @@
 using Il2Cpp;
 using UnityEngine.UI;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 
 /// <summary>One tooltip image set we keep a custom icon on.</summary>
 internal sealed class CustomItemTooltipBinding

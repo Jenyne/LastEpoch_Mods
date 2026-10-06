@@ -1,7 +1,7 @@
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 
 /// <summary>Tells whether a game item is one of our custom uniques.</summary>
 public static class CustomUniqueItems

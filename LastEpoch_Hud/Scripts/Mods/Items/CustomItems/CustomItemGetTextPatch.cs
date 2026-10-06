@@ -1,6 +1,6 @@
 using HarmonyLib;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 
 [HarmonyPatch(typeof(Il2Cpp.Localization), "GetText")]
 public class CustomItemGetTextPatch

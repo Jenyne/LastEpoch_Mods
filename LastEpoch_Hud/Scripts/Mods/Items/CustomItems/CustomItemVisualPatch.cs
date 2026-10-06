@@ -3,7 +3,7 @@ using Il2CppLE.Services.Models.Items;
 using Il2CppLE.Services.Visuals;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 
 [HarmonyPatch(typeof(ClientVisualsService), "GetItemVisual")]
 public class CustomItemVisualPatch

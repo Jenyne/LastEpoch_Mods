@@ -1,26 +1,20 @@
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 using MelonLoader;
 using UnityEngine;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.SandsOfSilk;
 
 [RegisterTypeInIl2Cpp]
 public class Items_SandsOfSilk : MonoBehaviour
 {
     private static readonly CustomUniqueRegistrar _registrar = new(CreateDefinition());
 
-    public static Items_SandsOfSilk instance { get; private set; }
-
     public Items_SandsOfSilk(System.IntPtr ptr)
         : base(ptr) { }
 
-    void Awake()
-    {
-        instance = this;
-    }
-
-    void Update()
+    private void Update()
     {
         _registrar.Update();
     }

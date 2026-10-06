@@ -1,6 +1,6 @@
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 
 /// <summary>Shared text table and current game language for custom items.</summary>
 public static class CustomItemLocalization

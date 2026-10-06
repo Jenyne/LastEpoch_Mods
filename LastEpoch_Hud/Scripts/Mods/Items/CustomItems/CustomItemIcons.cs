@@ -4,7 +4,7 @@ using LastEpoch_Hud.Scripts.Core.CustomItems;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 
 /// <summary>Icons of the custom uniques, loaded once from the HUD bundle.</summary>
 public static class CustomItemIcons

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using Il2Cpp;
 using UnityEngine.UI;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 
 /// <summary>Keeps our icon on the item and comparison tooltips that show a custom unique.</summary>
 public static class CustomItemTooltipIcons
