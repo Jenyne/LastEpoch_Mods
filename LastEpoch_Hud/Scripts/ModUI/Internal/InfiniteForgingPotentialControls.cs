@@ -14,11 +14,15 @@ namespace LastEpoch_Hud.Scripts.ModUI
             var sample = panel.GetComponentInChildren<Text>(true);
             if (original.IsNullOrDestroyed() || sample.IsNullOrDestroyed()) return;
             var sourceToggle = original.GetComponent<Toggle>();
-            var oldRect = original.GetComponent<RectTransform>();
-            if (!oldRect.IsNullOrDestroyed()) oldRect.anchorMax = new Vector2(.66f, oldRect.anchorMax.y);
-            var go = Node(panel, "InfiniteForgingPotential", .69f, .58f, .99f, .98f);
+            if (Prefab.Child(viewport, "InfiniteForgingPotential") != null) return;
+            var go = Node(viewport, "InfiniteForgingPotential", 0, 1, 1, 1);
+            var rowRect = go.GetComponent<RectTransform>();
+            rowRect.pivot = new Vector2(.5f, 1);
+            rowRect.sizeDelta = new Vector2(0, 30);
+            go.AddComponent<LayoutElement>().preferredHeight = 30;
             var toggle = go.AddComponent<Toggle>();
-            var box = Node(go, "Box", 0, .12f, .20f, .88f).AddComponent<Image>();
+            var box = Node(go, "Box", .03f, .5f, .03f, .5f).AddComponent<Image>();
+            box.rectTransform.sizeDelta = new Vector2(18, 18);
             var sourceBox = sourceToggle.IsNullOrDestroyed() ? null : sourceToggle.targetGraphic as Image;
             box.sprite = sourceBox.IsNullOrDestroyed() ? null : sourceBox.sprite;
             box.type = sourceBox.IsNullOrDestroyed() ? Image.Type.Simple : sourceBox.type;
@@ -31,18 +35,58 @@ namespace LastEpoch_Hud.Scripts.ModUI
             toggle.targetGraphic = box; toggle.graphic = check;
             if (!sourceToggle.IsNullOrDestroyed())
             { toggle.colors = sourceToggle.colors; toggle.transition = sourceToggle.transition; }
-            var label = Node(go, "Label", .25f, 0, 1, 1).AddComponent<Text>();
+            var label = Node(go, "Label", .10f, 0, .98f, 1).AddComponent<Text>();
             label.font = sample.font; label.fontSize = 13; label.color = sample.color;
             label.alignment = TextAnchor.MiddleLeft; label.raycastTarget = false;
-            Prefab.ApplyLabel(label, "Infinite");
+            Prefab.ApplyLabel(label, "Infinite Forging Potential");
             ModSettings.InfiniteForgingPotential.Enabled.Changed += value =>
             {
                 if (!toggle.IsNullOrDestroyed()) toggle.SetIsOnWithoutNotify(value);
             };
             Main.logger_instance?.Msg("Infinite Forging Potential checkbox bound in Items > Crafting.");
+            MelonLoader.MelonCoroutines.Start(PositionRow(viewport, go));
             toggle.SetIsOnWithoutNotify(ModSettings.InfiniteForgingPotential.Enabled.Value);
             Prefab.BindToggle(toggle, new System.Action<bool>(v => ModSettings.InfiniteForgingPotential.Enabled.Set(v)));
         }
+        static System.Collections.IEnumerator PositionRow(GameObject viewport, GameObject row)
+        {
+            while (!viewport.IsNullOrDestroyed() && !viewport.activeInHierarchy) yield return null;
+            if (viewport.IsNullOrDestroyed() || row.IsNullOrDestroyed()) yield break;
+            yield return null;
+            Canvas.ForceUpdateCanvases();
+            var contentRect = viewport.GetComponent<RectTransform>();
+            if (contentRect.IsNullOrDestroyed()) yield break;
+            if (!viewport.GetComponent<VerticalLayoutGroup>().IsNullOrDestroyed())
+            {
+                row.transform.SetAsFirstSibling();
+                LayoutRebuilder.MarkLayoutForRebuild(contentRect);
+                yield break;
+            }
+            // Preserve existing row geometry before enlarging the scroll content.
+            var rects = new System.Collections.Generic.List<RectTransform>();
+            var centers = new System.Collections.Generic.List<Vector2>();
+            var sizes = new System.Collections.Generic.List<Vector2>();
+            for (int i = 0; i < viewport.transform.childCount; i++)
+            {
+                var child = viewport.transform.GetChild(i).GetComponent<RectTransform>();
+                if (child.IsNullOrDestroyed() || child.gameObject == row) continue;
+                rects.Add(child);
+                centers.Add(new Vector2(child.localPosition.x, child.localPosition.y) - contentRect.rect.center);
+                sizes.Add(child.rect.size);
+            }
+            float height = contentRect.rect.height;
+            contentRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height + 34);
+            for (int i = 0; i < rects.Count; i++)
+            {
+                var child = rects[i];
+                child.anchorMin = child.anchorMax = new Vector2(.5f, 1);
+                child.sizeDelta = sizes[i];
+                // The old pivot's position, measured from the old content top.
+                child.anchoredPosition = new Vector2(centers[i].x, centers[i].y - height / 2 - 34);
+            }
+            row.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+        }
+
         static GameObject Node(GameObject parent, string name, float left, float bottom, float right, float top)
         {
             var go = new GameObject(name);
