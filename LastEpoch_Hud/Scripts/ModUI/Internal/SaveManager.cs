@@ -71,9 +71,17 @@ namespace LastEpoch_Hud.Scripts.ModUI
             if (saveTimer < SaveInterval)
                 return;
             saveTimer = 0f;
-            ModSettings.ClearDirty();
             ModSettings.Trace("SaveManager.Update flushing (debounce hit)");
             Save();
+            ModSettings.ClearDirty();
+        }
+
+        void OnApplicationQuit()
+        {
+            if (!initialized || !ModSettings.Dirty) return;
+            try { Save(); ModSettings.ClearDirty(); }
+            catch (System.Exception ex)
+            { Main.logger_instance?.Error("ModUI settings save on exit failed: " + ex.Message); }
         }
 
         private void Load()
@@ -127,6 +135,13 @@ namespace LastEpoch_Hud.Scripts.ModUI
             if (needsRewrite)
                 ModSettings.Difficulty.CapLevelToZone.Value = false;
 
+            if (KeybindMatcher.Conflicts(ModSettings.SafeTeleport.Key.Value,
+                ModSettings.SkillsAutoCast.ModifierKey.Value))
+            {
+                ModSettings.SafeTeleport.Key.Value = "";
+                needsRewrite = true;
+                Main.logger_instance?.Warning("Saved bindings conflict: Safe Teleport unbound; AutoCast binding preserved.");
+            }
             initialized = true;
 
             if (needsRewrite)
