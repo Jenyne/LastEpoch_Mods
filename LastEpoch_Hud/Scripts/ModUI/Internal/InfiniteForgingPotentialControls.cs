@@ -1,3 +1,4 @@
+using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,14 +17,21 @@ namespace LastEpoch_Hud.Scripts.ModUI
             var row = Node(viewport, "InfiniteForgingPotential", 0, 1, 1, 1);
             var rowRect = row.GetComponent<RectTransform>();
             rowRect.pivot = new Vector2(.5f, 1);
-            rowRect.sizeDelta = new Vector2(0, 34);
+            var panelRect = panel.GetComponent<RectTransform>();
+            rowRect.anchorMin = new Vector2(panelRect.anchorMin.x, 1);
+            rowRect.anchorMax = new Vector2(panelRect.anchorMax.x, 1);
+            rowRect.sizeDelta = new Vector2(panelRect.sizeDelta.x, 34);
+            rowRect.anchoredPosition = new Vector2(panelRect.anchoredPosition.x, 0);
             row.AddComponent<LayoutElement>().preferredHeight = 34;
             // Reuse the native prefab's checkbox geometry, sprites, font and transitions.
             var control = UnityEngine.Object.Instantiate(original, row.transform);
             control.name = "Toggle_InfiniteForgingPotential";
             var rect = control.GetComponent<RectTransform>();
-            rect.anchorMin = Vector2.zero; rect.anchorMax = new Vector2(.74f, 1);
-            rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
+            var originalRect = original.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(originalRect.anchorMin.x, 0);
+            rect.anchorMax = new Vector2(originalRect.anchorMax.x, 1);
+            rect.offsetMin = new Vector2(originalRect.offsetMin.x, 0);
+            rect.offsetMax = new Vector2(originalRect.offsetMax.x, 0);
             var toggle = control.GetComponent<Toggle>();
             if (toggle.IsNullOrDestroyed()) { UnityEngine.Object.Destroy(row); return; }
             toggle.group = null; toggle.interactable = true;
@@ -34,42 +42,65 @@ namespace LastEpoch_Hud.Scripts.ModUI
             var label = labelObject.IsNullOrDestroyed() ? null : labelObject.GetComponent<Text>();
             if (!label.IsNullOrDestroyed()) Prefab.ApplyLabel(label, "Infinite Forging Potential");
 
-            var border = panel.GetComponent<Image>();
-            if (!border.IsNullOrDestroyed())
+            // Keep the row transparent and reuse the label's gold for the divider.
+            var line = Node(row, "Divider", 0, 0, 1, 0).AddComponent<Image>();
+            line.rectTransform.sizeDelta = new Vector2(0, 1);
+            line.color = label.IsNullOrDestroyed() ? new Color(.9f, .73f, .4f) : label.color;
+            line.raycastTarget = false;
+            var buttonObject = Node(row, "Btn_Craft_DeselectAll", .76f, .12f, .99f, .88f);
+            var buttonImage = buttonObject.AddComponent<Image>();
+            buttonImage.color = new Color(.10f, .12f, .15f);
+            var button = buttonObject.AddComponent<Button>();
+            button.targetGraphic = buttonImage;
+            // Explicit Text: arbitrary HUD buttons can have no Text or use TMP.
+            var buttonText = Node(buttonObject, "Label", .02f, 0, .98f, 1).AddComponent<Text>();
+            if (!label.IsNullOrDestroyed())
             {
-                var background = row.AddComponent<Image>();
-                background.sprite = border.sprite; background.type = border.type;
-                background.color = border.color; background.raycastTarget = false;
+                buttonText.font = label.font; buttonText.fontSize = label.fontSize;
+                buttonText.color = label.color;
             }
-            // Clone a regular HUD button so this action follows the same theme too.
-            var templates = content.GetComponentsInChildren<Button>(true);
-            if (templates.Length > 0)
-            {
-                var buttonObject = UnityEngine.Object.Instantiate(templates[0].gameObject, row.transform);
-                buttonObject.name = "Btn_Craft_DeselectAll";
-                var buttonRect = buttonObject.GetComponent<RectTransform>();
-                buttonRect.anchorMin = new Vector2(.76f, .12f);
-                buttonRect.anchorMax = new Vector2(.99f, .88f);
-                buttonRect.offsetMin = buttonRect.offsetMax = Vector2.zero;
-                var button = buttonObject.GetComponent<Button>();
-                button.onClick.RemoveAllListeners(); button.interactable = true;
-                var text = buttonObject.GetComponentInChildren<Text>(true);
-                if (!text.IsNullOrDestroyed()) Prefab.ApplyLabel(text, "Deselect All");
-                Prefab.BindButton(button, new System.Action(() => DeselectAll(viewport)));
-                buttonObject.SetActive(true);
-            }
+            buttonText.alignment = TextAnchor.MiddleCenter;
+            buttonText.raycastTarget = false;
+            Prefab.ApplyLabel(buttonText, "Deselect All");
+            var buttonLine = Node(buttonObject, "Divider", 0, 0, 1, 0).AddComponent<Image>();
+            buttonLine.rectTransform.sizeDelta = new Vector2(0, 1);
+            buttonLine.color = line.color; buttonLine.raycastTarget = false;
             ModSettings.InfiniteForgingPotential.Enabled.Changed += enabled =>
             {
                 if (!toggle.IsNullOrDestroyed()) toggle.SetIsOnWithoutNotify(enabled);
             };
             toggle.SetIsOnWithoutNotify(ModSettings.InfiniteForgingPotential.Enabled.Value);
-            Prefab.BindToggle(toggle, new System.Action<bool>(enabled =>
-            {
-                ModSettings.InfiniteForgingPotential.Enabled.Set(enabled);
-                Main.logger_instance?.Msg("Infinite Forging Potential: " + (enabled ? "enabled" : "disabled"));
-            }));
             MelonLoader.MelonCoroutines.Start(PositionRow(viewport, row));
             Main.logger_instance?.Msg("Infinite Forging Potential checkbox bound in Items > Crafting.");
+        }
+
+        // Match the existing HUD's native event hooks; managed listeners do not
+        // reliably receive IL2CPP control events in this build.
+        [HarmonyPatch(typeof(Toggle), "OnPointerClick")]
+        internal static class InfiniteClick
+        {
+            [HarmonyPostfix]
+            static void Postfix(Toggle __instance)
+            {
+                if (__instance.IsNullOrDestroyed() || !__instance.interactable
+                    || __instance.gameObject.name != "Toggle_InfiniteForgingPotential") return;
+                ModSettings.InfiniteForgingPotential.Enabled.Set(__instance.isOn);
+                Main.logger_instance?.Msg("Infinite Forging Potential: " + (__instance.isOn ? "enabled" : "disabled"));
+            }
+        }
+
+        [HarmonyPatch(typeof(Button), "Press")]
+        internal static class DeselectClick
+        {
+            [HarmonyPostfix]
+            static void Postfix(Button __instance)
+            {
+                if (__instance.IsNullOrDestroyed() || !__instance.interactable
+                    || __instance.gameObject.name != "Btn_Craft_DeselectAll") return;
+                var row = __instance.transform.parent;
+                if (row.IsNullOrDestroyed() || row.parent.IsNullOrDestroyed()) return;
+                DeselectAll(row.parent.gameObject);
+            }
         }
 
         static void DeselectAll(GameObject viewport)
@@ -150,7 +181,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 // The old pivot's position, measured from the old content top.
                 child.anchoredPosition = new Vector2(centers[i].x, centers[i].y - height / 2 - 38);
             }
-            row.GetComponent<RectTransform>().anchoredPosition = Vector2.zero;
+            var rowRect = row.GetComponent<RectTransform>();
+            rowRect.anchoredPosition = new Vector2(rowRect.anchoredPosition.x, 0);
         }
 
         static GameObject Node(GameObject parent, string name, float left, float bottom, float right, float top)
