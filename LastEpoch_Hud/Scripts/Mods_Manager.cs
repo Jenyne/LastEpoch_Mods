@@ -152,7 +152,7 @@ public class Mods_Manager : MonoBehaviour
             Vector3.zero,
             Quaternion.identity
         );
-        items_mjolner_obj.AddComponent<Mods.Items.Items_Mjolner>();
+        items_mjolner_obj.AddComponent<Mods.Items.CustomItems.Mjolner.Items_Mjolner>();
         Mods_Objects.Add(items_mjolner_obj);
 
         items_sandsofsilk_obj = Object.Instantiate(
