@@ -15,26 +15,26 @@ namespace LastEpoch_Hud.Scripts.ModUI
             var section = Node(viewport, "SafeTeleport", 0, 0, 1, 1);
             var rect = section.GetComponent<RectTransform>();
             var layout = section.AddComponent<LayoutElement>();
-            layout.minHeight = 148; layout.preferredHeight = 148; layout.flexibleHeight = 0;
+            layout.minHeight = 116; layout.preferredHeight = 116; layout.flexibleHeight = 0;
             rect.anchorMin = new Vector2(0, 1);
             rect.anchorMax = new Vector2(1, 1);
             rect.pivot = new Vector2(.5f, 1);
-            rect.sizeDelta = new Vector2(0, 148);
+            rect.sizeDelta = new Vector2(0, 116);
             Label(section, "Title", font, "Safe Teleport", .03f, .80f, .97f, 1f);
             var toggleGo = Node(section, "Enabled", .03f, .57f, .97f, .80f);
             var toggle = toggleGo.AddComponent<Toggle>();
-            var box = Node(toggleGo, "Box", 0, .1f, .075f, .9f).AddComponent<Image>();
-            box.color = new Color(.22f, .24f, .27f);
+            var box = Node(toggleGo, "Box", 0, .2f, .045f, .8f).AddComponent<Image>();
+            box.color = new Color(.58f, .45f, .20f);
             var check = Node(box.gameObject, "Check", .2f, .2f, .8f, .8f).AddComponent<Image>();
-            check.color = new Color(.9f, .73f, .4f);
+            check.color = new Color(.93f, .84f, .65f);
             toggle.targetGraphic = box; toggle.graphic = check;
-            Label(toggleGo, "Label", font, "Enable Safe Teleport", .1f, 0, 1, 1);
+            Label(toggleGo, "Label", font, "Enable Safe Teleport", .065f, 0, 1, 1);
             var key = Node(section, "Key", .03f, .31f, .97f, .55f);
             Label(key, "Label", font, "Teleport Key", 0, 0, .40f, 1);
             Button(key, "Capture", font, .41f, .77f);
             Button(key, "Reset", font, .79f, 1f);
             Label(section, "Description", font,
-                "Returns to the End of Time. Requires its waypoint. Unbound by default.",
+                "End of Time waypoint required. Bind a key or modifier + key.",
                 .03f, .01f, .97f, .29f);
             ModSettings.SafeTeleport.Group.ResolveAndBind(content);
             MelonLoader.MelonCoroutines.Start(PositionWhenVisible(viewport, section));
@@ -67,9 +67,9 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 rect.anchorMin = new Vector2(0, 1); rect.anchorMax = new Vector2(1, 1);
                 rect.pivot = new Vector2(.5f, 1);
                 rect.anchoredPosition = new Vector2(0, bottom - parentRect.rect.yMax - 8);
-                rect.sizeDelta = new Vector2(0, 148);
+                rect.sizeDelta = new Vector2(0, 116);
                 parentRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,
-                    Mathf.Max(parentRect.rect.height, -rect.anchoredPosition.y + 148));
+                    Mathf.Max(parentRect.rect.height, -rect.anchoredPosition.y + 116));
             }
 
             LayoutRebuilder.ForceRebuildLayoutImmediate(viewport.GetComponent<RectTransform>());
@@ -95,7 +95,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             float left, float bottom, float right, float top)
         {
             var text = Node(parent, name, left, bottom, right, top).AddComponent<Text>();
-            text.font = font; text.fontSize = 14; text.color = new Color(.93f, .84f, .65f);
+            text.font = font; text.fontSize = 12; text.color = new Color(.93f, .84f, .65f);
             text.alignment = TextAnchor.MiddleLeft; text.raycastTarget = false;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
             Prefab.ApplyLabel(text, label);
