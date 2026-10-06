@@ -52,6 +52,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             {
                 if (__state == null) return;
                 scopes.Remove(__state);
+                if (__state.Hits > 0)
+                    Main.logger_instance?.Msg("Prophecy rewards: applied x" + __state.Multiplier + " multiplier.");
                 if (__state.Hits == 0 && !warned)
                 {
                     warned = true;
@@ -79,15 +81,14 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 if (__state != null) __state.Calculating--;
             }
         }
-        // Native versions can read either the exposed count or its backing-field wrapper.
-        // Suppress getter scaling inside GetItemsDropped so nested calculations apply once.
+        // ItemsDropped is a native method; lowercase itemsDropped is a field accessor
+        // and cannot be patched. Suppress nested scaling to apply the multiplier once.
         [HarmonyPatch]
         static class Quantity
         {
             static IEnumerable<System.Reflection.MethodBase> TargetMethods()
             {
                 yield return AccessTools.Method(typeof(ProphecySlotReward), "get_ItemsDropped");
-                yield return AccessTools.Method(typeof(ProphecySlotReward), "get_itemsDropped");
             }
             [HarmonyPrefix]
             static void Prefix(ProphecySlotReward __instance, out RewardScope __state)
