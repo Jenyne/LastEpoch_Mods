@@ -326,5 +326,12 @@
   "Choose Blessings": "Choisir les bénédictions",
   "Unlock Blessing Slots": "Débloquer les emplacements de bénédiction",
   "Discover All Blessings": "Découvrir toutes les bénédictions",
-  "Max Out Blessings": "Maximiser les bénédictions"
+  "Max Out Blessings": "Maximiser les bénédictions",
+  "Natural Drop Rates": "Taux de butin naturel",
+  "Unique Drop Rate": "Taux de butin unique",
+  "Set Drop Rate": "Taux de butin d’ensemble",
+  "Exalted Affix Chance": "Chance d’affixe exalté",
+  "T7 Affix Chance": "Chance d’affixe T7",
+  "100% = normal. Range: 0–1000%. Forced rarity takes priority.": "100 % = normal. Plage : 0–1000 %. La rareté forcée est prioritaire."
 }
+

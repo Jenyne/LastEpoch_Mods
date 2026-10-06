@@ -326,5 +326,12 @@
   "Choose Blessings": "",
   "Unlock Blessing Slots": "",
   "Discover All Blessings": "",
-  "Max Out Blessings": ""
+  "Max Out Blessings": "",
+  "Natural Drop Rates": "Natural Drop Rates",
+  "Unique Drop Rate": "Unique Drop Rate",
+  "Set Drop Rate": "Set Drop Rate",
+  "Exalted Affix Chance": "Exalted Affix Chance",
+  "T7 Affix Chance": "T7 Affix Chance",
+  "100% = normal. Range: 0–1000%. Forced rarity takes priority.": "100% = normal. Range: 0–1000%. Forced rarity takes priority."
 }
+

@@ -337,5 +337,12 @@
   "Magic": "마법",
   "Rare": "희귀",
   "Reset Difficulty": "난이도 초기화",
-  "Max Out Blessings": "축복 수치 최대화"
+  "Max Out Blessings": "축복 수치 최대화",
+  "Natural Drop Rates": "일반 전리품 획득률",
+  "Unique Drop Rate": "고유 아이템 획득률",
+  "Set Drop Rate": "세트 아이템 획득률",
+  "Exalted Affix Chance": "고급 접사 확률",
+  "T7 Affix Chance": "T7 접사 확률",
+  "100% = normal. Range: 0–1000%. Forced rarity takes priority.": "100% = 기본값. 범위: 0–1000%. 강제 희귀도가 우선 적용됩니다."
 }
+

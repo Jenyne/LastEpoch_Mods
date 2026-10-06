@@ -337,5 +337,12 @@
   "Choose Blessings": "选择祝福",
   "Unlock Blessing Slots": "解锁祝福槽位",
   "Discover All Blessings": "发现所有祝福",
-  "Max Out Blessings": "最大化祝福数值"
+  "Max Out Blessings": "最大化祝福数值",
+  "Natural Drop Rates": "自然掉落概率",
+  "Unique Drop Rate": "暗金物品掉落概率",
+  "Set Drop Rate": "套装物品掉落概率",
+  "Exalted Affix Chance": "崇高词缀概率",
+  "T7 Affix Chance": "T7 词缀概率",
+  "100% = normal. Range: 0–1000%. Forced rarity takes priority.": "100% = 默认。范围：0–1000%。强制稀有度优先。"
 }
+
