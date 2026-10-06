@@ -57,8 +57,8 @@ internal static class ScenesSectionControls
         Title(minimapTitle, "Minimap");
         // Fit the center column to its actual controls instead of filling the screen.
         const float header = 28;
-        const float dungeonHeight = 88;
-        const float miscHeight = 88;
+        const float dungeonHeight = 108;
+        const float miscHeight = 104;
         const float minimapHeight = 52;
         const float gap = 8;
         const float total = 3 * header + dungeonHeight + miscHeight + minimapHeight + 2 * gap + 8;

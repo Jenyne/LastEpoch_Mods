@@ -164,6 +164,8 @@ public class Save_Manager : MonoBehaviour
                     Dex_Buff_Value = 0f,
                     Enable_Att_Buff = false,
                     Att_Buff_Value = 0f,
+                    Enable_AoE_Buff = false,
+                    AoE_Buff_Value = 1f,
                 },
             },
             Cosmetics =
@@ -706,6 +708,8 @@ public class Save_Manager : MonoBehaviour
             public float Vit_Buff_Value;
             public bool Enable_Att_Buff;
             public float Att_Buff_Value;
+            public bool Enable_AoE_Buff;
+            public float AoE_Buff_Value;
         }
 
         //Items

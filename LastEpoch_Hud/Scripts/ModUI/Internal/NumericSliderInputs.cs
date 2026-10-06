@@ -344,7 +344,8 @@ public static class NumericSliderInputs
             || name.IndexOf("CriticalMultiplier", StringComparison.OrdinalIgnoreCase) >= 0
             || name.IndexOf("HealthRegen", StringComparison.OrdinalIgnoreCase) >= 0
             || name.IndexOf("ManaRegen", StringComparison.OrdinalIgnoreCase) >= 0
-            || name.IndexOf("Buffs_Damage", StringComparison.OrdinalIgnoreCase) >= 0;
+            || name.IndexOf("Buffs_Damage", StringComparison.OrdinalIgnoreCase) >= 0
+            || name.IndexOf("AreaOfEffect", StringComparison.OrdinalIgnoreCase) >= 0;
     }
 
     static bool IsStatPercent(string name)

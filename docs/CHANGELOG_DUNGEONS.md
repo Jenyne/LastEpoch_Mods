@@ -37,3 +37,5 @@ CSharpier 1.3.0 formatting and check passed for all 156 C# files. The normal bui
 - Preserve saved settings and keybinds. This layout follow-up needs in-game verification.
 
 - Correct panel positioning to target the outer scroll panels, keep inner content at the top, and provide the standard Misc/Viewport/Content hierarchy for Safe Teleport binding. Hide unused scrollbars in the compact panels.
+
+- Give Dungeons and Misc panels additional bottom room so their descriptions are not clipped by the native viewport.

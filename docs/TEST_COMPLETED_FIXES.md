@@ -2,7 +2,7 @@
 
 Branch: `test/completed-fixes-integration`
 
-Base: Syncingoutt/master at `35c6a14efd3afa77ebd57a892bb0db15c46673e2`.
+Base: Syncingoutt/master at `88ca851e144504665aa9d601c4b80a46a01d218b` (includes PR #23, Area of Effect buff slider).
 
 This is a combined regression build. The individual completed features were tested in game; their interaction in the initial combined build was also confirmed working by the user. The currency/blessing layout follow-up still needs testing. The original task branches remain available.
 
@@ -83,3 +83,7 @@ CSharpier formatting, whitespace checks, and locale JSON/key checks were run loc
 ## Scenes layout follow-up
 
 Dungeons, Misc and Minimap are compact separate sections in the center column. Misc contains Safe Teleport; Minimap contains only Zoom and Fog of War. Verify all controls remain clickable, modifier binding still persists, and section borders/labels fit at the usual HUD scale.
+
+## Upstream update regression check
+
+The latest master update merges the native Area of Effect slider, save fields, percent inputs and buff-row ordering. Confirm Character → Buffs shows Area of Effect between Damage and Attack Speed, the remaining rows stay ordered and accessible, and the currency/blessing sections still fit. Verify both Scenes descriptions are fully visible. AoE behavior and persistence need in-game confirmation.

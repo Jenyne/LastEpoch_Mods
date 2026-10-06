@@ -1713,6 +1713,26 @@ public partial class Hud_Manager : MonoBehaviour
                                 "Slider_Character_Buffs_Damage"
                             );
 
+                            Buffs.EnsureAreaOfEffectBuffRow(character_buffs_content);
+
+                            //AreaOfEffect
+                            Buffs.aoe_toggle = Functions.Get_ToggleInPanel(
+                                character_buffs_content,
+                                "AreaOfEffect",
+                                "Toggle_Character_Buffs_AreaOfEffect"
+                            );
+                            Buffs.aoe_text = Functions.Get_TextInToggle(
+                                character_buffs_content,
+                                "AreaOfEffect",
+                                "Toggle_Character_Buffs_AreaOfEffect",
+                                "Value"
+                            );
+                            Buffs.aoe_slider = Functions.Get_SliderInPanel(
+                                character_buffs_content,
+                                "AreaOfEffect",
+                                "Slider_Character_Buffs_AreaOfEffect"
+                            );
+
                             //AttackSpeed
                             Buffs.attackspeed_toggle = Functions.Get_ToggleInPanel(
                                 character_buffs_content,
@@ -2518,6 +2538,24 @@ public partial class Hud_Manager : MonoBehaviour
                                 .PermanentBuffs
                                 .Damage_Buff_Value;
                         }
+                        if (!Buffs.aoe_toggle.IsNullOrDestroyed())
+                        {
+                            Buffs.aoe_toggle.isOn = Save_Manager
+                                .instance
+                                .data
+                                .Character
+                                .PermanentBuffs
+                                .Enable_AoE_Buff;
+                        }
+                        if (!Buffs.aoe_slider.IsNullOrDestroyed())
+                        {
+                            Buffs.aoe_slider.value = Save_Manager
+                                .instance
+                                .data
+                                .Character
+                                .PermanentBuffs
+                                .AoE_Buff_Value;
+                        }
                         if (!Buffs.attackspeed_toggle.IsNullOrDestroyed())
                         {
                             Buffs.attackspeed_toggle.isOn = Save_Manager
@@ -3144,6 +3182,20 @@ public partial class Hud_Manager : MonoBehaviour
                                         .Character
                                         .PermanentBuffs
                                         .Damage_Buff_Value * 100
+                                )
+                                + " %";
+                        }
+                        if (!Buffs.aoe_text.IsNullOrDestroyed())
+                        {
+                            Buffs.aoe_text.text =
+                                "+ "
+                                + (int)(
+                                    Save_Manager
+                                        .instance
+                                        .data
+                                        .Character
+                                        .PermanentBuffs
+                                        .AoE_Buff_Value * 100
                                 )
                                 + " %";
                         }
@@ -5065,6 +5117,10 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Text damage_text = null;
                 public static Slider damage_slider = null;
 
+                public static Toggle aoe_toggle = null;
+                public static Text aoe_text = null;
+                public static Slider aoe_slider = null;
+
                 public static Toggle attackspeed_toggle = null;
                 public static Text attackspeed_text = null;
                 public static Slider attackspeed_slider = null;
@@ -5108,6 +5164,156 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Toggle att_toggle = null;
                 public static Text att_text = null;
                 public static Slider att_slider = null;
+
+                static readonly string[] BuffPanelOrder =
+                {
+                    "MoveSpeed",
+                    "Damage",
+                    "AreaOfEffect",
+                    "AttackSpeed",
+                    "CastingSpeed",
+                    "CriticalChance",
+                    "CriticalMultiplier",
+                    "HealthRegen",
+                    "ManaRegen",
+                    "Strenght",
+                    "Intelligence",
+                    "Dexterity",
+                    "Vitality",
+                    "Attunement",
+                };
+
+                public static void EnsureAreaOfEffectBuffRow(GameObject character_buffs_content)
+                {
+                    if (character_buffs_content.IsNullOrDestroyed())
+                    {
+                        return;
+                    }
+
+                    GameObject source = Functions.GetChild(
+                        character_buffs_content,
+                        "Damage",
+                        false
+                    );
+                    if (source.IsNullOrDestroyed())
+                    {
+                        return;
+                    }
+
+                    SettingRow.AddMultiplier(
+                        character_buffs_content,
+                        "Damage",
+                        "AreaOfEffect",
+                        "Toggle_Character_Buffs_Damage",
+                        "Toggle_Character_Buffs_AreaOfEffect",
+                        "Slider_Character_Buffs_Damage",
+                        "Slider_Character_Buffs_AreaOfEffect",
+                        "Area of Effect"
+                    );
+
+                    GameObject row = Functions.GetChild(
+                        character_buffs_content,
+                        "AreaOfEffect",
+                        false
+                    );
+                    if (row.IsNullOrDestroyed())
+                    {
+                        return;
+                    }
+
+                    foreach (Transform child in row.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (child.name != "Slider_Character_Buffs_AreaOfEffect")
+                        {
+                            continue;
+                        }
+                        Slider slider = child.GetComponent<Slider>();
+                        if (!slider.IsNullOrDestroyed())
+                        {
+                            slider.minValue = 0f;
+                            slider.maxValue = 100f;
+                        }
+                    }
+
+                    foreach (Text label in row.GetComponentsInChildren<Text>(true))
+                    {
+                        if (label.gameObject.name == "Value")
+                        {
+                            continue;
+                        }
+                        ModUI.LocaleRegistry.Apply(label, "Area of Effect");
+                    }
+                    foreach (
+                        Il2CppTMPro.TMP_Text label in row.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(
+                            true
+                        )
+                    )
+                    {
+                        if (label.gameObject.name == "Value")
+                        {
+                            continue;
+                        }
+                        ModUI.LocaleRegistry.Apply(label, "Area of Effect");
+                    }
+
+                    LayoutBuffPanels(character_buffs_content);
+                }
+
+                static void LayoutBuffPanels(GameObject content)
+                {
+                    var rows = new System.Collections.Generic.List<RectTransform>();
+                    foreach (string panelName in BuffPanelOrder)
+                    {
+                        GameObject panel = Functions.GetChild(content, panelName, false);
+                        if (panel.IsNullOrDestroyed())
+                        {
+                            continue;
+                        }
+                        RectTransform rect = panel.GetComponent<RectTransform>();
+                        if (!rect.IsNullOrDestroyed())
+                        {
+                            rows.Add(rect);
+                        }
+                    }
+                    if (rows.Count < 2)
+                    {
+                        return;
+                    }
+
+                    float step = rows[1].anchoredPosition.y - rows[0].anchoredPosition.y;
+                    if (Mathf.Abs(step) < 0.01f)
+                    {
+                        float rowHeight = Mathf.Abs(rows[0].rect.height);
+                        if (rowHeight < 1f)
+                        {
+                            rowHeight = Mathf.Abs(rows[0].sizeDelta.y);
+                        }
+                        if (rowHeight < 1f)
+                        {
+                            rowHeight = 32f;
+                        }
+                        step = -rowHeight;
+                    }
+
+                    float baseY = rows[0].anchoredPosition.y;
+                    for (int i = 0; i < rows.Count; i++)
+                    {
+                        RectTransform rect = rows[i];
+                        rect.SetSiblingIndex(i);
+                        Vector2 pos = rect.anchoredPosition;
+                        rect.anchoredPosition = new Vector2(pos.x, baseY + (i * step));
+                    }
+
+                    RectTransform parent = content.GetComponent<RectTransform>();
+                    if (!parent.IsNullOrDestroyed())
+                    {
+                        float neededHeight = Mathf.Abs(step) * rows.Count;
+                        if (parent.sizeDelta.y < neededHeight)
+                        {
+                            parent.sizeDelta = new Vector2(parent.sizeDelta.x, neededHeight);
+                        }
+                    }
+                }
             }
         }
 
