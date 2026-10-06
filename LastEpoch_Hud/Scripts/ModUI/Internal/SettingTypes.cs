@@ -387,6 +387,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 return;
             Value = val;
             ModSettings.MarkDirty();
+            SaveManager.FlushKeybind();
             Changed?.Invoke(val);
         }
 
