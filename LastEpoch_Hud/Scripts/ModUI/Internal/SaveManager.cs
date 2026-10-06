@@ -30,17 +30,16 @@ public class SaveManager : MonoBehaviour
 
     void Start()
     {
-        System.Threading.Tasks.Task.Run(() =>
+        // Load before UI binding/capture; settings and Unity input validation
+        // must not race a background loader.
+        try
         {
-            try
-            {
-                Load();
-            }
-            catch (System.Exception ex)
-            {
-                Main.logger_instance?.Error("ModUI SaveManager: Load failed: " + ex.Message);
-            }
-        });
+            Load();
+        }
+        catch (System.Exception ex)
+        {
+            Main.logger_instance?.Error("ModUI SaveManager: Load failed: " + ex.Message);
+        }
     }
 
     void Update()
@@ -71,9 +70,24 @@ public class SaveManager : MonoBehaviour
         if (saveTimer < SaveInterval)
             return;
         saveTimer = 0f;
-        ModSettings.ClearDirty();
         ModSettings.Trace("SaveManager.Update flushing (debounce hit)");
         Save();
+        ModSettings.ClearDirty();
+    }
+
+    void OnApplicationQuit()
+    {
+        if (!initialized || !ModSettings.Dirty)
+            return;
+        try
+        {
+            Save();
+            ModSettings.ClearDirty();
+        }
+        catch (System.Exception ex)
+        {
+            Main.logger_instance?.Error("ModUI settings save on exit failed: " + ex.Message);
+        }
     }
 
     private void Load()
@@ -127,12 +141,40 @@ public class SaveManager : MonoBehaviour
         if (needsRewrite)
             ModSettings.Difficulty.CapLevelToZone.Value = false;
 
+        if (
+            KeybindMatcher.Conflicts(
+                ModSettings.SafeTeleport.Key.Value,
+                ModSettings.SkillsAutoCast.ModifierKey.Value
+            )
+        )
+        {
+            ModSettings.SafeTeleport.Key.Value = "";
+            needsRewrite = true;
+            Main.logger_instance?.Warning(
+                "Saved bindings conflict: Safe Teleport unbound; AutoCast binding preserved."
+            );
+        }
         initialized = true;
 
         if (needsRewrite)
         {
             Save();
             Main.logger_instance?.Msg("ModUI SaveManager: Wrote fresh schema to " + filename);
+        }
+    }
+
+    internal static void FlushKeybind()
+    {
+        if (instance == null || !instance.initialized)
+            return;
+        try
+        {
+            instance.Save();
+            ModSettings.ClearDirty();
+        }
+        catch (System.Exception ex)
+        {
+            Main.logger_instance?.Error("ModUI keybind save failed: " + ex.Message);
         }
     }
 

@@ -42,12 +42,15 @@ public static class ForceDropBuilder
         corruptionSelect,
         pickerPrevious,
         pickerNext;
-    static int corruptionId = -1,
-        rageId = -1;
+    static int corruptionId = -1;
+    static readonly int[] variantIds = { -1, -1 };
+    static readonly string[] variantNames = { "Choose modifier 1", "Choose modifier 2" };
+    static readonly Button[] variantSelect = new Button[2];
+    static Text variantHeader,
+        variantDescription;
     static ushort rageUniqueId;
     static int rageMetadataId = -1;
-    static string rageName = "Choose Rage";
-    static Button rageSelect;
+
     static string corruptionName = "None";
     static Number corruptionTier,
         corruptionRoll;
@@ -69,6 +72,13 @@ public static class ForceDropBuilder
     static string lastSearch = "",
         lastPickerSearch = "",
         lastItems = "";
+    static string lastNativeLocale;
+    static object lastModLocale;
+    static int lastCategoryCount;
+    static Dictionary<int, NativeItemNames.Category> nativeCategories =
+        new Dictionary<int, NativeItemNames.Category>();
+    static Dictionary<int, NativeItemNames.ItemChoice> nativeItems =
+        new Dictionary<int, NativeItemNames.ItemChoice>();
     static bool corrupted,
         failed,
         metadataLogged;
@@ -81,6 +91,7 @@ public static class ForceDropBuilder
         public int id;
         public int group;
         public string name;
+        public string aliases;
         public Action select;
     }
 
@@ -141,6 +152,7 @@ public static class ForceDropBuilder
         }
         if (!IsReady)
             return false;
+        RefreshNativeLocale();
         foreach (var n in numbers)
             n.Read();
         string signature =
@@ -158,8 +170,11 @@ public static class ForceDropBuilder
             pickerPage = 0;
             RefreshPicker();
         }
-        Caption(typeButton, CategoryLabel(Selected(FD.type_dropdown, "Choose category")));
-        Caption(rarityButton, Selected(FD.rarity_dropdown, "Choose rarity"));
+        Caption(typeButton, SelectedCategoryName("Choose category"));
+        Caption(
+            rarityButton,
+            NativeItemNames.RarityName(Selected(FD.rarity_dropdown, "Choose rarity"))
+        );
         lp.group.SetActive(
             FD.item_rarity > 6
                 && FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential
@@ -170,7 +185,8 @@ public static class ForceDropBuilder
         );
         uniquePage.SetActive(FD.item_rarity > 6);
         var rageEntry = SelectedRageEntry();
-        bool showRage = UniqueVariantAdapter.IsUnsated(rageEntry);
+        int variantCount = UniqueVariantAdapter.VariantCount(rageEntry);
+        bool showRage = variantCount > 0;
         if (rageUniqueId != FD.item_unique_id)
         {
             ResetRage();
@@ -181,7 +197,7 @@ public static class ForceDropBuilder
         {
             rageMetadataId = FD.item_unique_id;
             Main.logger_instance.Msg(
-                "Unsated Rage native pool: unique="
+                "Unique variant native pool: unique="
                     + rageEntry.uniqueID
                     + ", specific="
                     + rageEntry.dropsSpecificLegendaryAffixes
@@ -200,9 +216,39 @@ public static class ForceDropBuilder
             );
         }
         // Keep the exclusive modifier next to the item preview and outside the affix grid.
-        rageSelect.interactable = UniqueVariantAdapter.HasSingleVariant(rageEntry);
-        Caption(rageSelect, rageSelect.interactable ? rageName : "Rage pool unavailable");
-        Rect(preview.gameObject, .04f, showRage ? .47f : .28f, .96f, .90f);
+        bool twoVariants = variantCount == 2;
+        Rect(ragePage, .04f, .28f, .96f, twoVariants ? .54f : .45f);
+        LocaleRegistry.Apply(
+            variantHeader,
+            twoVariants ? "Exclusive glove modifiers" : "Unsated Rage modifier"
+        );
+        LocaleRegistry.Apply(
+            variantDescription,
+            twoVariants
+                ? "Two exclusive modifiers · separate from LP"
+                : "Exclusive ring modifier · separate from LP"
+        );
+        Rect(variantHeader.gameObject, .03f, twoVariants ? .78f : .72f, .97f, .97f);
+        Rect(variantDescription.gameObject, .03f, .02f, .97f, twoVariants ? .22f : .25f);
+        for (int slot = 0; slot < variantSelect.Length; slot++)
+        {
+            variantSelect[slot].gameObject.SetActive(slot < variantCount);
+            variantSelect[slot].interactable = UniqueVariantAdapter.HasVariants(rageEntry);
+            Caption(
+                variantSelect[slot],
+                variantSelect[slot].interactable
+                    ? variantNames[slot]
+                    : "Unique modifier pool unavailable"
+            );
+        }
+        Rect(
+            variantSelect[0].gameObject,
+            .03f,
+            twoVariants ? .51f : .29f,
+            .97f,
+            twoVariants ? .75f : .69f
+        );
+        Rect(preview.gameObject, .04f, showRage ? (twoVariants ? .56f : .47f) : .28f, .96f, .90f);
         if (Time.unscaledTime >= nextCorruptionCheck)
         {
             nextCorruptionCheck = Time.unscaledTime + 2f;
@@ -430,10 +476,36 @@ public static class ForceDropBuilder
                 3,
                 4
             );
-        ragePage = Panel(right, "Unsated Rage variant", .04f, .28f, .96f, .45f);
-        Label(ragePage, "Unsated Rage modifier", .03f, .72f, .97f, .96f, 15);
-        rageSelect = Button(ragePage, "Choose Rage", .03f, .29f, .97f, .69f, RagePicker);
-        Label(ragePage, "Exclusive ring modifier · separate from LP", .03f, .04f, .97f, .25f, 11);
+        ragePage = Panel(right, "Unique variants", .04f, .28f, .96f, .45f);
+        variantHeader = Label(ragePage, "Unsated Rage modifier", .03f, .72f, .97f, .96f, 15);
+        variantSelect[0] = Button(
+            ragePage,
+            "Choose Rage",
+            .03f,
+            .29f,
+            .97f,
+            .69f,
+            () => RagePicker(0)
+        );
+        variantSelect[1] = Button(
+            ragePage,
+            "Choose modifier 2",
+            .03f,
+            .25f,
+            .97f,
+            .49f,
+            () => RagePicker(1)
+        );
+        variantSelect[1].gameObject.SetActive(false);
+        variantDescription = Label(
+            ragePage,
+            "Exclusive ring modifier · separate from LP",
+            .03f,
+            .04f,
+            .97f,
+            .25f,
+            11
+        );
         ragePage.SetActive(false);
         Label(right, "Item preview", .04f, .92f, .96f, .99f, 20);
         preview = Label(right, "Choose an item", .04f, .28f, .96f, .90f, 15);
@@ -500,13 +572,21 @@ public static class ForceDropBuilder
 
     static void RefreshItems()
     {
+        nativeItems = NativeItemNames.Items(FD.items_dropdown, FD.item_type, FD.item_rarity);
         itemIndexes.Clear();
         for (int i = 1; i < FD.items_dropdown.options.Count; i++)
+        {
+            string raw = FD.items_dropdown.options[i].text;
+            nativeItems.TryGetValue(i, out var item);
             if (
-                FD.items_dropdown.options[i]
-                    .text.IndexOf(search.text, StringComparison.OrdinalIgnoreCase) >= 0
+                NativeItemNames.Matches(
+                    search.text,
+                    item == null ? raw : item.name,
+                    item == null ? raw : item.aliases
+                )
             )
                 itemIndexes.Add(i);
+        }
         for (int slot = 0; slot < itemButtons.Count; slot++)
         {
             int index = itemPage * 12 + slot;
@@ -516,8 +596,7 @@ public static class ForceDropBuilder
                 bool selected = itemIndexes[index] == FD.items_dropdown.value;
                 Caption(
                     itemButtons[slot],
-                    (selected ? "Selected: " : "")
-                        + FD.items_dropdown.options[itemIndexes[index]].text
+                    (selected ? "Selected: " : "") + ItemName(itemIndexes[index])
                 );
                 itemButtons[slot].GetComponent<Image>().color = selected
                     ? new Color(.29f, .24f, .13f)
@@ -534,8 +613,12 @@ public static class ForceDropBuilder
         int i = itemPage * 12 + slot;
         if (i >= itemIndexes.Count)
             return;
-        FD.items_dropdown.SetValueWithoutNotify(itemIndexes[i]);
-        FD.SelectItem();
+        int option = itemIndexes[i];
+        FD.items_dropdown.SetValueWithoutNotify(option);
+        if (nativeItems.TryGetValue(option, out var item))
+            NativeItemNames.SelectItem(item);
+        else
+            FD.SelectItem();
         ResetRage();
         RefreshItems();
         foreach (var row in rows)
@@ -568,37 +651,50 @@ public static class ForceDropBuilder
 
     static void ResetRage()
     {
-        rageId = -1;
-        rageName = "Choose Rage";
-        if (!rageSelect.IsNullOrDestroyed())
-            Caption(rageSelect, rageName);
+        bool ring = UniqueVariantAdapter.IsUnsated(SelectedRageEntry());
+        for (int slot = 0; slot < variantIds.Length; slot++)
+        {
+            variantIds[slot] = -1;
+            variantNames[slot] =
+                ring && slot == 0 ? "Choose Rage"
+                : slot == 0 ? "Choose modifier 1"
+                : "Choose modifier 2";
+            if (!variantSelect[slot].IsNullOrDestroyed())
+                Caption(variantSelect[slot], variantNames[slot]);
+        }
     }
 
-    static void RagePicker()
+    static void RagePicker(int slot)
     {
         choices.Clear();
         foreach (var definition in UniqueVariantAdapter.Catalog(SelectedRageEntry()))
         {
             int id = definition.affixId;
-            string name = definition.getAffixDisplayName();
-            if (string.IsNullOrEmpty(name))
-                name = definition.affixName;
+            if (variantIds[1 - slot] == id)
+                continue;
+            string name = NativeItemNames.AffixName(definition);
             choices.Add(
                 new Choice
                 {
                     id = id,
                     name = name,
+                    aliases = NativeItemNames.AffixAliases(definition),
                     select = () =>
                     {
-                        rageId = id;
-                        rageName = name;
-                        Caption(rageSelect, name);
+                        variantIds[slot] = id;
+                        variantNames[slot] = name;
+                        Caption(variantSelect[slot], name);
                     },
                 }
             );
         }
         choices.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
-        OpenPicker("Unsated Rage — exclusive ring modifier");
+        OpenPicker(
+            UniqueVariantAdapter.IsUnsated(SelectedRageEntry())
+                ? "Unsated Rage — exclusive ring modifier"
+            : slot == 0 ? "Withstand the Elements — modifier 1"
+            : "Withstand the Elements — modifier 2"
+        );
     }
 
     static void CorruptionPicker()
@@ -631,14 +727,13 @@ public static class ForceDropBuilder
                 }
             if (used || choices.Exists(x => x.id == id))
                 continue;
-            string name = a.getAffixDisplayName();
-            if (string.IsNullOrEmpty(name))
-                name = a.affixName;
+            string name = NativeItemNames.AffixName(a);
             choices.Add(
                 new Choice
                 {
                     id = id,
                     name = name,
+                    aliases = NativeItemNames.AffixAliases(a),
                     select = () =>
                     {
                         corruptionId = id;
@@ -657,8 +752,8 @@ public static class ForceDropBuilder
     {
         if (!IsReady)
             return;
-        if (UniqueVariantAdapter.IsUnsated(SelectedRageEntry()))
-            UniqueVariantAdapter.Apply(item, rageId);
+        if (UniqueVariantAdapter.VariantCount(SelectedRageEntry()) > 0)
+            UniqueVariantAdapter.Apply(item, SelectedVariantIds());
         if (!corrupted || corruptionId < 0)
             return;
         CorruptedAffixAdapter.Apply(
@@ -671,14 +766,24 @@ public static class ForceDropBuilder
 
     public static void VerifySelectedCorruption(ItemDataUnpacked item)
     {
-        if (!IsReady || !corrupted || corruptionId < 0)
+        if (!IsReady)
             return;
-        CorruptedAffixAdapter.VerifySelection(
-            item,
-            corruptionId,
-            corruptionTier.value - 1,
-            Roll(corruptionRoll)
-        );
+        if (UniqueVariantAdapter.VariantCount(SelectedRageEntry()) > 0)
+            UniqueVariantAdapter.VerifySelection(item, SelectedVariantIds());
+        if (corrupted && corruptionId >= 0)
+            CorruptedAffixAdapter.VerifySelection(
+                item,
+                corruptionId,
+                corruptionTier.value - 1,
+                Roll(corruptionRoll)
+            );
+    }
+
+    static int[] SelectedVariantIds()
+    {
+        return UniqueVariantAdapter.VariantCount(SelectedRageEntry()) == 2
+            ? new[] { variantIds[0], variantIds[1] }
+            : new[] { variantIds[0] };
     }
 
     static void CatalogPicker(Dropdown catalog, Action changed, bool skipPlaceholder)
@@ -694,17 +799,25 @@ public static class ForceDropBuilder
                 && label.IndexOf("blessing", StringComparison.OrdinalIgnoreCase) >= 0
             )
                 continue;
-            string display = catalog == FD.type_dropdown ? CategoryLabel(label) : label;
+            nativeCategories.TryGetValue(i, out var category);
+            string display =
+                catalog == FD.type_dropdown
+                    ? CategoryName(i, label)
+                    : NativeItemNames.RarityName(label);
             int index = i;
             choices.Add(
                 new Choice
                 {
                     group = CategoryGroup(label),
                     name = display,
+                    aliases = label + "\n" + CategoryLabel(label),
                     select = () =>
                     {
                         catalog.SetValueWithoutNotify(index);
-                        changed();
+                        if (catalog == FD.type_dropdown && category != null)
+                            NativeItemNames.SelectCategory(category);
+                        else
+                            changed();
                         ResetRage();
                         foreach (var r in rows)
                         {
@@ -783,14 +896,13 @@ public static class ForceDropBuilder
             return;
         if (choices.Exists(x => x.id == id))
             return;
-        string name = a.getAffixDisplayName();
-        if (string.IsNullOrEmpty(name))
-            name = a.affixName;
+        string name = NativeItemNames.AffixName(a);
         choices.Add(
             new Choice
             {
                 id = id,
                 name = name,
+                aliases = NativeItemNames.AffixAliases(a),
                 select = () =>
                 {
                     rows[slot].id = id;
@@ -876,14 +988,21 @@ public static class ForceDropBuilder
         if (!ValidSelectedItem())
             return "The selected item does not match its category. Choose it again.";
         var rageEntry = SelectedRageEntry();
-        if (UniqueVariantAdapter.IsUnsated(rageEntry))
+        int variantCount = UniqueVariantAdapter.VariantCount(rageEntry);
+        if (variantCount > 0)
         {
-            if (!UniqueVariantAdapter.HasSingleVariant(rageEntry))
-                return "Unsated Rage fixed-pool data is unavailable.";
-            if (!UniqueVariantAdapter.Catalog(rageEntry).Exists(a => a.affixId == rageId))
-                return "Choose the ring's exclusive Rage modifier.";
-            if (!ids.Add(rageId))
-                return "Rage cannot occupy an ordinary affix slot.";
+            if (!UniqueVariantAdapter.HasVariants(rageEntry))
+                return "Unique modifier pool unavailable";
+            var variantCatalog = UniqueVariantAdapter.Catalog(rageEntry);
+            for (int slot = 0; slot < variantCount; slot++)
+            {
+                if (!variantCatalog.Exists(a => a.affixId == variantIds[slot]))
+                    return variantCount == 1
+                        ? "Choose the ring's exclusive Rage modifier."
+                        : "Choose both exclusive glove modifiers.";
+                if (!ids.Add(variantIds[slot]))
+                    return "Exclusive unique modifiers must be different and separate from ordinary affixes.";
+            }
         }
         for (int slot = 0; slot < rows.Length; slot++)
         {
@@ -946,11 +1065,13 @@ public static class ForceDropBuilder
 
     static void RefreshPreview()
     {
-        var s = new StringBuilder(Selected(FD.items_dropdown, L("Choose an item")));
+        var s = new StringBuilder(
+            FD.items_dropdown.value > 0 ? ItemName(FD.items_dropdown.value) : L("Choose an item")
+        );
         s.Append("\n\n")
-            .Append(L(CategoryLabel(Selected(FD.type_dropdown, ""))))
+            .Append(SelectedCategoryName(""))
             .Append("\n")
-            .Append(L(Selected(FD.rarity_dropdown, "")));
+            .Append(NativeItemNames.RarityName(Selected(FD.rarity_dropdown, "")));
         if (FD.item_type < 100)
         {
             if (FD.item_rarity < 7)
@@ -978,8 +1099,18 @@ public static class ForceDropBuilder
                                 + (ww.random ? L("Random") : ww.value.ToString())
                     );
         }
-        if (UniqueVariantAdapter.IsUnsated(SelectedRageEntry()))
-            s.Append("\n\n").Append(L("Ring variant")).Append(": ").Append(L(rageName));
+        int variantCount = UniqueVariantAdapter.VariantCount(SelectedRageEntry());
+        for (int slot = 0; slot < variantCount; slot++)
+            s.Append("\n\n")
+                .Append(
+                    L(
+                        variantCount == 1 ? "Ring variant"
+                        : slot == 0 ? "Glove modifier 1"
+                        : "Glove modifier 2"
+                    )
+                )
+                .Append(": ")
+                .Append(L(variantNames[slot]));
         s.Append("\n\n").Append(L("Corrupted")).Append(": ").Append(corrupted ? L("Yes") : L("No"));
         if (corrupted && corruptionId >= 0)
             s.Append("\n")
@@ -1166,6 +1297,70 @@ public static class ForceDropBuilder
         RefreshPicker();
     }
 
+    static void RefreshNativeLocale()
+    {
+        string locale = NativeItemNames.Locale;
+        object modLocale = Locales.current_dictionary;
+        int categoryCount = FD.type_dropdown.options.Count;
+        if (
+            lastNativeLocale == locale
+            && ReferenceEquals(lastModLocale, modLocale)
+            && lastCategoryCount == categoryCount
+        )
+            return;
+        lastNativeLocale = locale;
+        lastModLocale = modLocale;
+        lastCategoryCount = categoryCount;
+        nativeCategories = NativeItemNames.Categories(FD.type_dropdown);
+        lastItems = "";
+        lastSearch = "";
+        itemPage = 0;
+        // Picker actions keep stable ids; reopen to rebuild its translated labels.
+        if (!picker.IsNullOrDestroyed())
+            picker.SetActive(false);
+        foreach (var row in rows)
+        {
+            row.name = row.id < 0 ? "None" : NativeItemNames.AffixName(row.id, row.name);
+            Caption(row.select, row.name);
+        }
+        corruptionName =
+            corruptionId < 0 ? "None" : NativeItemNames.AffixName(corruptionId, corruptionName);
+        Caption(corruptionSelect, corruptionId < 0 ? "Corrupted affix: None" : corruptionName);
+        for (int slot = 0; slot < variantIds.Length; slot++)
+        {
+            if (variantIds[slot] < 0)
+                continue;
+            variantNames[slot] = NativeItemNames.AffixName(variantIds[slot], variantNames[slot]);
+            Caption(variantSelect[slot], variantNames[slot]);
+        }
+    }
+
+    static string ItemName(int index)
+    {
+        if (nativeItems.TryGetValue(index, out var item))
+            return item.name;
+        return index > 0 && index < FD.items_dropdown.options.Count
+            ? FD.items_dropdown.options[index].text
+            : L("Choose an item");
+    }
+
+    static string CategoryName(int index, string fallback)
+    {
+        if (!nativeCategories.TryGetValue(index, out var category))
+            return L(CategoryLabel(fallback));
+        string label = CategoryLabel(category.raw);
+        if (label == "Runes" || label == "Glyphs")
+            return L(label);
+        return category.name;
+    }
+
+    static string SelectedCategoryName(string fallback)
+    {
+        return FD.type_dropdown.value > 0
+            ? CategoryName(FD.type_dropdown.value, Selected(FD.type_dropdown, fallback))
+            : L(fallback);
+    }
+
     static string CategoryLabel(string name)
     {
         if (name.IndexOf("crafting modifier", StringComparison.OrdinalIgnoreCase) >= 0)
@@ -1232,10 +1427,7 @@ public static class ForceDropBuilder
         filtered.Clear();
         visiblePicks.Clear();
         foreach (var choice in choices)
-            if (
-                (choice.name ?? "").IndexOf(pickerSearch.text, StringComparison.OrdinalIgnoreCase)
-                >= 0
-            )
+            if (NativeItemNames.Matches(pickerSearch.text, choice.name, choice.aliases))
                 filtered.Add(choice);
         pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker);
         pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker);
