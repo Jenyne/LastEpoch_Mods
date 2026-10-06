@@ -11,6 +11,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
         private static KeybindSetting current;
         private static Text displayText;
         private static bool[] gamepadSnapshot;
+        private static KeyCode pendingModifier;
 
         public static bool Active => current != null;
 
@@ -19,6 +20,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             current = setting;
             displayText = display;
             gamepadSnapshot = null;
+            pendingModifier = KeyCode.None;
         }
 
         public static void Cancel()
@@ -28,6 +30,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             current = null;
             displayText = null;
             gamepadSnapshot = null;
+            pendingModifier = KeyCode.None;
         }
 
         public static void Tick()
@@ -37,6 +40,12 @@ namespace LastEpoch_Hud.Scripts.ModUI
             if (Input.GetKeyDown(KeyCode.Escape)) { Cancel(); return; }
 
             if (Input.anyKeyDown && TryCaptureKeyboard()) return;
+            // A modifier by itself remains usable (e.g. AutoCast): commit on release.
+            if (pendingModifier != KeyCode.None && Input.GetKeyUp(pendingModifier))
+            {
+                Commit("kb:" + pendingModifier);
+                return;
+            }
             TryCaptureGamepad();
         }
 
@@ -48,11 +57,24 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 if (kc == KeyCode.Escape) continue;
                 if (kc == KeyCode.Mouse0 || kc == KeyCode.Mouse1) continue;
                 if (!Input.GetKeyDown(kc)) continue;
-                Commit("kb:" + kc.ToString());
+                if (IsModifier(kc)) { pendingModifier = kc; continue; }
+                var keys = new System.Collections.Generic.List<string>();
+                foreach (var modifier in new[] { KeyCode.LeftControl, KeyCode.RightControl,
+                    KeyCode.LeftShift, KeyCode.RightShift, KeyCode.LeftAlt, KeyCode.RightAlt,
+                    KeyCode.LeftCommand, KeyCode.RightCommand })
+                    if (Input.GetKey(modifier)) keys.Add(modifier.ToString());
+                keys.Add(kc.ToString());
+                Commit("kb:" + string.Join("+", keys));
                 return true;
             }
             return false;
         }
+
+        private static bool IsModifier(KeyCode key) =>
+            key == KeyCode.LeftControl || key == KeyCode.RightControl
+            || key == KeyCode.LeftShift || key == KeyCode.RightShift
+            || key == KeyCode.LeftAlt || key == KeyCode.RightAlt
+            || key == KeyCode.LeftCommand || key == KeyCode.RightCommand;
 
         private static void TryCaptureGamepad()
         {
@@ -90,6 +112,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             current = null;
             displayText = null;
             gamepadSnapshot = null;
+            pendingModifier = KeyCode.None;
             s.Set(binding);
         }
     }
