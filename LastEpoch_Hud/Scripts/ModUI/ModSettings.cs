@@ -61,6 +61,15 @@ namespace LastEpoch_Hud.Scripts.ModUI
         // CHARACTER TAB
         //
 
+        public static class ProphecyRewards
+        {
+            public static readonly SettingsGroup Group = new SettingsGroup("ProphecyRewards")
+                .Content("Character_Content").Viewport("Character_Cheats", "Character_Cheats_Content")
+                .OnBind((content, viewport) => ProphecyRewardControls.Bind(content, viewport));
+            public static readonly FloatSetting Multiplier = Group.Float("Multiplier", defaultValue: 1,
+                min: 1, max: 10, format: DisplayFormat.Raw);
+        }
+
         public static class Weaver
         {
             public static readonly SettingsGroup Group = new SettingsGroup("Weaver")

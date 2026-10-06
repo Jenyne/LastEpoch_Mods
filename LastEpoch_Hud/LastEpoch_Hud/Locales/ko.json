@@ -337,5 +337,8 @@
   "Magic": "마법",
   "Rare": "희귀",
   "Reset Difficulty": "난이도 초기화",
-  "Max Out Blessings": "축복 수치 최대화"
+  "Max Out Blessings": "축복 수치 최대화",
+  "Prophecy Reward Multiplier": "예언 보상 배율",
+  "Multiply Prophecy Rewards": "예언 보상 배율 적용",
+  "Whole numbers: 1–10. Charges are consumed normally.": "정수 1–10. 충전 횟수는 정상적으로 소모됩니다."
 }
