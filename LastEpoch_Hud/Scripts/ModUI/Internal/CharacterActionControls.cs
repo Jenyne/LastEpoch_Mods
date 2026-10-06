@@ -51,7 +51,10 @@ internal static class CharacterActionControls
                 count++;
         if (count == 0)
             return;
-        float height = 32 + ((count + 1) / 2) * 44;
+        const float headerHeight = 24;
+        const float rowHeight = 20;
+        const float rowSpacing = 2;
+        float height = headerHeight + count * (rowHeight + rowSpacing);
         var section = Node(content, name);
         var rect = section.GetComponent<RectTransform>();
         rect.anchorMin = new Vector2(0, 1);
@@ -67,12 +70,12 @@ internal static class CharacterActionControls
         title.color = sample.color;
         title.alignment = TextAnchor.MiddleLeft;
         title.raycastTarget = false;
-        Place(title.gameObject, 0, 1, 0, 26);
+        Place(title.gameObject, 0, 1, 0, 20);
         LocaleRegistry.Apply(title, caption);
         var line = Node(section, "Separator").AddComponent<Image>();
         line.color = new Color(.83f, .69f, .36f);
         line.raycastTarget = false;
-        Place(line.gameObject, 0, 1, 27, 1);
+        Place(line.gameObject, 0, 1, 21, 1);
         int index = 0;
         foreach (var button in buttons)
         {
@@ -82,10 +85,10 @@ internal static class CharacterActionControls
             button.transform.SetParent(section.transform, false);
             Place(
                 button.gameObject,
-                index % 2 == 0 ? 0 : .51f,
-                index % 2 == 0 ? .49f : 1,
-                32 + index / 2 * 44,
-                38
+                0,
+                1,
+                headerHeight + index * (rowHeight + rowSpacing),
+                rowHeight
             );
             var oldLayout = button.GetComponent<LayoutElement>();
             if (!oldLayout.IsNullOrDestroyed())

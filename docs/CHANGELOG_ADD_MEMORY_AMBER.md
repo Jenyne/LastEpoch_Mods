@@ -13,8 +13,10 @@ In-game checks: click once and verify +10,000, including with the Memory Amber m
 
 ## Currency and blessing layout follow-up
 
-- Group all Add buttons into a compact two-column Currencies section in Character → Cheats.
+- Group all Add buttons into a compact full-width bar Currencies section in Character → Cheats.
 - Replace the Soul Ember input and Data row with Add 1,000 Soul Embers. Each click uses one native +1,000 grant.
 - Move Choose Blessings, Discover All Blessings, Max Out Blessings and Unlock Blessing Slots to the bottom of Character → Data.
 - Match native button appearance and gold section dividers; translate the new labels in English, French, Korean and Chinese.
 - Initial integration gameplay was confirmed; this layout follow-up remains pending in-game testing.
+
+- Layout follow-up: stack currency and blessing actions as full-width native button bars, with 20-pixel rows and 2-pixel gaps to reduce scroll space.
