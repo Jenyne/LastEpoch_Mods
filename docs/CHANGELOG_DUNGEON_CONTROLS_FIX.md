@@ -11,7 +11,7 @@
 
 ## Developer changes
 
-- Separate persisted reveal settings from the runtime UI group, removing the automatic binding attempt before control creation.
+- Leave the existing settings registry and reveal save key intact. Runtime controls save directly through native click/submit hooks. The initial legacy `DungeonReveal: Bound 0/1` warning may still appear because automatic binding precedes runtime creation; this warning alone no longer determines whether the new controls work.
 - Handle native Toggle pointer and submit events instead of relying on a managed listener for the runtime checkboxes.
 - Wait for pulse initialization, restrict activation to components with a dungeon manager, and clear the reference on destruction.
 - Leave the native pulse's activated state intact. Disabling the option prevents subsequent automatic reveals; it does not hide a floor already revealed.
