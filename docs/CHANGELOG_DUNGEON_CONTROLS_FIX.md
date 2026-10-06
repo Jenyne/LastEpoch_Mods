@@ -13,7 +13,7 @@
 
 - Leave the existing settings registry and reveal save key intact. Runtime controls save directly through native click/submit hooks. The initial legacy `DungeonReveal: Bound 0/1` warning may still appear because automatic binding precedes runtime creation; this warning alone no longer determines whether the new controls work.
 - Handle native Toggle pointer and submit events instead of relying on a managed listener for the runtime checkboxes.
-- Wait for native Start to finish and for an unlocked ordinary dungeon floor. Request activation once per pulse component, marking it before entering native code, and clear its guard on destruction.
+- Wait for native Start to finish and for a dungeon manager. Request activation once per pulse component, marking it before entering native code, and clear its guard on destruction.
 - Remove the score-change hook: reveal activation no longer runs inside the native score-event callback.
 - Log pulse identity and request/completion separately so further crashes can be correlated with a specific activation.
 - Leave the native pulse's activated state intact. Disabling the option prevents subsequent automatic reveals; it does not hide a floor already revealed.
@@ -39,3 +39,5 @@ This branch starts from feat/dungeon-objective-reveal, keeping the queued test w
 ## Dungeon crash follow-up
 
 The user's build 04146990 was stable in town but crashed within about a minute inside Temporal Sanctum. Latest(3).log showed four reveal activations in two timestamp pairs, without a fatal exception stack or pulse identities. This does not establish the cause; the score callback and repeated requests are a candidate being isolated. The follow-up removes that callback and guards activation. Retest for several minutes on each floor and through floor transitions. If it still crashes, restart with Reveal Dungeon Objectives disabled while leaving keyless entry enabled, then repeat to separate the two features. Gameplay stability remains unconfirmed.
+
+The user confirmed the guarded build no longer crashed in their test, but reveal stopped working. The follow-up removes the Default/Unlocked state gate, which was an unverified readiness assumption, while retaining the one-request guard and removal of the score callback. Native zone type/state are now logged for evidence. Reveal and continued stability need retesting together.
