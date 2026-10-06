@@ -145,18 +145,18 @@ public static class CustomItemIcons
     private static void Reload(int index)
     {
         Main.logger_instance?.Warning(
-            $"{CustomUniqueSpecs.All[index].Name} icon was unloaded; reloaded"
+            $"{CustomUniqueSpecs.All[index].Name} icon was unloaded; reloading"
         );
         string name = _assetNames[index];
         _sprites[index] = null;
         _textures[index] = null;
         _assetNames[index] = null;
-        if (Hud_Manager.asset_bundle.IsNullOrDestroyed())
+        if (!Hud_Manager.asset_bundle.IsNullOrDestroyed())
         {
-            return;
+            LoadIcon(name);
         }
 
-        LoadIcon(name);
+        LogUnavailable(index);
     }
 
     private static void LogLoaded(int index, string name)
