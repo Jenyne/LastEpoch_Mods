@@ -1,4 +1,6 @@
 using HarmonyLib;
+using System;
+using System.Collections.Generic;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.ModUI;
 using ModSaveManager = LastEpoch_Hud.Scripts.ModUI.SaveManager;
@@ -8,6 +10,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Dungeons
     internal static class Dungeons_ObjectiveReveal
     {
         static DelayedZoneObjectivePulse pulse;
+        static readonly HashSet<IntPtr> requested = new HashSet<IntPtr>();
 
         static bool Enabled => Scenes.IsGameScene()
             && !ModSaveManager.instance.IsNullOrDestroyed()
@@ -18,24 +21,35 @@ namespace LastEpoch_Hud.Scripts.Mods.Dungeons
         {
             if (!enabled || !Enabled || pulse.IsNullOrDestroyed() || pulse.activated
                 || pulse.dungeonZoneManager.IsNullOrDestroyed()) return;
-            // Use the native reveal path, including its activation state and sync.
-            // The same component also serves monoliths: require a dungeon manager.
+            var manager = pulse.dungeonZoneManager;
+            // Entrance areas can initialise pulse components before a run is entered.
+            // Only reveal an unlocked, ordinary dungeon floor.
+            if (manager.zoneType.ToString() != "Default"
+                || manager.zoneState.ToString() != "Unlocked") return;
+            IntPtr pointer = pulse.Pointer;
+            // Mark BEFORE the native call: activation can synchronously invoke other
+            // native callbacks before its activated field has been updated.
+            if (!requested.Add(pointer)) return;
+            Main.logger_instance?.Msg("Dungeon objective reveal: requesting pulse " + pointer
+                + " in " + manager.gameObject.scene.name);
             pulse.activate();
-            Main.logger_instance?.Msg("Dungeon objective reveal: activated native pulse");
+            Main.logger_instance?.Msg("Dungeon objective reveal: completed request for pulse " + pointer);
         }
 
         static System.Collections.IEnumerator ApplyWhenReady(DelayedZoneObjectivePulse target)
         {
-            // Start and dungeon initialise can run in either order. Wait for both.
+            // Let native Start finish, then wait for the floor and saved settings.
+            // Never invoke activation from inside the native score-change callback.
+            yield return null;
+            yield return null;
             for (int i = 0; i < 120; i++)
             {
-                yield return null;
+                yield return new UnityEngine.WaitForSeconds(0.25f);
                 if (target.IsNullOrDestroyed()) yield break;
                 if (target.dungeonZoneManager.IsNullOrDestroyed()) continue;
                 pulse = target;
                 Apply(ModSettings.DungeonReveal.Enabled.Value);
-                if (!ModSaveManager.instance.IsNullOrDestroyed()
-                    && ModSaveManager.instance.initialized) yield break;
+                if (requested.Contains(target.Pointer) || target.activated) yield break;
             }
         }
 
@@ -49,24 +63,13 @@ namespace LastEpoch_Hud.Scripts.Mods.Dungeons
             }
         }
 
-        [HarmonyPatch(typeof(DelayedZoneObjectivePulse), "onScoreChanged")]
-        static class ScoreChanged
-        {
-            [HarmonyPostfix]
-            static void Postfix(DelayedZoneObjectivePulse __instance)
-            {
-                if (__instance.dungeonZoneManager.IsNullOrDestroyed()) return;
-                pulse = __instance;
-                Apply(ModSettings.DungeonReveal.Enabled.Value);
-            }
-        }
-
         [HarmonyPatch(typeof(DelayedZoneObjectivePulse), "OnDestroy")]
         static class PulseDestroyed
         {
             [HarmonyPrefix]
             static void Prefix(DelayedZoneObjectivePulse __instance)
             {
+                requested.Remove(__instance.Pointer);
                 if (!pulse.IsNullOrDestroyed() && pulse.Pointer == __instance.Pointer) pulse = null;
             }
         }
