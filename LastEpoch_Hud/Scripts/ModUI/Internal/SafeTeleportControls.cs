@@ -61,6 +61,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
             float right, float top)
         {
             var go = new GameObject(name);
+            // Match the HUD layer so the UI camera renders and raycasts these controls.
+            go.layer = parent.layer;
             var r = go.AddComponent<RectTransform>();
             r.SetParent(parent.transform, false);
             r.anchorMin = new Vector2(left, bottom); r.anchorMax = new Vector2(right, top);
