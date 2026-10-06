@@ -83,8 +83,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             public static readonly SettingsGroup Group = new SettingsGroup("Cheats")
                 .Content("Character_Content")
                 .Viewport("Character_Cheats", "Character_Cheats_Content")
-                .Prefix("Character_Cheats_")
-                .OnBind((content, viewport) => SafeTeleportControls.Bind(content, viewport));
+                .Prefix("Character_Cheats_");
 
             public static readonly BoolSetting TwoHandeWithShield = Group.Bool(
                 "TwoHandeWithShield",
@@ -94,9 +93,9 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
         public static class SafeTeleport
         {
-            // UI is built at runtime for existing asset bundles, then bound from Cheats.
+            // UI is built below Minimap in Scenes; keep the same save group and keys.
             public static readonly SettingsGroup Group = new SettingsGroup("SafeTeleport")
-                .Viewport("Character_Cheats", "Character_Cheats_Content");
+                .Viewport("Center", "Scenes_Minimap_Content");
             public static readonly BoolSetting Enabled = Group.Bool("Enabled",
                 label: "Enable Safe Teleport", path: "SafeTeleport/Enabled");
             public static readonly KeybindSetting Key = Group.Keybind("Key", defaultBinding: "",
@@ -119,6 +118,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 .OnBind(
                     (contentObj, _) =>
                     {
+                        SafeTeleportControls.Bind(contentObj,
+                            Prefab.ViewportContent(contentObj, "Center", "Scenes_Minimap_Content"));
                         // Apply to existing asset bundles as well as the updated prefab.
                         LayoutPanel(contentObj, "Camera", 0.006f, 0.505f, 0.33229983f, 0.9895249f);
                         LayoutPanel(contentObj, "Difficulty", 0.006f, 0.010475103f, 0.33229983f, 0.495f);
