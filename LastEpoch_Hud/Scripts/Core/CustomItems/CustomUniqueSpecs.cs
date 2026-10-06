@@ -15,6 +15,7 @@ public static class CustomUniqueSpecs
         LevelRequirement = 40,
         OverrideLevelRequirement = true,
         EffectiveLevelForLegendaryPotential = 0,
+        IconAsset = "/headhunter/texture2d/icon.png",
     };
 
     public static readonly CustomUniqueSpec Mjolner = new()
@@ -27,6 +28,7 @@ public static class CustomUniqueSpecs
         LevelRequirement = 78,
         OverrideLevelRequirement = false,
         EffectiveLevelForLegendaryPotential = 60,
+        IconAsset = "/mjolner.png",
     };
 
     public static readonly CustomUniqueSpec SandsOfSilk = new()
@@ -39,6 +41,8 @@ public static class CustomUniqueSpecs
         LevelRequirement = 16,
         OverrideLevelRequirement = true,
         EffectiveLevelForLegendaryPotential = 0,
+        IconAsset = "/sandsofsilk/texture2d/icon.png",
+        VisualSource = new CustomItemVisualSource { SubType = 0, UniqueId = 7 },
     };
 
     public static readonly CustomUniqueSpec EssentiaSanguis = new()
@@ -51,6 +55,8 @@ public static class CustomUniqueSpecs
         LevelRequirement = 52,
         OverrideLevelRequirement = true,
         EffectiveLevelForLegendaryPotential = 0,
+        IconAsset = "/essentiasanguis/texture2d/icon.png",
+        VisualSource = new CustomItemVisualSource { SubType = 0, UniqueId = 22 },
     };
 
     public static readonly IReadOnlyList<CustomUniqueSpec> All = new[]

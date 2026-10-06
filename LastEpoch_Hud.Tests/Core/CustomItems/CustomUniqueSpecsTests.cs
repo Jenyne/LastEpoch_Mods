@@ -64,4 +64,65 @@ public sealed class CustomUniqueSpecsTests
 
         Assert.Equal(bases.Count, bases.Distinct().Count());
     }
+
+    [Theory]
+    [InlineData("Headhunter", "/headhunter/texture2d/icon.png")]
+    [InlineData("Mjolner", "/mjolner.png")]
+    [InlineData("Sands of Silk", "/sandsofsilk/texture2d/icon.png")]
+    [InlineData("Essentia Sanguis", "/essentiasanguis/texture2d/icon.png")]
+    public void IconAsset_HoldsTodaysValue(string name, string suffix)
+    {
+        CustomUniqueSpec spec = CustomUniqueSpecs.All.Single(s => s.Name == name);
+
+        Assert.Equal(suffix, spec.IconAsset);
+    }
+
+    [Fact]
+    public void IconAssets_AreDistinctAndRooted()
+    {
+        var assets = CustomUniqueSpecs.All.Select(s => s.IconAsset).ToList();
+
+        Assert.All(assets, asset => Assert.StartsWith("/", asset));
+        Assert.Equal(assets.Count, assets.Distinct().Count());
+    }
+
+    [Fact]
+    public void IconAssets_NoneEndsWithAnother()
+    {
+        IEnumerable<(CustomUniqueSpec a, CustomUniqueSpec b)> pairs =
+            CustomUniqueSpecs.All.SelectMany(a =>
+                CustomUniqueSpecs.All.Where(b => a != b).Select(b => (a, b))
+            );
+
+        Assert.All(
+            pairs,
+            pair =>
+                Assert.False(
+                    pair.a.IconAsset.EndsWith(pair.b.IconAsset, StringComparison.OrdinalIgnoreCase)
+                )
+        );
+    }
+
+    [Fact]
+    public void VisualSource_OnlyEsAndSos()
+    {
+        var names = CustomUniqueSpecs
+            .All.Where(s => s.VisualSource != null)
+            .Select(s => s.Name)
+            .ToList();
+
+        Assert.Equal(new[] { "Sands of Silk", "Essentia Sanguis" }, names);
+    }
+
+    [Fact]
+    public void VisualSources_UseFixedBaseAndGameUnique()
+    {
+        var withSource = CustomUniqueSpecs.All.Where(s => s.VisualSource != null).ToList();
+
+        Assert.All(withSource, spec => Assert.True(spec.BaseId >= 0));
+        Assert.All(
+            withSource,
+            spec => Assert.Equal(-1, CustomUniqueLookup.IndexOf(spec.VisualSource.UniqueId))
+        );
+    }
 }

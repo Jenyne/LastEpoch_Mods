@@ -171,6 +171,14 @@ public class Mods_Manager : MonoBehaviour
         items_essentiasanguis_obj.AddComponent<Mods.Items.Items_EssentiaSanguis>();
         Mods_Objects.Add(items_essentiasanguis_obj);
 
+        GameObject customIconsObj = Object.Instantiate(
+            new GameObject { name = "Mod_Items_CustomItemIcons" },
+            Vector3.zero,
+            Quaternion.identity
+        );
+        customIconsObj.AddComponent<Mods.Items.CustomItemIconUpdater>();
+        Mods_Objects.Add(customIconsObj);
+
         items_temporalis_obj = Object.Instantiate(
             new GameObject { name = "Mod_Items_Temporalis" },
             Vector3.zero,

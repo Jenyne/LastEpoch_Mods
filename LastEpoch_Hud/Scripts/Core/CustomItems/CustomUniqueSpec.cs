@@ -14,4 +14,10 @@ public sealed class CustomUniqueSpec
     public int LevelRequirement { get; init; }
     public bool OverrideLevelRequirement { get; init; }
     public int EffectiveLevelForLegendaryPotential { get; init; }
+
+    /// <summary>Lowercase '/'-path suffix of the icon in the HUD bundle.</summary>
+    public string IconAsset { get; init; }
+
+    /// <summary>Game item whose 3D visual is borrowed; null uses the game's own lookup.</summary>
+    public CustomItemVisualSource VisualSource { get; init; }
 }

@@ -1,6 +1,4 @@
-﻿using HarmonyLib;
 using Il2Cpp;
-using Il2CppInterop.Runtime;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 using MelonLoader;
 using Newtonsoft.Json;
@@ -54,11 +52,6 @@ public class Items_HeadHunter : MonoBehaviour
         {
             Initialized = Config.LoadConfig();
         }
-    }
-
-    void LateUpdate()
-    {
-        Unique.RefreshVisibleIcons();
     }
 
     void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -189,351 +182,36 @@ public class Items_HeadHunter : MonoBehaviour
 
         public static void Load()
         {
-            if (
-                (!Loaded)
-                && (!attempted)
-                && (!Hud_Manager.asset_bundle.IsNullOrDestroyed())
-                && (!loading)
-            )
+            if (Loaded || attempted || Hud_Manager.asset_bundle.IsNullOrDestroyed() || loading)
             {
-                loading = true;
-                attempted = true;
-                try
+                return;
+            }
+            loading = true;
+            attempted = true;
+            try
+            {
+                foreach (string name in Hud_Manager.asset_bundle.GetAllAssetNames())
                 {
-                    foreach (string name in Hud_Manager.asset_bundle.GetAllAssetNames())
+                    if (IsBuffsJson(name))
                     {
-                        string path = name.Replace("\\", "/").ToLowerInvariant();
-                        if (path.Contains("/headhunter/"))
-                        {
-                            if (
-                                (Functions.Check_Texture(name))
-                                && (path.EndsWith("/headhunter/texture2d/icon.png"))
-                                && (Unique.Icon.IsNullOrDestroyed())
-                            )
-                            {
-                                // Load the texture explicitly and create a runtime sprite;
-                                // this avoids ambiguous PNG subassets and imported atlas bindings.
-                                Texture2D texture = Hud_Manager
-                                    .asset_bundle.LoadAsset(name, Il2CppType.Of<Texture2D>())
-                                    .TryCast<Texture2D>();
-                                if (!texture.IsNullOrDestroyed())
-                                {
-                                    Unique.Icon = Sprite.Create(
-                                        texture,
-                                        new Rect(0, 0, texture.width, texture.height),
-                                        new Vector2(0.5f, 0.5f)
-                                    );
-                                }
-                                else
-                                {
-                                    Unique.Icon = Hud_Manager
-                                        .asset_bundle.LoadAsset(name, Il2CppType.Of<Sprite>())
-                                        .TryCast<Sprite>();
-                                }
-                                if (!Unique.Icon.IsNullOrDestroyed())
-                                {
-                                    Main.logger_instance?.Msg(
-                                        "Headhunter icon loaded: "
-                                            + path
-                                            + " ("
-                                            + Unique.Icon.rect.width
-                                            + "x"
-                                            + Unique.Icon.rect.height
-                                            + ")"
-                                    );
-                                }
-                            }
-                            else if (
-                                (Functions.Check_Json(name))
-                                && (name.Contains("hh_buffs"))
-                                && (Config.json.IsNullOrDestroyed())
-                            )
-                            {
-                                Config.json = Hud_Manager
-                                    .asset_bundle.LoadAsset(name)
-                                    .TryCast<TextAsset>();
-                                //Object.DontDestroyOnLoad(Config.json);
-                            }
-                        }
-                    }
-                    if ((!Unique.Icon.IsNullOrDestroyed()) && (!Config.json.IsNullOrDestroyed()))
-                    {
-                        Loaded = true;
-                    }
-                    else
-                    {
-                        Loaded = false;
+                        Config.json = Hud_Manager.asset_bundle.LoadAsset(name).TryCast<TextAsset>();
                     }
                 }
-                catch (System.Exception ex)
-                {
-                    Main.logger_instance?.Error("Headhunter Asset Error: " + ex.Message);
-                }
-                loading = false;
+                Loaded = !Config.json.IsNullOrDestroyed();
             }
-        }
-    }
-
-    public class Unique
-    {
-        public static Sprite Icon = null;
-
-        public static string Get_Unique_Name()
-        {
-            return CustomItemLocalization.Text(HeadhunterTexts.UniqueName);
+            catch (System.Exception ex)
+            {
+                Main.logger_instance?.Error("Headhunter Asset Error: " + ex.Message);
+            }
+            loading = false;
         }
 
-        public static string Get_Unique_Description()
+        private static bool IsBuffsJson(string name)
         {
-            string result = "";
-            switch (Locales.current)
-            {
-                case Locales.Selected.English:
-                {
-                    result = HHLocales.UniqueDescription.en;
-                    break;
-                }
-                case Locales.Selected.French:
-                {
-                    result = HHLocales.UniqueDescription.fr;
-                    break;
-                }
-
-                case Locales.Selected.Korean:
-                {
-                    result = HHLocales.UniqueDescription.en;
-                    break;
-                }
-                case Locales.Selected.German:
-                {
-                    result = HHLocales.UniqueDescription.en;
-                    break;
-                }
-                case Locales.Selected.Russian:
-                {
-                    result = HHLocales.UniqueDescription.en;
-                    break;
-                }
-                case Locales.Selected.Polish:
-                {
-                    result = HHLocales.UniqueDescription.en;
-                    break;
-                }
-                case Locales.Selected.Portuguese:
-                {
-                    result = HHLocales.UniqueDescription.en;
-                    break;
-                }
-                case Locales.Selected.Chinese:
-                {
-                    result = HHLocales.UniqueDescription.en;
-                    break;
-                }
-                case Locales.Selected.Spanish:
-                {
-                    result = HHLocales.UniqueDescription.en;
-                    break;
-                }
-            }
-
-            return result;
-        }
-
-        //Not work in 1.2
-        /*[HarmonyPatch(typeof(InventoryItemUI), "GetSpriteImage")]
-        public class InventoryItemUI_GetSpriteImage
-        {
-            [HarmonyPostfix]
-            static void Postfix(ref UnityEngine.Sprite __result, ItemData __0, ItemUIContext __1)
-            {
-                if ((__0.getAsUnpacked().FullName == Get_Unique_Name()) && (!Icon.IsNullOrDestroyed()))
-                {
-                    __result = Icon;
-                }
-            }
-        }*/
-
-        private static bool IsHeadhunter(ItemData item)
-        {
-            return !item.IsNullOrDestroyed()
-                && item.isUniqueSetOrLegendary()
-                && item.uniqueID == CustomUniqueSpecs.Headhunter.UniqueId;
-        }
-
-        private static readonly System.Collections.Generic.List<InventoryItemUI> inventoryIcons =
-            new System.Collections.Generic.List<InventoryItemUI>();
-
-        private sealed class TooltipIcons
-        {
-            public UITooltipItem owner;
-            public bool comparison;
-            public UnityEngine.UI.Image[] images;
-        }
-
-        private static readonly System.Collections.Generic.List<TooltipIcons> tooltipIcons =
-            new System.Collections.Generic.List<TooltipIcons>();
-
-        private static void ApplyIcon(UnityEngine.UI.Image image)
-        {
-            if (image.IsNullOrDestroyed() || Icon.IsNullOrDestroyed())
-            {
-                return;
-            }
-            // A native override sprite can mask Image.sprite entirely.
-            image.overrideSprite = null;
-            image.sprite = Icon;
-        }
-
-        private static void BindInventoryIcon(InventoryItemUI ui)
-        {
-            if (ui.IsNullOrDestroyed())
-            {
-                return;
-            }
-            bool matches = !ui.EntryRef.IsNullOrDestroyed() && IsHeadhunter(ui.EntryRef.data);
-            if (matches)
-            {
-                if (!inventoryIcons.Contains(ui))
-                {
-                    inventoryIcons.Add(ui);
-                }
-                ApplyIcon(ui.contentImage);
-            }
-            else
-            {
-                inventoryIcons.Remove(ui);
-            }
-        }
-
-        private static void BindTooltipIcon(UITooltipItem ui, ItemData item, bool comparison)
-        {
-            if (ui.IsNullOrDestroyed())
-            {
-                return;
-            }
-            for (int i = tooltipIcons.Count - 1; i >= 0; i--)
-            {
-                if (tooltipIcons[i].owner == ui && tooltipIcons[i].comparison == comparison)
-                {
-                    tooltipIcons.RemoveAt(i);
-                }
-            }
-            if (!IsHeadhunter(item))
-            {
-                return;
-            }
-            var images = comparison
-                ? new[]
-                {
-                    ui.compareItemImage,
-                    ui.compareSmallItemImage,
-                    ui.compareMediumItemImage,
-                    ui.compareTallMediumItemImage,
-                    ui.compareLargeItemImage,
-                    ui.compareSpearItemImage,
-                    ui.compareWideItemImage,
-                }
-                : new[]
-                {
-                    ui.itemImage,
-                    ui.smallItemImage,
-                    ui.mediumItemImage,
-                    ui.tallMediumItemImage,
-                    ui.largeItemImage,
-                    ui.spearItemImage,
-                    ui.wideItemImage,
-                };
-            tooltipIcons.Add(
-                new TooltipIcons
-                {
-                    owner = ui,
-                    comparison = comparison,
-                    images = images,
-                }
-            );
-            foreach (var image in images)
-            {
-                ApplyIcon(image);
-            }
-        }
-
-        public static void RefreshVisibleIcons()
-        {
-            // Native addressable image loads may finish after our Harmony postfix.
-            // Track only bound Headhunter views; never scan all UI objects.
-            for (int i = inventoryIcons.Count - 1; i >= 0; i--)
-            {
-                var ui = inventoryIcons[i];
-                if (
-                    ui.IsNullOrDestroyed()
-                    || ui.EntryRef.IsNullOrDestroyed()
-                    || !IsHeadhunter(ui.EntryRef.data)
-                )
-                {
-                    inventoryIcons.RemoveAt(i);
-                    continue;
-                }
-                if (ui.gameObject.activeInHierarchy)
-                {
-                    ApplyIcon(ui.contentImage);
-                }
-            }
-            for (int i = tooltipIcons.Count - 1; i >= 0; i--)
-            {
-                var binding = tooltipIcons[i];
-                if (binding.owner.IsNullOrDestroyed())
-                {
-                    tooltipIcons.RemoveAt(i);
-                    continue;
-                }
-                if (!binding.owner.gameObject.activeInHierarchy)
-                {
-                    continue;
-                }
-                foreach (var image in binding.images)
-                {
-                    ApplyIcon(image);
-                }
-            }
-        }
-
-        [HarmonyPatch(typeof(InventoryItemUI), "SetImageSpritesAndColours")]
-        public class InventoryItemUI_SetImageSpritesAndColours
-        {
-            [HarmonyPostfix]
-            static void Postfix(InventoryItemUI __instance)
-            {
-                BindInventoryIcon(__instance);
-            }
-        }
-
-        [HarmonyPatch(typeof(InventoryItemUI), "SetItemSprite")]
-        public class InventoryItemUI_SetItemSprite
-        {
-            [HarmonyPostfix]
-            static void Postfix(InventoryItemUI __instance)
-            {
-                BindInventoryIcon(__instance);
-            }
-        }
-
-        [HarmonyPatch(
-            typeof(UITooltipItem),
-            "SetItemImage",
-            new System.Type[]
-            {
-                typeof(ItemDataUnpacked),
-                typeof(UITooltipItem.ItemTooltipInfo),
-                typeof(bool),
-            }
-        )]
-        public class UITooltipItem_SetItemImage
-        {
-            [HarmonyPostfix]
-            static void Postfix(UITooltipItem __instance, ItemDataUnpacked __0, bool __2)
-            {
-                BindTooltipIcon(__instance, __0, __2);
-            }
+            return name.Replace("\\", "/").ToLowerInvariant().Contains("/headhunter/")
+                && Functions.Check_Json(name)
+                && name.Contains("hh_buffs")
+                && Config.json.IsNullOrDestroyed();
         }
     }
 
@@ -875,7 +553,63 @@ public class Items_HeadHunter : MonoBehaviour
                 return null;
             }
 
-            return Unique.Get_Unique_Description();
+            return CurrentDescription();
+        }
+
+        private static string CurrentDescription()
+        {
+            string result = "";
+            switch (Locales.current)
+            {
+                case Locales.Selected.English:
+                {
+                    result = HHLocales.UniqueDescription.en;
+                    break;
+                }
+                case Locales.Selected.French:
+                {
+                    result = HHLocales.UniqueDescription.fr;
+                    break;
+                }
+
+                case Locales.Selected.Korean:
+                {
+                    result = HHLocales.UniqueDescription.en;
+                    break;
+                }
+                case Locales.Selected.German:
+                {
+                    result = HHLocales.UniqueDescription.en;
+                    break;
+                }
+                case Locales.Selected.Russian:
+                {
+                    result = HHLocales.UniqueDescription.en;
+                    break;
+                }
+                case Locales.Selected.Polish:
+                {
+                    result = HHLocales.UniqueDescription.en;
+                    break;
+                }
+                case Locales.Selected.Portuguese:
+                {
+                    result = HHLocales.UniqueDescription.en;
+                    break;
+                }
+                case Locales.Selected.Chinese:
+                {
+                    result = HHLocales.UniqueDescription.en;
+                    break;
+                }
+                case Locales.Selected.Spanish:
+                {
+                    result = HHLocales.UniqueDescription.en;
+                    break;
+                }
+            }
+
+            return result;
         }
 
         public class UniqueDescription

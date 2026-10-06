@@ -1,7 +1,4 @@
-﻿using HarmonyLib;
 using Il2Cpp;
-using Il2CppLE.Services.Models.Items;
-using Il2CppLE.Services.Visuals;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 using MelonLoader;
 using UnityEngine;
@@ -25,10 +22,6 @@ public class Items_SandsOfSilk : MonoBehaviour
 
     void Update()
     {
-        if (!Assets.Loaded)
-        {
-            Assets.Load();
-        }
         _registrar.Update();
     }
 
@@ -149,125 +142,5 @@ public class Items_SandsOfSilk : MonoBehaviour
         result.Add(new UniqueModDisplayListEntry(5));
 
         return result;
-    }
-
-    public class Assets
-    {
-        public static bool Loaded = false;
-        public static bool loading = false;
-        public static bool attempted = false;
-
-        public static void Load()
-        {
-            if (
-                (!Loaded)
-                && (!attempted)
-                && (!Hud_Manager.asset_bundle.IsNullOrDestroyed())
-                && (!loading)
-            )
-            {
-                loading = true;
-                attempted = true;
-                try
-                {
-                    foreach (string name in Hud_Manager.asset_bundle.GetAllAssetNames())
-                    {
-                        if (name.Contains("/sandsofsilk/"))
-                        {
-                            if (
-                                (Functions.Check_Texture(name))
-                                && (name.Contains("icon"))
-                                && (Unique.Icon.IsNullOrDestroyed())
-                            )
-                            {
-                                Texture2D texture = Hud_Manager
-                                    .asset_bundle.LoadAsset(name)
-                                    .TryCast<Texture2D>();
-                                Unique.Icon = Sprite.Create(
-                                    texture,
-                                    new Rect(0, 0, texture.width, texture.height),
-                                    Vector2.zero
-                                );
-                            }
-                        }
-                    }
-                    if (!Unique.Icon.IsNullOrDestroyed())
-                    {
-                        Loaded = true;
-                    }
-                    else
-                    {
-                        Loaded = false;
-                    }
-                }
-                catch
-                {
-                    Main.logger_instance?.Error("Sands Of Silk Asset Error");
-                }
-                loading = false;
-            }
-        }
-    }
-
-    public class Unique
-    {
-        public static Sprite Icon = null;
-
-        public static string Get_Unique_Name()
-        {
-            return CustomItemLocalization.Text(SandsOfSilkTexts.UniqueName);
-        }
-
-        [HarmonyPatch(typeof(InventoryItemUI), "SetImageSpritesAndColours")]
-        public class InventoryItemUI_SetImageSpritesAndColours
-        {
-            [HarmonyPostfix]
-            static void Postfix(ref Il2Cpp.InventoryItemUI __instance)
-            {
-                if (
-                    (__instance.EntryRef.data.getAsUnpacked().FullName == Get_Unique_Name())
-                    && (!Icon.IsNullOrDestroyed())
-                )
-                {
-                    __instance.contentImage.sprite = Icon;
-                }
-            }
-        }
-
-        public class UITooltipItem_GetItemSprite
-        {
-            [HarmonyPostfix]
-            static void Postfix(ref UnityEngine.Sprite __result, ItemData __0)
-            {
-                if (
-                    (__0.getAsUnpacked().FullName == Get_Unique_Name())
-                    && (!Icon.IsNullOrDestroyed())
-                )
-                {
-                    __result = Icon;
-                }
-            }
-        }
-    }
-
-    public class Visual
-    {
-        [HarmonyPatch(typeof(ClientVisualsService), "GetItemVisual")]
-        public class ClientVisualsService_GetItemVisual
-        {
-            [HarmonyPrefix]
-            static void Prefix(ClientVisualsService __instance, ref ItemVisualKey __0)
-            {
-                if (
-                    (__0.EquipmentType == EquipmentType.BODY_ARMOR)
-                    && (__0.SubType == CustomUniqueSpecs.SandsOfSilk.BaseId)
-                    && (__0.UniqueID == CustomUniqueSpecs.SandsOfSilk.UniqueId)
-                )
-                {
-                    __0.SubType = 0;
-                    __0.UniqueID = 7; //The Krestel
-                }
-            }
-        }
     }
 }
