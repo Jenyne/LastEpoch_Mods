@@ -1,0 +1,3 @@
+# Repo-wide CSharpier format: no code changes. git blame skips these commits
+# (GitHub does this automatically; locally: git config blame.ignoreRevsFile .git-blame-ignore-revs).
+1fdf85a3e6508651cd4166bf2a70d03fb451c883
