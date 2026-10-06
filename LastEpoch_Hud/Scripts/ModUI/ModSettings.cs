@@ -95,6 +95,21 @@ public static class ModSettings
     // SCENES TAB
     //
 
+    public static class DungeonReveal
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("DungeonReveal")
+            .Content("Scenes_Content")
+            .Viewport("Center", "Scenes_Dungeons_Content")
+            .OnBind((content, viewport) => DungeonRevealControls.Bind(content, viewport));
+
+        public static readonly BoolSetting Enabled = Group.Bool("Enabled");
+
+        static DungeonReveal()
+        {
+            Enabled.Changed += Mods.Dungeons.Dungeons_ObjectiveReveal.Apply;
+        }
+    }
+
     public static class Difficulty
     {
         public static readonly SettingsGroup Group = new SettingsGroup("ScenesDifficulty")
