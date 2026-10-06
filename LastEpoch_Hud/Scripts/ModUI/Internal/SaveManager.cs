@@ -30,17 +30,11 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
         void Start()
         {
-            System.Threading.Tasks.Task.Run(() =>
-            {
-                try
-                {
-                    Load();
-                }
-                catch (System.Exception ex)
-                {
-                    Main.logger_instance?.Error("ModUI SaveManager: Load failed: " + ex.Message);
-                }
-            });
+            // Load before UI binding/capture; settings and Unity input validation
+            // must not race a background loader.
+            try { Load(); }
+            catch (System.Exception ex)
+            { Main.logger_instance?.Error("ModUI SaveManager: Load failed: " + ex.Message); }
         }
 
         void Update()
@@ -149,6 +143,18 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 Save();
                 Main.logger_instance?.Msg("ModUI SaveManager: Wrote fresh schema to " + filename);
             }
+        }
+
+        internal static void FlushKeybind()
+        {
+            if (instance == null || !instance.initialized) return;
+            try
+            {
+                instance.Save();
+                ModSettings.ClearDirty();
+            }
+            catch (System.Exception ex)
+            { Main.logger_instance?.Error("ModUI keybind save failed: " + ex.Message); }
         }
 
         private void Save()
