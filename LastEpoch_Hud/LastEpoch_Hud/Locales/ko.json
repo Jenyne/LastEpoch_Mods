@@ -361,5 +361,7 @@
   "Add 1,000 Soul Embers": "영혼의 불씨 1,000개 추가",
   "Currencies": "재화",
   "Blessings": "축복",
-  "Misc": "기타"
+  "Misc": "기타",
+  "Reveal Dungeon Objectives": "던전 목표 표시",
+  "Revealed objectives remain visible for this floor.": "표시된 목표는 이 층에서 계속 보입니다."
 }
