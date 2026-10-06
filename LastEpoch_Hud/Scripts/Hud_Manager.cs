@@ -657,7 +657,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("seal_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.seal_select_text"
+                        );
                     }
                 }
                 else
@@ -772,7 +775,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("affix_0_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.affix_0_select_text"
+                        );
                     }
                     if (!Content.OdlForceDrop.affix_1_select_text.IsNullOrDestroyed())
                     {
@@ -782,7 +788,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("affix_1_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.affix_1_select_text"
+                        );
                     }
                     if (!Content.OdlForceDrop.affix_2_select_text.IsNullOrDestroyed())
                     {
@@ -792,7 +801,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("affix_2_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.affix_2_select_text"
+                        );
                     }
                     if (!Content.OdlForceDrop.affix_3_select_text.IsNullOrDestroyed())
                     {
@@ -802,7 +814,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("affix_3_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.affix_3_select_text"
+                        );
                     }
                     if (!Content.OdlForceDrop.affix_4_select_text.IsNullOrDestroyed())
                     {
@@ -812,7 +827,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("affix_4_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.affix_4_select_text"
+                        );
                     }
                     if (!Content.OdlForceDrop.affix_5_select_text.IsNullOrDestroyed())
                     {
@@ -822,7 +840,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("affix_5_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.affix_5_select_text"
+                        );
                     }
                 }
                 else
@@ -898,7 +919,10 @@ public partial class Hud_Manager : MonoBehaviour
                 }
                 else
                 {
-                    Main.logger_instance.Error("affix_5_select_text NULLLLL");
+                    ErrorLog.Report(
+                        "quantity_text or forcedrop_quantity_slider is missing",
+                        "Hud_Manager.OdlForceDrop.quantity_text"
+                    );
                 }
             }
         }
