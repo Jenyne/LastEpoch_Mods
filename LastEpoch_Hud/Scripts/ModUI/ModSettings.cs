@@ -63,9 +63,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
         public static class InfiniteForgingPotential
         {
-            public static readonly SettingsGroup Group = new SettingsGroup("InfiniteForgingPotential")
-                .Content("Items_Content").Viewport("Items_Craft", "Items_Craft_Content")
-                .OnBind((content, viewport) => InfiniteForgingPotentialControls.Bind(content, viewport));
+            // Runtime checkbox is bound by Hud_Manager after the crafting panel is ready.
+            public static readonly SettingsGroup Group = new SettingsGroup("InfiniteForgingPotential");
             public static readonly BoolSetting Enabled = Group.Bool("Enabled");
         }
 
