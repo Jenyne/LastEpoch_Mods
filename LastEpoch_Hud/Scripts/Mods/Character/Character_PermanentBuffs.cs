@@ -20,6 +20,7 @@ public class Character_PermanentBuffs : MonoBehaviour
         public float Value;
         public SP Propertie;
         public Buff_Type Type;
+        public AT Tags;
     }
 
     public enum Buff_Type
@@ -273,6 +274,24 @@ public class Character_PermanentBuffs : MonoBehaviour
                 Type = Buff_Type.Add,
                 Toggle = Save_Manager.instance.data.Character.PermanentBuffs.Enable_Vit_Buff,
             },
+            new PermanentBuff
+            {
+                Name = "AreaOfEffect_Buff",
+                Value = Save_Manager.instance.data.Character.PermanentBuffs.AoE_Buff_Value,
+                Propertie = SP.IncreasedAreaForAreaSkills,
+                Type = Buff_Type.Add,
+                Toggle = Save_Manager.instance.data.Character.PermanentBuffs.Enable_AoE_Buff,
+                Tags = AT.None,
+            },
+            new PermanentBuff
+            {
+                Name = "MeleeAreaOfEffect_Buff",
+                Value = Save_Manager.instance.data.Character.PermanentBuffs.AoE_Buff_Value,
+                Propertie = SP.IncreasedAreaForAreaSkills,
+                Type = Buff_Type.Add,
+                Toggle = Save_Manager.instance.data.Character.PermanentBuffs.Enable_AoE_Buff,
+                Tags = AT.Melee,
+            },
         };
 
         foreach (PermanentBuff p in Buffs)
@@ -326,7 +345,7 @@ public class Character_PermanentBuffs : MonoBehaviour
                             add,
                             increase,
                             null,
-                            AT.None,
+                            permanent_buff.Tags,
                             0,
                             0,
                             permanent_buff.Name
