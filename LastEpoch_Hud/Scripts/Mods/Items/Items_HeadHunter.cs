@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
 using Il2CppInterop.Runtime;
+using LastEpoch_Hud.Scripts.Core.CustomItems;
 using MelonLoader;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -22,6 +23,7 @@ public class Items_HeadHunter : MonoBehaviour
     void Awake()
     {
         instance = this;
+        HHLocales.Register();
         SceneManager.add_sceneLoaded(new System.Action<Scene, LoadSceneMode>(OnSceneLoaded));
     }
 
@@ -236,58 +238,7 @@ public class Items_HeadHunter : MonoBehaviour
 
         public static string Get_Subtype_Name()
         {
-            string result = "";
-            switch (Locales.current)
-            {
-                case Locales.Selected.English:
-                {
-                    result = HHLocales.SubType.en;
-                    break;
-                }
-                case Locales.Selected.French:
-                {
-                    result = HHLocales.SubType.fr;
-                    break;
-                }
-                case Locales.Selected.German:
-                {
-                    result = HHLocales.SubType.de;
-                    break;
-                }
-                case Locales.Selected.Russian:
-                {
-                    result = HHLocales.SubType.ru;
-                    break;
-                }
-                case Locales.Selected.Portuguese:
-                {
-                    result = HHLocales.SubType.pt;
-                    break;
-                }
-
-                case Locales.Selected.Korean:
-                {
-                    result = HHLocales.SubType.en;
-                    break;
-                }
-                case Locales.Selected.Polish:
-                {
-                    result = HHLocales.SubType.en;
-                    break;
-                }
-                case Locales.Selected.Chinese:
-                {
-                    result = HHLocales.SubType.en;
-                    break;
-                }
-                case Locales.Selected.Spanish:
-                {
-                    result = HHLocales.SubType.en;
-                    break;
-                }
-            }
-
-            return result;
+            return CustomItemLocalization.Text(HeadhunterTexts.SubtypeName);
         }
 
         private static Il2CppSystem.Collections.Generic.List<ItemList.EquipmentImplicit> implicits()
@@ -404,58 +355,7 @@ public class Items_HeadHunter : MonoBehaviour
 
         public static string Get_Unique_Name()
         {
-            string result = "";
-            switch (Locales.current)
-            {
-                case Locales.Selected.English:
-                {
-                    result = HHLocales.UniqueName.en;
-                    break;
-                }
-                case Locales.Selected.French:
-                {
-                    result = HHLocales.UniqueName.fr;
-                    break;
-                }
-                case Locales.Selected.German:
-                {
-                    result = HHLocales.UniqueName.de;
-                    break;
-                }
-                case Locales.Selected.Russian:
-                {
-                    result = HHLocales.UniqueName.ru;
-                    break;
-                }
-                case Locales.Selected.Portuguese:
-                {
-                    result = HHLocales.UniqueName.pt;
-                    break;
-                }
-
-                case Locales.Selected.Korean:
-                {
-                    result = HHLocales.UniqueName.en;
-                    break;
-                }
-                case Locales.Selected.Polish:
-                {
-                    result = HHLocales.UniqueName.en;
-                    break;
-                }
-                case Locales.Selected.Chinese:
-                {
-                    result = HHLocales.UniqueName.en;
-                    break;
-                }
-                case Locales.Selected.Spanish:
-                {
-                    result = HHLocales.UniqueName.en;
-                    break;
-                }
-            }
-
-            return result;
+            return CustomItemLocalization.Text(HeadhunterTexts.UniqueName);
         }
 
         public static string Get_Unique_Description()
@@ -516,58 +416,7 @@ public class Items_HeadHunter : MonoBehaviour
 
         public static string Get_Unique_Lore()
         {
-            string result = "";
-            switch (Locales.current)
-            {
-                case Locales.Selected.English:
-                {
-                    result = HHLocales.Lore.en;
-                    break;
-                }
-                case Locales.Selected.French:
-                {
-                    result = HHLocales.Lore.fr;
-                    break;
-                }
-                case Locales.Selected.German:
-                {
-                    result = HHLocales.Lore.de;
-                    break;
-                }
-
-                case Locales.Selected.Korean:
-                {
-                    result = HHLocales.Lore.en;
-                    break;
-                }
-                case Locales.Selected.Russian:
-                {
-                    result = HHLocales.Lore.en;
-                    break;
-                }
-                case Locales.Selected.Polish:
-                {
-                    result = HHLocales.Lore.en;
-                    break;
-                }
-                case Locales.Selected.Portuguese:
-                {
-                    result = HHLocales.Lore.en;
-                    break;
-                }
-                case Locales.Selected.Chinese:
-                {
-                    result = HHLocales.Lore.en;
-                    break;
-                }
-                case Locales.Selected.Spanish:
-                {
-                    result = HHLocales.Lore.en;
-                    break;
-                }
-            }
-
-            return result;
+            return CustomItemLocalization.Text(HeadhunterTexts.Lore);
         }
 
         private static Il2CppSystem.Collections.Generic.List<byte> SubType()
@@ -1194,30 +1043,29 @@ public class Items_HeadHunter : MonoBehaviour
 
     public class HHLocales
     {
-        private static string basic_subtype_name_key =
-            "Item_SubType_Name_" + Basic.base_type + "_" + Basic.base_id;
-        private static string unique_name_key = "Unique_Name_" + Unique.unique_id;
-        private static string unique_description_key = "Unique_Tooltip_0_" + Unique.unique_id;
-        private static string unique_lore_key = "Unique_Lore_" + Unique.unique_id;
-
-        public class SubType
+        public static void Register()
         {
-            public static string en = "HH Leather belt";
-            public static string fr = "HH Ceinture en cuir";
-            public static string de = "HH Ledergürtel";
-            public static string ru = "HH Ремень";
-            public static string pt = "Cinto de Couro";
-            //Add all languages here
+            CustomItemTextTable table = CustomItemLocalization.Table;
+            table.Register(
+                CustomItemKeys.SubtypeName(Basic.base_type, Basic.base_id),
+                HeadhunterTexts.SubtypeName
+            );
+            table.Register(CustomItemKeys.UniqueName(Unique.unique_id), HeadhunterTexts.UniqueName);
+            table.Register(
+                CustomItemKeys.UniqueTooltip(Unique.unique_id),
+                (System.Func<string, string>)(_ => DescriptionWhenSaveReady())
+            );
+            table.Register(CustomItemKeys.UniqueLore(Unique.unique_id), HeadhunterTexts.Lore);
         }
 
-        public class UniqueName
+        private static string DescriptionWhenSaveReady()
         {
-            public static string en = "Headhunter";
-            public static string fr = "Chasseur de têtes";
-            public static string de = "Kopfjäger";
-            public static string ru = "Охотник за головами";
-            public static string pt = "Caçador de Cabeças";
-            //Add all languages here
+            if (Save_Manager.instance.IsNullOrDestroyed() || !Save_Manager.instance.initialized)
+            {
+                return null;
+            }
+
+            return Unique.Get_Unique_Description();
         }
 
         public class UniqueDescription
@@ -1239,79 +1087,6 @@ public class Items_HeadHunter : MonoBehaviour
                 + Save_Manager.instance.data.Items.Headhunter.BuffDuration
                 + " secondes.";
             //Add all languages here
-        }
-
-        public class Lore
-        {
-            public static readonly string en =
-                "A man's soul rules from a cavern of bone, learns and\r\njudges through flesh-born windows. The heart is meat.\r\nThe head is where the Man is.\"\r\n- Lavianga, Advisor to Kaom";
-            public static readonly string fr =
-                "L'âme d'un homme règne depuis une caverne d'os,\r\napprend et juge à travers des fenêtres plantées dans la chair.\r\nLe cœur est un morceau de viande. La tête est le siège de l'homme.\r\n- Lavianga, conseiller de Kaom";
-            public static readonly string de =
-                "Die Seele eines Mannes regiert\r\naus einer Höhle aus Knochen,\r\nlernt und urteilt aus Fenstern,\r\ngeboren aus Fleisch. Das Herz ist Fleisch.\r\nDer Kopf ist dort, wo der Mann ist.\r\n– Lavianga, Berater von Kaom";
-            //Add all languages here
-        }
-
-        [HarmonyPatch(typeof(Il2Cpp.Localization), "TryGetText")]
-        public class Localization_TryGetText
-        {
-            [HarmonyPrefix]
-            static bool Prefix(ref bool __result, string __0) //, Il2CppSystem.String __1)
-            {
-                bool result = true;
-                if (
-                    (__0 == basic_subtype_name_key)
-                    || (__0 == unique_name_key)
-                    || (__0 == unique_description_key)
-                    || (__0 == unique_lore_key)
-                )
-                {
-                    __result = true;
-                    result = false;
-                }
-
-                return result;
-            }
-        }
-
-        [HarmonyPatch(typeof(Il2Cpp.Localization), "GetText")]
-        public class Localization_GetText
-        {
-            [HarmonyPrefix]
-            static bool Prefix(ref string __result, string __0)
-            {
-                bool result = true;
-                if (__0 == basic_subtype_name_key)
-                {
-                    __result = Basic.Get_Subtype_Name();
-                    result = false;
-                }
-                else if (__0 == unique_name_key)
-                {
-                    __result = Unique.Get_Unique_Name();
-                    result = false;
-                }
-                else if (__0 == unique_description_key)
-                {
-                    string description = Unique.Get_Unique_Description();
-                    if (description != "")
-                    {
-                        __result = description;
-                        result = false;
-                    }
-                }
-                else if (__0 == unique_lore_key)
-                {
-                    string lore = Unique.Get_Unique_Lore();
-                    if (lore != "")
-                    {
-                        __result = lore;
-                        result = false;
-                    }
-                }
-
-                return result;
-            }
         }
     }
 

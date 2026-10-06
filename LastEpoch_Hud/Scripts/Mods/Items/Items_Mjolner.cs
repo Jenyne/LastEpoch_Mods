@@ -5,6 +5,7 @@
 using HarmonyLib;
 using Il2Cpp;
 using Il2CppInterop.Runtime;
+using LastEpoch_Hud.Scripts.Core.CustomItems;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -24,6 +25,7 @@ public class Items_Mjolner : MonoBehaviour
     void Awake()
     {
         instance = this;
+        Locales.Register();
         SceneManager.add_sceneLoaded(new System.Action<Scene, LoadSceneMode>(OnSceneLoaded));
     }
 
@@ -494,57 +496,7 @@ public class Items_Mjolner : MonoBehaviour
     {
         internal static string Get_UniqueName()
         {
-            string name = "";
-            switch (LastEpoch_Hud.Locales.current)
-            {
-                case LastEpoch_Hud.Locales.Selected.English:
-                {
-                    name = "Mjölner";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.French:
-                {
-                    name = "Mjölner";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.German:
-                {
-                    name = "Mjölner";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.Russian:
-                {
-                    name = "Мьёльнир";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.Portuguese:
-                {
-                    name = "Mjölner";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.Korean:
-                {
-                    name = "Mjölner";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.Polish:
-                {
-                    name = "Mjölner";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.Chinese:
-                {
-                    name = "Mjölner";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.Spanish:
-                {
-                    name = "Mjölner";
-                    break;
-                }
-            }
-
-            return name;
+            return CustomItemLocalization.Text(MjolnerTexts.UniqueName);
         }
 
         internal static string Get_UniqueDescription()
@@ -870,129 +822,28 @@ public class Items_Mjolner : MonoBehaviour
 
         internal static string Get_UniqueLore()
         {
-            string lore = "";
-            switch (LastEpoch_Hud.Locales.current)
-            {
-                case LastEpoch_Hud.Locales.Selected.English:
-                {
-                    lore = "Look the storm in the eye and you will have its respect.";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.French:
-                {
-                    lore = "Entrez dans l'œil de la tempête et vous gagnerez son respect.";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.German:
-                {
-                    lore = "Blickt dem Sturm ins Auge,\r\nund sein Respekt ist Euch gewiss.";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.Korean:
-                {
-                    lore = "Look the storm in the eye and you will have its respect.";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.Russian:
-                {
-                    lore = "Look the storm in the eye and you will have its respect.";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.Polish:
-                {
-                    lore = "Look the storm in the eye and you will have its respect.";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.Portuguese:
-                {
-                    lore = "Encare o olho da tempestade, e ela te respeitará.";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.Chinese:
-                {
-                    lore = "Look the storm in the eye and you will have its respect.";
-                    break;
-                }
-                case LastEpoch_Hud.Locales.Selected.Spanish:
-                {
-                    lore = "Look the storm in the eye and you will have its respect.";
-                    break;
-                }
-            }
-
-            return lore;
+            return CustomItemLocalization.Text(MjolnerTexts.Lore);
         }
 
-        private class Keys
+        internal static void Register()
         {
-            internal static string unique_name = "Unique_Name_" + Unique.unique_id;
-            internal static string unique_description = "Unique_Tooltip_0_" + Unique.unique_id;
-            internal static string unique_lore = "Unique_Lore_" + Unique.unique_id;
+            CustomItemTextTable table = CustomItemLocalization.Table;
+            table.Register(CustomItemKeys.UniqueName(Unique.unique_id), MjolnerTexts.UniqueName);
+            table.Register(
+                CustomItemKeys.UniqueTooltip(Unique.unique_id),
+                (System.Func<string, string>)(_ => DescriptionWhenSaveReady())
+            );
+            table.Register(CustomItemKeys.UniqueLore(Unique.unique_id), MjolnerTexts.Lore);
         }
 
-        private class Hooks
+        private static string DescriptionWhenSaveReady()
         {
-            [HarmonyPatch(typeof(Il2Cpp.Localization), "TryGetText")]
-            private class Localization_TryGetText
+            if (Save_Manager.instance.IsNullOrDestroyed() || !Save_Manager.instance.initialized)
             {
-                [HarmonyPrefix]
-                static bool Prefix(ref bool __result, string __0) //, Il2CppSystem.String __1)
-                {
-                    bool result = true;
-                    if ( /*(__0 == basic_subtype_name_key) ||*/
-                        (__0 == Keys.unique_name)
-                        || (__0 == Keys.unique_description)
-                        || (__0 == Keys.unique_lore)
-                    )
-                    {
-                        __result = true;
-                        result = false;
-                    }
-
-                    return result;
-                }
+                return null;
             }
 
-            [HarmonyPatch(typeof(Il2Cpp.Localization), "GetText")]
-            private class Localization_GetText
-            {
-                [HarmonyPrefix]
-                static bool Prefix(ref string __result, string __0)
-                {
-                    bool result = true;
-                    /*if (__0 == basic_subtype_name_key)
-                    {
-                        __result = Basic.Get_Subtype_Name();
-                        result = false;
-                    }
-                    else */
-                    if (__0 == Keys.unique_name)
-                    {
-                        __result = Locales.Get_UniqueName();
-                        result = false;
-                    }
-                    else if (__0 == Keys.unique_description)
-                    {
-                        string description = Locales.Get_UniqueDescription();
-                        if (description != "")
-                        {
-                            __result = description;
-                            result = false;
-                        }
-                    }
-                    else if (__0 == Keys.unique_lore)
-                    {
-                        string lore = Locales.Get_UniqueLore();
-                        if (lore != "")
-                        {
-                            __result = lore;
-                            result = false;
-                        }
-                    }
-
-                    return result;
-                }
-            }
+            return Get_UniqueDescription();
         }
     }
 
