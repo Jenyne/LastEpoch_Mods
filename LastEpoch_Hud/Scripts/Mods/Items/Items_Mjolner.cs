@@ -539,7 +539,7 @@ public class Items_Mjolner : MonoBehaviour
                             + display_min_chance
                             + " à "
                             + display_max_chance
-                            + "% de chances de Déclenche un Sort de foudre lorsqu'une Attaque Touche";
+                            + "% de chance de déclencher un sort de foudre lors d'une attaque réussie";
                         break;
                     }
                     case LastEpoch_Hud.Locales.Selected.Korean:
@@ -563,11 +563,11 @@ public class Items_Mjolner : MonoBehaviour
                             + str_requirement
                             + " Stärke und "
                             + int_requirement
-                            + " Intelligenz, "
+                            + " Intelligenz haben, "
                             + display_min_chance
                             + " bis "
                             + display_max_chance
-                            + "% Chance bei Treffer einen Blitzzauber auszulösen yeah";
+                            + "% Chance, bei Treffer mit einem Angriff einen Blitzzauber auszulösen";
                         break;
                     }
                     case LastEpoch_Hud.Locales.Selected.Russian:
@@ -673,11 +673,11 @@ public class Items_Mjolner : MonoBehaviour
                     case LastEpoch_Hud.Locales.Selected.French:
                     {
                         description =
-                            "Si voud avez au moins "
+                            "Si vous avez au moins "
                             + str_requirement
                             + " de Force et "
                             + int_requirement
-                            + " d'Intelligence, Déclenche "
+                            + " d'Intelligence, déclenche "
                             + skill_0
                             + ", "
                             + skill_1

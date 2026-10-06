@@ -126,7 +126,6 @@ public sealed class CustomItemTextsTests
     {
         Assert.Equal("Shrouded Vest", SandsOfSilkTexts.SubtypeName.For(language));
         Assert.Equal("Sands of Silk", SandsOfSilkTexts.UniqueName.For(language));
-        Assert.Equal("The desert is ever flowing.", SandsOfSilkTexts.Description.For(language));
         Assert.Equal("The desert is ever flowing.", SandsOfSilkTexts.Lore.For(language));
     }
 }

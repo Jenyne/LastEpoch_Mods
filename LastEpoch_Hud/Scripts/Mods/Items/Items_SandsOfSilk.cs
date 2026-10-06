@@ -189,7 +189,6 @@ public class Items_SandsOfSilk : MonoBehaviour
                 baseType = Basic.base_type,
                 subTypes = SubType(),
                 mods = Mods(),
-                //tooltipDescriptions = TooltipDescription(),
                 loreText = Get_Unique_Lore(), //lore,
                 tooltipEntries = TooltipEntries(),
                 oldSubTypeID = 0,
@@ -256,11 +255,6 @@ public class Items_SandsOfSilk : MonoBehaviour
         public static string Get_Unique_Name()
         {
             return CustomItemLocalization.Text(SandsOfSilkTexts.UniqueName);
-        }
-
-        public static string Get_Unique_Description()
-        {
-            return CustomItemLocalization.Text(SandsOfSilkTexts.Description);
         }
 
         public static string Get_Unique_Lore()
@@ -366,13 +360,6 @@ public class Items_SandsOfSilk : MonoBehaviour
             return result;
         }
 
-        /*private static Il2CppSystem.Collections.Generic.List<ItemTooltipDescription> TooltipDescription()
-        {
-            Il2CppSystem.Collections.Generic.List<ItemTooltipDescription> result = new Il2CppSystem.Collections.Generic.List<ItemTooltipDescription>();
-            result.Add(new ItemTooltipDescription { description = Get_Unique_Description() });
-
-            return result;
-        }*/
         /*private static UniqueList.LegendaryType LegendaryType()
         {
             UniqueList.LegendaryType legendaryType = UniqueList.LegendaryType.LegendaryPotential;
@@ -446,10 +433,6 @@ public class Items_SandsOfSilk : MonoBehaviour
             table.Register(
                 CustomItemKeys.UniqueName(Unique.unique_id),
                 SandsOfSilkTexts.UniqueName
-            );
-            table.Register(
-                CustomItemKeys.UniqueTooltip(Unique.unique_id),
-                SandsOfSilkTexts.Description
             );
             table.Register(CustomItemKeys.UniqueLore(Unique.unique_id), SandsOfSilkTexts.Lore);
         }

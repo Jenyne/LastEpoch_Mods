@@ -1,5 +1,3 @@
-using LastEpoch_Hud.Scripts.Mods.Localization;
-
 namespace LastEpoch_Hud.Scripts.Mods.Craft;
 
 public class Craft_Locales
@@ -12,10 +10,4 @@ public class Craft_Locales
     //Craft to T8
     public const string affix_is_maxed_key = "Crafting_ForgeButton_Title_AffixMaxed_2"; //LastEpoch v1.3.1.1
     public static string affix_is_maxed = "affix_maxed";
-
-    public static void RegisterLocales()
-    {
-        LocalizationOverride.Register(item_corrupted_key, () => item_is_corrupted);
-        LocalizationOverride.Register(affix_is_maxed_key, () => affix_is_maxed);
-    }
 }

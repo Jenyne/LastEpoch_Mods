@@ -7,7 +7,5 @@ public static class SandsOfSilkTexts
 
     public static readonly LocalizedText UniqueName = new("Sands of Silk");
 
-    public static readonly LocalizedText Description = new("The desert is ever flowing.");
-
     public static readonly LocalizedText Lore = new("The desert is ever flowing.");
 }
