@@ -378,6 +378,11 @@ namespace LastEpoch_Hud.Scripts.ModUI
         {
             ModSettings.Trace("KeybindSetting.Set: before=" + Value + " requested=" + newBinding);
             string val = newBinding ?? "";
+            if (KeybindMatcher.Rejects(this, val))
+            {
+                Main.logger_instance?.Warning("Binding rejected: AutoCast and Safe Teleport cannot share a key or modifier combination.");
+                return;
+            }
             if (Value == val)
                 return;
             Value = val;
