@@ -1697,7 +1697,10 @@ public partial class Hud_Manager : MonoBehaviour
                                 "Slider_Character_Data_LanternLuminance"
                             );
 
-                            Data.soul_row = Functions.GetChild(character_data_content, "Soul Embers");
+                            Data.soul_row = Functions.GetChild(
+                                character_data_content,
+                                "Soul Embers"
+                            );
                             Data.soul_text = Functions.Get_TextInButton(
                                 character_data_content,
                                 "Soul Embers",
@@ -2293,11 +2296,20 @@ public partial class Hud_Manager : MonoBehaviour
                     Events.Set_Toggle_Event(Cheats.lowlife_toggle, Cheats.Lowlife_Toggle_Action);
                 }
                 if (!Cheats.max_blessings_button.IsNullOrDestroyed())
-                    Events.Set_Button_Event(Cheats.max_blessings_button, Cheats.MaxOutBlessings_OnClick_Action);
+                    Events.Set_Button_Event(
+                        Cheats.max_blessings_button,
+                        Cheats.MaxOutBlessings_OnClick_Action
+                    );
                 if (!Cheats.unlock_blessing_slots_button.IsNullOrDestroyed())
-                    Events.Set_Button_Event(Cheats.unlock_blessing_slots_button, Cheats.UnlockBlessingSlots_OnClick_Action);
+                    Events.Set_Button_Event(
+                        Cheats.unlock_blessing_slots_button,
+                        Cheats.UnlockBlessingSlots_OnClick_Action
+                    );
                 if (!Cheats.choose_blessings_button.IsNullOrDestroyed())
-                    Events.Set_Button_Event(Cheats.choose_blessings_button, Cheats.ChooseBlessings_OnClick_Action);
+                    Events.Set_Button_Event(
+                        Cheats.choose_blessings_button,
+                        Cheats.ChooseBlessings_OnClick_Action
+                    );
                 if (!Cheats.unlock_all_idols.IsNullOrDestroyed())
                 {
                     Events.Set_Toggle_Event(
@@ -3715,48 +3727,76 @@ public partial class Hud_Manager : MonoBehaviour
 
                 public static void BuildUnlockBlessingSlotsButton()
                 {
-                    if (!unlock_blessing_slots_button.IsNullOrDestroyed() || discover_blessings_button.IsNullOrDestroyed()) return;
+                    if (
+                        !unlock_blessing_slots_button.IsNullOrDestroyed()
+                        || discover_blessings_button.IsNullOrDestroyed()
+                    )
+                        return;
                     var original = discover_blessings_button.gameObject;
                     var rect = original.GetComponent<RectTransform>();
                     var row = new GameObject("Blessing discovery actions");
                     var rowRect = row.AddComponent<RectTransform>();
                     row.transform.SetParent(original.transform.parent, false);
                     row.transform.SetSiblingIndex(original.transform.GetSiblingIndex());
-                    rowRect.anchorMin = rect.anchorMin; rowRect.anchorMax = rect.anchorMax;
-                    rowRect.pivot = rect.pivot; rowRect.anchoredPosition = rect.anchoredPosition;
+                    rowRect.anchorMin = rect.anchorMin;
+                    rowRect.anchorMax = rect.anchorMax;
+                    rowRect.pivot = rect.pivot;
+                    rowRect.anchoredPosition = rect.anchoredPosition;
                     rowRect.sizeDelta = rect.sizeDelta;
                     var layout = original.GetComponent<LayoutElement>();
                     if (!layout.IsNullOrDestroyed())
                     {
                         var copy = row.AddComponent<LayoutElement>();
-                        copy.minWidth = layout.minWidth; copy.minHeight = layout.minHeight;
-                        copy.preferredWidth = layout.preferredWidth; copy.preferredHeight = layout.preferredHeight;
-                        copy.flexibleWidth = layout.flexibleWidth; copy.flexibleHeight = layout.flexibleHeight;
+                        copy.minWidth = layout.minWidth;
+                        copy.minHeight = layout.minHeight;
+                        copy.preferredWidth = layout.preferredWidth;
+                        copy.preferredHeight = layout.preferredHeight;
+                        copy.flexibleWidth = layout.flexibleWidth;
+                        copy.flexibleHeight = layout.flexibleHeight;
                     }
                     var button = UnityEngine.Object.Instantiate(original, row.transform, false);
                     button.name = "Btn_Character_Cheats_UnlockBlessingSlots";
                     unlock_blessing_slots_button = button.GetComponent<Button>();
                     unlock_blessing_slots_button.onClick = new Button.ButtonClickedEvent();
-                    foreach (var label in button.GetComponentsInChildren<Text>(true)) ModUI.LocaleRegistry.Apply(label, "Unlock Blessing Slots");
-                    foreach (var label in button.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)) label.text = "Unlock Blessing Slots";
-                    foreach (var label in original.GetComponentsInChildren<Text>(true)) ModUI.LocaleRegistry.Apply(label, "Discover All Blessings");
-                    foreach (var label in original.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)) ModUI.LocaleRegistry.Apply(label, "Discover All Blessings");
+                    foreach (var label in button.GetComponentsInChildren<Text>(true))
+                        ModUI.LocaleRegistry.Apply(label, "Unlock Blessing Slots");
+                    foreach (
+                        var label in button.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)
+                    )
+                        label.text = "Unlock Blessing Slots";
+                    foreach (var label in original.GetComponentsInChildren<Text>(true))
+                        ModUI.LocaleRegistry.Apply(label, "Discover All Blessings");
+                    foreach (
+                        var label in original.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)
+                    )
+                        ModUI.LocaleRegistry.Apply(label, "Discover All Blessings");
                     original.transform.SetParent(row.transform, false);
-                    rect.anchorMin = Vector2.zero; rect.anchorMax = new Vector2(.32f, 1f);
+                    rect.anchorMin = Vector2.zero;
+                    rect.anchorMax = new Vector2(.32f, 1f);
                     rect.offsetMin = rect.offsetMax = Vector2.zero;
                     var buttonRect = button.GetComponent<RectTransform>();
-                    buttonRect.anchorMin = new Vector2(.68f, 0f); buttonRect.anchorMax = Vector2.one;
+                    buttonRect.anchorMin = new Vector2(.68f, 0f);
+                    buttonRect.anchorMax = Vector2.one;
                     buttonRect.offsetMin = buttonRect.offsetMax = Vector2.zero;
-                    var maxButtonObject = UnityEngine.Object.Instantiate(original, row.transform, false);
+                    var maxButtonObject = UnityEngine.Object.Instantiate(
+                        original,
+                        row.transform,
+                        false
+                    );
                     maxButtonObject.name = "Btn_Character_Cheats_MaxOutBlessings";
                     max_blessings_button = maxButtonObject.GetComponent<Button>();
                     max_blessings_button.onClick = new Button.ButtonClickedEvent();
                     foreach (var label in maxButtonObject.GetComponentsInChildren<Text>(true))
                         ModUI.LocaleRegistry.Apply(label, "Max Out Blessings");
-                    foreach (var label in maxButtonObject.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
+                    foreach (
+                        var label in maxButtonObject.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(
+                            true
+                        )
+                    )
                         ModUI.LocaleRegistry.Apply(label, "Max Out Blessings");
                     var maxRect = maxButtonObject.GetComponent<RectTransform>();
-                    maxRect.anchorMin = new Vector2(.34f, 0f); maxRect.anchorMax = new Vector2(.66f, 1f);
+                    maxRect.anchorMin = new Vector2(.34f, 0f);
+                    maxRect.anchorMax = new Vector2(.66f, 1f);
                     maxRect.offsetMin = maxRect.offsetMax = Vector2.zero;
                     foreach (var label in row.GetComponentsInChildren<Text>(true))
                     {
@@ -3775,11 +3815,15 @@ public partial class Hud_Manager : MonoBehaviour
                 public static void BuildChooseBlessingsButton(GameObject content)
                 {
                     var oldRow = Functions.GetChild(content, "AllowChoosingBlessings");
-                    if (oldRow.IsNullOrDestroyed() || discover_blessings_button.IsNullOrDestroyed()) return;
+                    if (oldRow.IsNullOrDestroyed() || discover_blessings_button.IsNullOrDestroyed())
+                        return;
                     if (choose_blessings_button.IsNullOrDestroyed())
                     {
                         var replacement = UnityEngine.Object.Instantiate(
-                            discover_blessings_button.gameObject, oldRow.transform.parent, false);
+                            discover_blessings_button.gameObject,
+                            oldRow.transform.parent,
+                            false
+                        );
                         replacement.name = "Btn_Character_Cheats_ChooseBlessings";
                         replacement.transform.SetSiblingIndex(oldRow.transform.GetSiblingIndex());
                         var sourceRect = oldRow.GetComponent<RectTransform>();
@@ -3794,16 +3838,24 @@ public partial class Hud_Manager : MonoBehaviour
                         var newLayout = replacement.GetComponent<LayoutElement>();
                         if (!oldLayout.IsNullOrDestroyed())
                         {
-                            if (newLayout.IsNullOrDestroyed()) newLayout = replacement.AddComponent<LayoutElement>();
-                            newLayout.minWidth = oldLayout.minWidth; newLayout.minHeight = oldLayout.minHeight;
-                            newLayout.preferredWidth = oldLayout.preferredWidth; newLayout.preferredHeight = oldLayout.preferredHeight;
-                            newLayout.flexibleWidth = oldLayout.flexibleWidth; newLayout.flexibleHeight = oldLayout.flexibleHeight;
+                            if (newLayout.IsNullOrDestroyed())
+                                newLayout = replacement.AddComponent<LayoutElement>();
+                            newLayout.minWidth = oldLayout.minWidth;
+                            newLayout.minHeight = oldLayout.minHeight;
+                            newLayout.preferredWidth = oldLayout.preferredWidth;
+                            newLayout.preferredHeight = oldLayout.preferredHeight;
+                            newLayout.flexibleWidth = oldLayout.flexibleWidth;
+                            newLayout.flexibleHeight = oldLayout.flexibleHeight;
                         }
                         choose_blessings_button = replacement.GetComponent<Button>();
                         choose_blessings_button.onClick = new Button.ButtonClickedEvent();
                         foreach (var label in replacement.GetComponentsInChildren<Text>(true))
                             ModUI.LocaleRegistry.Apply(label, "Choose Blessings");
-                        foreach (var label in replacement.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
+                        foreach (
+                            var label in replacement.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(
+                                true
+                            )
+                        )
                             label.text = "Choose Blessings";
                         replacement.SetActive(true);
                     }
@@ -3950,7 +4002,12 @@ public partial class Hud_Manager : MonoBehaviour
 
                     if (!Save_Manager.instance.IsNullOrDestroyed())
                     {
-                        uint value = Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier;
+                        uint value = Save_Manager
+                            .instance
+                            .data
+                            .Character
+                            .Cheats
+                            .MemoryAmberMultiplier;
                         if (value < 1)
                         {
                             value = 1;
@@ -4226,7 +4283,10 @@ public partial class Hud_Manager : MonoBehaviour
 
                     PrepareNumericInput(soul_amount_input, "1000");
 
-                    GameObject buttonClone = Object.Instantiate(save_button.gameObject, soul_row.transform);
+                    GameObject buttonClone = Object.Instantiate(
+                        save_button.gameObject,
+                        soul_row.transform
+                    );
                     buttonClone.name = "Btn_Character_Data_AddSoulEmbers";
                     soul_add_button = buttonClone.GetComponent<Button>();
                     PrepareFullWidthActionButton(buttonClone, soul_add_button, "Add Soul Embers");
@@ -4466,9 +4526,8 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Slider monolith_corruption_slider = null;
                 public static Il2CppTMPro.TMP_InputField monolith_corruption_input = null;
                 public static Button monolith_corruption_all_button = null;
-                public static readonly System.Action MonolithCorruptionAll_Action = new System.Action(
-                    CopySelectedTimelineToAll
-                );
+                public static readonly System.Action MonolithCorruptionAll_Action =
+                    new System.Action(CopySelectedTimelineToAll);
                 public static readonly System.Action<float> monolith_corruption_slider_Action =
                     new System.Action<float>(Set_monolith_corruption_slider);
                 public static readonly System.Action<string> monolith_corruption_input_Action =
@@ -4582,7 +4641,10 @@ public partial class Hud_Manager : MonoBehaviour
                         return;
                     }
 
-                    GameObject buttonClone = Object.Instantiate(save_button.gameObject, parent.transform);
+                    GameObject buttonClone = Object.Instantiate(
+                        save_button.gameObject,
+                        parent.transform
+                    );
                     buttonClone.name = "Btn_Monolith_Corruption_ApplyAll";
                     monolith_corruption_all_button = buttonClone.GetComponent<Button>();
                     PrepareFullWidthActionButton(
@@ -4610,8 +4672,10 @@ public partial class Hud_Manager : MonoBehaviour
                         !monolith_stability_empower_go.IsNullOrDestroyed()
                         && monolith_stability_empower_go.activeSelf;
                     bool copyCorruption =
-                        !monolith_corruption_go.IsNullOrDestroyed() && monolith_corruption_go.activeSelf;
-                    bool copyGaze = !monolith_gaze_go.IsNullOrDestroyed() && monolith_gaze_go.activeSelf;
+                        !monolith_corruption_go.IsNullOrDestroyed()
+                        && monolith_corruption_go.activeSelf;
+                    bool copyGaze =
+                        !monolith_gaze_go.IsNullOrDestroyed() && monolith_gaze_go.activeSelf;
                     int basic = 0,
                         empowered = 0,
                         corruption = 0,
@@ -4657,7 +4721,10 @@ public partial class Hud_Manager : MonoBehaviour
                         return;
                     }
 
-                    var runs = new System.Collections.Generic.List<(int TimelineId, int Difficulty)>();
+                    var runs = new System.Collections.Generic.List<(
+                        int TimelineId,
+                        int Difficulty
+                    )>();
                     foreach (SavedMonolithRun saved in Refs_Manager.player_data.MonolithRuns)
                     {
                         if (saved.DifficultyIndex == 0 && copyBasic)
@@ -4666,7 +4733,8 @@ public partial class Hud_Manager : MonoBehaviour
                             runs.Add((saved.TimelineID, 0));
                         }
                         else if (
-                            saved.DifficultyIndex == 1 && (copyEmpowered || copyCorruption || copyGaze)
+                            saved.DifficultyIndex == 1
+                            && (copyEmpowered || copyCorruption || copyGaze)
                         )
                         {
                             if (copyEmpowered)
@@ -4738,10 +4806,16 @@ public partial class Hud_Manager : MonoBehaviour
                     {
                         return false;
                     }
-                    return TryReadMonolithValue(Mathf.RoundToInt(slider.value).ToString(), out value);
+                    return TryReadMonolithValue(
+                        Mathf.RoundToInt(slider.value).ToString(),
+                        out value
+                    );
                 }
 
-                static void PrepareNumericInput(Il2CppTMPro.TMP_InputField input, string defaultText)
+                static void PrepareNumericInput(
+                    Il2CppTMPro.TMP_InputField input,
+                    string defaultText
+                )
                 {
                     if (input.IsNullOrDestroyed())
                     {
@@ -4829,7 +4903,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static void MoveEndgameControls(GameObject monolithTarget, GameObject dungeonTarget)
+                public static void MoveEndgameControls(
+                    GameObject monolithTarget,
+                    GameObject dungeonTarget
+                )
                 {
                     if (!monolithTarget.IsNullOrDestroyed())
                     {
@@ -4904,9 +4981,9 @@ public partial class Hud_Manager : MonoBehaviour
 
                     Il2CppTMPro.TMP_InputField input =
                         clone.GetComponent<Il2CppTMPro.TMP_InputField>();
-                        if (!input.IsNullOrDestroyed())
-                        {
-                            PrepareNumericInput(input, "");
+                    if (!input.IsNullOrDestroyed())
+                    {
+                        PrepareNumericInput(input, "");
                         if (!input.textViewport.IsNullOrDestroyed())
                         {
                             RectTransform view = input.textViewport;
@@ -12200,7 +12277,11 @@ public partial class Hud_Manager : MonoBehaviour
                         UpdateRarity();
                         UpdateItems();
                         shard_initialized = false; //Reset shards
-                        if (enable && !ModUI.ForceDropBuilder.IsReady && !center_content.IsNullOrDestroyed())
+                        if (
+                            enable
+                            && !ModUI.ForceDropBuilder.IsReady
+                            && !center_content.IsNullOrDestroyed()
+                        )
                         {
                             InitializeShardsView();
                         }
@@ -12491,7 +12572,11 @@ public partial class Hud_Manager : MonoBehaviour
                             }
                         }
                         shard_initialized = false;
-                        if (enable && !ModUI.ForceDropBuilder.IsReady && !center_content.IsNullOrDestroyed())
+                        if (
+                            enable
+                            && !ModUI.ForceDropBuilder.IsReady
+                            && !center_content.IsNullOrDestroyed()
+                        )
                         {
                             InitializeShardsView();
                         }
@@ -13125,11 +13210,11 @@ public partial class Hud_Manager : MonoBehaviour
                                     affixName = affix.affixName,
                                     affixTitle = affix.affixTitle,
                                     affixType = affix.type,
-                                specialAffixType = affix.specialAffixType,
-                                titleType = affix.titleType,
-                                sealedAffixType = seal
-                                    ? Il2Cpp.SealedAffixType.Regular
-                                    : Il2Cpp.SealedAffixType.None,
+                                    specialAffixType = affix.specialAffixType,
+                                    titleType = affix.titleType,
+                                    sealedAffixType = seal
+                                        ? Il2Cpp.SealedAffixType.Regular
+                                        : Il2Cpp.SealedAffixType.None,
                                     //isSealedAffix = seal,
                                     affixTier = tier,
                                     affixRoll = roll,
