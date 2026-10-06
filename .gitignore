@@ -455,3 +455,6 @@ AGENTS.md
 .claude
 .idea
 .vs
+
+# Old build archives; releases are GitHub release assets now (docs/RELEASING.md)
+/Latest/LastEpoch_Hud*.rar

@@ -30,20 +30,15 @@ Manual:
 
 ## Update
 
-1. From the [latest release](https://github.com/Syncingoutt/LastEpoch_Mods/releases), download `LastEpoch_Hud.dll`.
-2. Replace it here:
+1. From the [latest release](https://github.com/Syncingoutt/LastEpoch_Mods/releases), download `LastEpoch_Hud.zip` and `UnityEngine.CoreModule.dll`.
+2. Extract `LastEpoch_Hud.zip` into `<Last Epoch>\Mods`, replacing the old files.
+3. If the game itself was updated: launch it once, wait for the main menu, then quit. MelonLoader rebuilds its files and overwrites `UnityEngine.CoreModule.dll`.
+4. Copy the downloaded `UnityEngine.CoreModule.dll` into this folder, replacing the existing one:
 
    ```text
    <Last Epoch>\MelonLoader\Il2CppAssemblies\
    ```
-   
-3. Launch the game once and wait till menu screen then quit
-4. Replace the `LastEpoch_Hud.dll` file again here:
 
-   ```text
-   <Last Epoch>\MelonLoader\Il2CppAssemblies\
-   ```
-   
 
 ## In case of issues
 
