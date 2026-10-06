@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace LastEpoch_Hud.Scripts.ModUI
 {
@@ -55,6 +55,9 @@ namespace LastEpoch_Hud.Scripts.ModUI
             public static readonly BoolSetting Profiling = Group.Bool("Profiling");
 
             public static readonly BoolSetting ProfileGameTypes = Group.Bool("ProfileGameTypes");
+
+            // Read-only ground hover trace; enable in SaveModUI.json for diagnosis.
+            public static readonly BoolSetting GroundItemTooltips = Group.Bool("GroundItemTooltips");
         }
 
         //
@@ -234,6 +237,16 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 "DisableInNonCombatZone",
                 label: "Pause autocast in non-combat zones"
             );
+        }
+
+        public static class IdolReroll
+        {
+            public static readonly SettingsGroup Group = new SettingsGroup("IdolReroll")
+                .Content("Items_Content")
+                .Viewport("Items_Craft", "Items_Craft_Content")
+                .OnBind((content, viewport) => IdolRerollControls.Bind(content, viewport));
+            public static readonly BoolSetting FreeMemoryAmber = Group.Bool("FreeMemoryAmber");
+            public static readonly BoolSetting UnlimitedUses = Group.Bool("UnlimitedUses");
         }
 
         //
