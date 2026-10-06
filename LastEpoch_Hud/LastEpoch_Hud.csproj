@@ -1,19 +1,22 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <TargetFrameworks>net6.0</TargetFrameworks>
-    <LastEpochPath Condition="'$(LastEpochPath)' == '' and Exists('D:\SteamLibrary\steamapps\common\Last Epoch\Last Epoch.exe')">D:\SteamLibrary\steamapps\common\Last Epoch</LastEpochPath>
-    <LastEpochPath Condition="'$(LastEpochPath)' == ''">C:\Program Files (x86)\Steam\steamapps\common\Last Epoch</LastEpochPath>
+    <LastEpochPath
+      Condition="'$(LastEpochPath)' == '' and Exists('D:\SteamLibrary\steamapps\common\Last Epoch\Last Epoch.exe')"
+      >D:\SteamLibrary\steamapps\common\Last Epoch</LastEpochPath>
+    <LastEpochPath Condition="'$(LastEpochPath)' == ''"
+      >C:\Program Files (x86)\Steam\steamapps\common\Last Epoch</LastEpochPath>
     <OutputType>Library</OutputType>
-	<Nullable>disable</Nullable>
+    <Nullable>disable</Nullable>
     <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
     <BaseOutputPath>..\Build</BaseOutputPath>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
-  <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
-  <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
+    <GenerateAssemblyInfo>False</GenerateAssemblyInfo>
   </PropertyGroup>
   <ItemGroup Condition="'$(TargetFramework)' == 'net6.0'">
     <Reference Include="AssetsTools.NET">
@@ -209,10 +212,28 @@
   <!-- Build stamp: obj/<cfg>/BuildInfo.key holds "commit|dirty", BuildInfo.g.cs adds the time. Never fails the build when git is missing. -->
   <!-- Always runs; defines the paths (IntermediateOutputPath is only known at target time). Design-time builds (Rider/VS) skip git and keep an existing key. -->
   <Target Name="WriteBuildInfoKey" BeforeTargets="CoreCompile" DependsOnTargets="ResolveReferences">
-    <Exec Condition="'$(DesignTimeBuild)' != 'true'" Command="git rev-parse --short HEAD 2&gt;nul" WorkingDirectory="$(MSBuildProjectDirectory)" ConsoleToMSBuild="true" ContinueOnError="true" IgnoreExitCode="true" IgnoreStandardErrorWarningFormat="true" StandardOutputImportance="low">
+    <Exec
+      Condition="'$(DesignTimeBuild)' != 'true'"
+      Command="git rev-parse --short HEAD 2&gt;nul"
+      WorkingDirectory="$(MSBuildProjectDirectory)"
+      ConsoleToMSBuild="true"
+      ContinueOnError="true"
+      IgnoreExitCode="true"
+      IgnoreStandardErrorWarningFormat="true"
+      StandardOutputImportance="low"
+    >
       <Output TaskParameter="ConsoleOutput" PropertyName="BuildInfoCommit" />
     </Exec>
-    <Exec Condition="'$(DesignTimeBuild)' != 'true'" Command="git --no-optional-locks status --porcelain -- . 2&gt;nul" WorkingDirectory="$(MSBuildProjectDirectory)" ConsoleToMSBuild="true" ContinueOnError="true" IgnoreExitCode="true" IgnoreStandardErrorWarningFormat="true" StandardOutputImportance="low">
+    <Exec
+      Condition="'$(DesignTimeBuild)' != 'true'"
+      Command="git --no-optional-locks status --porcelain -- . 2&gt;nul"
+      WorkingDirectory="$(MSBuildProjectDirectory)"
+      ConsoleToMSBuild="true"
+      ContinueOnError="true"
+      IgnoreExitCode="true"
+      IgnoreStandardErrorWarningFormat="true"
+      StandardOutputImportance="low"
+    >
       <Output TaskParameter="ConsoleOutput" ItemName="BuildInfoStatusLine" />
     </Exec>
     <PropertyGroup>
@@ -221,12 +242,26 @@
       <BuildInfoCommit>$(BuildInfoCommit.Trim())</BuildInfoCommit>
       <BuildInfoDirty Condition="'@(BuildInfoStatusLine)' != ''">true</BuildInfoDirty>
       <BuildInfoDirty Condition="'@(BuildInfoStatusLine)' == ''">false</BuildInfoDirty>
-      <BuildInfoWriteKey Condition="'$(DesignTimeBuild)' != 'true' or !Exists('$(BuildInfoKeyFile)')">true</BuildInfoWriteKey>
+      <BuildInfoWriteKey
+        Condition="'$(DesignTimeBuild)' != 'true' or !Exists('$(BuildInfoKeyFile)')"
+        >true</BuildInfoWriteKey>
     </PropertyGroup>
-    <WriteLinesToFile Condition="'$(BuildInfoWriteKey)' == 'true'" File="$(BuildInfoKeyFile)" Lines="$(BuildInfoCommit)|$(BuildInfoDirty)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <WriteLinesToFile
+      Condition="'$(BuildInfoWriteKey)' == 'true'"
+      File="$(BuildInfoKeyFile)"
+      Lines="$(BuildInfoCommit)|$(BuildInfoDirty)"
+      Overwrite="true"
+      WriteOnlyWhenDifferent="true"
+    />
   </Target>
   <!-- The time only refreshes when a compile is needed anyway (inputs newer than BuildInfo.g.cs). -->
-  <Target Name="WriteBuildInfo" BeforeTargets="CoreCompile" DependsOnTargets="WriteBuildInfoKey" Inputs="@(Compile);@(ReferencePath);$(MSBuildProjectFullPath);$(BuildInfoKeyFile)" Outputs="$(BuildInfoFile)">
+  <Target
+    Name="WriteBuildInfo"
+    BeforeTargets="CoreCompile"
+    DependsOnTargets="WriteBuildInfoKey"
+    Inputs="@(Compile);@(ReferencePath);$(MSBuildProjectFullPath);$(BuildInfoKeyFile)"
+    Outputs="$(BuildInfoFile)"
+  >
     <PropertyGroup>
       <BuildInfoTime>$([System.DateTime]::Now.ToString('yyyy-MM-dd HH:mm'))</BuildInfoTime>
     </PropertyGroup>
@@ -241,7 +276,13 @@
       <BuildInfoLine Include="    }" />
       <BuildInfoLine Include="}" />
     </ItemGroup>
-    <WriteLinesToFile Condition="'$(DesignTimeBuild)' != 'true' or !Exists('$(BuildInfoFile)')" File="$(BuildInfoFile)" Lines="@(BuildInfoLine)" Overwrite="true" WriteOnlyWhenDifferent="true" />
+    <WriteLinesToFile
+      Condition="'$(DesignTimeBuild)' != 'true' or !Exists('$(BuildInfoFile)')"
+      File="$(BuildInfoFile)"
+      Lines="@(BuildInfoLine)"
+      Overwrite="true"
+      WriteOnlyWhenDifferent="true"
+    />
   </Target>
   <!-- Always runs, even when WriteBuildInfo is skipped as up to date. -->
   <Target Name="AddBuildInfoToCompile" BeforeTargets="CoreCompile" AfterTargets="WriteBuildInfo">
