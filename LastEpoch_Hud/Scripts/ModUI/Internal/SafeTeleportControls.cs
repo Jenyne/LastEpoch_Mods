@@ -12,6 +12,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             var sample = viewport.GetComponentInChildren<Text>(true);
             if (sample.IsNullOrDestroyed()) return;
             Font font = sample.font;
+            var styleToggle = viewport.GetComponentInChildren<Toggle>(true);
             var section = Node(viewport, "SafeTeleport", 0, 0, 1, 1);
             var rect = section.GetComponent<RectTransform>();
             var layout = section.AddComponent<LayoutElement>();
@@ -27,6 +28,23 @@ namespace LastEpoch_Hud.Scripts.ModUI
             box.color = new Color(.58f, .45f, .20f);
             var check = Node(box.gameObject, "Check", .2f, .2f, .8f, .8f).AddComponent<Image>();
             check.color = new Color(.93f, .84f, .65f);
+            var boxRect = box.GetComponent<RectTransform>();
+            boxRect.anchorMin = new Vector2(0, .5f); boxRect.anchorMax = new Vector2(0, .5f);
+            boxRect.pivot = new Vector2(0, .5f);
+            boxRect.anchoredPosition = Vector2.zero; boxRect.sizeDelta = new Vector2(18, 18);
+            if (!styleToggle.IsNullOrDestroyed())
+            {
+                var sourceBox = styleToggle.targetGraphic.IsNullOrDestroyed()
+                    ? null : styleToggle.targetGraphic.GetComponent<Image>();
+                var sourceCheck = styleToggle.graphic.IsNullOrDestroyed()
+                    ? null : styleToggle.graphic.GetComponent<Image>();
+                if (!sourceBox.IsNullOrDestroyed())
+                { box.sprite = sourceBox.sprite; box.type = sourceBox.type; box.color = sourceBox.color; }
+                if (!sourceCheck.IsNullOrDestroyed())
+                { check.sprite = sourceCheck.sprite; check.type = sourceCheck.type; check.color = sourceCheck.color; }
+                toggle.colors = styleToggle.colors;
+                toggle.transition = styleToggle.transition;
+            }
             toggle.targetGraphic = box; toggle.graphic = check;
             Label(toggleGo, "Label", font, "Enable Safe Teleport", .065f, 0, 1, 1);
             var key = Node(section, "Key", .03f, .31f, .97f, .55f);
