@@ -65,7 +65,7 @@ internal static class ScenesSectionControls
             foreach (var text in title.GetComponentsInChildren<Text>(true))
             {
                 text.font = headerStyle.font;
-                text.fontSize = headerStyle.fontSize;
+                text.fontSize = Mathf.Clamp(headerStyle.fontSize, 14, 20);
                 text.fontStyle = headerStyle.fontStyle;
                 text.color = headerStyle.color;
             }
@@ -246,12 +246,24 @@ internal static class ScenesSectionControls
     {
         foreach (var label in node.GetComponentsInChildren<Text>(true))
         {
-            label.fontSize = 16;
+            label.fontSize = 20;
+            label.resizeTextForBestFit = true;
+            label.resizeTextMinSize = 14;
+            label.resizeTextMaxSize = 20;
+            label.verticalOverflow = VerticalWrapMode.Overflow;
+            var rect = label.GetComponent<RectTransform>();
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.offsetMin = new Vector2(8, 0);
+            rect.offsetMax = new Vector2(-8, 0);
             LocaleRegistry.Apply(label, caption);
         }
         foreach (var label in node.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
         {
-            label.fontSize = 16;
+            label.fontSize = 20;
+            label.enableAutoSizing = true;
+            label.fontSizeMin = 14;
+            label.fontSizeMax = 20;
             LocaleRegistry.Apply(label, caption);
         }
     }
