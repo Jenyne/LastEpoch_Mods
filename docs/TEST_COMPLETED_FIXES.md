@@ -4,7 +4,7 @@ Branch: `test/completed-fixes-integration`
 
 Base: Syncingoutt/master at `88ca851e144504665aa9d601c4b80a46a01d218b` (includes PR #23, Area of Effect buff slider).
 
-This is a combined regression build. The individual completed features were tested in game; their interaction in the initial combined build was also confirmed working by the user. The currency/blessing layout follow-up still needs testing. The original task branches remain available.
+This is a combined regression build. The individual completed features were tested in game; their interaction in the initial combined build was also confirmed working by the user. The user also confirmed the currency/blessing and Scenes layout follow-ups working in the final test. The original task branches remain available.
 
 ## Included changes and checks
 
@@ -78,7 +78,7 @@ The historical changelogs describe each task separately. This document is the cu
 
 ## Integration validation
 
-CSharpier formatting, whitespace checks, and locale JSON/key checks were run locally. MSBuild cannot initialize process-information APIs in this execution environment, so the full build and automated .NET suite remain unverified here. The initial combined build was confirmed working in game. The user reported the intermittent Mjölner icon problem, which is left to the custom-item maintainer. This layout follow-up requires a Windows build and in-game testing.
+CSharpier formatting, whitespace checks, and locale JSON/key checks were run locally. MSBuild cannot initialize process-information APIs in this execution environment, so the full build and automated .NET suite remain unverified here. The combined build and final layout were confirmed working in game. The user reported the intermittent Mjölner icon problem, which is left to the custom-item maintainer. The final Windows build and in-game test used commit `8bcf260f`; its supplied log has no ERROR entries or crash traces. Blessing selection and dungeon reveal completed. A subsequent settings-path cleanup corrects the DungeonReveal binding warning and needs a startup/toggle spot-check.
 
 ## Scenes layout follow-up
 

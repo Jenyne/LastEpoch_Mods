@@ -134,7 +134,11 @@ public static class ModSettings
             .Viewport("Center", "Scenes_Dungeons_Content")
             .OnBind((content, viewport) => DungeonRevealControls.Bind(content, viewport));
 
-        public static readonly BoolSetting Enabled = Group.Bool("Enabled");
+        public static readonly BoolSetting Enabled = Group.Bool(
+            "Enabled",
+            label: "Reveal Dungeon Objectives",
+            path: "DungeonControls/Toggle_DungeonControls_Reveal"
+        );
 
         static DungeonReveal()
         {
