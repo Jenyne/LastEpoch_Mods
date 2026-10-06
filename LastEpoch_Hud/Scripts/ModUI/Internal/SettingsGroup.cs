@@ -544,7 +544,16 @@ public class SettingsGroup
         if (string.IsNullOrEmpty(binding))
             return true;
         if (binding.StartsWith("kb:"))
-            return System.Enum.TryParse<KeyCode>(binding.Substring(3), out _);
+        {
+            foreach (var part in binding.Substring(3).Split('+'))
+                if (
+                    !System.Enum.TryParse<KeyCode>(part, out var key)
+                    || key == KeyCode.None
+                    || !System.Enum.IsDefined(typeof(KeyCode), key)
+                )
+                    return false;
+            return true;
+        }
         if (binding.StartsWith("gp:"))
             return !string.IsNullOrEmpty(binding.Substring(3));
         return false;

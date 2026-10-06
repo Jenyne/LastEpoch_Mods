@@ -619,10 +619,14 @@ public class SettingsBuilder
 
         var displayText = captureBtn.GetComponentInChildren<Text>();
         if (displayText != null)
+        {
+            // The captured value is dynamic, not the prefab's "Unbound" locale key.
+            LocaleRegistry.Apply(displayText, "");
             displayText.text = KeybindFormat.FriendlyWithDefault(
                 setting.Value,
                 setting.DefaultValue
             );
+        }
 
         setting.Changed += newVal =>
         {

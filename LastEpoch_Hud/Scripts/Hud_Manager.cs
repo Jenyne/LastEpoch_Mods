@@ -1245,6 +1245,9 @@ public partial class Hud_Manager : MonoBehaviour
                             {
                                 Cheats.add_ancient_bones_button =
                                     ancient_bones_button.GetComponent<Button>();
+                                Mods.Character.Character_MemoryAmber.BuildButton(
+                                    Cheats.add_ancient_bones_button
+                                );
                             }
                             Cheats.discover_blessings_button = Functions
                                 .GetChild(
@@ -2145,6 +2148,9 @@ public partial class Hud_Manager : MonoBehaviour
 
                 if (!Data.soul_add_button.IsNullOrDestroyed())
                 {
+                    // This runtime button owns its listeners. Rebinding must not
+                    // stack a second currency grant onto the existing click.
+                    Data.soul_add_button.onClick.RemoveAllListeners();
                     Events.Set_Button_Event(Data.soul_add_button, Data.SoulEmbers_Add_Action);
                 }
                 if (!Data.monolith_corruption_all_button.IsNullOrDestroyed())
@@ -3950,7 +3956,7 @@ public partial class Hud_Manager : MonoBehaviour
                         actionLayout.ignoreLayout = true;
                     }
                     buttonClone.SetActive(true);
-                    Events.Set_Button_Event(soul_add_button, SoulEmbers_Add_Action);
+                    soul_add_button.onClick.RemoveAllListeners(); // Bound once in Character.Set_Events.
 
                     inputClone.transform.SetAsLastSibling();
                     UpdateSoulEmberBalance();
@@ -5684,6 +5690,10 @@ public partial class Hud_Manager : MonoBehaviour
                         );
                         if (!items_craft_content.IsNullOrDestroyed())
                         {
+                            ModUI.InfiniteForgingPotentialControls.Bind(
+                                content_obj,
+                                items_craft_content
+                            );
                             CraftingSlot.forgin_potencial_toggle = Functions.Get_ToggleInPanel(
                                 items_craft_content,
                                 "ForginPotencial",

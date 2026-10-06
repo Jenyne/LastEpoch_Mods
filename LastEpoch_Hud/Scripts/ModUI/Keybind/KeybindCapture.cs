@@ -11,6 +11,7 @@ internal static class KeybindCapture
     private static KeybindSetting current;
     private static Text displayText;
     private static bool[] gamepadSnapshot;
+    private static KeyCode pendingModifier;
 
     public static bool Active => current != null;
 
@@ -19,6 +20,7 @@ internal static class KeybindCapture
         current = setting;
         displayText = display;
         gamepadSnapshot = null;
+        pendingModifier = KeyCode.None;
     }
 
     public static void Cancel()
@@ -28,6 +30,7 @@ internal static class KeybindCapture
         current = null;
         displayText = null;
         gamepadSnapshot = null;
+        pendingModifier = KeyCode.None;
     }
 
     public static void Tick()
@@ -43,6 +46,12 @@ internal static class KeybindCapture
 
         if (Input.anyKeyDown && TryCaptureKeyboard())
             return;
+        // A modifier by itself remains usable (e.g. AutoCast): commit on release.
+        if (pendingModifier != KeyCode.None && Input.GetKeyUp(pendingModifier))
+        {
+            Commit("kb:" + pendingModifier);
+            return;
+        }
         TryCaptureGamepad();
     }
 
@@ -58,11 +67,43 @@ internal static class KeybindCapture
                 continue;
             if (!Input.GetKeyDown(kc))
                 continue;
-            Commit("kb:" + kc.ToString());
+            if (IsModifier(kc))
+            {
+                pendingModifier = kc;
+                continue;
+            }
+            var keys = new System.Collections.Generic.List<string>();
+            foreach (
+                var modifier in new[]
+                {
+                    KeyCode.LeftControl,
+                    KeyCode.RightControl,
+                    KeyCode.LeftShift,
+                    KeyCode.RightShift,
+                    KeyCode.LeftAlt,
+                    KeyCode.RightAlt,
+                    KeyCode.LeftCommand,
+                    KeyCode.RightCommand,
+                }
+            )
+                if (Input.GetKey(modifier))
+                    keys.Add(modifier.ToString());
+            keys.Add(kc.ToString());
+            Commit("kb:" + string.Join("+", keys));
             return true;
         }
         return false;
     }
+
+    private static bool IsModifier(KeyCode key) =>
+        key == KeyCode.LeftControl
+        || key == KeyCode.RightControl
+        || key == KeyCode.LeftShift
+        || key == KeyCode.RightShift
+        || key == KeyCode.LeftAlt
+        || key == KeyCode.RightAlt
+        || key == KeyCode.LeftCommand
+        || key == KeyCode.RightCommand;
 
     private static void TryCaptureGamepad()
     {
@@ -97,11 +138,22 @@ internal static class KeybindCapture
 
     private static void Commit(string binding)
     {
+        if (KeybindMatcher.Rejects(current, binding))
+        {
+            Main.logger_instance?.Warning(
+                "Binding rejected: AutoCast and Safe Teleport cannot share a key or modifier combination."
+            );
+            if (displayText != null)
+                displayText.text = "Conflict with AutoCast / Safe Teleport. Press another key.";
+            pendingModifier = KeyCode.None;
+            return;
+        }
         ModSettings.Trace("KeybindCapture committed: " + binding);
         var s = current;
         current = null;
         displayText = null;
         gamepadSnapshot = null;
+        pendingModifier = KeyCode.None;
         s.Set(binding);
     }
 }

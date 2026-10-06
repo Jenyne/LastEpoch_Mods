@@ -61,6 +61,13 @@ public static class ModSettings
     // CHARACTER TAB
     //
 
+    public static class InfiniteForgingPotential
+    {
+        // Runtime checkbox is bound by Hud_Manager after the crafting panel is ready.
+        public static readonly SettingsGroup Group = new SettingsGroup("InfiniteForgingPotential");
+        public static readonly BoolSetting Enabled = Group.Bool("Enabled");
+    }
+
     public static class Weaver
     {
         public static readonly SettingsGroup Group = new SettingsGroup("Weaver")
@@ -87,13 +94,53 @@ public static class ModSettings
 
         public static readonly BoolSetting TwoHandeWithShield = Group.Bool(
             "TwoHandeWithShield",
-            label: "Allow Shields With Two-Handed Weapons"
+            label: "Ignore Weapon Restrictions"
+        );
+    }
+
+    public static class SafeTeleport
+    {
+        // UI is built below Minimap in Scenes; keep the same save group and keys.
+        public static readonly SettingsGroup Group = new SettingsGroup("SafeTeleport").Viewport(
+            "Center",
+            "Scenes_Minimap_Content"
+        );
+        public static readonly BoolSetting Enabled = Group.Bool(
+            "Enabled",
+            label: "Enable Safe Teleport",
+            path: "SafeTeleport/Enabled"
+        );
+        public static readonly KeybindSetting Key = Group.Keybind(
+            "Key",
+            defaultBinding: "",
+            label: "Teleport Key",
+            resetLabel: "Clear",
+            paths: new KeybindPaths(
+                "SafeTeleport/Key/Capture",
+                "SafeTeleport/Key/Reset",
+                "SafeTeleport/Key/Label"
+            )
         );
     }
 
     //
     // SCENES TAB
     //
+
+    public static class DungeonReveal
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("DungeonReveal")
+            .Content("Scenes_Content")
+            .Viewport("Center", "Scenes_Dungeons_Content")
+            .OnBind((content, viewport) => DungeonRevealControls.Bind(content, viewport));
+
+        public static readonly BoolSetting Enabled = Group.Bool("Enabled");
+
+        static DungeonReveal()
+        {
+            Enabled.Changed += Mods.Dungeons.Dungeons_ObjectiveReveal.Apply;
+        }
+    }
 
     public static class Difficulty
     {
@@ -105,6 +152,10 @@ public static class ModSettings
             .OnBind(
                 (contentObj, _) =>
                 {
+                    SafeTeleportControls.Bind(
+                        contentObj,
+                        Prefab.ViewportContent(contentObj, "Center", "Scenes_Minimap_Content")
+                    );
                     // Apply to existing asset bundles as well as the updated prefab.
                     LayoutPanel(contentObj, "Camera", 0.006f, 0.505f, 0.33229983f, 0.9895249f);
                     LayoutPanel(
