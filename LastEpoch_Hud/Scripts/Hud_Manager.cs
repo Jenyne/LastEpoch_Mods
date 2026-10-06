@@ -5967,6 +5967,7 @@ public partial class Hud_Manager : MonoBehaviour
                         );
                         if (!items_craft_content.IsNullOrDestroyed())
                         {
+                            ModUI.InfiniteForgingPotentialControls.Bind(content_obj, items_craft_content);
                             CraftingSlot.forgin_potencial_toggle = Functions.Get_ToggleInPanel(
                                 items_craft_content,
                                 "ForginPotencial",
