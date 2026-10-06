@@ -8,7 +8,10 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
 {
     internal static class Items_InfiniteForgingPotential
     {
-        [ThreadStatic] static int localCraftDepth;
+        static bool Enabled() =>
+            ModSettings.InfiniteForgingPotential.Enabled.Value
+            && !ModSaveManager.instance.IsNullOrDestroyed() && ModSaveManager.instance.initialized
+            && Scenes.IsGameScene() && !Refs_Manager.player_actor.IsNullOrDestroyed();
         sealed class CraftState { public bool OriginalNoCost; }
         [HarmonyPatch(typeof(CraftingManager), "Forge")]
         static class Forge
@@ -17,20 +20,14 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             static void Prefix(CraftingManager __instance, out CraftState __state)
             {
                 __state = null;
-                if (!ModSettings.InfiniteForgingPotential.Enabled.Value
-                    || ModSaveManager.instance.IsNullOrDestroyed() || !ModSaveManager.instance.initialized
-                    || !Scenes.IsGameScene() || __instance.actor.IsNullOrDestroyed()
-                    || Refs_Manager.player_actor.IsNullOrDestroyed()
-                    || __instance.actor.Pointer != Refs_Manager.player_actor.Pointer) return;
+                if (!Enabled() || __instance.IsNullOrDestroyed()) return;
                 __state = new CraftState { OriginalNoCost = __instance.debugNoForgingPotentialCost };
                 __instance.debugNoForgingPotentialCost = true;
-                localCraftDepth++;
             }
             [HarmonyFinalizer]
             static void Finalizer(CraftingManager __instance, CraftState __state)
             {
                 if (__state == null) return;
-                localCraftDepth--;
                 if (!__instance.IsNullOrDestroyed()) __instance.debugNoForgingPotentialCost = __state.OriginalNoCost;
             }
         }
@@ -40,7 +37,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             [HarmonyPrefix]
             static void Prefix(ref bool __2)
             {
-                if (localCraftDepth > 0) __2 = true;
+                if (Enabled()) __2 = true;
             }
         }
         [HarmonyPatch(typeof(ItemData), "applyForgingPotentialCostFromShard")]
@@ -49,7 +46,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             [HarmonyPrefix]
             static void Prefix(ref bool __1)
             {
-                if (localCraftDepth > 0) __1 = true;
+                if (Enabled()) __1 = true;
             }
         }
     }
