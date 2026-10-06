@@ -1,48 +1,58 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
 
-namespace LastEpoch_Hud.Scripts.Mods.Skills
+namespace LastEpoch_Hud.Scripts.Mods.Skills;
+
+public class Skills_SpecializationsSlots
 {
-    public class Skills_SpecializationsSlots
+    public static bool CanRun()
     {
-        public static bool CanRun()
+        if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()))
         {
-            if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()))
+            if (!Save_Manager.instance.data.IsNullOrDestroyed())
             {
-                if (!Save_Manager.instance.data.IsNullOrDestroyed())
-                {
-                    return Save_Manager.instance.data.Skills.Enable_SpecializationSlots;
-                }
-                else { return false; }
+                return Save_Manager.instance.data.Skills.Enable_SpecializationSlots;
             }
-            else { return false; }
-        }
-
-        [HarmonyPatch(typeof(SkillsPanelManager), "OnEnable")]
-        public class SkillsPanelManager_OnEnable
-        {
-            [HarmonyPrefix]
-            static void Prefix(ref SkillsPanelManager __instance)
+            else
             {
-                if (CanRun())
-                {
-                    SpecialisedAbilityManager.getNumberOfSpecialisationSlots((int)PlayerFinder.localPlayerLevel());
-                }
+                return false;
             }
         }
-
-        [HarmonyPatch(typeof(SpecialisedAbilityManager), "getNumberOfSpecialisationSlots")]
-        public class SpecialisedAbilityManager_getNumberOfSpecialisationSlots
+        else
         {
-            [HarmonyPrefix]
-            static bool Prefix(ref byte __result, int __0)
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(SkillsPanelManager), "OnEnable")]
+    public class SkillsPanelManager_OnEnable
+    {
+        [HarmonyPrefix]
+        static void Prefix(ref SkillsPanelManager __instance)
+        {
+            if (CanRun())
             {
-                if (CanRun())
-                {
-                    __result = (byte)Save_Manager.instance.data.Skills.SpecializationSlots;
-                    return false;
-                }
-                else { return true; }
+                SpecialisedAbilityManager.getNumberOfSpecialisationSlots(
+                    (int)PlayerFinder.localPlayerLevel()
+                );
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(SpecialisedAbilityManager), "getNumberOfSpecialisationSlots")]
+    public class SpecialisedAbilityManager_getNumberOfSpecialisationSlots
+    {
+        [HarmonyPrefix]
+        static bool Prefix(ref byte __result, int __0)
+        {
+            if (CanRun())
+            {
+                __result = (byte)Save_Manager.instance.data.Skills.SpecializationSlots;
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
     }

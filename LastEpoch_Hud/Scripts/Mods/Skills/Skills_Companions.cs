@@ -1,52 +1,82 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
 
-namespace LastEpoch_Hud.Scripts.Mods.Skills
+namespace LastEpoch_Hud.Scripts.Mods.Skills;
+
+public class Skills_Companions
 {
-    public class Skills_Companions
+    public static bool CanRun()
     {
-        public static bool CanRun()
+        if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()))
         {
-            if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()))
+            if (!Save_Manager.instance.data.IsNullOrDestroyed())
             {
-                if (!Save_Manager.instance.data.IsNullOrDestroyed())
-                {
-                    return true;
-                }
-                else { return false; }
+                return true;
             }
-            else { return false; }
-        }
-        [HarmonyPatch(typeof(AbilityStatsMutatorManager), "OnStatsUpdate")]
-        public class AbilityStatsMutatorManager_OnStatsUpdate
-        {
-            [HarmonyPostfix]
-            static void Postfix(ref AbilityStatsMutatorManager __instance)
+            else
             {
-                if (CanRun())
-                {
-                    if (Save_Manager.instance.data.Skills.Companion.Wolf.Enable_SummonMax) { __instance.canSummonWolvesUpToMaxCompanions = true; }
-                    if (Save_Manager.instance.data.Skills.Minions.BoneGolems.Enable_addedGolemsPer4Skeletons)
-                    {
-                        __instance.addedGolemsPer4Skeletons = Save_Manager.instance.data.Skills.Minions.BoneGolems.addedGolemsPer4Skeletons;
-                    }
-                    if (Save_Manager.instance.data.Skills.Companion.Wolf.Enable_StunImmunity) { __instance.wolfStunImmunity = true; }
-                    else { __instance.wolfStunImmunity = false; }
-                }
+                return false;
             }
         }
-        [HarmonyPatch(typeof(CharacterStats), "getMaximumCompanions")]
-        public class CharacterStats_GetMaximumCompanions
+        else
         {
-            [HarmonyPostfix]
-            static void Postfix(CharacterStats __instance, ref int __result)
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(AbilityStatsMutatorManager), "OnStatsUpdate")]
+    public class AbilityStatsMutatorManager_OnStatsUpdate
+    {
+        [HarmonyPostfix]
+        static void Postfix(ref AbilityStatsMutatorManager __instance)
+        {
+            if (CanRun())
             {
-                if (CanRun())
+                if (Save_Manager.instance.data.Skills.Companion.Wolf.Enable_SummonMax)
                 {
-                    if (Save_Manager.instance.data.Skills.Companion.Enable_Limit)
-                    {
-                        __result = Save_Manager.instance.data.Skills.Companion.Limit;
-                    }
+                    __instance.canSummonWolvesUpToMaxCompanions = true;
+                }
+                if (
+                    Save_Manager
+                        .instance
+                        .data
+                        .Skills
+                        .Minions
+                        .BoneGolems
+                        .Enable_addedGolemsPer4Skeletons
+                )
+                {
+                    __instance.addedGolemsPer4Skeletons = Save_Manager
+                        .instance
+                        .data
+                        .Skills
+                        .Minions
+                        .BoneGolems
+                        .addedGolemsPer4Skeletons;
+                }
+                if (Save_Manager.instance.data.Skills.Companion.Wolf.Enable_StunImmunity)
+                {
+                    __instance.wolfStunImmunity = true;
+                }
+                else
+                {
+                    __instance.wolfStunImmunity = false;
+                }
+            }
+        }
+    }
+
+    [HarmonyPatch(typeof(CharacterStats), "getMaximumCompanions")]
+    public class CharacterStats_GetMaximumCompanions
+    {
+        [HarmonyPostfix]
+        static void Postfix(CharacterStats __instance, ref int __result)
+        {
+            if (CanRun())
+            {
+                if (Save_Manager.instance.data.Skills.Companion.Enable_Limit)
+                {
+                    __result = Save_Manager.instance.data.Skills.Companion.Limit;
                 }
             }
         }

@@ -1,18 +1,17 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
 
-namespace LastEpoch_Hud.Scripts.Mods.Ladder
+namespace LastEpoch_Hud.Scripts.Mods.Ladder;
+
+public class Ladder_Remove
 {
-    public class Ladder_Remove
+    [HarmonyPatch(typeof(UIBase), "LadderKeyDown")]
+    public class UIBase_LadderKeyDown
     {
-        [HarmonyPatch(typeof(UIBase), "LadderKeyDown")]
-        public class UIBase_LadderKeyDown
+        [HarmonyPrefix]
+        static bool Prefix()
         {
-            [HarmonyPrefix]
-            static bool Prefix()
-            {
-                return false;
-            }
+            return false;
         }
     }
 }

@@ -1729,10 +1729,17 @@ public partial class Hud_Manager
                                 }
                                 case "Slider_Character_Cheats_MemoryAmberMultiplier":
                                 {
-                                    uint multiplier = (uint)Mathf.Clamp(Mathf.RoundToInt(__0), 1, 10000);
-                                    Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier =
-                                        multiplier;
-                                    if (!Content.Character.Cheats.memoryamber_text.IsNullOrDestroyed())
+                                    uint multiplier = (uint)
+                                        Mathf.Clamp(Mathf.RoundToInt(__0), 1, 10000);
+                                    Save_Manager
+                                        .instance
+                                        .data
+                                        .Character
+                                        .Cheats
+                                        .MemoryAmberMultiplier = multiplier;
+                                    if (
+                                        !Content.Character.Cheats.memoryamber_text.IsNullOrDestroyed()
+                                    )
                                     {
                                         Content.Character.Cheats.memoryamber_text.text =
                                             "x " + multiplier;

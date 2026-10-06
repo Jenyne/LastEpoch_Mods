@@ -1,29 +1,38 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
 
-namespace LastEpoch_Hud.Scripts.Mods.Character
+namespace LastEpoch_Hud.Scripts.Mods.Character;
+
+public class Character_Waypoints
 {
-    public class Character_Waypoints
+    public static bool CanRun()
     {
-        public static bool CanRun()
+        if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()))
         {
-            if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()))
+            if (!Save_Manager.instance.data.IsNullOrDestroyed())
             {
-                if (!Save_Manager.instance.data.IsNullOrDestroyed())
-                {
-                    return Save_Manager.instance.data.Character.Cheats.Enable_WaypointsUnlock;
-                }
-                else { return false; }
+                return Save_Manager.instance.data.Character.Cheats.Enable_WaypointsUnlock;
             }
-            else { return false; }
-        }
-        [HarmonyPatch(typeof(UIWaypointStandard), "OnPointerEnter")]
-        public class UIWaypointStandard_OnPointerEnter
-        {
-            [HarmonyPrefix]
-            static void Prefix(ref UIWaypointStandard __instance)
+            else
             {
-                if (CanRun()) { __instance.isActive = true; }
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(UIWaypointStandard), "OnPointerEnter")]
+    public class UIWaypointStandard_OnPointerEnter
+    {
+        [HarmonyPrefix]
+        static void Prefix(ref UIWaypointStandard __instance)
+        {
+            if (CanRun())
+            {
+                __instance.isActive = true;
             }
         }
     }

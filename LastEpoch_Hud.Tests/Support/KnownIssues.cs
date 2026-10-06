@@ -10,5 +10,6 @@ internal static class KnownIssues
 
     public static bool Contains(string id) => Ids.Contains(id);
 
-    public static IEnumerable<string> WithPrefix(string prefix) => Ids.Where(id => id.StartsWith(prefix, StringComparison.Ordinal));
+    public static IEnumerable<string> WithPrefix(string prefix) =>
+        Ids.Where(id => id.StartsWith(prefix, StringComparison.Ordinal));
 }
