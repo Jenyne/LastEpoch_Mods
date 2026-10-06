@@ -352,5 +352,20 @@
   "Blessings": "Blessings",
   "Misc": "Misc",
   "Reveal Dungeon Objectives": "Reveal Dungeon Objectives",
-  "Revealed objectives remain visible for this floor.": "Revealed objectives remain visible for this floor."
+  "Revealed objectives remain visible for this floor.": "Revealed objectives remain visible for this floor.",
+  "CustomItem.Headhunter.Subtype": "HH Leather belt",
+  "CustomItem.Headhunter.Name": "Headhunter",
+  "CustomItem.Headhunter.Lore": "A man's soul rules from a cavern of bone, learns and\r\njudges through flesh-born windows. The heart is meat.\r\nThe head is where the Man is.\"\r\n- Lavianga, Advisor to Kaom",
+  "CustomItem.Headhunter.Description": "When you or your minions Kill a monster, you gain {0} to {1} random Modifiers for {2} seconds",
+  "CustomItem.Mjolner.Name": "Mjölner",
+  "CustomItem.Mjolner.Lore": "Look the storm in the eye and you will have its respect.",
+  "CustomItem.Mjolner.DescriptionProc": "If you have at least {0} Strength and {1} Intelligence, {2} to {3}% chance to Trigger a Lightning Spell on Hit with an Attack",
+  "CustomItem.Mjolner.DescriptionSocketed": "If you have at least {0} Strength and {1} Intelligence, Trigger {2}, {3} and {4} on Hit, with a {5} second Cooldown",
+  "CustomItem.EssentiaSanguis.Subtype": "Furtive Wraps",
+  "CustomItem.EssentiaSanguis.Name": "Essentia Sanguis",
+  "CustomItem.EssentiaSanguis.Description": "Life Leech is Converted to Ward Leech",
+  "CustomItem.EssentiaSanguis.Lore": "The darkest clouds clashed and coupled,\r\ngiving birth to four lightning children of hate.",
+  "CustomItem.SandsOfSilk.Subtype": "Shrouded Vest",
+  "CustomItem.SandsOfSilk.Name": "Sands of Silk",
+  "CustomItem.SandsOfSilk.Lore": "The desert is ever flowing."
 }

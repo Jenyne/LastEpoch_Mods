@@ -352,5 +352,20 @@
   "Blessings": "Bénédictions",
   "Misc": "Divers",
   "Reveal Dungeon Objectives": "Révéler les objectifs du donjon",
-  "Revealed objectives remain visible for this floor.": "Les objectifs révélés restent visibles à cet étage."
+  "Revealed objectives remain visible for this floor.": "Les objectifs révélés restent visibles à cet étage.",
+  "CustomItem.Headhunter.Subtype": "HH Ceinture en cuir",
+  "CustomItem.Headhunter.Name": "Chasseur de têtes",
+  "CustomItem.Headhunter.Lore": "L'âme d'un homme règne depuis une caverne d'os,\r\napprend et juge à travers des fenêtres plantées dans la chair.\r\nLe cœur est un morceau de viande. La tête est le siège de l'homme.\r\n- Lavianga, conseiller de Kaom",
+  "CustomItem.Headhunter.Description": "Lorsque vous ou vos invocations tuez un monstre, vous gagnez {0} à {1} modificateurs aléatoires pendant {2} secondes.",
+  "CustomItem.Mjolner.Name": "Mjölner",
+  "CustomItem.Mjolner.Lore": "Entrez dans l'œil de la tempête et vous gagnerez son respect.",
+  "CustomItem.Mjolner.DescriptionProc": "Si vous avez au moins {0} de Force et {1} d'Intelligence, {2} à {3}% de chance de déclencher un sort de foudre lors d'une attaque réussie",
+  "CustomItem.Mjolner.DescriptionSocketed": "Si vous avez au moins {0} de Force et {1} d'Intelligence, déclenche {2}, {3} et {4} à l'impact, avec un temps de recharge de {5} seconde",
+  "CustomItem.EssentiaSanguis.Subtype": "Bandages furtifs",
+  "CustomItem.EssentiaSanguis.Name": "Essentia Sanguis",
+  "CustomItem.EssentiaSanguis.Description": "Le drain de PV est converti en drain de protection",
+  "CustomItem.EssentiaSanguis.Lore": "Les nuages les plus sombres s'entrechoquèrent et s'accouplèrent,\r\nenfantant quatre enfants de foudre et de haine.",
+  "CustomItem.SandsOfSilk.Subtype": "Veste voilée",
+  "CustomItem.SandsOfSilk.Name": "Sables de soie",
+  "CustomItem.SandsOfSilk.Lore": "Le désert coule sans cesse."
 }

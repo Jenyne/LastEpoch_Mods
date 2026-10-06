@@ -144,7 +144,7 @@ public class Mods_Manager : MonoBehaviour
             Vector3.zero,
             Quaternion.identity
         );
-        items_headhunter_obj.AddComponent<Mods.Items.Items_HeadHunter>();
+        items_headhunter_obj.AddComponent<Mods.Items.CustomItems.Headhunter.Items_HeadHunter>();
         Mods_Objects.Add(items_headhunter_obj);
 
         items_mjolner_obj = Object.Instantiate(
@@ -152,7 +152,7 @@ public class Mods_Manager : MonoBehaviour
             Vector3.zero,
             Quaternion.identity
         );
-        items_mjolner_obj.AddComponent<Mods.Items.Items_Mjolner>();
+        items_mjolner_obj.AddComponent<Mods.Items.CustomItems.Mjolner.Items_Mjolner>();
         Mods_Objects.Add(items_mjolner_obj);
 
         items_sandsofsilk_obj = Object.Instantiate(
@@ -160,7 +160,7 @@ public class Mods_Manager : MonoBehaviour
             Vector3.zero,
             Quaternion.identity
         );
-        items_sandsofsilk_obj.AddComponent<Mods.Items.Items_SandsOfSilk>();
+        items_sandsofsilk_obj.AddComponent<Mods.Items.CustomItems.SandsOfSilk.Items_SandsOfSilk>();
         Mods_Objects.Add(items_sandsofsilk_obj);
 
         items_essentiasanguis_obj = Object.Instantiate(
@@ -168,8 +168,16 @@ public class Mods_Manager : MonoBehaviour
             Vector3.zero,
             Quaternion.identity
         );
-        items_essentiasanguis_obj.AddComponent<Mods.Items.Items_EssentiaSanguis>();
+        items_essentiasanguis_obj.AddComponent<Mods.Items.CustomItems.EssentiaSanguis.Items_EssentiaSanguis>();
         Mods_Objects.Add(items_essentiasanguis_obj);
+
+        GameObject customIconsObj = Object.Instantiate(
+            new GameObject { name = "Mod_Items_CustomItemIcons" },
+            Vector3.zero,
+            Quaternion.identity
+        );
+        customIconsObj.AddComponent<Mods.Items.CustomItems.CustomItemIconUpdater>();
+        Mods_Objects.Add(customIconsObj);
 
         items_temporalis_obj = Object.Instantiate(
             new GameObject { name = "Mod_Items_Temporalis" },

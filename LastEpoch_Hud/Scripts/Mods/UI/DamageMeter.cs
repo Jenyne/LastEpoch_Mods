@@ -136,7 +136,8 @@ public class DamageMeter : MonoBehaviour
                     Abilities.Add(ab);
                 }
             }
-            Ability[] mjolnerAbilities = Items.Items_Mjolner.GetTriggerAbilities();
+            Ability[] mjolnerAbilities =
+                Items.CustomItems.Mjolner.Items_Mjolner.GetTriggerAbilities();
             if (mjolnerAbilities != null)
             {
                 foreach (Ability ab in mjolnerAbilities)

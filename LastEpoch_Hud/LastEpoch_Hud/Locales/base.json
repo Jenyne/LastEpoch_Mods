@@ -352,5 +352,20 @@
   "Blessings": "Blessings",
   "Misc": "Misc",
   "Reveal Dungeon Objectives": "",
-  "Revealed objectives remain visible for this floor.": ""
+  "Revealed objectives remain visible for this floor.": "",
+  "CustomItem.Headhunter.Subtype": "",
+  "CustomItem.Headhunter.Name": "",
+  "CustomItem.Headhunter.Lore": "",
+  "CustomItem.Headhunter.Description": "",
+  "CustomItem.Mjolner.Name": "",
+  "CustomItem.Mjolner.Lore": "",
+  "CustomItem.Mjolner.DescriptionProc": "",
+  "CustomItem.Mjolner.DescriptionSocketed": "",
+  "CustomItem.EssentiaSanguis.Subtype": "",
+  "CustomItem.EssentiaSanguis.Name": "",
+  "CustomItem.EssentiaSanguis.Description": "",
+  "CustomItem.EssentiaSanguis.Lore": "",
+  "CustomItem.SandsOfSilk.Subtype": "",
+  "CustomItem.SandsOfSilk.Name": "",
+  "CustomItem.SandsOfSilk.Lore": ""
 }

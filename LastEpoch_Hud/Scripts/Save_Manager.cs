@@ -815,7 +815,7 @@ public class Save_Manager : MonoBehaviour
 
         public struct CraftingSlot
         {
-            public bool Enable_Mod; //added by https://github.com/RolandSolymosi
+            public bool Enable_Mod;
 
             public bool Enable_ForginPotencial;
             public float ForginPotencial;

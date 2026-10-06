@@ -23,3 +23,6 @@ fr:Angle Minimum
 fr:Angle Maximum
 
 fr:Runes
+# Custom item proper names kept in English in French.
+fr:CustomItem.Mjolner.Name
+fr:CustomItem.EssentiaSanguis.Name

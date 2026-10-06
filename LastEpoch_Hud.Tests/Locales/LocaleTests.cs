@@ -8,23 +8,31 @@ namespace LastEpoch_Hud.Tests.Locales;
 /// <summary>Menu text: every key in base.json is translated, and every locale file ships.</summary>
 public sealed partial class LocaleTests
 {
-    private static readonly string LocalesDir = Path.Combine(
+    private static readonly string _localesDir = Path.Combine(
         GameEnvironment.ModProjectDir,
         "LastEpoch_Hud",
         "Locales"
     );
-    private static readonly string[] TranslatedLanguages = ["fr", "zh"];
-    private static readonly string[] Languages = ["en", .. TranslatedLanguages];
-    private static readonly HashSet<string> KeepEnglish = ListFile.Load("Locales/KeepEnglish.txt");
+    private static readonly string[] _translatedLanguages = ["fr", "zh"];
+    private static readonly string[] _languages = ["en", .. _translatedLanguages];
+    private static readonly HashSet<string> _keepEnglish = ListFile.Load("Locales/KeepEnglish.txt");
 
-    public static TheoryData<string> LanguageData => new(Languages);
-    public static TheoryData<string> TranslatedLanguageData => new(TranslatedLanguages);
+    public static TheoryData<string> LanguageData => new(_languages);
+    public static TheoryData<string> TranslatedLanguageData => new(_translatedLanguages);
+    public static TheoryData<string> ShippedNonEnglishLanguageData =>
+        new(
+            Directory
+                .GetFiles(_localesDir, "*.json")
+                .Select(path => Path.GetFileNameWithoutExtension(path))
+                .Where(name => name != "base" && name != "en")
+                .Order()
+        );
 
     [Theory]
     [MemberData(nameof(LanguageData))]
     public void Language_TranslatesEveryBaseKey(string language)
     {
-        var translations = Read(language);
+        Dictionary<string, string> translations = Read(language);
         var missing = Read("base")
             .Keys.Where(key => string.IsNullOrWhiteSpace(translations.GetValueOrDefault(key)))
             .ToList();
@@ -36,11 +44,11 @@ public sealed partial class LocaleTests
     [MemberData(nameof(TranslatedLanguageData))]
     public void Language_HasNoEnglishLeftovers(string language)
     {
-        var english = Read("en");
+        Dictionary<string, string> english = Read("en");
         var leftovers = Read(language)
             .Where(pair => SameAsEnglish(english.GetValueOrDefault(pair.Key), pair.Value))
             .Select(pair => pair.Key)
-            .Where(key => !KeepEnglish.Contains($"{language}:{key}"))
+            .Where(key => !_keepEnglish.Contains($"{language}:{key}"))
             .ToList();
 
         Assert.True(
@@ -49,13 +57,43 @@ public sealed partial class LocaleTests
         );
     }
 
+    [Theory]
+    [MemberData(nameof(ShippedNonEnglishLanguageData))]
+    public void Language_KeepsTemplatePlaceholders(string language)
+    {
+        Dictionary<string, string> english = Read("en");
+        var changed = Read(language)
+            .Where(pair => !string.IsNullOrEmpty(pair.Value))
+            .Where(pair => english.ContainsKey(pair.Key))
+            .Where(pair => Placeholders(english[pair.Key]) != Placeholders(pair.Value))
+            .Select(pair => pair.Key)
+            .ToList();
+
+        Assert.True(
+            changed.Count == 0,
+            $"{language}.json changes {{n}} placeholders of: {string.Join(", ", changed)}"
+        );
+    }
+
+    [Fact]
+    public void LocalesFolder_ShipsOnlyBaseEnFrKoZh()
+    {
+        string[] shipped = Directory
+            .GetFiles(_localesDir, "*.json")
+            .Select(path => Path.GetFileNameWithoutExtension(path))
+            .Order()
+            .ToArray();
+
+        Assert.Equal(["base", "en", "fr", "ko", "zh"], shipped);
+    }
+
     [Fact]
     public void KeepEnglish_EntriesAreStillEnglishAndExist()
     {
         var baseKeys = Read("base").Keys.ToHashSet();
-        var english = Read("en");
-        var translations = TranslatedLanguages.ToDictionary(language => language, Read);
-        var broken = KeepEnglish
+        Dictionary<string, string> english = Read("en");
+        var translations = _translatedLanguages.ToDictionary(language => language, Read);
+        var broken = _keepEnglish
             .Where(entry => !IsValidKeepEnglish(entry, baseKeys, english, translations))
             .ToList();
 
@@ -69,7 +107,7 @@ public sealed partial class LocaleTests
     [Fact]
     public void SettingLabels_HaveBaseKeys()
     {
-        var source = File.ReadAllText(
+        string source = File.ReadAllText(
             Path.Combine(GameEnvironment.ModProjectDir, "Scripts", "ModUI", "ModSettings.cs")
         );
         var keys = Read("base").Keys.ToHashSet();
@@ -86,9 +124,9 @@ public sealed partial class LocaleTests
     [Fact]
     public void LocaleFiles_AreCopiedToBuildOutput()
     {
-        var copied = CopiedFiles();
+        HashSet<string> copied = CopiedFiles();
         var missing = Directory
-            .GetFiles(LocalesDir, "*.json")
+            .GetFiles(_localesDir, "*.json")
             .Select(path => $@"LastEpoch_Hud\Locales\{Path.GetFileName(path)}")
             .Where(file => !copied.Contains(file))
             .Where(file => !KnownIssues.Contains($"locale-copy:{Path.GetFileName(file)}"))
@@ -103,7 +141,7 @@ public sealed partial class LocaleTests
     [Fact]
     public void KnownUncopiedLocales_AreStillUncopied()
     {
-        var copied = CopiedFiles();
+        HashSet<string> copied = CopiedFiles();
         var fixedOnes = KnownIssues
             .WithPrefix("locale-copy:")
             .Where(id => copied.Contains($@"LastEpoch_Hud\Locales\{id["locale-copy:".Length..]}"))
@@ -115,6 +153,12 @@ public sealed partial class LocaleTests
         );
     }
 
+    private static string Placeholders(string text) =>
+        string.Join(
+            ",",
+            PlaceholderPattern().Matches(text).Select(m => m.Value).Distinct().Order()
+        );
+
     private static bool SameAsEnglish(string english, string translated) =>
         string.Equals(english, translated, StringComparison.OrdinalIgnoreCase);
 
@@ -125,9 +169,14 @@ public sealed partial class LocaleTests
         Dictionary<string, Dictionary<string, string>> translations
     )
     {
-        var parts = entry.Split(':', 2);
-        if (parts.Length != 2 || !translations.TryGetValue(parts[0], out var language))
+        string[] parts = entry.Split(':', 2);
+        if (
+            parts.Length != 2
+            || !translations.TryGetValue(parts[0], out Dictionary<string, string> language)
+        )
+        {
             return false;
+        }
 
         return baseKeys.Contains(parts[1])
             && SameAsEnglish(
@@ -138,7 +187,7 @@ public sealed partial class LocaleTests
 
     private static Dictionary<string, string> Read(string language) =>
         JsonSerializer.Deserialize<Dictionary<string, string>>(
-            File.ReadAllText(Path.Combine(LocalesDir, $"{language}.json"))
+            File.ReadAllText(Path.Combine(_localesDir, $"{language}.json"))
         );
 
     private static HashSet<string> CopiedFiles() =>
@@ -151,6 +200,9 @@ public sealed partial class LocaleTests
             )
             .Select(e => (string)e.Attribute("Update") ?? (string)e.Attribute("Include") ?? "")
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
+
+    [GeneratedRegex(@"\{\d+\}")]
+    private static partial Regex PlaceholderPattern();
 
     [GeneratedRegex("label:\\s*\"([^\"]+)\"")]
     private static partial Regex LabelPattern();
