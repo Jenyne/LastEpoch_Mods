@@ -1,3 +1,4 @@
+using HarmonyLib;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -5,22 +6,61 @@ namespace LastEpoch_Hud.Scripts.ModUI
 {
     internal static class DungeonRevealControls
     {
-        public static void Bind(GameObject content, GameObject viewport)
+        const string RevealName = "Toggle_DungeonControls_Reveal";
+        const string KeylessName = "Toggle_DungeonControls_Keyless";
+
+        public static void Bind(GameObject content, GameObject unused)
         {
-            if (viewport.IsNullOrDestroyed() || Prefab.Child(viewport, "DungeonReveal") != null)
+            var viewport = Prefab.ViewportContent(content, "Center", "Scenes_Dungeons_Content");
+            if (viewport.IsNullOrDestroyed())
+                viewport = Prefab.ViewportContent(content, "Center", "Scenes_Minimap_Content");
+            if (viewport.IsNullOrDestroyed())
+            {
+                Main.logger_instance?.Warning("Dungeon controls: no dungeon/minimap viewport in this HUD bundle");
                 return;
+            }
+            if (Prefab.Child(viewport, "DungeonControls") != null) return;
             var sample = viewport.GetComponentInChildren<Text>(true);
             if (sample.IsNullOrDestroyed()) return;
-            Font font = sample.font;
-            var section = Node(viewport, "DungeonReveal", 0, 0, 1, 1);
+            var style = viewport.GetComponentInChildren<Toggle>(true);
+            var section = Node(viewport, "DungeonControls", 0, 0, 1, 1);
             var rect = section.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 1); rect.anchorMax = new Vector2(1, 1);
+            rect.pivot = new Vector2(.5f, 1); rect.sizeDelta = new Vector2(0, 120);
             var layout = section.AddComponent<LayoutElement>();
-            layout.minHeight = 76; layout.preferredHeight = 76; layout.flexibleHeight = 0;
+            layout.minHeight = 120; layout.preferredHeight = 120; layout.flexibleHeight = 0;
+            Label(section, "Title", sample.font, "Dungeons", .03f, .78f, .97f, 1);
+            Checkbox(section, RevealName, "Reveal Dungeon Objectives", sample.font, style,
+                .51f, .76f, ModSettings.DungeonReveal.Enabled.Value);
+            bool keyless = !Save_Manager.instance.IsNullOrDestroyed()
+                && Save_Manager.instance.initialized
+                && Save_Manager.instance.data.Scenes.Dungeons.Enable_EnterWithoutKey;
+            Checkbox(section, KeylessName, "Enter Without Key", sample.font, style, .25f, .50f, keyless);
+            var line = Node(section, "Separator", .01f, .22f, .99f, .22f);
+            line.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 1);
+            var image = line.AddComponent<Image>();
+            image.color = new Color(.83f, .69f, .36f); image.raycastTarget = false;
+            Label(section, "Description", sample.font, "Revealed objectives remain visible for this floor.",
+                .03f, .01f, .97f, .21f);
+            // Keep one visible entry control when the original bundle includes it.
+            var old = Prefab.Child(viewport, "EnterWithoutKey");
+            if (!old.IsNullOrDestroyed()) old.SetActive(false);
+            MelonLoader.MelonCoroutines.Start(PositionWhenVisible(viewport, section));
+            Main.logger_instance?.Msg("Dungeon controls: created in " + viewport.transform.parent.parent.name);
+        }
+
+        static System.Collections.IEnumerator PositionWhenVisible(GameObject viewport, GameObject section)
+        {
+            while (!viewport.IsNullOrDestroyed() && !viewport.activeInHierarchy) yield return null;
+            if (viewport.IsNullOrDestroyed() || section.IsNullOrDestroyed()) yield break;
+            yield return null;
+            if (viewport.IsNullOrDestroyed() || section.IsNullOrDestroyed()) yield break;
+            Canvas.ForceUpdateCanvases();
             if (viewport.GetComponent<VerticalLayoutGroup>().IsNullOrDestroyed())
             {
-                // Older bundles may use explicit positions instead of a layout group.
-                var parentRect = viewport.GetComponent<RectTransform>();
-                float bottom = parentRect.rect.yMax;
+                var parent = viewport.GetComponent<RectTransform>();
+                var rect = section.GetComponent<RectTransform>();
+                float bottom = parent.rect.yMax;
                 var corners = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<Vector3>(4);
                 for (int i = 0; i < viewport.transform.childCount; i++)
                 {
@@ -31,33 +71,70 @@ namespace LastEpoch_Hud.Scripts.ModUI
                     childRect.GetWorldCorners(corners);
                     bottom = Mathf.Min(bottom, viewport.transform.InverseTransformPoint(corners[0]).y);
                 }
-                rect.anchorMin = new Vector2(0, 1); rect.anchorMax = new Vector2(1, 1);
-                rect.pivot = new Vector2(.5f, 1);
-                rect.anchoredPosition = new Vector2(0, bottom - parentRect.rect.yMax - 8);
-                rect.sizeDelta = new Vector2(0, 76);
-                parentRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,
-                    Mathf.Max(parentRect.rect.height, -rect.anchoredPosition.y + 76));
+                rect.anchoredPosition = new Vector2(0, bottom - parent.rect.yMax - 8);
+                parent.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical,
+                    Mathf.Max(parent.rect.height, -rect.anchoredPosition.y + 120));
             }
-            Label(section, "Title", font, "Dungeon Objective Reveal", .03f, .61f, .97f, 1f);
-            var toggleGo = Node(section, "Enabled", .03f, .06f, .97f, .59f);
-            var toggle = toggleGo.AddComponent<Toggle>();
-            var box = Node(toggleGo, "Box", 0, .1f, .075f, .9f).AddComponent<Image>();
-            box.color = new Color(.22f, .24f, .27f);
-            var check = Node(box.gameObject, "Check", .2f, .2f, .8f, .8f).AddComponent<Image>();
-            check.color = new Color(.9f, .73f, .4f); toggle.targetGraphic = box; toggle.graphic = check;
-            Label(toggleGo, "Label", font, "Reveal Dungeon Objectives", .1f, 0, 1, 1);
-            toggle.SetIsOnWithoutNotify(ModSettings.DungeonReveal.Enabled.Value);
-            Prefab.BindToggle(toggle, new System.Action<bool>(v => ModSettings.DungeonReveal.Enabled.Set(v)));
+            LayoutRebuilder.ForceRebuildLayoutImmediate(viewport.GetComponent<RectTransform>());
         }
 
-        static GameObject Node(GameObject parent, string name, float left, float bottom,
-            float right, float top)
+        static void Checkbox(GameObject section, string name, string label, Font font, Toggle style,
+            float bottom, float top, bool value)
         {
-            var go = new GameObject(name);
-            var r = go.AddComponent<RectTransform>();
-            r.SetParent(parent.transform, false);
-            r.anchorMin = new Vector2(left, bottom); r.anchorMax = new Vector2(right, top);
-            r.offsetMin = Vector2.zero; r.offsetMax = Vector2.zero;
+            var row = Node(section, name, .03f, bottom, .97f, top);
+            var toggle = row.AddComponent<Toggle>();
+            var box = Node(row, "Box", 0, .5f, 0, .5f).AddComponent<Image>();
+            var rect = box.GetComponent<RectTransform>();
+            rect.pivot = new Vector2(0, .5f); rect.sizeDelta = new Vector2(18, 18);
+            box.color = new Color(.58f, .45f, .20f);
+            var check = Node(box.gameObject, "Check", .2f, .2f, .8f, .8f).AddComponent<Image>();
+            check.color = new Color(.93f, .84f, .65f);
+            if (!style.IsNullOrDestroyed())
+            {
+                var sourceBox = style.targetGraphic.IsNullOrDestroyed() ? null : style.targetGraphic.GetComponent<Image>();
+                var sourceCheck = style.graphic.IsNullOrDestroyed() ? null : style.graphic.GetComponent<Image>();
+                if (!sourceBox.IsNullOrDestroyed())
+                { box.sprite = sourceBox.sprite; box.type = sourceBox.type; box.color = sourceBox.color; }
+                if (!sourceCheck.IsNullOrDestroyed())
+                { check.sprite = sourceCheck.sprite; check.type = sourceCheck.type; check.color = sourceCheck.color; }
+                toggle.colors = style.colors; toggle.transition = style.transition;
+            }
+            toggle.targetGraphic = box; toggle.graphic = check;
+            Label(row, "Label", font, label, .1f, 0, 1, 1);
+            toggle.SetIsOnWithoutNotify(value);
+        }
+
+        static void Save(Toggle toggle)
+        {
+            if (toggle.IsNullOrDestroyed()) return;
+            if (toggle.name == RevealName) ModSettings.DungeonReveal.Enabled.Set(toggle.isOn);
+            else if (toggle.name == KeylessName && !Save_Manager.instance.IsNullOrDestroyed()
+                && Save_Manager.instance.initialized)
+            {
+                Save_Manager.instance.data.Scenes.Dungeons.Enable_EnterWithoutKey = toggle.isOn;
+                var old = Hud_Manager.Content.Scenes.Dungeons.enter_without_key_toggle;
+                if (!old.IsNullOrDestroyed()) old.SetIsOnWithoutNotify(toggle.isOn);
+                Save_Manager.instance.Save();
+            }
+        }
+
+        [HarmonyPatch(typeof(Toggle), "OnPointerClick")]
+        static class Click
+        {
+            [HarmonyPostfix] static void Postfix(Toggle __instance) => Save(__instance);
+        }
+        [HarmonyPatch(typeof(Toggle), "OnSubmit")]
+        static class Submit
+        {
+            [HarmonyPostfix] static void Postfix(Toggle __instance) => Save(__instance);
+        }
+
+        static GameObject Node(GameObject parent, string name, float left, float bottom, float right, float top)
+        {
+            var go = new GameObject(name); go.layer = parent.layer;
+            var rect = go.AddComponent<RectTransform>(); rect.SetParent(parent.transform, false);
+            rect.anchorMin = new Vector2(left, bottom); rect.anchorMax = new Vector2(right, top);
+            rect.offsetMin = Vector2.zero; rect.offsetMax = Vector2.zero;
             return go;
         }
 
@@ -65,12 +142,10 @@ namespace LastEpoch_Hud.Scripts.ModUI
             float left, float bottom, float right, float top)
         {
             var text = Node(parent, name, left, bottom, right, top).AddComponent<Text>();
-            text.font = font; text.fontSize = 14; text.color = new Color(.93f, .84f, .65f);
+            text.font = font; text.fontSize = 12; text.color = new Color(.93f, .84f, .65f);
             text.alignment = TextAnchor.MiddleLeft; text.raycastTarget = false;
             text.horizontalOverflow = HorizontalWrapMode.Wrap;
-            Prefab.ApplyLabel(text, label);
-            return text;
+            Prefab.ApplyLabel(text, label); return text;
         }
-
     }
 }
