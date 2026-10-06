@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Text.RegularExpressions;
 using Il2CppTMPro;
+using UnityEngine;
 using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI;
@@ -107,6 +108,32 @@ internal static class LocaleRegistry
             }
         }
         entries.Add((text, englishLabel));
+    }
+
+    // Legacy prefab labels must join the same canonical-key registry as runtime
+    // controls before their first translation. Never use a translated caption as
+    // the next locale's lookup key, and leave dynamic values/item names alone.
+    public static void RefreshTree(GameObject root)
+    {
+        if (root.IsNullOrDestroyed())
+            return;
+        SweepDead();
+        foreach (var text in root.GetComponentsInChildren<Text>(true))
+        {
+            int index = entries.FindIndex(e => e.Text == text);
+            if (index >= 0)
+                text.text = Translate(entries[index].EnglishLabel);
+            else if (Locales.TryGetTranslation(text.text, out _))
+                Apply(text, Locales.CanonicalKey(text.text));
+        }
+        foreach (var text in root.GetComponentsInChildren<TMP_Text>(true))
+        {
+            int index = tmpEntries.FindIndex(e => e.Text == text);
+            if (index >= 0)
+                text.text = Translate(tmpEntries[index].EnglishLabel);
+            else if (Locales.TryGetTranslation(text.text, out _))
+                Apply(text, Locales.CanonicalKey(text.text));
+        }
     }
 
     public static void TickIfLocaleChanged()

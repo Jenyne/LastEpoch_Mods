@@ -367,5 +367,6 @@
   "CustomItem.EssentiaSanguis.Lore": "The darkest clouds clashed and coupled,\r\ngiving birth to four lightning children of hate.",
   "CustomItem.SandsOfSilk.Subtype": "Shrouded Vest",
   "CustomItem.SandsOfSilk.Name": "Sands of Silk",
-  "CustomItem.SandsOfSilk.Lore": "The desert is ever flowing."
+  "CustomItem.SandsOfSilk.Lore": "The desert is ever flowing.",
+  "End of Time waypoint required. Bind a key or modifier + key.": "End of Time waypoint required. Bind a key or modifier + key."
 }
