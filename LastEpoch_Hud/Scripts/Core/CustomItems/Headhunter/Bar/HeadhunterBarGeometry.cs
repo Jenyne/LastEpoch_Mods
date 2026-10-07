@@ -1,69 +1,33 @@
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Bar;
 
-/// <summary>Where each bar icon sits on screen.</summary>
+/// <summary>Converts screen pixels to bar grid units and back.</summary>
 public static class HeadhunterBarGeometry
 {
     public static int IndexAt(
         HeadhunterBarPlacement placement,
         float canvasScale,
-        int count,
+        HeadhunterBarGrid grid,
         float x,
         float y
     )
     {
-        if (count <= 0 || placement.Scale <= 0f || canvasScale <= 0f)
+        if (placement.Scale <= 0f || canvasScale <= 0f)
         {
             return -1;
         }
 
-        float icon = IconPixels(placement, canvasScale);
-        if (y < placement.Y || y >= placement.Y + icon)
-        {
-            return -1;
-        }
-
-        float step = icon + GapPixels(placement, canvasScale);
-        float offset = x - Left(placement, canvasScale, count);
-        if (offset < 0f)
-        {
-            return -1;
-        }
-
-        int index = (int)(offset / step);
-        if (index >= count || offset - (index * step) >= icon)
-        {
-            return -1;
-        }
-
-        return index;
+        float scale = placement.Scale * canvasScale;
+        return grid.IndexAt((x - placement.X) / scale, (y - placement.Y) / scale);
     }
 
-    public static (float X, float Y) TopCenter(
+    public static (float X, float Y) TooltipAnchor(
         HeadhunterBarPlacement placement,
         float canvasScale,
-        int count,
+        HeadhunterBarGrid grid,
         int index
     )
     {
-        float icon = IconPixels(placement, canvasScale);
-        float step = icon + GapPixels(placement, canvasScale);
-        float x = Left(placement, canvasScale, count) + (index * step) + (icon / 2f);
-        return (x, placement.Y + icon);
-    }
-
-    private static float IconPixels(HeadhunterBarPlacement placement, float canvasScale)
-    {
-        return HeadhunterBarLayout.EntrySize * placement.Scale * canvasScale;
-    }
-
-    private static float GapPixels(HeadhunterBarPlacement placement, float canvasScale)
-    {
-        return HeadhunterBarLayout.Spacing * placement.Scale * canvasScale;
-    }
-
-    private static float Left(HeadhunterBarPlacement placement, float canvasScale, int count)
-    {
-        float width = HeadhunterBarLayout.PanelWidth(count) * placement.Scale * canvasScale;
-        return placement.X - (width / 2f);
+        float scale = placement.Scale * canvasScale;
+        return (placement.X + (grid.CellX(index) * scale), placement.Y + (grid.Height * scale));
     }
 }

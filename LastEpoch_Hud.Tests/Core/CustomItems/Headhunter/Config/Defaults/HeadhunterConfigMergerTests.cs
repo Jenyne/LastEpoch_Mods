@@ -585,7 +585,7 @@ public sealed class HeadhunterConfigMergerTests
             )
         );
         Assert.Equal(1, result.Added);
-        Assert.Equal(9, (int)merged["defaultsVersion"]);
+        Assert.Equal(HeadhunterConfigDefaults.DefaultsVersion, (int)merged["defaultsVersion"]);
     }
 
     [Fact]
@@ -603,6 +603,46 @@ public sealed class HeadhunterConfigMergerTests
         var merged = JObject.Parse(result.Text);
         Assert.Equal(1f, (float)merged["modelSize"]["perBuff"]);
         Assert.Equal(5f, (float)merged["modelSize"]["cap"]);
+    }
+
+    [Fact]
+    public void Merge_V9File_AddsBar()
+    {
+        var file = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+        file.Remove("bar");
+        file["defaultsVersion"] = 9;
+
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            file.ToString(),
+            HeadhunterConfigDefaults.MergeDefaults
+        );
+
+        var merged = JObject.Parse(result.Text);
+        Assert.True(
+            JToken.DeepEquals(
+                HeadhunterConfigWriter.BuildBar(HeadhunterConfigDefaults.Bar),
+                merged["bar"]
+            )
+        );
+        Assert.Equal(1, result.Added);
+        Assert.Equal(HeadhunterConfigDefaults.DefaultsVersion, (int)merged["defaultsVersion"]);
+    }
+
+    [Fact]
+    public void Merge_PlayerBar_Kept()
+    {
+        var file = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+        file["bar"] = new JObject { ["offsetY"] = 3, ["perRow"] = 4 };
+        file["defaultsVersion"] = 9;
+
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            file.ToString(),
+            HeadhunterConfigDefaults.MergeDefaults
+        );
+
+        var merged = JObject.Parse(result.Text);
+        Assert.Equal(3f, (float)merged["bar"]["offsetY"]);
+        Assert.Equal(4, (int)merged["bar"]["perRow"]);
     }
 
     [Fact]

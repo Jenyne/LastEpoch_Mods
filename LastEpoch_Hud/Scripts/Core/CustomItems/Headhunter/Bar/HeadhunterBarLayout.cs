@@ -1,4 +1,5 @@
 using System;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
 
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Bar;
 
@@ -13,6 +14,7 @@ public static class HeadhunterBarLayout
 
     public static bool TryPlace(
         SkillBarBounds bounds,
+        HeadhunterBarSettings settings,
         float entryHeight,
         float canvasScale,
         out HeadhunterBarPlacement placement
@@ -23,11 +25,17 @@ public static class HeadhunterBarLayout
         {
             return false;
         }
+        if (settings.IconSize <= 0f)
+        {
+            return false;
+        }
 
+        float baseScale = (bounds.Height * SizeRatio) / entryHeight / canvasScale;
+        float rowPixels = (EntrySize + Spacing) * baseScale * canvasScale;
         placement = new HeadhunterBarPlacement(
-            bounds.CenterX,
-            bounds.MaxY + (bounds.Height * GapRatio),
-            (bounds.Height * SizeRatio) / entryHeight / canvasScale
+            bounds.CenterX + (settings.OffsetX * rowPixels),
+            bounds.MaxY + (bounds.Height * GapRatio) + (settings.OffsetY * rowPixels),
+            baseScale * settings.IconSize
         );
         return true;
     }

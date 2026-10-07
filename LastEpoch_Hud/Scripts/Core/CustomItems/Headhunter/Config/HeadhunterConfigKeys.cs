@@ -26,4 +26,9 @@ internal static class HeadhunterConfigKeys
     public const string ModelSize = "modelSize";
     public const string PerBuff = "perBuff";
     public const string Cap = "cap";
+    public const string Bar = "bar";
+    public const string OffsetX = "offsetX";
+    public const string OffsetY = "offsetY";
+    public const string IconSize = "iconSize";
+    public const string PerRow = "perRow";
 }

@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Bar;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -16,7 +17,7 @@ internal static class HeadhunterBuffBarView
     private static UnityEngine.Camera _matchedCamera;
     private static HeadhunterBarPlacement _placement;
     private static bool _visible;
-    private static int _shownCount;
+    private static HeadhunterBarGrid _grid;
     private static float _canvasScale = 1f;
     private static HeadhunterBarTooltip _tooltip;
 
@@ -31,12 +32,12 @@ internal static class HeadhunterBuffBarView
             return -1;
         }
 
-        return HeadhunterBarGeometry.IndexAt(_placement, _canvasScale, _shownCount, x, y);
+        return HeadhunterBarGeometry.IndexAt(_placement, _canvasScale, _grid, x, y);
     }
 
     public static int RowAt(int index)
     {
-        if (index < 0 || index >= _shownCount)
+        if (index < 0 || index >= _grid.Count)
         {
             return -1;
         }
@@ -46,7 +47,7 @@ internal static class HeadhunterBuffBarView
 
     public static int StacksAt(int index)
     {
-        if (index < 0 || index >= _shownCount)
+        if (index < 0 || index >= _grid.Count)
         {
             return 0;
         }
@@ -56,15 +57,15 @@ internal static class HeadhunterBuffBarView
 
     public static void ShowTooltip(int index, string text)
     {
-        if (index < 0 || index >= _shownCount || !EnsureTooltip())
+        if (index < 0 || index >= _grid.Count || !EnsureTooltip())
         {
             return;
         }
 
-        (float sx, float sy) = HeadhunterBarGeometry.TopCenter(
+        (float sx, float sy) = HeadhunterBarGeometry.TooltipAnchor(
             _placement,
             _canvasScale,
-            _shownCount,
+            _grid,
             index
         );
         (float x, float y) = HeadhunterBarLayout.ToLocal(
@@ -87,7 +88,10 @@ internal static class HeadhunterBuffBarView
         _tooltip.Hide();
     }
 
-    public static void Show(IReadOnlyList<HeadhunterBarEntry> entries)
+    public static void Show(
+        IReadOnlyList<HeadhunterBarEntry> entries,
+        HeadhunterBarSettings settings
+    )
     {
         if (entries.Count == 0 || !EnsureCreated())
         {
@@ -106,12 +110,13 @@ internal static class HeadhunterBuffBarView
         }
 
         _root.SetActive(true);
-        if (entries.Count != _shownCount)
+        var grid = new HeadhunterBarGrid(entries.Count, settings.PerRow);
+        if (grid != _grid)
         {
-            ApplyLayout(entries.Count);
+            ApplyLayout(grid);
         }
 
-        Place();
+        Place(settings);
         _visible = true;
     }
 
@@ -123,7 +128,7 @@ internal static class HeadhunterBuffBarView
         }
 
         _visible = false;
-        _shownCount = 0;
+        _grid = default;
         HideTooltip();
         if (!_root.IsNullOrDestroyed())
         {
@@ -144,7 +149,7 @@ internal static class HeadhunterBuffBarView
         }
 
         _slots.Clear();
-        _shownCount = 0;
+        _grid = default;
         _tooltip = null;
         _placement = default;
         _matchedSource = null;
@@ -175,19 +180,18 @@ internal static class HeadhunterBuffBarView
         _panel.anchorMax = new Vector2(0.5f, 0.5f);
         _panel.pivot = new Vector2(0.5f, 0f);
         _panel.sizeDelta = new Vector2(20f, HeadhunterBarLayout.EntrySize + 4f);
-        GridLayoutGroup grid = panelObject.GetComponent<GridLayoutGroup>();
-        grid.constraint = GridLayoutGroup.Constraint.FixedRowCount;
-        grid.constraintCount = 1;
-        grid.childAlignment = TextAnchor.LowerCenter;
-        grid.cellSize = new Vector2(HeadhunterBarLayout.EntrySize, HeadhunterBarLayout.EntrySize);
-        grid.spacing = new Vector2(HeadhunterBarLayout.Spacing, 0f);
+        panelObject.GetComponent<GridLayoutGroup>().enabled = false;
     }
 
-    private static void ApplyLayout(int count)
+    private static void ApplyLayout(HeadhunterBarGrid grid)
     {
-        _shownCount = count;
-        _panel.sizeDelta = new Vector2(HeadhunterBarLayout.PanelWidth(count), _panel.sizeDelta.y);
-        LayoutRebuilder.ForceRebuildLayoutImmediate(_panel);
+        _grid = grid;
+        _panel.sizeDelta = new Vector2(grid.Width, grid.Height);
+        for (int i = 0; i < grid.Count; i++)
+        {
+            _slots[i].PlaceAt(grid.CellX(i), grid.CellBottom(i));
+        }
+
         LayoutVersion++;
     }
 
@@ -226,13 +230,14 @@ internal static class HeadhunterBuffBarView
         return _slots[index];
     }
 
-    private static void Place()
+    private static void Place(HeadhunterBarSettings settings)
     {
         SkillBarBounds bounds = HeadhunterSkillBarLocator.Read(out Canvas source);
         MatchCanvas(source);
         if (
             !HeadhunterBarLayout.TryPlace(
                 bounds,
+                settings,
                 HeadhunterBarLayout.EntrySize,
                 _canvas.scaleFactor,
                 out HeadhunterBarPlacement next

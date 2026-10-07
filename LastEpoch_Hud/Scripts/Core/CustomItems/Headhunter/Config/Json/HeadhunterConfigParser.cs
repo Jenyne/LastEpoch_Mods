@@ -28,6 +28,7 @@ public static class HeadhunterConfigParser
             Stats = ReadStats(root, knownStats, problems),
             AffixMap = HeadhunterAffixMapParser.Read(root, problems),
             ModelSize = HeadhunterModelSizeParser.Read(root, problems),
+            Bar = HeadhunterBarSettingsParser.Read(root, problems),
         };
         return Result(config, problems, true);
     }

@@ -83,6 +83,28 @@ public sealed class HeadhunterConfigDefaultsTests
     }
 
     [Fact]
+    public void VersionedFields_Bar_AddedAtVersion10()
+    {
+        Assert.Contains(
+            HeadhunterConfigDefaults.VersionedFields,
+            field =>
+                field.Parent == ""
+                && field.Key == "bar"
+                && JToken.DeepEquals(
+                    field.Value,
+                    HeadhunterConfigWriter.BuildBar(HeadhunterConfigDefaults.Bar)
+                )
+                && field.Since == 10
+        );
+    }
+
+    [Fact]
+    public void Bar_Defaults()
+    {
+        Assert.Equal(new HeadhunterBarSettings(0f, 1f, 1f, 10), HeadhunterConfigDefaults.Bar);
+    }
+
+    [Fact]
     public void Config_Triggers_AreAllOn()
     {
         Assert.Equal(

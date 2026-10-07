@@ -62,7 +62,7 @@ internal static class HeadhunterBuffBar
             HeadhunterConfigLoader.Stacks,
             config.DurationSeconds
         );
-        HeadhunterBuffBarView.Show(entries);
+        HeadhunterBuffBarView.Show(entries, HeadhunterConfigLoader.Current.Bar);
         HeadhunterModelScaler.Apply(entries.Count);
         HeadhunterAreaBuff.Sync(entries.Count);
         HeadhunterAuraProbe.Tick(now, entries.Count);

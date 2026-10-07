@@ -9,7 +9,7 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Defaults;
 public static class HeadhunterConfigDefaults
 {
     public const int CurrentVersion = 1;
-    public const int DefaultsVersion = 9;
+    public const int DefaultsVersion = 10;
     public const int UnstampedDefaultsVersion = 1;
     public const float DurationSeconds = 60f;
     public const int MaxStacks = 10;
@@ -60,6 +60,8 @@ public static class HeadhunterConfigDefaults
 
     public static readonly HeadhunterSizeCurve ModelSize = new(2f, 20f);
 
+    public static readonly HeadhunterBarSettings Bar = new(0f, 1f, 1f, 10);
+
     public static readonly IReadOnlyList<HeadhunterVersionedField> VersionedFields =
         new List<HeadhunterVersionedField>
         {
@@ -71,6 +73,7 @@ public static class HeadhunterConfigDefaults
                 HeadhunterConfigWriter.BuildModelSize(ModelSize),
                 9
             ),
+            new("", HeadhunterConfigKeys.Bar, HeadhunterConfigWriter.BuildBar(Bar), 10),
         };
 
     public static readonly HeadhunterMergeDefaults MergeDefaults = new()
@@ -91,5 +94,6 @@ public static class HeadhunterConfigDefaults
         Stats = Stats,
         AffixMap = HeadhunterAffixDefaults.AffixMap,
         ModelSize = ModelSize,
+        Bar = Bar,
     };
 }

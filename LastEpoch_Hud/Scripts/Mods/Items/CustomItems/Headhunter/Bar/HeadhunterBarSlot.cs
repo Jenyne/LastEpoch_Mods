@@ -12,6 +12,7 @@ internal sealed class HeadhunterBarSlot
     private static readonly Color _outlineColor = new(0f, 0f, 0f, 1f);
     private static readonly Vector2 _frameDistance = new(3f, 3f);
     private static readonly SecondsTextCache _numberTexts = new();
+    private static readonly Vector2 _bottomCenter = new(0.5f, 0f);
     private static readonly Vector2 _badgeSize = new(24f, 20f);
 
     private readonly GameObject _root;
@@ -30,6 +31,7 @@ internal sealed class HeadhunterBarSlot
     public HeadhunterBarSlot(GameObject entry)
     {
         _root = entry;
+        ConfigureRect(entry.GetComponent<RectTransform>());
         GameObject iconPanel = Functions.GetChild(entry, "Panel_Icon");
         _icon = Functions.GetChild(iconPanel, "Icon").GetComponent<Image>();
         _timer = Functions.GetChild(iconPanel, "Timer").GetComponent<Image>();
@@ -71,6 +73,20 @@ internal sealed class HeadhunterBarSlot
     public void Hide()
     {
         _root.SetActive(false);
+    }
+
+    /// <summary>Moves the slot to a cell (canvas units from the panel bottom-center).</summary>
+    public void PlaceAt(float centerX, float bottom)
+    {
+        _root.GetComponent<RectTransform>().anchoredPosition = new Vector2(centerX, bottom);
+    }
+
+    private static void ConfigureRect(RectTransform rect)
+    {
+        rect.anchorMin = _bottomCenter;
+        rect.anchorMax = _bottomCenter;
+        rect.pivot = _bottomCenter;
+        rect.sizeDelta = new Vector2(HeadhunterBarLayout.EntrySize, HeadhunterBarLayout.EntrySize);
     }
 
     private void ApplyFrame(GameObject background)

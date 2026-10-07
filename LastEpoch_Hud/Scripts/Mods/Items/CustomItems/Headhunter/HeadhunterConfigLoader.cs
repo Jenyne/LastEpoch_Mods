@@ -7,6 +7,7 @@ using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Defaults;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Json;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Resolve;
+using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Bar;
 using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Buffs;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
@@ -27,6 +28,8 @@ internal static class HeadhunterConfigLoader
     private static readonly ConfigChangeDetector _changes = new(1.0);
     private static readonly HeadhunterSystemRandom _random = new();
 
+    private static string _appliedText;
+
     public static HeadhunterConfig Current { get; private set; } = HeadhunterConfigDefaults.Config;
     public static HeadhunterResolvedConfig Resolved { get; private set; }
     public static HeadhunterStackState Stacks { get; private set; }
@@ -36,6 +39,7 @@ internal static class HeadhunterConfigLoader
     {
         ExportDefaultsIfMissing();
         string text = MergeNewDefaults(_store.Read());
+        _appliedText = text;
         HeadhunterConfigParseResult result = HeadhunterConfigParser.Parse(text, _knownStats);
         LogProblems(result.Problems);
         Current = result.Config;
@@ -67,10 +71,19 @@ internal static class HeadhunterConfigLoader
 
     private static void Reload()
     {
-        HeadhunterConfigParseResult result = ParseFile();
+        string text = _store.Read();
+        HeadhunterConfigParseResult result = Parse(text);
         LogProblems(result.Problems);
         if (!result.IsReadable)
         {
+            return;
+        }
+
+        HeadhunterReloadKind kind = HeadhunterReloadClassifier.Classify(_appliedText, text);
+        _appliedText = text;
+        if (kind == HeadhunterReloadKind.LayoutOnly)
+        {
+            ApplyLayoutOnly(result.Config);
             return;
         }
 
@@ -86,9 +99,17 @@ internal static class HeadhunterConfigLoader
         );
     }
 
-    private static HeadhunterConfigParseResult ParseFile()
+    /// <summary>Swaps in a config whose only change is bar placement; buffs stay.</summary>
+    private static void ApplyLayoutOnly(HeadhunterConfig config)
     {
-        return HeadhunterConfigParser.Parse(_store.Read(), _knownStats);
+        Current = config;
+        HeadhunterBuffBar.MarkDirty();
+        Main.logger_instance?.Msg("Headhunter config reloaded: bar layout only");
+    }
+
+    private static HeadhunterConfigParseResult Parse(string text)
+    {
+        return HeadhunterConfigParser.Parse(text, _knownStats);
     }
 
     private static void ExportDefaultsIfMissing()

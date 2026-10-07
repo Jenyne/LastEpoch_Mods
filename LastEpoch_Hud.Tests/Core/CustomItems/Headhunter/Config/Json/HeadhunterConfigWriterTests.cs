@@ -219,4 +219,38 @@ public sealed class HeadhunterConfigWriterTests
         Assert.Equal(2f, (float)root["modelSize"]["perBuff"]);
         Assert.Equal(20f, (float)root["modelSize"]["cap"]);
     }
+
+    [Fact]
+    public void Write_RoundTrips_Bar()
+    {
+        HeadhunterConfig config = new()
+        {
+            Version = 1,
+            DurationSeconds = 10f,
+            Triggers = HeadhunterTestData.AllTriggers,
+            Stats = new List<HeadhunterStatEntry>(),
+            Bar = new HeadhunterBarSettings(-0.5f, 2f, 0.7f, 5),
+        };
+
+        HeadhunterConfigParseResult result = HeadhunterConfigParser.Parse(
+            HeadhunterConfigWriter.Write(config),
+            new HashSet<string>(StringComparer.Ordinal)
+        );
+
+        Assert.Empty(result.Problems);
+        Assert.Equal(config.Bar, result.Config.Bar);
+    }
+
+    [Fact]
+    public void Write_Defaults_HasBar()
+    {
+        var root = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+
+        Assert.True(
+            JToken.DeepEquals(
+                HeadhunterConfigWriter.BuildBar(HeadhunterConfigDefaults.Bar),
+                root["bar"]
+            )
+        );
+    }
 }

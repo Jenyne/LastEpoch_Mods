@@ -20,7 +20,7 @@ public sealed class HeadhunterBarGeometryTests
         float x = CellLeft(3, index) + (Icon / 2f);
         float y = _placement.Y + (Icon / 2f);
 
-        Assert.Equal(index, HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, 3, x, y));
+        Assert.Equal(index, HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, Grid(3), x, y));
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public sealed class HeadhunterBarGeometryTests
         float x = CellLeft(3, 0) + Icon + (Gap / 2f);
         float y = _placement.Y + (Icon / 2f);
 
-        Assert.Equal(-1, HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, 3, x, y));
+        Assert.Equal(-1, HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, Grid(3), x, y));
     }
 
     [Theory]
@@ -42,7 +42,7 @@ public sealed class HeadhunterBarGeometryTests
 
         Assert.Equal(
             -1,
-            HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, 3, x, edge + offset)
+            HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, Grid(3), x, edge + offset)
         );
     }
 
@@ -56,7 +56,7 @@ public sealed class HeadhunterBarGeometryTests
 
         Assert.Equal(
             -1,
-            HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, 3, edge + (side * 0.5f), y)
+            HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, Grid(3), edge + (side * 0.5f), y)
         );
     }
 
@@ -67,7 +67,10 @@ public sealed class HeadhunterBarGeometryTests
     {
         float y = _placement.Y + (Icon / 2f);
 
-        Assert.Equal(-1, HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, count, 500, y));
+        Assert.Equal(
+            -1,
+            HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, Grid(count), 500, y)
+        );
     }
 
     [Theory]
@@ -80,7 +83,7 @@ public sealed class HeadhunterBarGeometryTests
         HeadhunterBarPlacement placement = _placement with { Scale = scale };
         float y = placement.Y + (Icon / 2f);
 
-        Assert.Equal(-1, HeadhunterBarGeometry.IndexAt(placement, canvasScale, 1, 500, y));
+        Assert.Equal(-1, HeadhunterBarGeometry.IndexAt(placement, canvasScale, Grid(1), 500, y));
     }
 
     [Fact]
@@ -91,13 +94,18 @@ public sealed class HeadhunterBarGeometryTests
         float x = left + (0.75f * Icon);
         float y = small.Y + 1f;
 
-        Assert.Equal(-1, HeadhunterBarGeometry.IndexAt(small, CanvasScale, 1, x, y));
+        Assert.Equal(-1, HeadhunterBarGeometry.IndexAt(small, CanvasScale, Grid(1), x, y));
     }
 
     [Fact]
-    public void TopCenter_SingleIcon_IsBarTopCenter()
+    public void TooltipAnchor_SingleIcon_IsBarTopCenter()
     {
-        (float x, float y) = HeadhunterBarGeometry.TopCenter(_placement, CanvasScale, 1, 0);
+        (float x, float y) = HeadhunterBarGeometry.TooltipAnchor(
+            _placement,
+            CanvasScale,
+            Grid(1),
+            0
+        );
 
         Assert.Equal(_placement.X, x, 0.001f);
         Assert.Equal(_placement.Y + Icon, y, 0.001f);
@@ -107,11 +115,19 @@ public sealed class HeadhunterBarGeometryTests
     [InlineData(0)]
     [InlineData(1)]
     [InlineData(2)]
-    public void TopCenter_MatchesIndexAt(int index)
+    public void TooltipAnchor_MatchesIndexAt(int index)
     {
-        (float x, float y) = HeadhunterBarGeometry.TopCenter(_placement, CanvasScale, 3, index);
+        (float x, float y) = HeadhunterBarGeometry.TooltipAnchor(
+            _placement,
+            CanvasScale,
+            Grid(3),
+            index
+        );
 
-        Assert.Equal(index, HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, 3, x, y - 1f));
+        Assert.Equal(
+            index,
+            HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, Grid(3), x, y - 1f)
+        );
     }
 
     [Fact]
@@ -119,7 +135,13 @@ public sealed class HeadhunterBarGeometryTests
     {
         Assert.Equal(
             0,
-            HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, 3, CellLeft(3, 0), _placement.Y)
+            HeadhunterBarGeometry.IndexAt(
+                _placement,
+                CanvasScale,
+                Grid(3),
+                CellLeft(3, 0),
+                _placement.Y
+            )
         );
     }
 
@@ -130,7 +152,13 @@ public sealed class HeadhunterBarGeometryTests
 
         Assert.Equal(
             -1,
-            HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, 3, CellLeft(3, 0) + Icon, y)
+            HeadhunterBarGeometry.IndexAt(
+                _placement,
+                CanvasScale,
+                Grid(3),
+                CellLeft(3, 0) + Icon,
+                y
+            )
         );
     }
 
@@ -141,7 +169,7 @@ public sealed class HeadhunterBarGeometryTests
 
         Assert.Equal(
             -1,
-            HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, 3, x, _placement.Y + Icon)
+            HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, Grid(3), x, _placement.Y + Icon)
         );
     }
 
@@ -151,7 +179,7 @@ public sealed class HeadhunterBarGeometryTests
         float x = CellLeft(3, 3) + (Icon / 2f);
         float y = _placement.Y + (Icon / 2f);
 
-        Assert.Equal(-1, HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, 3, x, y));
+        Assert.Equal(-1, HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, Grid(3), x, y));
     }
 
     [Fact]
@@ -161,18 +189,60 @@ public sealed class HeadhunterBarGeometryTests
         float x = ScaledLeft(2) + ((Icon + Gap) * 1.5f) + (Icon * 1.5f / 2f);
         float y = placement.Y + (Icon * 1.5f / 2f);
 
-        Assert.Equal(1, HeadhunterBarGeometry.IndexAt(placement, 1.5f, 2, x, y));
+        Assert.Equal(1, HeadhunterBarGeometry.IndexAt(placement, 1.5f, Grid(2), x, y));
     }
 
     [Fact]
-    public void TopCenter_ScaledRow_UsesScaledIconSize()
+    public void TooltipAnchor_ScaledRow_UsesScaledIconSize()
     {
         HeadhunterBarPlacement placement = new(500, 100, 1f);
 
-        (float x, float y) = HeadhunterBarGeometry.TopCenter(placement, 1.5f, 2, 1);
+        (float x, float y) = HeadhunterBarGeometry.TooltipAnchor(placement, 1.5f, Grid(2), 1);
 
         Assert.Equal(ScaledLeft(2) + ((Icon + Gap) * 1.5f) + (Icon * 1.5f / 2f), x, 0.001f);
         Assert.Equal(100 + (Icon * 1.5f), y, 0.001f);
+    }
+
+    [Fact]
+    public void IndexAt_TwoRowsScaled_HitsTopRowIcon()
+    {
+        HeadhunterBarPlacement placement = new(500, 100, 1f);
+        HeadhunterBarGrid grid = Grid(16);
+        const float scale = 1.5f;
+        float x = placement.X + (grid.CellX(12) * scale);
+        float y = placement.Y + ((grid.CellBottom(12) + (Icon / 2f)) * scale);
+
+        Assert.Equal(12, HeadhunterBarGeometry.IndexAt(placement, scale, grid, x, y));
+    }
+
+    [Fact]
+    public void IndexAt_TwoRows_GapBetweenRows_MinusOne()
+    {
+        HeadhunterBarGrid grid = Grid(16);
+        float scale = _placement.Scale * CanvasScale;
+        float x = _placement.X + (grid.CellX(0) * scale);
+        float iconY = _placement.Y + (Icon / 2f * scale);
+        float gapY = _placement.Y + ((Icon + (Gap / 2f)) * scale);
+
+        Assert.Equal(0, HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, grid, x, iconY));
+        Assert.Equal(-1, HeadhunterBarGeometry.IndexAt(_placement, CanvasScale, grid, x, gapY));
+    }
+
+    [Fact]
+    public void TooltipAnchor_TwoRows_IsIconXAndBarTop()
+    {
+        HeadhunterBarGrid grid = Grid(16);
+        float scale = _placement.Scale * CanvasScale;
+
+        (float x, float y) = HeadhunterBarGeometry.TooltipAnchor(_placement, CanvasScale, grid, 3);
+
+        Assert.Equal(_placement.X + (grid.CellX(3) * scale), x, 0.001f);
+        Assert.Equal(_placement.Y + (grid.Height * scale), y, 0.001f);
+    }
+
+    private static HeadhunterBarGrid Grid(int count)
+    {
+        return new HeadhunterBarGrid(count, 10);
     }
 
     private static float ScaledLeft(int count)

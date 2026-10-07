@@ -20,6 +20,7 @@ public static class HeadhunterConfigWriter
             [HeadhunterConfigKeys.Stats] = BuildStats(config.Stats),
             [HeadhunterConfigKeys.AffixMap] = BuildAffixMap(config.AffixMap),
             [HeadhunterConfigKeys.ModelSize] = BuildModelSize(config.ModelSize),
+            [HeadhunterConfigKeys.Bar] = BuildBar(config.Bar),
         };
         return root.ToString(Formatting.Indented);
     }
@@ -56,6 +57,17 @@ public static class HeadhunterConfigWriter
         {
             [HeadhunterConfigKeys.PerBuff] = curve.PerBuffPercent,
             [HeadhunterConfigKeys.Cap] = curve.CapPercent,
+        };
+    }
+
+    internal static JObject BuildBar(HeadhunterBarSettings bar)
+    {
+        return new JObject
+        {
+            [HeadhunterConfigKeys.OffsetX] = bar.OffsetX,
+            [HeadhunterConfigKeys.OffsetY] = bar.OffsetY,
+            [HeadhunterConfigKeys.IconSize] = bar.IconSize,
+            [HeadhunterConfigKeys.PerRow] = bar.PerRow,
         };
     }
 
