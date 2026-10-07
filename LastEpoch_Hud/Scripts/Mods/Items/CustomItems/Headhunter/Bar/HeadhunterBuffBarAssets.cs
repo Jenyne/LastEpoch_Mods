@@ -1,6 +1,6 @@
 using System;
 using Il2CppInterop.Runtime;
-using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Bar;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Bar;

@@ -1,6 +1,6 @@
-using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Bar;
 
-namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter;
+namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter.Bar;
 
 public sealed class HeadhunterAssetLoadGateTests
 {

@@ -1,4 +1,4 @@
-namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
+namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Bar;
 
 /// <summary>Says when the buff bar prefabs must be loaded. A bundle that lacked them is not scanned again until the bundle id changes.</summary>
 public sealed class HeadhunterAssetLoadGate
