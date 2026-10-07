@@ -6,7 +6,7 @@ using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Kills;
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Buffs;
 
 /// <summary>Rare or magic kill: stack its mod stats as buffs. Boss or miniboss kill: one random not-live buff. Always refreshes all live ones.</summary>
-public sealed class RareModsMechanic : IHeadhunterMechanic
+public sealed class RareModsMechanic
 {
     private readonly HeadhunterResolvedConfig _config;
     private readonly HeadhunterStackState _stacks;
@@ -25,6 +25,7 @@ public sealed class RareModsMechanic : IHeadhunterMechanic
         _random = random;
     }
 
+    /// <summary>Buff changes for one kill. The list is reused: valid until the next call.</summary>
     public IReadOnlyList<BuffAction> OnKill(KillInfo kill, IReadOnlySet<int> liveRows)
     {
         _actions.Clear();
@@ -40,6 +41,7 @@ public sealed class RareModsMechanic : IHeadhunterMechanic
         return _actions;
     }
 
+    /// <summary>Drops all per-run state (stacks and anything kept between kills).</summary>
     public void Reset()
     {
         _stacks.Reset();

@@ -27,7 +27,7 @@ internal static class HeadhunterConfigLoader
     public static HeadhunterConfig Current { get; private set; } = HeadhunterConfigDefaults.Config;
     public static HeadhunterResolvedConfig Resolved { get; private set; }
     public static HeadhunterStackState Stacks { get; private set; }
-    public static IHeadhunterMechanic Mechanic { get; private set; }
+    public static RareModsMechanic Mechanic { get; private set; }
 
     public static void Load()
     {
@@ -124,7 +124,7 @@ internal static class HeadhunterConfigLoader
             problems
         );
         Stacks = new HeadhunterStackState(resolved.Stats.Count);
-        Mechanic = HeadhunterMechanics.Create(resolved, Stacks, _random, problems);
+        Mechanic = new RareModsMechanic(resolved, Stacks, _random);
         Resolved = resolved;
         LogProblems(problems);
     }

@@ -39,12 +39,6 @@ public sealed class HeadhunterConfigDefaultsTests
     }
 
     [Fact]
-    public void Config_Mechanic_IsRareMods()
-    {
-        Assert.Equal("rare_mods", HeadhunterConfigDefaults.Config.Mechanic);
-    }
-
-    [Fact]
     public void Config_Duration_IsSixtySeconds()
     {
         Assert.Equal(60f, HeadhunterConfigDefaults.Config.DurationSeconds);

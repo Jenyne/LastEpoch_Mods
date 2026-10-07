@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Buffs;
 using Newtonsoft.Json.Linq;
 
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
@@ -11,7 +10,6 @@ public static class HeadhunterConfigDefaults
     public const int CurrentVersion = 1;
     public const int DefaultsVersion = 6;
     public const int UnstampedDefaultsVersion = 1;
-    public const string Mechanic = HeadhunterMechanics.RareModsId;
     public const float DurationSeconds = 60f;
     public const int MaxStacks = 10;
     public const float EntryAdded = 0f;
@@ -76,7 +74,6 @@ public static class HeadhunterConfigDefaults
     public static readonly HeadhunterConfig Config = new()
     {
         Version = CurrentVersion,
-        Mechanic = Mechanic,
         DurationSeconds = DurationSeconds,
         MaxStacks = MaxStacks,
         Triggers = Triggers,

@@ -36,7 +36,6 @@ internal static class HeadhunterTestData
         return new HeadhunterConfig
         {
             Version = 1,
-            Mechanic = "fake_mechanic",
             DurationSeconds = Duration,
             MaxStacks = MaxStacks,
             Triggers = triggers,
@@ -52,7 +51,6 @@ internal static class HeadhunterTestData
         return new HeadhunterConfig
         {
             Version = 1,
-            Mechanic = "fake_mechanic",
             DurationSeconds = Duration,
             MaxStacks = MaxStacks,
             Triggers = AllTriggers,

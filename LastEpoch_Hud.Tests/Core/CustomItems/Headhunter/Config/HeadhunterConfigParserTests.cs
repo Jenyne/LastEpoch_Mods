@@ -44,7 +44,6 @@ public sealed class HeadhunterConfigParserTests
         Assert.Empty(result.Problems);
         Assert.Equal(30f, result.Config.DurationSeconds);
         Assert.Equal(new HeadhunterTriggers(true, false, true, true, true), result.Config.Triggers);
-        Assert.Equal(HeadhunterConfigDefaults.Mechanic, result.Config.Mechanic);
         Assert.Equivalent(HeadhunterConfigDefaults.Stats, result.Config.Stats, strict: true);
     }
 
@@ -88,25 +87,19 @@ public sealed class HeadhunterConfigParserTests
         Assert.Equal(new[] { "version" }, Paths(result));
     }
 
-    [Fact]
-    public void Parse_Mechanic_IsKept_WhenNonBlankString()
-    {
-        HeadhunterConfigParseResult result = Parse("{\"mechanic\":\"fake_id\"}");
-
-        Assert.Equal("fake_id", result.Config.Mechanic);
-        Assert.Empty(result.Problems);
-    }
-
     [Theory]
+    [InlineData("\"rare_mods\"")]
+    [InlineData("\"fake_id\"")]
     [InlineData("\"\"")]
-    [InlineData("\"  \"")]
     [InlineData("5")]
-    public void Parse_Mechanic_FallsBackToDefaultWithProblem_WhenInvalid(string value)
+    public void Parse_IgnoresLegacyMechanicKey(string value)
     {
-        HeadhunterConfigParseResult result = Parse("{\"mechanic\":" + value + "}");
+        HeadhunterConfigParseResult result = Parse(
+            "{\"mechanic\":" + value + ",\"durationSeconds\":30}"
+        );
 
-        Assert.Equal(HeadhunterConfigDefaults.Mechanic, result.Config.Mechanic);
-        Assert.Equal(new[] { "mechanic" }, Paths(result));
+        Assert.Empty(result.Problems);
+        Assert.Equivalent(Parse("{\"durationSeconds\":30}").Config, result.Config, strict: true);
     }
 
     [Theory]
@@ -319,18 +312,11 @@ public sealed class HeadhunterConfigParserTests
     public void Parse_ReportsEveryProblemInFileOrder()
     {
         HeadhunterConfigParseResult result = Parse(
-            "{\"mechanic\":5,\"durationSeconds\":0,\"triggers\":{\"rare\":1},\"stats\":[{\"stat\":\"Nope\"},{\"stat\":\"FakeA\",\"enabled\":\"yes\"},{\"stat\":\"FakeB\"}]}"
+            "{\"durationSeconds\":0,\"triggers\":{\"rare\":1},\"stats\":[{\"stat\":\"Nope\"},{\"stat\":\"FakeA\",\"enabled\":\"yes\"},{\"stat\":\"FakeB\"}]}"
         );
 
         Assert.Equal(
-            new[]
-            {
-                "mechanic",
-                "durationSeconds",
-                "triggers.rare",
-                "stats[0].stat",
-                "stats[1].enabled",
-            },
+            new[] { "durationSeconds", "triggers.rare", "stats[0].stat", "stats[1].enabled" },
             Paths(result)
         );
         Assert.Equal("FakeB", Assert.Single(result.Config.Stats).Stat);

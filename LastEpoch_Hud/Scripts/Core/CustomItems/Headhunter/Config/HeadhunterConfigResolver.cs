@@ -25,7 +25,6 @@ public static class HeadhunterConfigResolver
             problems
         );
         return new HeadhunterResolvedConfig(
-            config.Mechanic,
             config.DurationSeconds,
             config.MaxStacks,
             config.Triggers,

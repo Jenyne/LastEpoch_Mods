@@ -27,7 +27,6 @@ public sealed class HeadhunterConfigWriterTests
         var config = new HeadhunterConfig
         {
             Version = 1,
-            Mechanic = "fake_id",
             DurationSeconds = 12.5f,
             MaxStacks = 7,
             Triggers = new HeadhunterTriggers(true, false, true, false, false),
@@ -54,6 +53,14 @@ public sealed class HeadhunterConfigWriterTests
         var root = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
 
         Assert.Equal(HeadhunterConfigDefaults.MaxStacks, (int)root["maxStacks"]);
+    }
+
+    [Fact]
+    public void Write_OmitsMechanicKey()
+    {
+        var root = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+
+        Assert.False(root.ContainsKey("mechanic"));
     }
 
     [Fact]

@@ -16,7 +16,7 @@ internal static class HeadhunterKillHandler
 
     public static void Handle(KillInfo kill)
     {
-        IHeadhunterMechanic mechanic = HeadhunterConfigLoader.Mechanic;
+        RareModsMechanic mechanic = HeadhunterConfigLoader.Mechanic;
         StatBuffs buffs = HeadhunterBuffSink.PlayerBuffs();
         if (mechanic == null || buffs == null)
         {

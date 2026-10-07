@@ -9,7 +9,6 @@ public sealed class HeadhunterResolvedConfig
     private readonly IReadOnlyDictionary<int, int[]> _affixRows;
 
     public HeadhunterResolvedConfig(
-        string mechanic,
         float durationSeconds,
         int maxStacks,
         HeadhunterTriggers triggers,
@@ -17,7 +16,6 @@ public sealed class HeadhunterResolvedConfig
         IReadOnlyDictionary<int, int[]> affixRows = null
     )
     {
-        Mechanic = mechanic;
         DurationSeconds = durationSeconds;
         MaxStacks = maxStacks;
         Triggers = triggers;
@@ -29,7 +27,6 @@ public sealed class HeadhunterResolvedConfig
         }
     }
 
-    public string Mechanic { get; }
     public float DurationSeconds { get; }
     public int MaxStacks { get; }
     public HeadhunterTriggers Triggers { get; }

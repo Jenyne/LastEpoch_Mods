@@ -21,7 +21,6 @@ public static class HeadhunterConfigParser
         var config = new HeadhunterConfig
         {
             Version = ReadVersion(root, problems),
-            Mechanic = ReadMechanic(root, problems),
             DurationSeconds = ReadDuration(root, problems),
             MaxStacks = ReadMaxStacks(root, problems),
             Triggers = ReadTriggers(root, problems),
@@ -106,21 +105,6 @@ public static class HeadhunterConfigParser
             Report(problems, HeadhunterConfigKeys.Version, "Unsupported version " + version + ".");
         }
         return version;
-    }
-
-    private static string ReadMechanic(JObject root, List<HeadhunterConfigProblem> problems)
-    {
-        JToken token = root[HeadhunterConfigKeys.Mechanic];
-        if (token == null)
-        {
-            return HeadhunterConfigDefaults.Mechanic;
-        }
-        if (token is JValue { Value: string text } && !string.IsNullOrWhiteSpace(text))
-        {
-            return text;
-        }
-        Report(problems, HeadhunterConfigKeys.Mechanic, "Must be a non-empty text.");
-        return HeadhunterConfigDefaults.Mechanic;
     }
 
     private static float ReadDuration(JObject root, List<HeadhunterConfigProblem> problems)

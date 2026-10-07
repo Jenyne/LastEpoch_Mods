@@ -268,7 +268,6 @@ public sealed class HeadhunterConfigMergerTests
         var config = new HeadhunterConfig
         {
             Version = HeadhunterConfigDefaults.CurrentVersion,
-            Mechanic = HeadhunterConfigDefaults.Mechanic,
             DurationSeconds = HeadhunterConfigDefaults.DurationSeconds,
             Triggers = HeadhunterConfigDefaults.Triggers,
             Stats = HeadhunterConfigDefaults
@@ -298,7 +297,6 @@ public sealed class HeadhunterConfigMergerTests
         var config = new HeadhunterConfig
         {
             Version = HeadhunterConfigDefaults.CurrentVersion,
-            Mechanic = HeadhunterConfigDefaults.Mechanic,
             DurationSeconds = HeadhunterConfigDefaults.DurationSeconds,
             Triggers = new HeadhunterTriggers(false, true, true, true, true),
             Stats = HeadhunterConfigDefaults.Stats,
@@ -351,7 +349,6 @@ public sealed class HeadhunterConfigMergerTests
         var config = new HeadhunterConfig
         {
             Version = HeadhunterConfigDefaults.CurrentVersion,
-            Mechanic = HeadhunterConfigDefaults.Mechanic,
             DurationSeconds = HeadhunterConfigDefaults.DurationSeconds,
             MaxStacks = HeadhunterConfigDefaults.MaxStacks,
             Triggers = HeadhunterConfigDefaults.Triggers,
@@ -524,7 +521,6 @@ public sealed class HeadhunterConfigMergerTests
         var config = new HeadhunterConfig
         {
             Version = HeadhunterConfigDefaults.CurrentVersion,
-            Mechanic = HeadhunterConfigDefaults.Mechanic,
             DurationSeconds = HeadhunterConfigDefaults.DurationSeconds,
             MaxStacks = HeadhunterConfigDefaults.MaxStacks,
             Triggers = HeadhunterConfigDefaults.Triggers,

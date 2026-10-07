@@ -13,7 +13,6 @@ public static class HeadhunterConfigWriter
         {
             [HeadhunterConfigKeys.Version] = config.Version,
             [HeadhunterConfigKeys.DefaultsVersion] = HeadhunterConfigDefaults.DefaultsVersion,
-            [HeadhunterConfigKeys.Mechanic] = config.Mechanic,
             [HeadhunterConfigKeys.DurationSeconds] = config.DurationSeconds,
             [HeadhunterConfigKeys.MaxStacks] = config.MaxStacks,
             [HeadhunterConfigKeys.Triggers] = BuildTriggers(config.Triggers),

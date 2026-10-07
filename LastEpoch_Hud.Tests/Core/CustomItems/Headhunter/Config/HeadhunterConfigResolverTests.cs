@@ -112,7 +112,7 @@ public sealed class HeadhunterConfigResolverTests
     }
 
     [Fact]
-    public void Resolve_CopiesMechanicDurationTriggers()
+    public void Resolve_CopiesDurationTriggers()
     {
         var triggers = new HeadhunterTriggers(true, false, true, false, true);
         HeadhunterConfig config = HeadhunterTestData.Config(
@@ -122,7 +122,6 @@ public sealed class HeadhunterConfigResolverTests
 
         HeadhunterResolvedConfig result = HeadhunterTestData.Resolve(config);
 
-        Assert.Equal(config.Mechanic, result.Mechanic);
         Assert.Equal(config.DurationSeconds, result.DurationSeconds);
         Assert.Equal(triggers, result.Triggers);
     }
