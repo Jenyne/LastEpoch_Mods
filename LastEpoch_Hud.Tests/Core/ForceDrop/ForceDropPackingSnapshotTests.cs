@@ -98,7 +98,7 @@ public sealed class ForceDropPackingSnapshotTests
     }
 
     [Fact]
-    public void BaseItem_ZeroSocketsWithAnAffixRemainsInvalid()
+    public void BaseItem_ZeroDecodedSocketsPreservesTheAffixButZeroLiveSocketsRemainInvalid()
     {
         var affixes = new[] { new PackedForceDropAffix(13, 6, 255, ForceDropSeal.None, 0) };
         var expected = Snapshot(
@@ -120,7 +120,9 @@ public sealed class ForceDropPackingSnapshotTests
             lp: 0,
             sockets: 0
         );
-        Assert.Contains("Socket count", expected.Difference(actual));
+        Assert.Equal("", expected.Difference(actual));
+        Assert.Contains("Socket count", actual.IntegrityError());
+        Assert.Contains("Before packing: Socket count", actual.Difference(expected));
     }
 
     static ForceDropPackingSnapshot Unsated(int sockets, PackedForceDropAffix[] affixes = null)
@@ -153,7 +155,7 @@ public sealed class ForceDropPackingSnapshotTests
         var live = CorruptedBase(idol, idol ? 4 : 5);
         var decoded = CorruptedBase(idol, 0);
         Assert.Equal("", live.IntegrityError());
-        Assert.Equal("", decoded.IntegrityError());
+        Assert.Equal("", decoded.IntegrityError(decoded: true));
         Assert.Equal("", live.Difference(decoded));
         Assert.Equal("", live.Difference(CorruptedBase(idol, live.Sockets)));
     }
@@ -212,12 +214,12 @@ public sealed class ForceDropPackingSnapshotTests
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void CorruptedBase_CorruptedFlagAloneDoesNotAllowZeroSockets(bool idol)
+    public void CorruptedBase_ZeroDecodedSocketsDoesNotHideALostCorruptionSeal(bool idol)
     {
         var live = CorruptedBase(idol, idol ? 4 : 5);
         var saved = live.Affixes.Where(a => a.Seal != ForceDropSeal.Corruption).ToArray();
         Assert.Contains(
-            "Socket count",
+            "corruption or seal flags",
             live.Difference(CorruptedBase(idol, 0, saved, corruption: false))
         );
     }
@@ -239,6 +241,115 @@ public sealed class ForceDropPackingSnapshotTests
         Assert.Contains(
             "corruption or seal flags",
             live.Difference(CorruptedBase(false, 0, saved, regular: false))
+        );
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    public void SetBaseRuntimeRegression_ZeroDecodedSocketsPreservesTheCompleteItem(
+        bool regular,
+        bool corrupted
+    )
+    {
+        var live = SetRing(regular, corrupted, regular ? 5 : 4);
+        Assert.Equal("", live.IntegrityError());
+        Assert.Equal("", live.Difference(SetRing(regular, corrupted, 0)));
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    public void SetBase_AnUnrelatedNonzeroDecodedCountRemainsRejected(bool regular, bool corrupted)
+    {
+        Assert.Contains(
+            "Socket count",
+            SetRing(regular, corrupted, regular ? 5 : 4).Difference(SetRing(regular, corrupted, 2))
+        );
+    }
+
+    [Theory]
+    [InlineData(true, true, "missing")]
+    [InlineData(true, true, "tier")]
+    [InlineData(true, true, "roll")]
+    [InlineData(true, true, "set")]
+    [InlineData(true, true, "seal")]
+    [InlineData(true, false, "missing")]
+    [InlineData(true, false, "tier")]
+    [InlineData(true, false, "roll")]
+    [InlineData(true, false, "set")]
+    [InlineData(true, false, "seal")]
+    [InlineData(false, false, "missing")]
+    [InlineData(false, false, "tier")]
+    [InlineData(false, false, "roll")]
+    [InlineData(false, false, "set")]
+    [InlineData(false, false, "seal")]
+    public void SetBase_ZeroDecodedSocketsDoesNotHideChangedAffixes(
+        bool regular,
+        bool corrupted,
+        string changed
+    )
+    {
+        var live = SetRing(regular, corrupted, regular ? 5 : 4);
+        var saved = live.Affixes.ToArray();
+        int index = Array.FindIndex(saved, a => a.SpecialType == 3);
+        var affix = saved[index];
+        if (changed == "missing")
+            saved = saved.Where((_, i) => i != index).ToArray();
+        else
+            saved[index] = new PackedForceDropAffix(
+                affix.Id,
+                changed == "tier" ? 5 : affix.Tier,
+                changed == "roll" ? 254 : affix.Roll,
+                changed == "seal" ? ForceDropSeal.Regular : affix.Seal,
+                changed == "set" ? 0 : affix.SpecialType,
+                affix.AffixType
+            );
+        Assert.NotEqual("", live.Difference(SetRing(regular, corrupted, 0, saved)));
+    }
+
+    static ForceDropPackingSnapshot SetRing(
+        bool regular,
+        bool corrupted,
+        int sockets,
+        PackedForceDropAffix[] affixes = null
+    )
+    {
+        // Exact rejections from build 33fedcf1, 13:20:38/50 and 13:21:05.
+        affixes ??= regular
+            ? new[]
+            {
+                new PackedForceDropAffix(9, 6, 255, ForceDropSeal.Regular, 0, 0),
+                new PackedForceDropAffix(959, 6, 255, ForceDropSeal.None, 3, 0),
+                new PackedForceDropAffix(502, 6, 255, ForceDropSeal.None, 0, 0),
+                new PackedForceDropAffix(824, 6, 255, ForceDropSeal.None, 0, 1),
+                new PackedForceDropAffix(25, 6, 255, ForceDropSeal.None, 0, 1),
+            }
+            : new[]
+            {
+                new PackedForceDropAffix(960, 6, 255, ForceDropSeal.None, 3, 0),
+                new PackedForceDropAffix(70, 6, 255, ForceDropSeal.None, 0, 0),
+                new PackedForceDropAffix(24, 6, 255, ForceDropSeal.None, 0, 1),
+                new PackedForceDropAffix(13, 6, 255, ForceDropSeal.None, 0, 1),
+            };
+        return new ForceDropPackingSnapshot(
+            21,
+            11,
+            0,
+            4,
+            corrupted ? 0 : 63,
+            0,
+            0,
+            corrupted,
+            sockets,
+            regular,
+            false,
+            false,
+            new[] { 255, 255, 255 },
+            Array.Empty<int>(),
+            affixes
         );
     }
 

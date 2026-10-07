@@ -89,24 +89,23 @@ public sealed class ForceDropPackingSnapshot
         Affixes = Array.AsReadOnly(affixes.ToArray());
     }
 
-    public string IntegrityError()
+    public string IntegrityError(bool decoded = false)
     {
         if (Affixes.Any(a => a == null))
             return "Missing affix data";
-        // The runtime's decoded Unsated Rage retained its exact fixed modifier
-        // while sockets became zero. Unique-family packing carries affixes
-        // independently of this live field. With corruption the runtime also
-        // reports one socket for two affixes (variant plus corruption). Verify
-        // that route by its complete affix list and stored socket value instead.
+        // Decoded native items can report zero sockets while retaining the full
+        // affix list, on both unique and base routes, with or without corruption.
+        // This is not the serialized affix count. Before packing, still validate
+        // the live base count; after decoding, verify the complete affix list.
         if (Sockets < 0 || Sockets > byte.MaxValue)
             return "Socket count is outside the packed range";
-        // The runtime also excludes the corruption affix from the live socket
-        // count on base gear/idols, then decodes zero while preserving all affixes.
-        // Accept only those observed representations, not arbitrary count changes.
+        // Native corruption insertion excludes its new sealed affix from the
+        // live base-item count. No other nonzero count mismatch is accepted.
         if (
             !UsesUniqueStorage
             && Sockets != Affixes.Count
-            && !(UsesCorruptionStorage && (Sockets == 0 || Sockets == Affixes.Count - 1))
+            && !(UsesCorruptionStorage && Sockets == Affixes.Count - 1)
+            && !(decoded && Sockets == 0)
         )
             return "Socket count does not match the affix count (sockets="
                 + Sockets
@@ -197,17 +196,14 @@ public sealed class ForceDropPackingSnapshot
             return "Before packing: " + error;
         if (actual == null)
             return "Missing decoded item";
-        error = actual.IntegrityError();
+        error = actual.IntegrityError(decoded: true);
         if (error.Length != 0)
             return "After packing: " + error;
         if (ItemType != actual.ItemType || SubType != actual.SubType || UniqueId != actual.UniqueId)
             return "Item identity changed during packing";
         if (Rarity != actual.Rarity)
             return "Item rarity changed during packing";
-        if (
-            Sockets != actual.Sockets
-            && !((UsesUniqueStorage || UsesCorruptionStorage) && actual.Sockets == 0)
-        )
+        if (Sockets != actual.Sockets && actual.Sockets != 0)
             return "Item socket count changed during packing";
         if (
             ForgingPotential != actual.ForgingPotential
