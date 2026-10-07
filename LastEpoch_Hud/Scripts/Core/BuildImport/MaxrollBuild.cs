@@ -7,6 +7,8 @@ namespace LastEpoch_Hud.Scripts.Core.BuildImport;
 // These snapshots preserve planner data. They are not game items or legality verdicts.
 public sealed class MaxrollBuild
 {
+    public MaxrollPlannerCatalog TreeCatalog { get; internal set; }
+    public string TreeCatalogIssue { get; internal set; }
     public string Name { get; internal set; }
     public MaxrollLink Link { get; internal set; }
     public Uri SourceEndpoint { get; internal set; }

@@ -434,5 +434,16 @@
   "Tree history could not be decoded.": "Impossible de décoder l’historique de l’arbre.",
   "No tree reader issues. Game prerequisites have not been checked.": "Aucune erreur de lecture des arbres. Les prérequis du jeu n’ont pas été vérifiés.",
   "Preview only. No items or points are changed.": "Aperçu uniquement. Aucun objet ni point n’est modifié.",
-  "Planner IDs require game validation before point allocation.": "Les ID du planificateur doivent être vérifiés dans le jeu avant d’attribuer des points."
+  "Planner IDs require game validation before point allocation.": "Les ID du planificateur doivent être vérifiés dans le jeu avant d’attribuer des points.",
+  "Unknown skill": "Compétence inconnue",
+  "Unknown node": "Nœud inconnu",
+  "Fit": "Ajuster",
+  "Total passive points": "Total des points passifs",
+  "Some allocated nodes are missing from current planner data.": "Certains nœuds attribués sont absents des données actuelles du planificateur.",
+  "Drag to pan. Zoom for names. Hover or click a node for details.": "Faites glisser pour déplacer la vue. Zoomez pour les noms. Survolez ou cliquez sur un nœud pour les détails.",
+  "Requires any": "Au moins un prérequis",
+  "Mastery points required": "Points de maîtrise requis",
+  "Base node values": "Valeurs de base du nœud",
+  "Tree data unavailable.": "Données d’arbre indisponibles.",
+  "Tree names and layout could not be loaded. Reload the build to retry.": "Impossible de charger les noms et la disposition des arbres. Rechargez le build pour réessayer."
 }

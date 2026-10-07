@@ -8,6 +8,7 @@ namespace LastEpoch_Hud.Scripts.Core.BuildImport;
 // An abandoned request can never replace a newer build or reopen a closed window.
 public sealed class MaxrollPreviewSession
 {
+    static MaxrollPlannerCatalog catalog;
     readonly Func<string, CancellationToken, Task<MaxrollBuild>> retrieve;
     Request pending;
 
@@ -82,7 +83,28 @@ public sealed class MaxrollPreviewSession
     static async Task<MaxrollBuild> Retrieve(string input, CancellationToken token)
     {
         using var client = new MaxrollBuildClient();
-        return await client.RetrieveAsync(input, token).ConfigureAwait(false);
+        var build = await client.RetrieveAsync(input, token).ConfigureAwait(false);
+        try
+        {
+            var metadata = Volatile.Read(ref catalog);
+            if (metadata == null)
+            {
+                using var catalogClient = new MaxrollCatalogClient();
+                metadata = await catalogClient.RetrieveAsync(token).ConfigureAwait(false);
+                Interlocked.CompareExchange(ref catalog, metadata, null);
+            }
+            build.TreeCatalog = metadata;
+        }
+        catch (OperationCanceledException) when (token.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            // A catalog outage must not discard the successfully retrieved gear.
+            build.TreeCatalogIssue = ex.Message;
+        }
+        return build;
     }
 
     sealed class Result

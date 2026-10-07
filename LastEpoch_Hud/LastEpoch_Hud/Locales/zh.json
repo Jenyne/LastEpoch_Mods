@@ -445,5 +445,16 @@
   "Tree history could not be decoded.": "无法解析技能树历史。",
   "No tree reader issues. Game prerequisites have not been checked.": "技能树读取无异常。尚未检查游戏中的前置条件。",
   "Preview only. No items or points are changed.": "仅供预览。不会更改物品或点数。",
-  "Planner IDs require game validation before point allocation.": "分配点数前，需要使用游戏数据验证规划器 ID。"
+  "Planner IDs require game validation before point allocation.": "分配点数前，需要使用游戏数据验证规划器 ID。",
+  "Unknown skill": "未知技能",
+  "Unknown node": "未知节点",
+  "Fit": "适应窗口",
+  "Total passive points": "被动技能总点数",
+  "Some allocated nodes are missing from current planner data.": "当前规划器数据中缺少部分已分配的节点。",
+  "Drag to pan. Zoom for names. Hover or click a node for details.": "拖动平移，放大查看名称。悬停或点击节点查看详情。",
+  "Requires any": "任一前置条件",
+  "Mastery points required": "所需专精点数",
+  "Base node values": "节点基础数值",
+  "Tree data unavailable.": "技能树数据不可用。",
+  "Tree names and layout could not be loaded. Reload the build to retry.": "无法加载技能树名称和布局。请重新加载构筑再试。"
 }

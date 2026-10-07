@@ -434,5 +434,16 @@
   "Tree history could not be decoded.": "Tree history could not be decoded.",
   "No tree reader issues. Game prerequisites have not been checked.": "No tree reader issues. Game prerequisites have not been checked.",
   "Preview only. No items or points are changed.": "Preview only. No items or points are changed.",
-  "Planner IDs require game validation before point allocation.": "Planner IDs require game validation before point allocation."
+  "Planner IDs require game validation before point allocation.": "Planner IDs require game validation before point allocation.",
+  "Unknown skill": "Unknown skill",
+  "Unknown node": "Unknown node",
+  "Fit": "Fit",
+  "Total passive points": "Total passive points",
+  "Some allocated nodes are missing from current planner data.": "Some allocated nodes are missing from current planner data.",
+  "Drag to pan. Zoom for names. Hover or click a node for details.": "Drag to pan. Zoom for names. Hover or click a node for details.",
+  "Requires any": "Requires any",
+  "Mastery points required": "Mastery points required",
+  "Base node values": "Base node values",
+  "Tree data unavailable.": "Tree data unavailable.",
+  "Tree names and layout could not be loaded. Reload the build to retry.": "Tree names and layout could not be loaded. Reload the build to retry."
 }

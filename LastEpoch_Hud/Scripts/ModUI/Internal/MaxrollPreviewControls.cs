@@ -43,7 +43,9 @@ internal static partial class MaxrollPreviewControls
         "Skills",
     };
     static readonly List<Button> SectionButtons = new();
-    static GameObject root;
+    static GameObject root,
+        leftPanel,
+        rightPanel;
     static Font font;
     static TMP_InputField input;
     static Text status,
@@ -106,14 +108,14 @@ internal static partial class MaxrollPreviewControls
         if (Session.Poll())
         {
             selected = null;
-            selectedTree = null;
-            showHistory = false;
+            ResetTreeView();
             itemPage = detailPage = 0;
             showIssues = false;
             error = Session.Error;
             message = Session.Build == null ? "Could not load this build." : "Build loaded.";
             Render();
         }
+        TickGraph();
         if (
             !ReferenceEquals(dictionary, Locales.current_dictionary)
             || nativeLocale != NativeItemNames.Locale
@@ -133,8 +135,7 @@ internal static partial class MaxrollPreviewControls
     static void Load()
     {
         selected = null;
-        selectedTree = null;
-        showHistory = false;
+        ResetTreeView();
         showIssues = false;
         itemPage = detailPage = 0;
         error = null;
@@ -157,7 +158,10 @@ internal static partial class MaxrollPreviewControls
         Items.Clear();
         Details.Clear();
         SectionButtons.Clear();
-        root = Panel(Hud_Manager.Content.content_obj, "MaxrollBuildPreview", 0, 0, 1, 1);
+        var menu = Hud_Manager.Content.content_obj;
+        var canvas = menu.GetComponentInParent<Canvas>();
+        var parent = canvas.IsNullOrDestroyed() ? menu : canvas.rootCanvas.gameObject;
+        root = Panel(parent, "MaxrollBuildPreview", .03f, .035f, .97f, .965f);
         var layout = root.AddComponent<LayoutElement>();
         layout.ignoreLayout = true;
         var title = Label(root, .02f, .944f, .81f, .99f, 22);
@@ -229,27 +233,25 @@ internal static partial class MaxrollPreviewControls
             () => ChangeVariant(-1)
         );
         nextVariant = Button(root, "Next", .85f, .749f, .98f, .793f, () => ChangeVariant(1));
-        var left = Panel(root, "BuildItems", .02f, .062f, .40f, .731f);
-        var right = Panel(root, "ItemDetails", .41f, .062f, .98f, .731f);
+        var left = leftPanel = Panel(root, "BuildItems", .02f, .062f, .40f, .651f);
+        var right = rightPanel = Panel(root, "ItemDetails", .41f, .062f, .98f, .651f);
         for (int i = 0; i < Sections.Length; i++)
         {
             int choice = i;
-            float x = .02f + (i % 3) * .326f;
-            float top = .983f - (i / 3) * .075f;
+            float x = .02f + i * .161f;
             SectionButtons.Add(
                 Button(
-                    left,
+                    root,
                     SectionLabels[i],
                     x,
-                    top - .064f,
-                    x + .31f,
-                    top,
+                    .67f,
+                    x + .153f,
+                    .731f,
                     () =>
                     {
                         section = choice;
                         selected = null;
-                        selectedTree = null;
-                        showHistory = false;
+                        ResetTreeView();
                         itemPage = detailPage = 0;
                         showIssues = false;
                         Render();
@@ -260,13 +262,13 @@ internal static partial class MaxrollPreviewControls
         for (int i = 0; i < ItemRows; i++)
         {
             int row = i;
-            float top = .822f - i * .069f;
+            float top = .978f - i * .086f;
             Items.Add(
                 Button(
                     left,
                     "",
                     .02f,
-                    top - .064f,
+                    top - .079f,
                     .98f,
                     top,
                     () =>
@@ -274,7 +276,7 @@ internal static partial class MaxrollPreviewControls
                         int index = itemPage * ItemRows + row;
                         if (IsTreeSection && index < TreeRows.Count)
                         {
-                            selectedTree = TreeRows[index];
+                            SelectTreeRow(index);
                             selected = null;
                             detailPage = 0;
                             showIssues = false;
@@ -349,21 +351,6 @@ internal static partial class MaxrollPreviewControls
                 Render();
             }
         );
-        historyButton = Button(
-            right,
-            "Allocation History",
-            .685f,
-            .799f,
-            .975f,
-            .87f,
-            () =>
-            {
-                showHistory = !showHistory;
-                showIssues = false;
-                detailPage = 0;
-                Render();
-            }
-        );
         for (int i = 0; i < DetailRows; i++)
         {
             float top = .776f - i * .081f;
@@ -397,6 +384,7 @@ internal static partial class MaxrollPreviewControls
         );
         detailPageLabel = Label(right, .33f, .02f, .67f, .095f, 13);
         detailPageLabel.alignment = TextAnchor.MiddleCenter;
+        BuildGraph();
         var note = Label(root, .02f, .008f, .98f, .053f, 13);
         LocaleRegistry.Apply(note, "Preview only. No items or points are changed.");
     }
@@ -411,8 +399,7 @@ internal static partial class MaxrollPreviewControls
             : 0;
         build.SelectVariant(Math.Max(0, Math.Min(build.Variants.Count - 1, index)));
         selected = null;
-        selectedTree = null;
-        showHistory = false;
+        ResetTreeView();
         itemPage = detailPage = 0;
         showIssues = false;
         Render();
@@ -473,9 +460,8 @@ internal static partial class MaxrollPreviewControls
             {
                 var tree = TreeRows[index];
                 button.GetComponentInChildren<Text>(true).text = TreeCaption(tree);
-                button.GetComponent<Image>().color = ReferenceEquals(selectedTree, tree)
-                    ? new Color(.28f, .23f, .13f)
-                    : Dark;
+                button.GetComponent<Image>().color =
+                    selectedTreeIndex == index ? new Color(.28f, .23f, .13f) : Dark;
                 continue;
             }
             var placement = Placements[index];
@@ -494,20 +480,8 @@ internal static partial class MaxrollPreviewControls
             copy.GetComponentInChildren<Text>(true),
             IsTreeSection ? "Copy Tree JSON" : "Copy Item JSON"
         );
-        historyButton.gameObject.SetActive(IsTreeSection);
-        historyButton.interactable = selectedTree?.IsDecoded == true;
-        LocaleRegistry.Apply(
-            historyButton.GetComponentInChildren<Text>(true),
-            showHistory ? "Node Ranks" : "Allocation History"
-        );
-        Rect(copy.gameObject, .025f, .799f, IsTreeSection ? .33f : .48f, .87f);
-        Rect(
-            issuesButton.gameObject,
-            IsTreeSection ? .355f : .51f,
-            .799f,
-            IsTreeSection ? .66f : .975f,
-            .87f
-        );
+        Rect(copy.gameObject, .025f, .799f, .48f, .87f);
+        Rect(issuesButton.gameObject, .51f, .799f, .975f, .87f);
         issuesButton.interactable = build != null;
         LocaleRegistry.Apply(
             issuesButton.GetComponentInChildren<Text>(true),
@@ -517,7 +491,7 @@ internal static partial class MaxrollPreviewControls
             showIssues ? L("Build Issues")
             : IsTreeSection
                 ? selectedTree == null ? L(SectionLabels[section])
-                    : TreeName(selectedTree)
+                    : SelectedView?.Name ?? L("Unknown skill")
             : selected == null ? L("Select an item to inspect.")
             : Position(selected) + " — " + ItemName(selected);
         Fields.Clear();
@@ -543,8 +517,29 @@ internal static partial class MaxrollPreviewControls
                     )
                 );
         }
-        else if (IsTreeSection)
-            DescribeTree(gear?.Trees);
+        else if (IsTreeSection && gear != null)
+        {
+            if (Session.Build.TreeCatalog == null)
+                Fields.Add(
+                    (
+                        L("Tree names and layout could not be loaded. Reload the build to retry."),
+                        false
+                    )
+                );
+            else if (selectedTree != null && !selectedTree.IsDecoded)
+            {
+                Fields.Add((L("Tree history could not be decoded."), false));
+                foreach (string issue in selectedTree.Issues)
+                    Fields.Add((issue, false));
+            }
+            else if (section == 5)
+            {
+                SkillSlots(gear.Trees.ActiveSkills, "Active Skills");
+                SkillSlots(gear.Trees.SpecializedSkills, "Specialized Skills");
+            }
+            else
+                Fields.Add((L("No tree data in this variant."), false));
+        }
         else if (selected?.Item != null)
             Describe(selected.Item.Value);
         else if (selected != null)
@@ -567,6 +562,11 @@ internal static partial class MaxrollPreviewControls
         nextDetails.interactable = (detailPage + 1) * DetailRows < Fields.Count;
         detailPageLabel.text =
             (detailPage + 1) + "/" + Math.Max(1, (Fields.Count + DetailRows - 1) / DetailRows);
+        bool graphical = IsTreeSection && selectedTree?.IsDecoded == true && !showIssues;
+        rightPanel.SetActive(!graphical);
+        Rect(leftPanel, .02f, .062f, IsTreeSection ? .20f : .40f, .651f);
+        Rect(rightPanel, IsTreeSection ? .21f : .41f, .062f, .98f, .651f);
+        RenderGraph(graphical);
     }
 
     static void Describe(JsonElement item)

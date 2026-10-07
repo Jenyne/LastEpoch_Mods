@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
@@ -9,141 +10,86 @@ namespace LastEpoch_Hud.Scripts.ModUI;
 
 internal static partial class MaxrollPreviewControls
 {
-    static readonly List<MaxrollTreeSnapshot> TreeRows = new();
+    static readonly List<MaxrollTreeView> TreeRows = new();
     static MaxrollTreeSnapshot selectedTree;
-    static Button historyButton;
-    static bool showHistory;
+    static MaxrollTreePreview treeProfile;
+    static int treeSection = -1,
+        selectedTreeIndex = -1;
     static bool IsTreeSection => section >= 4;
+    static MaxrollTreeView SelectedView =>
+        selectedTreeIndex >= 0 && selectedTreeIndex < TreeRows.Count
+            ? TreeRows[selectedTreeIndex]
+            : null;
+
+    static void ResetTreeView()
+    {
+        selectedTree = null;
+        selectedTreeIndex = -1;
+        ResetGraph();
+    }
 
     static void BuildTreeRows(MaxrollTreePreview preview)
     {
-        TreeRows.Clear();
-        if (!IsTreeSection || preview == null)
-            return;
-        if (section == 4)
+        if (!ReferenceEquals(treeProfile, preview) || treeSection != section)
         {
-            if (preview.Passives != null)
+            TreeRows.Clear();
+            treeProfile = preview;
+            treeSection = section;
+            if (IsTreeSection && preview != null)
             {
-                TreeRows.Add(preview.Passives);
-                selectedTree ??= preview.Passives;
+                if (section == 5)
+                    TreeRows.Add(null); // named skill bar overview
+                var catalog = Session.Build?.TreeCatalog;
+                if (catalog != null)
+                    TreeRows.AddRange(catalog.Views(preview, section == 4));
+            }
+            ResetTreeView();
+        }
+        if (IsTreeSection && selectedTreeIndex < 0 && TreeRows.Count > 0)
+        {
+            selectedTreeIndex = section == 5 && TreeRows.Count > 1 ? 1 : 0;
+            if (section == 4 && preview.MasteryId.HasValue)
+            {
+                int mastery = TreeRows.FindIndex(view => view?.Mastery == preview.MasteryId);
+                if (mastery >= 0)
+                    selectedTreeIndex = mastery;
             }
         }
-        else
-        {
-            // The first Skills row previews active and specialized slot order.
-            TreeRows.Add(null);
-            TreeRows.AddRange(preview.Skills);
-        }
+        selectedTree = SelectedView?.Snapshot;
     }
 
-    static string TreeName(MaxrollTreeSnapshot tree) =>
-        section == 4 ? L("Passives") : L("Planner tree ID") + ": " + Short(tree.PlannerId, 70);
+    static void SelectTreeRow(int index)
+    {
+        selectedTreeIndex = index;
+        selectedTree = SelectedView?.Snapshot;
+        ResetGraph();
+    }
 
-    static string TreeCaption(MaxrollTreeSnapshot tree) =>
-        tree == null
-            ? L("Skill Slots") + "\n" + L("Active Skills") + " / " + L("Specialized Skills")
-            : TreeName(tree)
+    static string TreeCaption(MaxrollTreeView view) =>
+        view == null
+            ? L("Skill Slots")
+            : (string.IsNullOrWhiteSpace(view.Name) ? L("Unknown skill") : view.Name)
                 + "\n"
                 + (
-                    tree.IsDecoded
+                    view.Snapshot.IsDecoded
                         ? L("Points")
                             + ": "
-                            + tree.TotalPoints.ToString(CultureInfo.InvariantCulture)
+                            + view.TotalPoints.ToString(CultureInfo.InvariantCulture)
                         : L("Tree history could not be decoded.")
                 );
 
-    static void DescribeTree(MaxrollTreePreview preview)
-    {
-        if (preview == null)
-            return;
-        if (selectedTree == null && section == 4)
-        {
-            Fields.Add((L("No tree data in this variant."), false));
-            return;
-        }
-        Fields.Add((L("Planner IDs require game validation before point allocation."), false));
-        Fields.Add(
-            (
-                L("Class ID")
-                    + ": "
-                    + Number(preview.ClassId)
-                    + "; "
-                    + L("Mastery ID")
-                    + ": "
-                    + Number(preview.MasteryId),
-                false
-            )
-        );
-        Fields.Add((L("Level") + ": " + Number(preview.Level), false));
-        if (selectedTree == null)
-        {
-            SkillSlots(preview.ActiveSkills, "Active Skills");
-            SkillSlots(preview.SpecializedSkills, "Specialized Skills");
-            if (preview.Skills.Count == 0)
-                Fields.Add((L("No tree data in this variant."), false));
-            return;
-        }
-        var tree = selectedTree;
-        Fields.Add(
-            (L("History cursor") + ": " + Number(tree.Position) + "/" + tree.HistoryLength, false)
-        );
-        if (!tree.IsDecoded)
-        {
-            Fields.Add((L("Tree history could not be decoded."), false));
-            foreach (string issue in tree.Issues)
-                Fields.Add((issue, false));
-            return;
-        }
-        Fields.Add(
-            (L("Points") + ": " + tree.TotalPoints.ToString(CultureInfo.InvariantCulture), false)
-        );
-        if (showHistory)
-        {
-            foreach (var step in tree.Steps)
-            {
-                string prefix = L("Step") + " " + (step.HistoryIndex + 1) + ": ";
-                if (step.IsBulk)
-                    prefix += L("Bulk assignment") + "; ";
-                if (step.RanksAfter.Count == 0)
-                    Fields.Add((prefix + "{}", false));
-                foreach (var pair in step.RanksAfter)
-                    Fields.Add(
-                        (
-                            prefix
-                                + L("Planner node ID")
-                                + " "
-                                + pair.Key
-                                + ", "
-                                + L("Rank")
-                                + " "
-                                + pair.Value,
-                            false
-                        )
-                    );
-            }
-        }
-        else
-            foreach (var pair in tree.Ranks.OrderBy(pair => pair.Key))
-                Fields.Add(
-                    (
-                        L("Planner node ID") + " " + pair.Key + ": " + L("Rank") + " " + pair.Value,
-                        false
-                    )
-                );
-    }
-
-    static string Number(int? value) => value?.ToString(CultureInfo.InvariantCulture) ?? "—";
-
     static void SkillSlots(IReadOnlyList<JsonElement> slots, string label)
     {
-        for (int i = 0; i < slots.Count; i++)
+        Fields.Add((L(label), false));
+        foreach (var value in slots)
         {
-            var value = slots[i];
-            string text =
+            string name =
                 value.ValueKind == JsonValueKind.Null ? L("Empty slot")
-                : value.ValueKind == JsonValueKind.String ? value.GetString()
-                : value.GetRawText();
-            Fields.Add((L(label) + " " + (i + 1) + ": " + text, false));
+                : value.ValueKind == JsonValueKind.String
+                    ? Session.Build?.TreeCatalog?.AbilityName(value.GetString())
+                        ?? L("Unknown skill")
+                : L("Unknown skill");
+            Fields.Add((name, false));
         }
     }
 
@@ -151,13 +97,22 @@ internal static partial class MaxrollPreviewControls
     {
         if (preview == null)
             return;
+        if (Session.Build.TreeCatalogIssue != null)
+            Fields.Add((Session.Build.TreeCatalogIssue, false));
         foreach (string issue in preview.Issues)
             Fields.Add((issue, false));
         if (preview.Passives != null)
             foreach (string issue in preview.Passives.Issues)
                 Fields.Add((L("Passives") + ": " + issue, false));
         foreach (var tree in preview.Skills)
-        foreach (string issue in tree.Issues)
-            Fields.Add((tree.PlannerId + ": " + issue, false));
+        {
+            foreach (string issue in tree.Issues)
+                Fields.Add((tree.PlannerId + ": " + issue, false));
+            if (
+                Session.Build.TreeCatalog != null
+                && !Session.Build.TreeCatalog.Trees.ContainsKey(tree.PlannerId)
+            )
+                Fields.Add((L("Tree data unavailable.") + " " + tree.PlannerId, false));
+        }
     }
 }
