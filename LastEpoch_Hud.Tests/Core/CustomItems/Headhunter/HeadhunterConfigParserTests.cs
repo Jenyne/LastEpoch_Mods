@@ -12,6 +12,9 @@ public sealed class HeadhunterConfigParserTests
         "FakeB",
     };
 
+    public static TheoryData<string> UnusableTexts { get; } =
+        new() { (string)null, "", "  ", "not json", "[]", "{" };
+
     [Fact]
     public void Parse_ReturnsDefaults_WhenObjectEmpty()
     {
@@ -22,12 +25,7 @@ public sealed class HeadhunterConfigParserTests
     }
 
     [Theory]
-    [InlineData(null)]
-    [InlineData("")]
-    [InlineData("  ")]
-    [InlineData("not json")]
-    [InlineData("[]")]
-    [InlineData("{")]
+    [MemberData(nameof(UnusableTexts))]
     public void Parse_ReturnsDefaultsWithRootProblem_WhenTextUnusable(string json)
     {
         HeadhunterConfigParseResult result = Parse(json);
@@ -275,6 +273,30 @@ public sealed class HeadhunterConfigParserTests
             Paths(result)
         );
         Assert.Equal("FakeB", Assert.Single(result.Config.Stats).Stat);
+    }
+
+    [Theory]
+    [MemberData(nameof(UnusableTexts))]
+    public void Parse_UnusableText_NotReadable(string json)
+    {
+        Assert.False(Parse(json).IsReadable);
+    }
+
+    [Fact]
+    public void Parse_ObjectWithBadEntries_Readable()
+    {
+        HeadhunterConfigParseResult result = Parse(
+            "{\"durationSeconds\":-1,\"stats\":[{\"stat\":\"NotAStat\"}]}"
+        );
+
+        Assert.NotEmpty(result.Problems);
+        Assert.True(result.IsReadable);
+    }
+
+    [Fact]
+    public void Parse_Object_Readable()
+    {
+        Assert.True(Parse("{}").IsReadable);
     }
 
     private static HeadhunterConfigParseResult Parse(string json)

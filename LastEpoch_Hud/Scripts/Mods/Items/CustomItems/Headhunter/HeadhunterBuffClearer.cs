@@ -1,0 +1,22 @@
+using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
+
+namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
+
+/// <summary>Removes every Headhunter buff of one resolved config from the player.</summary>
+internal static class HeadhunterBuffClearer
+{
+    private static readonly HeadhunterClearRule _clear = new();
+
+    public static void ClearAll(HeadhunterResolvedConfig config)
+    {
+        StatBuffs buffs = HeadhunterBuffSink.PlayerBuffs();
+        if (config == null || buffs == null)
+        {
+            return;
+        }
+
+        HeadhunterBuffSink.Apply(buffs, _clear.RemoveAll(config));
+    }
+}

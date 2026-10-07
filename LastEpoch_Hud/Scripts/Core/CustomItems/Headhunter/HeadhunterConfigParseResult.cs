@@ -7,4 +7,5 @@ public sealed class HeadhunterConfigParseResult
 {
     public HeadhunterConfig Config { get; init; }
     public IReadOnlyList<HeadhunterConfigProblem> Problems { get; init; }
+    public bool IsReadable { get; init; }
 }

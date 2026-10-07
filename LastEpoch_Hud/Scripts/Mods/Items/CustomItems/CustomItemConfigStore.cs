@@ -13,6 +13,8 @@ internal sealed class CustomItemConfigStore
         "CustomItems"
     );
 
+    private static readonly DateTime _missingFileStamp = DateTime.FromFileTimeUtc(0);
+
     public CustomItemConfigStore(string fileName)
     {
         FilePath = Path.Combine(_folder, fileName);
@@ -23,6 +25,19 @@ internal sealed class CustomItemConfigStore
     public bool Exists()
     {
         return File.Exists(FilePath);
+    }
+
+    public DateTime? LastWriteUtc()
+    {
+        try
+        {
+            DateTime stamp = File.GetLastWriteTimeUtc(FilePath);
+            return stamp == _missingFileStamp ? null : stamp;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            return null;
+        }
     }
 
     public void Write(string text)

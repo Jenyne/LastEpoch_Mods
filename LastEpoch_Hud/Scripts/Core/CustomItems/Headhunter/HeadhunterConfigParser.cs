@@ -15,7 +15,7 @@ public static class HeadhunterConfigParser
         JObject root = ParseRoot(json, problems);
         if (root == null)
         {
-            return Result(HeadhunterConfigDefaults.Config, problems);
+            return Result(HeadhunterConfigDefaults.Config, problems, false);
         }
 
         var config = new HeadhunterConfig
@@ -26,15 +26,21 @@ public static class HeadhunterConfigParser
             Triggers = ReadTriggers(root, problems),
             Stats = ReadStats(root, knownStats, problems),
         };
-        return Result(config, problems);
+        return Result(config, problems, true);
     }
 
     private static HeadhunterConfigParseResult Result(
         HeadhunterConfig config,
-        List<HeadhunterConfigProblem> problems
+        List<HeadhunterConfigProblem> problems,
+        bool readable
     )
     {
-        return new HeadhunterConfigParseResult { Config = config, Problems = problems };
+        return new HeadhunterConfigParseResult
+        {
+            Config = config,
+            Problems = problems,
+            IsReadable = readable,
+        };
     }
 
     private static JObject ParseRoot(string json, List<HeadhunterConfigProblem> problems)
