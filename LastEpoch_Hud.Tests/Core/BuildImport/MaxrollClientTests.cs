@@ -58,7 +58,8 @@ public sealed class MaxrollClientTests
         };
         using var client = new MaxrollBuildClient(handler);
         var build = await client.RetrieveAsync(
-            "https://www.maxroll.gg/last-epoch/planner/abcd?tracking=ignored#1"
+            "https://www.maxroll.gg/last-epoch/planner/abcd?tracking=ignored#1",
+            TestContext.Current.CancellationToken
         );
         Assert.Equal("Starter", build.SelectedVariant.Name);
         Assert.Equal(
@@ -83,7 +84,12 @@ public sealed class MaxrollClientTests
         using var client = new MaxrollBuildClient(handler);
         Assert.Equal(
             "Endgame Gear",
-            (await client.RetrieveAsync("https://maxroll.gg/last-epoch/planner/abcd"))
+            (
+                await client.RetrieveAsync(
+                    "https://maxroll.gg/last-epoch/planner/abcd",
+                    TestContext.Current.CancellationToken
+                )
+            )
                 .SelectedVariant
                 .Name
         );
@@ -105,7 +111,10 @@ public sealed class MaxrollClientTests
                     )
                 );
         using var client = new MaxrollBuildClient(handler);
-        var build = await client.RetrieveAsync("https://maxroll.gg/last-epoch/planner/abcd#2");
+        var build = await client.RetrieveAsync(
+            "https://maxroll.gg/last-epoch/planner/abcd#2",
+            TestContext.Current.CancellationToken
+        );
         Assert.Equal("Endgame Gear", build.SelectedVariant.Name);
         Assert.Equal(build.Link.LoaderEndpoint, build.SourceEndpoint);
     }
@@ -123,7 +132,10 @@ public sealed class MaxrollClientTests
         };
         using var client = new MaxrollBuildClient(handler);
         await Assert.ThrowsAsync<FormatException>(() =>
-            client.RetrieveAsync("https://maxroll.gg/last-epoch/planner/abcd")
+            client.RetrieveAsync(
+                "https://maxroll.gg/last-epoch/planner/abcd",
+                TestContext.Current.CancellationToken
+            )
         );
         Assert.Equal(2, handler.Requests.Count);
     }
@@ -138,7 +150,10 @@ public sealed class MaxrollClientTests
         var handler = new Transport { Respond = _ => Reply(status) };
         using var client = new MaxrollBuildClient(handler);
         await Assert.ThrowsAsync<MaxrollAccessException>(() =>
-            client.RetrieveAsync("https://maxroll.gg/last-epoch/planner/abcd")
+            client.RetrieveAsync(
+                "https://maxroll.gg/last-epoch/planner/abcd",
+                TestContext.Current.CancellationToken
+            )
         );
         Assert.Single(handler.Requests);
     }
@@ -148,7 +163,9 @@ public sealed class MaxrollClientTests
     {
         var handler = new Transport { Respond = _ => Reply(HttpStatusCode.OK) };
         using var client = new MaxrollBuildClient(handler);
-        using var cancel = new CancellationTokenSource();
+        using var cancel = CancellationTokenSource.CreateLinkedTokenSource(
+            TestContext.Current.CancellationToken
+        );
         cancel.Cancel();
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
             client.RetrieveAsync("https://maxroll.gg/last-epoch/planner/abcd", cancel.Token)
@@ -166,7 +183,10 @@ public sealed class MaxrollClientTests
         };
         using var client = new MaxrollBuildClient(handler);
         await Assert.ThrowsAsync<MaxrollAccessException>(() =>
-            client.RetrieveAsync("https://maxroll.gg/last-epoch/planner/abcd")
+            client.RetrieveAsync(
+                "https://maxroll.gg/last-epoch/planner/abcd",
+                TestContext.Current.CancellationToken
+            )
         );
         Assert.Single(handler.Requests);
     }
@@ -183,7 +203,10 @@ public sealed class MaxrollClientTests
         };
         using var client = new MaxrollBuildClient(handler);
         await Assert.ThrowsAsync<MaxrollAccessException>(() =>
-            client.RetrieveAsync("https://maxroll.gg/last-epoch/planner/abcd")
+            client.RetrieveAsync(
+                "https://maxroll.gg/last-epoch/planner/abcd",
+                TestContext.Current.CancellationToken
+            )
         );
         Assert.Single(handler.Requests);
     }

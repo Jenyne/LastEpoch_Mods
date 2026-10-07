@@ -30,12 +30,18 @@ public sealed class MaxrollPreviewSessionTests
                 session.Load(Link);
                 return thread;
             },
-            CancellationToken.None,
+            TestContext.Current.CancellationToken,
             TaskCreationOptions.LongRunning,
             TaskScheduler.Default
         );
-        int callingThread = await caller.WaitAsync(TimeSpan.FromSeconds(3));
-        int retrievalThread = await started.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        int callingThread = await caller.WaitAsync(
+            TimeSpan.FromSeconds(3),
+            TestContext.Current.CancellationToken
+        );
+        int retrievalThread = await started.Task.WaitAsync(
+            TimeSpan.FromSeconds(3),
+            TestContext.Current.CancellationToken
+        );
         Assert.NotEqual(callingThread, retrievalThread);
         await Poll(session);
         Assert.NotNull(session.Build);
@@ -56,7 +62,10 @@ public sealed class MaxrollPreviewSessionTests
             }
         );
         session.Load(Link);
-        await started.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        await started.Task.WaitAsync(
+            TimeSpan.FromSeconds(3),
+            TestContext.Current.CancellationToken
+        );
         Assert.True(session.IsLoading);
         Assert.Null(session.Build);
         completed.SetResult(Build("First"));
@@ -84,7 +93,10 @@ public sealed class MaxrollPreviewSessionTests
             }
         );
         session.Load(Link);
-        await started.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        await started.Task.WaitAsync(
+            TimeSpan.FromSeconds(3),
+            TestContext.Current.CancellationToken
+        );
         session.Cancel();
         Assert.True(token.IsCancellationRequested);
         completed.SetResult(Build("Abandoned"));
@@ -115,7 +127,10 @@ public sealed class MaxrollPreviewSessionTests
             }
         );
         session.Load(Link);
-        await started.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        await started.Task.WaitAsync(
+            TimeSpan.FromSeconds(3),
+            TestContext.Current.CancellationToken
+        );
         session.Load(Link);
         await Poll(session);
         old.SetException(new InvalidOperationException("late failure"));
@@ -166,7 +181,10 @@ public sealed class MaxrollPreviewSessionTests
 
     static async Task Poll(MaxrollPreviewSession session)
     {
-        using var budget = new CancellationTokenSource(TimeSpan.FromSeconds(3));
+        using var budget = CancellationTokenSource.CreateLinkedTokenSource(
+            TestContext.Current.CancellationToken
+        );
+        budget.CancelAfter(TimeSpan.FromSeconds(3));
         while (!session.Poll())
             await Task.Delay(1, budget.Token);
     }

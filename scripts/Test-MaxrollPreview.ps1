@@ -21,15 +21,20 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Build failed; installed DLL was not replaced." }
 
     $previousGamePath = $env:LAST_EPOCH_PATH
+    $previousModDll = $env:LAST_EPOCH_MOD_DLL
+    $modDll = Join-Path $repoPath "Build\Release\net6.0\LastEpoch_Hud.dll"
     try {
         $env:LAST_EPOCH_PATH = $GamePath
+        $env:LAST_EPOCH_MOD_DLL = $modDll
+        Write-Host "Validating $modDll"
         dotnet run --project .\LastEpoch_Hud.Tests
         if ($LASTEXITCODE -ne 0) { throw "Tests failed; installed DLL was not replaced." }
     } finally {
         $env:LAST_EPOCH_PATH = $previousGamePath
+        $env:LAST_EPOCH_MOD_DLL = $previousModDll
     }
 
-    Copy-Item .\Build\Release\net6.0\LastEpoch_Hud.dll (Join-Path $GamePath "Mods\LastEpoch_Hud.dll") -Force
+    Copy-Item $modDll (Join-Path $GamePath "Mods\LastEpoch_Hud.dll") -Force
     $localePath = Join-Path $GamePath "Mods\LastEpoch_Hud\Locales"
     New-Item -ItemType Directory -Path $localePath -Force | Out-Null
     foreach ($language in @("en", "fr", "ko", "zh")) {
