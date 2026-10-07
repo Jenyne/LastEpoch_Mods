@@ -10,8 +10,8 @@ try {
         throw "Close Last Epoch before installing the testing build."
     }
     $branch = git branch --show-current
-    if ($LASTEXITCODE -ne 0 -or $branch -ne "feat/maxroll-build-preview") {
-        throw "Switch to feat/maxroll-build-preview and pull its latest changes first."
+    if ($LASTEXITCODE -ne 0 -or $branch -notin @("feat/maxroll-build-preview", "feat/maxroll-tree-preview")) {
+        throw "Switch to feat/maxroll-build-preview or feat/maxroll-tree-preview and pull its latest changes first."
     }
     if (!(Test-Path -LiteralPath (Join-Path $GamePath "Mods") -PathType Container)) {
         throw "The game Mods folder was not found. Check -GamePath and install MelonLoader first."

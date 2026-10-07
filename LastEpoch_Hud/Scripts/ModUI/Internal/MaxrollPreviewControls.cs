@@ -11,7 +11,7 @@ using UnityEngine.UI;
 namespace LastEpoch_Hud.Scripts.ModUI;
 
 // A read-only overlay. It never constructs ItemData, changes inventories, or selects Force Drop data.
-internal static class MaxrollPreviewControls
+internal static partial class MaxrollPreviewControls
 {
     const int ItemRows = 10,
         DetailRows = 8;
@@ -24,8 +24,24 @@ internal static class MaxrollPreviewControls
     static readonly List<Text> Details = new();
     static readonly List<MaxrollPlacement> Placements = new();
     static readonly List<(string Text, bool Corruption)> Fields = new();
-    static readonly string[] Sections = { "equipment", "idols", "blessings", "weaverItems" };
-    static readonly string[] SectionLabels = { "Equipment", "Idols", "Blessings", "Weaver Items" };
+    static readonly string[] Sections =
+    {
+        "equipment",
+        "idols",
+        "blessings",
+        "weaverItems",
+        "passives",
+        "skills",
+    };
+    static readonly string[] SectionLabels =
+    {
+        "Equipment",
+        "Idols",
+        "Blessings",
+        "Weaver Items",
+        "Passives",
+        "Skills",
+    };
     static readonly List<Button> SectionButtons = new();
     static GameObject root;
     static Font font;
@@ -90,6 +106,8 @@ internal static class MaxrollPreviewControls
         if (Session.Poll())
         {
             selected = null;
+            selectedTree = null;
+            showHistory = false;
             itemPage = detailPage = 0;
             showIssues = false;
             error = Session.Error;
@@ -115,6 +133,8 @@ internal static class MaxrollPreviewControls
     static void Load()
     {
         selected = null;
+        selectedTree = null;
+        showHistory = false;
         showIssues = false;
         itemPage = detailPage = 0;
         error = null;
@@ -214,19 +234,22 @@ internal static class MaxrollPreviewControls
         for (int i = 0; i < Sections.Length; i++)
         {
             int choice = i;
-            float x = .02f + i * .245f;
+            float x = .02f + (i % 3) * .326f;
+            float top = .983f - (i / 3) * .075f;
             SectionButtons.Add(
                 Button(
                     left,
                     SectionLabels[i],
                     x,
-                    .919f,
-                    x + .235f,
-                    .983f,
+                    top - .064f,
+                    x + .31f,
+                    top,
                     () =>
                     {
                         section = choice;
                         selected = null;
+                        selectedTree = null;
+                        showHistory = false;
                         itemPage = detailPage = 0;
                         showIssues = false;
                         Render();
@@ -237,19 +260,27 @@ internal static class MaxrollPreviewControls
         for (int i = 0; i < ItemRows; i++)
         {
             int row = i;
-            float top = .896f - i * .077f;
+            float top = .822f - i * .069f;
             Items.Add(
                 Button(
                     left,
                     "",
                     .02f,
-                    top - .07f,
+                    top - .064f,
                     .98f,
                     top,
                     () =>
                     {
                         int index = itemPage * ItemRows + row;
-                        if (index < Placements.Count)
+                        if (IsTreeSection && index < TreeRows.Count)
+                        {
+                            selectedTree = TreeRows[index];
+                            selected = null;
+                            detailPage = 0;
+                            showIssues = false;
+                            Render();
+                        }
+                        else if (!IsTreeSection && index < Placements.Count)
                         {
                             selected = Placements[index];
                             detailPage = 0;
@@ -294,24 +325,41 @@ internal static class MaxrollPreviewControls
             "Copy Item JSON",
             .025f,
             .799f,
-            .48f,
+            .33f,
             .87f,
             () =>
             {
-                if (selected?.Item != null)
+                if (IsTreeSection && selectedTree != null)
+                    GUIUtility.systemCopyBuffer = selectedTree.Source.GetRawText();
+                else if (selected?.Item != null)
                     GUIUtility.systemCopyBuffer = selected.Item.Value.GetRawText();
             }
         );
         issuesButton = Button(
             right,
             "Build Issues",
-            .51f,
+            .355f,
+            .799f,
+            .66f,
+            .87f,
+            () =>
+            {
+                showIssues = !showIssues;
+                detailPage = 0;
+                Render();
+            }
+        );
+        historyButton = Button(
+            right,
+            "Allocation History",
+            .685f,
             .799f,
             .975f,
             .87f,
             () =>
             {
-                showIssues = !showIssues;
+                showHistory = !showHistory;
+                showIssues = false;
                 detailPage = 0;
                 Render();
             }
@@ -350,10 +398,7 @@ internal static class MaxrollPreviewControls
         detailPageLabel = Label(right, .33f, .02f, .67f, .095f, 13);
         detailPageLabel.alignment = TextAnchor.MiddleCenter;
         var note = Label(root, .02f, .008f, .98f, .053f, 13);
-        LocaleRegistry.Apply(
-            note,
-            "Preview only. Item creation will be added after game validation."
-        );
+        LocaleRegistry.Apply(note, "Preview only. No items or points are changed.");
     }
 
     static void ChangeVariant(int direction)
@@ -366,6 +411,8 @@ internal static class MaxrollPreviewControls
             : 0;
         build.SelectVariant(Math.Max(0, Math.Min(build.Variants.Count - 1, index)));
         selected = null;
+        selectedTree = null;
+        showHistory = false;
         itemPage = detailPage = 0;
         showIssues = false;
         Render();
@@ -409,7 +456,9 @@ internal static class MaxrollPreviewControls
             foreach (var placement in gear.Placements)
                 if (placement.Section == Sections[section])
                     Placements.Add(placement);
-        itemPage = Math.Min(itemPage, Math.Max(0, (Placements.Count - 1) / ItemRows));
+        BuildTreeRows(gear?.Trees);
+        int rowCount = IsTreeSection ? TreeRows.Count : Placements.Count;
+        itemPage = Math.Min(itemPage, Math.Max(0, (rowCount - 1) / ItemRows));
         for (int i = 0; i < Sections.Length; i++)
             SectionButtons[i].GetComponent<Image>().color =
                 i == section ? new Color(.28f, .23f, .13f) : Dark;
@@ -417,9 +466,18 @@ internal static class MaxrollPreviewControls
         {
             int index = itemPage * ItemRows + i;
             var button = Items[i];
-            button.gameObject.SetActive(index < Placements.Count);
-            if (index >= Placements.Count)
+            button.gameObject.SetActive(index < rowCount);
+            if (index >= rowCount)
                 continue;
+            if (IsTreeSection)
+            {
+                var tree = TreeRows[index];
+                button.GetComponentInChildren<Text>(true).text = TreeCaption(tree);
+                button.GetComponent<Image>().color = ReferenceEquals(selectedTree, tree)
+                    ? new Color(.28f, .23f, .13f)
+                    : Dark;
+                continue;
+            }
             var placement = Placements[index];
             button.GetComponentInChildren<Text>(true).text =
                 Position(placement) + "\n" + ItemName(placement);
@@ -428,17 +486,38 @@ internal static class MaxrollPreviewControls
                 : Dark;
         }
         previousItems.interactable = itemPage > 0;
-        nextItems.interactable = (itemPage + 1) * ItemRows < Placements.Count;
+        nextItems.interactable = (itemPage + 1) * ItemRows < rowCount;
         itemPageLabel.text =
-            (itemPage + 1) + "/" + Math.Max(1, (Placements.Count + ItemRows - 1) / ItemRows);
-        copy.interactable = selected?.Item != null;
+            (itemPage + 1) + "/" + Math.Max(1, (rowCount + ItemRows - 1) / ItemRows);
+        copy.interactable = IsTreeSection ? selectedTree != null : selected?.Item != null;
+        LocaleRegistry.Apply(
+            copy.GetComponentInChildren<Text>(true),
+            IsTreeSection ? "Copy Tree JSON" : "Copy Item JSON"
+        );
+        historyButton.gameObject.SetActive(IsTreeSection);
+        historyButton.interactable = selectedTree?.IsDecoded == true;
+        LocaleRegistry.Apply(
+            historyButton.GetComponentInChildren<Text>(true),
+            showHistory ? "Node Ranks" : "Allocation History"
+        );
+        Rect(copy.gameObject, .025f, .799f, IsTreeSection ? .33f : .48f, .87f);
+        Rect(
+            issuesButton.gameObject,
+            IsTreeSection ? .355f : .51f,
+            .799f,
+            IsTreeSection ? .66f : .975f,
+            .87f
+        );
         issuesButton.interactable = build != null;
         LocaleRegistry.Apply(
             issuesButton.GetComponentInChildren<Text>(true),
-            showIssues ? "Item Details" : "Build Issues"
+            showIssues ? (IsTreeSection ? "Tree Details" : "Item Details") : "Build Issues"
         );
         itemTitle.text =
             showIssues ? L("Build Issues")
+            : IsTreeSection
+                ? selectedTree == null ? L(SectionLabels[section])
+                    : TreeName(selectedTree)
             : selected == null ? L("Select an item to inspect.")
             : Position(selected) + " — " + ItemName(selected);
         Fields.Clear();
@@ -447,11 +526,25 @@ internal static class MaxrollPreviewControls
             if (!string.IsNullOrEmpty(build?.SelectionIssue))
                 Fields.Add((build.SelectionIssue, false));
             if (gear != null)
+            {
                 foreach (string issue in gear.Issues)
                     Fields.Add((issue, false));
+                AddTreeIssues(gear.Trees);
+            }
             if (Fields.Count == 0)
-                Fields.Add((L("No reader issues. Game legality has not been checked."), false));
+                Fields.Add(
+                    (
+                        L(
+                            IsTreeSection
+                                ? "No tree reader issues. Game prerequisites have not been checked."
+                                : "No reader issues. Game legality has not been checked."
+                        ),
+                        false
+                    )
+                );
         }
+        else if (IsTreeSection)
+            DescribeTree(gear?.Trees);
         else if (selected?.Item != null)
             Describe(selected.Item.Value);
         else if (selected != null)

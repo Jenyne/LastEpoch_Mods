@@ -36,6 +36,7 @@ public sealed class MaxrollVariant
     public JsonElement Data { get; internal set; }
     public IReadOnlyList<MaxrollPlacement> Placements { get; internal set; }
     public IReadOnlyList<string> Issues { get; internal set; }
+    public MaxrollTreePreview Trees { get; internal set; }
 }
 
 public sealed class MaxrollPlacement

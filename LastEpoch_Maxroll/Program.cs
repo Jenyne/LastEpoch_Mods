@@ -64,7 +64,9 @@ try
         );
     }
     var selected = build.SelectedVariant;
+    var treeIssues = selected == null ? Array.Empty<string>() : TreeIssues(selected.Trees);
     if (selected != null)
+    {
         foreach (var p in selected.Placements.Where(p => !p.IsEmpty))
         {
             if (!p.Item.HasValue)
@@ -79,6 +81,17 @@ try
                 $"  {p.Section}/{p.Slot}: base={Field("itemType")} subtype={Field("subType")} unique={Field("uniqueID")}"
             );
         }
+        if (selected.Trees.Passives != null)
+            PrintTree(selected.Trees.Passives);
+        foreach (var tree in selected.Trees.Skills)
+            PrintTree(tree);
+        Console.WriteLine(
+            "  Active skill IDs: " + JsonSerializer.Serialize(selected.Trees.ActiveSkills)
+        );
+        Console.WriteLine(
+            "  Specialized skill IDs: " + JsonSerializer.Serialize(selected.Trees.SpecializedSkills)
+        );
+    }
     folder ??= Path.Combine("BuildImports", build.Link?.BuildId ?? "clipboard");
     Directory.CreateDirectory(folder);
     var options = new JsonSerializerOptions { WriteIndented = true };
@@ -109,13 +122,16 @@ try
             v.EmbedId,
             itemCount = v.Placements.Count(p => p.Item.HasValue),
             v.Issues,
+            treeIssues = TreeIssues(v.Trees),
         }),
         selected,
         notes = new[]
         {
             "Read-only planner snapshot, not a game item or legal-item verdict.",
             "Normalized rolls are preserved as 0..1. No rounding, byte conversion or defaults are applied.",
-            "Trees, history cursors, notes and unknown fields remain in build.json and variant Data.",
+            "Tree ranks are decoded at the saved history cursor. Numeric steps increment; object steps overwrite only the listed ranks.",
+            "Planner tree/node IDs are not validated against game nodes, prerequisites, point caps or an executable leveling order.",
+            "Full histories, future steps, notes and unknown fields remain in build.json and variant Data.",
             "Absent LP, Weaver's Will, forging potential or other game metadata remains absent.",
         },
     };
@@ -129,8 +145,10 @@ try
     if (selected != null)
         foreach (string issue in selected.Issues)
             Console.WriteLine("Issue: " + issue);
+    foreach (string issue in treeIssues)
+        Console.WriteLine("Tree issue: " + issue);
     Console.WriteLine("Saved snapshot and preview to " + Path.GetFullPath(folder));
-    return selected == null || selected.Issues.Count > 0 ? 2 : 0;
+    return selected == null || selected.Issues.Count > 0 || treeIssues.Length > 0 ? 2 : 0;
 }
 catch (OperationCanceledException)
 {
@@ -142,3 +160,25 @@ catch (Exception ex)
     Console.Error.WriteLine(ex.Message);
     return 1;
 }
+
+static void PrintTree(MaxrollTreeSnapshot tree) =>
+    Console.WriteLine(
+        $"  Planner tree {tree.PlannerId}: cursor={tree.Position}/{tree.HistoryLength}; "
+            + (
+                tree.IsDecoded
+                    ? $"{tree.TotalPoints} points in {tree.Ranks.Count} nodes"
+                    : "history could not be decoded"
+            )
+    );
+
+static string[] TreeIssues(MaxrollTreePreview preview) =>
+    preview
+        .Issues.Concat(
+            preview.Passives?.Issues.Select(issue => "passives: " + issue) ?? Array.Empty<string>()
+        )
+        .Concat(
+            preview.Skills.SelectMany(tree =>
+                tree.Issues.Select(issue => tree.PlannerId + ": " + issue)
+            )
+        )
+        .ToArray();

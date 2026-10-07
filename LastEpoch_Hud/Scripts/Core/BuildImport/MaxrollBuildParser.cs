@@ -213,6 +213,7 @@ public static class MaxrollBuildParser
             Data = value.Clone(),
             Placements = placements.AsReadOnly(),
             Issues = issues.AsReadOnly(),
+            Trees = MaxrollTreeParser.Parse(value),
         };
     }
 
