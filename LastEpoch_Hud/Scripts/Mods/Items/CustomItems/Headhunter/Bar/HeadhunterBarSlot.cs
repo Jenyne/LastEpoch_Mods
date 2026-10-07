@@ -23,6 +23,7 @@ internal sealed class HeadhunterBarSlot
     private readonly Text _stackText;
     private int _statId = -1;
     private int _tags;
+    private bool _iconFinal;
     private int _row = -1;
     private int _stacks;
     private int _seconds = -1;
@@ -136,15 +137,22 @@ internal sealed class HeadhunterBarSlot
 
     private void ApplyIcon(int statId, int tags)
     {
-        if (statId == _statId && tags == _tags && !_icon.sprite.IsNullOrDestroyed())
+        bool same = statId == _statId && tags == _tags;
+        if (same && _iconFinal && !_icon.sprite.IsNullOrDestroyed())
         {
             return;
         }
 
         _statId = statId;
         _tags = tags;
-        Sprite sprite = HeadhunterBuffIcons.For(statId, tags);
+        Sprite sprite = HeadhunterBuffIcons.For(statId, tags, out _iconFinal);
         if (sprite.IsNullOrDestroyed())
+        {
+            _iconFinal = false;
+            return;
+        }
+
+        if (sprite == _icon.sprite)
         {
             return;
         }

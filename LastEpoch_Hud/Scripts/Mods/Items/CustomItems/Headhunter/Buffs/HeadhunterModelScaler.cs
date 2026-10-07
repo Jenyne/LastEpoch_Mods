@@ -7,39 +7,27 @@ using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Buffs;
 
-/// <summary>Scales the player model by distinct buff count and restores it.</summary>
+/// <summary>Scales the visible player model (human or shapeshift form) by distinct buff count and restores it.</summary>
 internal static class HeadhunterModelScaler
 {
     private static readonly HeadhunterSizeTracker _tracker = new();
     private static ActorVisuals _visuals;
-    private static Transform _model;
+    private static Transform _baseModel;
     private static Transform _applied;
     private static Vector3 _original;
     private static Vector3 _written;
 
     public static void Apply(int liveBuffs)
     {
-        float factor = HeadhunterConfigLoader.Current.ModelSize.Factor(liveBuffs);
-        Transform model = CurrentModel();
-        HeadhunterSizeAction action = _tracker.Next(IdOf(model), factor, ScaleIntact());
-        if (action == HeadhunterSizeAction.None)
+        try
         {
-            return;
+            Step(liveBuffs);
         }
-
-        if (action == HeadhunterSizeAction.RestoreThenRescale)
+        catch (Exception ex)
         {
-            RestoreApplied();
+            ErrorLog.Report(ex, "Headhunter model size");
+            Restore();
         }
-
-        _applied = null;
-        if (model.IsNullOrDestroyed() || factor == HeadhunterSizeCurve.NormalFactor)
-        {
-            return;
-        }
-
-        Scale(model, factor);
-        Log(liveBuffs, factor);
     }
 
     public static void Restore()
@@ -60,21 +48,61 @@ internal static class HeadhunterModelScaler
         _applied = null;
     }
 
-    private static Transform CurrentModel()
+    private static void Step(int liveBuffs)
     {
+        float factor = HeadhunterConfigLoader.Current.ModelSize.Factor(liveBuffs);
+        Transform model = CurrentModel(out HeadhunterModelSource source);
+        HeadhunterSizeAction action = _tracker.Next(IdOf(model), factor, ScaleIntact());
+        if (action == HeadhunterSizeAction.None)
+        {
+            return;
+        }
+
+        if (action == HeadhunterSizeAction.RestoreThenRescale)
+        {
+            RestoreApplied();
+        }
+
+        _applied = null;
+        if (model.IsNullOrDestroyed() || factor == HeadhunterSizeCurve.NormalFactor)
+        {
+            return;
+        }
+
+        Scale(model, factor);
+        Log(liveBuffs, factor, source);
+    }
+
+    private static Transform CurrentModel(out HeadhunterModelSource source)
+    {
+        source = HeadhunterModelSource.Base;
         ActorVisuals visuals = Refs_Manager.player_visuals;
         if (visuals.IsNullOrDestroyed())
         {
             return null;
         }
-        if (visuals == _visuals && !_model.IsNullOrDestroyed())
+
+        Transform form = FormModel(visuals);
+        source = HeadhunterModelSelector.Pick(visuals._isTransformed, !form.IsNullOrDestroyed());
+        return source == HeadhunterModelSource.Form ? form : BaseModel(visuals);
+    }
+
+    private static Transform FormModel(ActorVisuals visuals)
+    {
+        VisualFormChanger changer = visuals.visualFormChangerManager?.currentVisualFormChanger;
+        return changer.IsNullOrDestroyed() ? null : changer.transform;
+    }
+
+    private static Transform BaseModel(ActorVisuals visuals)
+    {
+        if (visuals == _visuals && !_baseModel.IsNullOrDestroyed())
         {
-            return _model;
+            return _baseModel;
         }
 
         _visuals = visuals;
-        _model = FindModel(visuals);
-        return _model;
+        _baseModel = FindModel(visuals);
+        return _baseModel;
     }
 
     private static Transform FindModel(ActorVisuals visuals)
@@ -121,13 +149,20 @@ internal static class HeadhunterModelScaler
         return model.IsNullOrDestroyed() ? HeadhunterSizeTracker.NoModel : model.GetInstanceID();
     }
 
-    private static void Log(int buffs, float factor)
+    private static void Log(int buffs, float factor, HeadhunterModelSource source)
     {
         if (!ModSettings.Debug.Enabled.Value)
         {
             return;
         }
 
-        Main.logger_instance?.Msg("Headhunter size: " + buffs + " buff(s), x" + factor);
+        Main.logger_instance?.Msg(
+            "Headhunter size: "
+                + buffs
+                + " buff(s), x"
+                + factor
+                + ", "
+                + source.ToString().ToLowerInvariant()
+        );
     }
 }

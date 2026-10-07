@@ -119,4 +119,29 @@ public sealed class HeadhunterRendererMatchTests
     {
         Assert.False(HeadhunterRendererMatch.ChangedInPlace(new IntPtr(5), new IntPtr(6)));
     }
+
+    [Theory]
+    [InlineData(0, 7, 7, HeadhunterRarityRestore.Clear)]
+    [InlineData(5, 5, 5, HeadhunterRarityRestore.Clear)]
+    [InlineData(5, 7, 7, HeadhunterRarityRestore.PutBack)]
+    [InlineData(5, 7, 9, HeadhunterRarityRestore.Keep)]
+    [InlineData(0, 7, 0, HeadhunterRarityRestore.Keep)]
+    [InlineData(0, 0, 0, HeadhunterRarityRestore.Keep)]
+    [InlineData(5, 0, 5, HeadhunterRarityRestore.Keep)]
+    public void RarityRestore_PicksStep(
+        long captured,
+        long tinted,
+        long current,
+        HeadhunterRarityRestore expected
+    )
+    {
+        Assert.Equal(
+            expected,
+            HeadhunterRendererMatch.RarityRestore(
+                new IntPtr(captured),
+                new IntPtr(tinted),
+                new IntPtr(current)
+            )
+        );
+    }
 }
