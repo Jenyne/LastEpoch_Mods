@@ -58,7 +58,7 @@ public static class HeadhunterConfigDefaults
         .Select(row => row.Entry)
         .ToList();
 
-    public static readonly HeadhunterSizeCurve ModelSize = new(2f, 20f);
+    public static readonly HeadhunterSizeCurve ModelSize = new(6f, 60f);
 
     public static readonly HeadhunterBarSettings Bar = new(0f, 1f, 1f, 10);
 

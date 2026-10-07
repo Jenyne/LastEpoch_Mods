@@ -216,8 +216,14 @@ public sealed class HeadhunterConfigWriterTests
     {
         var root = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
 
-        Assert.Equal(2f, (float)root["modelSize"]["perBuff"]);
-        Assert.Equal(20f, (float)root["modelSize"]["cap"]);
+        Assert.Equal(
+            HeadhunterConfigDefaults.ModelSize.PerBuffPercent,
+            (float)root["modelSize"]["perBuff"]
+        );
+        Assert.Equal(
+            HeadhunterConfigDefaults.ModelSize.CapPercent,
+            (float)root["modelSize"]["cap"]
+        );
     }
 
     [Fact]
