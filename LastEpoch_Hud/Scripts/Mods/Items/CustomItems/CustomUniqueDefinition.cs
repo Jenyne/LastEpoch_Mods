@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Affixes;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems;
 
@@ -20,7 +20,9 @@ public sealed class CustomUniqueDefinition
     public Func<CustomUniqueFlags> Flags { get; init; }
 
     /// <summary>Null when the item uses a base the game already has.</summary>
-    public Func<Il2CppSystem.Collections.Generic.List<ItemList.EquipmentImplicit>> Implicits { get; init; }
-    public Func<Il2CppSystem.Collections.Generic.List<UniqueItemMod>> Mods { get; init; }
-    public Func<Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry>> TooltipEntries { get; init; }
+    public IReadOnlyList<CustomBaseImplicit> Implicits { get; init; }
+    public IReadOnlyList<CustomUniqueMod> Mods { get; init; }
+
+    /// <summary>Read at registration, so a save setting can pick the entries.</summary>
+    public Func<IReadOnlyList<byte>> TooltipEntries { get; init; }
 }

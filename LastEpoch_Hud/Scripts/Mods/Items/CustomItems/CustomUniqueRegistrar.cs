@@ -141,7 +141,7 @@ public sealed class CustomUniqueRegistrar
         return new ItemList.EquipmentItem
         {
             classRequirement = ItemList.ClassRequirement.None,
-            implicits = _definition.Implicits(),
+            implicits = CustomItemAffixLists.Implicits(_definition.Implicits),
             subClassRequirement = ItemList.SubClassRequirement.None,
             cannotDrop = flags.BaseCannotDrop,
             itemTags = ItemLocationTag.None,
@@ -175,9 +175,9 @@ public sealed class CustomUniqueRegistrar
             subTypeForIM = 0,
             baseType = spec.BaseType,
             subTypes = SubTypes(),
-            mods = _definition.Mods(),
+            mods = CustomItemAffixLists.Mods(_definition.Mods),
             loreText = CustomItemLocalization.Text(CustomItemKeys.UniqueLore(spec.UniqueId)),
-            tooltipEntries = _definition.TooltipEntries(),
+            tooltipEntries = CustomItemAffixLists.TooltipEntries(_definition.TooltipEntries()),
             oldSubTypeID = 0,
             oldUniqueID = 0,
         };
