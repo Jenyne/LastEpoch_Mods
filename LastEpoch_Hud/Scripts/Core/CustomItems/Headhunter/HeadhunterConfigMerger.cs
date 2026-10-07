@@ -15,7 +15,7 @@ public static class HeadhunterConfigMerger
         {
             return new HeadhunterMergeResult(json, false, 0);
         }
-        if (HasUnmergeableStats(root))
+        if (HasUnmergeableLists(root))
         {
             return new HeadhunterMergeResult(json, false, 0);
         }
@@ -27,7 +27,8 @@ public static class HeadhunterConfigMerger
 
         int added =
             AddStats(root, defaults.Stats, fileVersion)
-            + AddFields(root, defaults.Fields, fileVersion);
+            + AddFields(root, defaults.Fields, fileVersion)
+            + AddAffixes(root, defaults.Affixes, fileVersion);
         root[HeadhunterConfigKeys.DefaultsVersion] = defaults.Version;
         return new HeadhunterMergeResult(root.ToString(Formatting.Indented), true, added);
     }
@@ -58,10 +59,15 @@ public static class HeadhunterConfigMerger
             : HeadhunterConfigDefaults.UnstampedDefaultsVersion;
     }
 
-    private static bool HasUnmergeableStats(JObject root)
+    private static bool HasUnmergeableLists(JObject root)
     {
-        JToken stats = root[HeadhunterConfigKeys.Stats];
-        return stats != null && stats is not JArray;
+        return IsNotList(root[HeadhunterConfigKeys.Stats])
+            || IsNotList(root[HeadhunterConfigKeys.AffixMap]);
+    }
+
+    private static bool IsNotList(JToken token)
+    {
+        return token != null && token is not JArray;
     }
 
     private static int AddStats(
@@ -102,6 +108,56 @@ public static class HeadhunterConfigMerger
             if (
                 string.Equals(name, entry.Stat, StringComparison.Ordinal)
                 && string.Equals(ReadTag(obj), entry.Tag, StringComparison.Ordinal)
+            )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private static int AddAffixes(
+        JObject root,
+        IReadOnlyList<HeadhunterVersionedAffix> affixes,
+        int fileVersion
+    )
+    {
+        if (affixes == null)
+        {
+            return 0;
+        }
+        var entries = root[HeadhunterConfigKeys.AffixMap] as JArray;
+        int added = 0;
+        foreach (HeadhunterVersionedAffix affix in affixes)
+        {
+            if (affix.Since <= fileVersion || ContainsModKey(entries, affix.Entry.ModKey))
+            {
+                continue;
+            }
+            if (entries == null)
+            {
+                entries = new JArray();
+                root[HeadhunterConfigKeys.AffixMap] = entries;
+            }
+            entries.Add(HeadhunterConfigWriter.BuildAffix(affix.Entry));
+            added++;
+        }
+        return added;
+    }
+
+    private static bool ContainsModKey(JArray entries, int modKey)
+    {
+        if (entries == null)
+        {
+            return false;
+        }
+        foreach (JToken entry in entries)
+        {
+            if (
+                entry is JObject obj
+                && obj[HeadhunterConfigKeys.ModKey] is JToken token
+                && HeadhunterConfigParser.TryGetInt(token, out int key)
+                && key == modKey
             )
             {
                 return true;

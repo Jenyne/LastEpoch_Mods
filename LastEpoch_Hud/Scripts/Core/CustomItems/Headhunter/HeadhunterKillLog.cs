@@ -15,11 +15,27 @@ public static class HeadhunterKillLog
     )
     {
         var text = new StringBuilder("Headhunter kill: kind=");
-        text.Append(kill.Kind).Append(" byMinion=").Append(kill.ByMinion).Append(" mods=[");
+        text.Append(kill.Kind).Append(" byMinion=").Append(kill.ByMinion).Append(" keys=[");
+        AppendKeys(text, kill.Mods);
+        text.Append("] mods=[");
         AppendMods(text, kill.ModStats, statName, tagName);
         text.Append("] actions=[");
         AppendActions(text, actions);
         return text.Append(']').ToString();
+    }
+
+    private static void AppendKeys(StringBuilder text, IReadOnlyList<KillMod> mods)
+    {
+        if (mods == null)
+        {
+            return;
+        }
+
+        for (int i = 0; i < mods.Count; i++)
+        {
+            AppendSeparator(text, i);
+            text.Append(mods[i].Key);
+        }
     }
 
     private static void AppendMods(

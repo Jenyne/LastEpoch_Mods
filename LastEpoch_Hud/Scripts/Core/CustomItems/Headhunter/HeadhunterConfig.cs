@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
@@ -11,4 +12,6 @@ public sealed class HeadhunterConfig
     public int MaxStacks { get; init; } = HeadhunterConfigDefaults.MaxStacks;
     public HeadhunterTriggers Triggers { get; init; }
     public IReadOnlyList<HeadhunterStatEntry> Stats { get; init; }
+    public IReadOnlyList<HeadhunterAffixEntry> AffixMap { get; init; } =
+        Array.Empty<HeadhunterAffixEntry>();
 }

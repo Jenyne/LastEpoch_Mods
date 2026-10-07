@@ -7,4 +7,7 @@ public readonly record struct HeadhunterStatEntry(
     float Increased,
     bool Enabled,
     string Tag = null
-);
+)
+{
+    public string RowText => Tag == null ? Stat : Stat + "_" + Tag;
+}

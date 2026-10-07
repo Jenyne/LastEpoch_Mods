@@ -26,6 +26,7 @@ public static class HeadhunterConfigParser
             MaxStacks = ReadMaxStacks(root, problems),
             Triggers = ReadTriggers(root, problems),
             Stats = ReadStats(root, knownStats, problems),
+            AffixMap = HeadhunterAffixMapParser.Read(root, problems),
         };
         return Result(config, problems, true);
     }
@@ -43,6 +44,11 @@ public static class HeadhunterConfigParser
         }
         value = (int)number;
         return true;
+    }
+
+    internal static void Report(List<HeadhunterConfigProblem> problems, string path, string message)
+    {
+        problems.Add(new HeadhunterConfigProblem(path, message));
     }
 
     private static HeadhunterConfigParseResult Result(
@@ -409,10 +415,5 @@ public static class HeadhunterConfigParser
         }
         value = flag;
         return true;
-    }
-
-    private static void Report(List<HeadhunterConfigProblem> problems, string path, string message)
-    {
-        problems.Add(new HeadhunterConfigProblem(path, message));
     }
 }

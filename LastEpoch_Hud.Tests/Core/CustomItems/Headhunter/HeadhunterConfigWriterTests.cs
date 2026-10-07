@@ -114,4 +114,62 @@ public sealed class HeadhunterConfigWriterTests
         Assert.Empty(result.Problems);
         Assert.Equal(config.Stats, result.Config.Stats);
     }
+
+    [Fact]
+    public void Write_AffixMap_WritesEntriesAfterStats()
+    {
+        HeadhunterConfig config = HeadhunterTestData.ConfigWithMap(
+            [HeadhunterTestData.Affix(100, "FakeA", "FakeB_FakeTag")],
+            HeadhunterTestData.Entry("FakeA")
+        );
+
+        var root = JObject.Parse(HeadhunterConfigWriter.Write(config));
+
+        var names = root.Properties().Select(property => property.Name).ToList();
+        Assert.Equal(names.IndexOf("stats") + 1, names.IndexOf("affixMap"));
+        Assert.Equal(100, (int)root["affixMap"][0]["modKey"]);
+        Assert.Equal("FakeNote", (string)root["affixMap"][0]["note"]);
+        Assert.Equal(
+            new[] { "FakeA", "FakeB_FakeTag" },
+            root["affixMap"][0]["rows"].Select(row => (string)row)
+        );
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void Write_AffixEntryWithoutNote_OmitsNote(string note)
+    {
+        HeadhunterConfig config = HeadhunterTestData.ConfigWithMap(
+            [new HeadhunterAffixEntry(100, note, ["FakeA"])],
+            HeadhunterTestData.Entry("FakeA")
+        );
+
+        var root = JObject.Parse(HeadhunterConfigWriter.Write(config));
+
+        Assert.Null(((JObject)root["affixMap"][0]).Property("note"));
+    }
+
+    [Fact]
+    public void Write_Parse_RoundTrip_KeepsAffixMap()
+    {
+        HeadhunterAffixEntry[] map =
+        [
+            HeadhunterTestData.Affix(100, "FakeA", "FakeB_FakeTag"),
+            new HeadhunterAffixEntry(-200, null, []),
+        ];
+        HeadhunterConfig config = HeadhunterTestData.ConfigWithMap(
+            map,
+            HeadhunterTestData.Entry("FakeA")
+        );
+        var known = new HashSet<string>(StringComparer.Ordinal) { "FakeA" };
+
+        HeadhunterConfigParseResult result = HeadhunterConfigParser.Parse(
+            HeadhunterConfigWriter.Write(config),
+            known
+        );
+
+        Assert.Empty(result.Problems);
+        Assert.Equivalent(map, result.Config.AffixMap, strict: true);
+    }
 }

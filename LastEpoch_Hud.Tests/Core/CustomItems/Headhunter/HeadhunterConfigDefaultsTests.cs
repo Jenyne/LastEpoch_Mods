@@ -99,6 +99,7 @@ public sealed class HeadhunterConfigDefaultsTests
         int newest = HeadhunterConfigDefaults
             .VersionedStats.Select(row => row.Since)
             .Concat(HeadhunterConfigDefaults.VersionedFields.Select(field => field.Since))
+            .Concat(HeadhunterAffixDefaults.VersionedAffixes.Select(affix => affix.Since))
             .Max();
 
         Assert.Equal(HeadhunterConfigDefaults.DefaultsVersion, newest);

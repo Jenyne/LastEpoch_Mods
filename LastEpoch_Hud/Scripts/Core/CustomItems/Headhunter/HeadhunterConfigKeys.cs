@@ -20,4 +20,8 @@ internal static class HeadhunterConfigKeys
     public const string Added = "added";
     public const string Increased = "increased";
     public const string Enabled = "enabled";
+    public const string AffixMap = "affixMap";
+    public const string ModKey = "modKey";
+    public const string Note = "note";
+    public const string Rows = "rows";
 }

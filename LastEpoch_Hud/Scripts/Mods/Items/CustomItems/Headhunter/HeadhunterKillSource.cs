@@ -20,6 +20,7 @@ internal static class HeadhunterKillSource
         Actor
     >(OnMinionKill);
     private static readonly List<HeadhunterStatKey> _modStats = new();
+    private static readonly List<KillMod> _mods = new();
     private static readonly KillDeduper _deduper = new();
     private static readonly IntervalGate _trackerRetry = new(1.0);
     private static System.IntPtr _hookedActor;
@@ -159,13 +160,14 @@ internal static class HeadhunterKillSource
             return;
         }
 
-        ReadModStats(killed);
-        HeadhunterKillHandler.Handle(new KillInfo(kind, byMinion, _modStats));
+        ReadMods(killed);
+        HeadhunterKillHandler.Handle(new KillInfo(kind, byMinion, _modStats, _mods));
     }
 
-    private static void ReadModStats(Actor killed)
+    private static void ReadMods(Actor killed)
     {
         _modStats.Clear();
+        _mods.Clear();
         var manager = MonsterRarityManager.getInstance();
         if (manager.IsNullOrDestroyed())
         {
@@ -180,11 +182,11 @@ internal static class HeadhunterKillSource
 
         foreach (int key in keys)
         {
-            AddModStats(manager, key);
+            AddMod(manager, key);
         }
     }
 
-    private static void AddModStats(MonsterRarityManager manager, int key)
+    private static void AddMod(MonsterRarityManager manager, int key)
     {
         if (!manager.TryGetMonsterModFromKey(key, out MonsterMod mod))
         {
@@ -201,6 +203,13 @@ internal static class HeadhunterKillSource
             return;
         }
 
+        int start = _modStats.Count;
+        AddStats(mod);
+        _mods.Add(new KillMod(mod.modKey, start, _modStats.Count - start));
+    }
+
+    private static void AddStats(MonsterMod mod)
+    {
         StatsMonsterMod statsMod = mod.TryCast<StatsMonsterMod>();
         if (statsMod.IsNullOrDestroyed() || statsMod.stats == null)
         {

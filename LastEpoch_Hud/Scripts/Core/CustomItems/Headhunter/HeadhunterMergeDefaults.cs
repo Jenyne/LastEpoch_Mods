@@ -8,4 +8,5 @@ public sealed class HeadhunterMergeDefaults
     public int Version { get; init; }
     public IReadOnlyList<HeadhunterVersionedStat> Stats { get; init; }
     public IReadOnlyList<HeadhunterVersionedField> Fields { get; init; }
+    public IReadOnlyList<HeadhunterVersionedAffix> Affixes { get; init; }
 }

@@ -39,6 +39,41 @@ public sealed class HeadhunterKillLogTests
     }
 
     [Fact]
+    public void Format_ListsModKeysInOrder_RightAfterByMinion()
+    {
+        string line = HeadhunterKillLog.Format(
+            new KillInfo(
+                KillKind.Rare,
+                false,
+                HeadhunterTestData.Mods(1),
+                [new KillMod(300, 0, 1), new KillMod(100, 0, 0)]
+            ),
+            [],
+            _statName,
+            _tagName
+        );
+
+        Assert.Contains("byMinion=False keys=[300, 100]", line);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Format_NoMods_EmptyKeys(bool useNull)
+    {
+        IReadOnlyList<KillMod> mods = useNull ? null : [];
+
+        string line = HeadhunterKillLog.Format(
+            new KillInfo(KillKind.Rare, false, HeadhunterTestData.Mods(1), mods),
+            [],
+            _statName,
+            _tagName
+        );
+
+        Assert.Contains("byMinion=False keys=[]", line);
+    }
+
+    [Fact]
     public void Format_ListsModNamesInKillOrder()
     {
         string line = HeadhunterKillLog.Format(

@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
@@ -15,12 +16,21 @@ public static class HeadhunterConfigResolver
         ICollection<HeadhunterConfigProblem> problems
     )
     {
+        var rowByText = new Dictionary<string, int>(StringComparer.Ordinal);
+        List<HeadhunterBuffStat> stats = ResolveStats(
+            config.Stats,
+            statIds,
+            tagIds,
+            rowByText,
+            problems
+        );
         return new HeadhunterResolvedConfig(
             config.Mechanic,
             config.DurationSeconds,
             config.MaxStacks,
             config.Triggers,
-            ResolveStats(config.Stats, statIds, tagIds, problems)
+            stats,
+            HeadhunterAffixMapResolver.Resolve(config.AffixMap, config.Stats, rowByText, problems)
         );
     }
 
@@ -28,6 +38,7 @@ public static class HeadhunterConfigResolver
         IReadOnlyList<HeadhunterStatEntry> entries,
         IReadOnlyDictionary<string, int> statIds,
         IReadOnlyDictionary<string, int> tagIds,
+        Dictionary<string, int> rowByText,
         ICollection<HeadhunterConfigProblem> problems
     )
     {
@@ -64,6 +75,7 @@ public static class HeadhunterConfigResolver
                 continue;
             }
 
+            rowByText.TryAdd(entry.RowText, result.Count);
             result.Add(ToBuffStat(entry, statId, tags));
         }
 

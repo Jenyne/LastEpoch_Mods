@@ -40,6 +40,41 @@ internal static class HeadhunterTestData
         };
     }
 
+    public static HeadhunterConfig ConfigWithMap(
+        HeadhunterAffixEntry[] map,
+        params HeadhunterStatEntry[] stats
+    )
+    {
+        return new HeadhunterConfig
+        {
+            Version = 1,
+            Mechanic = "fake_mechanic",
+            DurationSeconds = Duration,
+            MaxStacks = MaxStacks,
+            Triggers = AllTriggers,
+            Stats = stats,
+            AffixMap = map,
+        };
+    }
+
+    public static HeadhunterAffixEntry Affix(int modKey, params string[] rows)
+    {
+        return new HeadhunterAffixEntry(modKey, "FakeNote", rows);
+    }
+
+    public static KillInfo Kill(KillKind kind, params (int Key, HeadhunterStatKey[] Stats)[] mods)
+    {
+        var flat = new List<HeadhunterStatKey>();
+        var ranges = new List<KillMod>();
+        foreach ((int key, HeadhunterStatKey[] stats) in mods)
+        {
+            ranges.Add(new KillMod(key, flat.Count, stats.Length));
+            flat.AddRange(stats);
+        }
+
+        return new KillInfo(kind, false, flat, ranges);
+    }
+
     public static HeadhunterStatEntry Entry(string stat, float added = 0f, float increased = 0f)
     {
         return new HeadhunterStatEntry(stat, added, increased, true);

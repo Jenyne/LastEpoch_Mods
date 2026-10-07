@@ -302,6 +302,7 @@ public sealed class HeadhunterConfigMergerTests
             DurationSeconds = HeadhunterConfigDefaults.DurationSeconds,
             Triggers = new HeadhunterTriggers(false, true, true, true, true),
             Stats = HeadhunterConfigDefaults.Stats,
+            AffixMap = HeadhunterAffixDefaults.AffixMap,
         };
         var file = JObject.Parse(HeadhunterConfigWriter.Write(config));
         ((JObject)file["triggers"]).Remove("magic");
@@ -358,6 +359,7 @@ public sealed class HeadhunterConfigMergerTests
                 .VersionedStats.Where(row => row.Since <= 4)
                 .Select(row => row.Entry)
                 .ToList(),
+            AffixMap = HeadhunterAffixDefaults.AffixMap,
         };
         var file = JObject.Parse(HeadhunterConfigWriter.Write(config));
         file["stats"][0]["added"] = 123;
@@ -434,6 +436,149 @@ public sealed class HeadhunterConfigMergerTests
         Assert.Equal(1, result.Added);
         Assert.Equal(2, rows.Count);
         Assert.Null(((JObject)rows[1]).Property("tag"));
+    }
+
+    [Fact]
+    public void Merge_NoAffixMap_CreatesSection()
+    {
+        HeadhunterMergeResult result = MergeAffix("""{"defaultsVersion":1}""");
+
+        Assert.Equal(new[] { 100 }, ModKeys(result));
+        Assert.Equal(1, result.Added);
+    }
+
+    [Fact]
+    public void Merge_FileHasModKey_KeepsPlayerRows()
+    {
+        HeadhunterMergeResult result = MergeAffix(
+            """{"defaultsVersion":1,"affixMap":[{"modKey":100,"rows":["FakeZ"]}]}"""
+        );
+
+        var entry = (JObject)JObject.Parse(result.Text)["affixMap"][0];
+        Assert.Equal(0, result.Added);
+        Assert.Equal("FakeZ", (string)entry["rows"][0]);
+        Assert.Single((JArray)JObject.Parse(result.Text)["affixMap"]);
+    }
+
+    [Fact]
+    public void Merge_NewerAffix_AppendedAfterPlayerEntries()
+    {
+        HeadhunterMergeResult result = MergeAffix(
+            """{"defaultsVersion":1,"affixMap":[{"modKey":7,"rows":[]}]}"""
+        );
+
+        Assert.Equal(new[] { 7, 100 }, ModKeys(result));
+        Assert.Equal(1, result.Added);
+    }
+
+    [Fact]
+    public void Merge_AppendedAffix_CarriesNoteAndRows()
+    {
+        HeadhunterMergeResult result = MergeAffix("""{"defaultsVersion":1}""");
+
+        var entry = (JObject)JObject.Parse(result.Text)["affixMap"][0];
+        Assert.Equal("FakeNote", (string)entry["note"]);
+        Assert.Equal("FakeA", (string)entry["rows"][0]);
+    }
+
+    [Fact]
+    public void Merge_StampAtSince_DeletedKeyNotReAdded()
+    {
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            """{"defaultsVersion":2,"affixMap":[]}""",
+            AffixDefaults(3, HeadhunterTestData.Affix(100, "FakeA"), 2)
+        );
+
+        Assert.Empty(ModKeys(result));
+        Assert.Equal(0, result.Added);
+    }
+
+    [Fact]
+    public void Merge_AffixMapNotList_NoMerge()
+    {
+        const string json = """{"defaultsVersion":1,"affixMap":5}""";
+
+        HeadhunterMergeResult result = MergeAffix(json);
+
+        Assert.False(result.Changed);
+        Assert.Equal(json, result.Text);
+        Assert.Equal(0, result.Added);
+    }
+
+    [Fact]
+    public void Merge_MalformedAffixEntries_Ignored()
+    {
+        HeadhunterMergeResult result = MergeAffix(
+            """{"defaultsVersion":1,"affixMap":[5,{"modKey":"x"},{"rows":[]}]}"""
+        );
+
+        var entries = (JArray)JObject.Parse(result.Text)["affixMap"];
+        Assert.Equal(4, entries.Count);
+        Assert.Equal(100, (int)entries[3]["modKey"]);
+        Assert.Equal(1, result.Added);
+    }
+
+    [Fact]
+    public void Merge_Stamp5File_AddsDefaultAffixMap()
+    {
+        var config = new HeadhunterConfig
+        {
+            Version = HeadhunterConfigDefaults.CurrentVersion,
+            Mechanic = HeadhunterConfigDefaults.Mechanic,
+            DurationSeconds = HeadhunterConfigDefaults.DurationSeconds,
+            MaxStacks = HeadhunterConfigDefaults.MaxStacks,
+            Triggers = HeadhunterConfigDefaults.Triggers,
+            Stats = HeadhunterConfigDefaults.Stats,
+        };
+        var file = JObject.Parse(HeadhunterConfigWriter.Write(config));
+        file.Remove("affixMap");
+        file["defaultsVersion"] = 5;
+        var known = HeadhunterConfigDefaults
+            .Stats.Select(entry => entry.Stat)
+            .ToHashSet(StringComparer.Ordinal);
+
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            file.ToString(),
+            HeadhunterConfigDefaults.MergeDefaults
+        );
+
+        HeadhunterConfigParseResult parsed = HeadhunterConfigParser.Parse(result.Text, known);
+        Assert.Empty(parsed.Problems);
+        Assert.Equal(HeadhunterAffixDefaults.VersionedAffixes.Count, result.Added);
+        Assert.Equal(
+            HeadhunterAffixDefaults.AffixMap.Select(entry => entry.ModKey),
+            parsed.Config.AffixMap.Select(entry => entry.ModKey)
+        );
+    }
+
+    private static HeadhunterMergeResult MergeAffix(string json)
+    {
+        return HeadhunterConfigMerger.Merge(
+            json,
+            AffixDefaults(2, HeadhunterTestData.Affix(100, "FakeA"), 2)
+        );
+    }
+
+    private static HeadhunterMergeDefaults AffixDefaults(
+        int version,
+        HeadhunterAffixEntry entry,
+        int since
+    )
+    {
+        return new HeadhunterMergeDefaults
+        {
+            Version = version,
+            Stats = new List<HeadhunterVersionedStat>(),
+            Fields = new List<HeadhunterVersionedField>(),
+            Affixes = new List<HeadhunterVersionedAffix> { new(entry, since) },
+        };
+    }
+
+    private static List<int> ModKeys(HeadhunterMergeResult result)
+    {
+        return ((JArray)JObject.Parse(result.Text)["affixMap"])
+            .Select(row => (int)row["modKey"])
+            .ToList();
     }
 
     private static int CountSince5()

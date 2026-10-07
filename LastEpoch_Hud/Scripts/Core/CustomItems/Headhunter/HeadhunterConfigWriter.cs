@@ -18,6 +18,7 @@ public static class HeadhunterConfigWriter
             [HeadhunterConfigKeys.MaxStacks] = config.MaxStacks,
             [HeadhunterConfigKeys.Triggers] = BuildTriggers(config.Triggers),
             [HeadhunterConfigKeys.Stats] = BuildStats(config.Stats),
+            [HeadhunterConfigKeys.AffixMap] = BuildAffixMap(config.AffixMap),
         };
         return root.ToString(Formatting.Indented);
     }
@@ -36,6 +37,18 @@ public static class HeadhunterConfigWriter
         return row;
     }
 
+    internal static JObject BuildAffix(HeadhunterAffixEntry entry)
+    {
+        var row = new JObject { [HeadhunterConfigKeys.ModKey] = entry.ModKey };
+        if (!string.IsNullOrEmpty(entry.Note))
+        {
+            row[HeadhunterConfigKeys.Note] = entry.Note;
+        }
+
+        row[HeadhunterConfigKeys.Rows] = new JArray(entry.Rows);
+        return row;
+    }
+
     private static JObject BuildTriggers(HeadhunterTriggers triggers)
     {
         return new JObject
@@ -46,6 +59,16 @@ public static class HeadhunterConfigWriter
             [HeadhunterConfigKeys.Miniboss] = triggers.Miniboss,
             [HeadhunterConfigKeys.MinionKills] = triggers.MinionKills,
         };
+    }
+
+    private static JArray BuildAffixMap(IReadOnlyList<HeadhunterAffixEntry> map)
+    {
+        var array = new JArray();
+        foreach (HeadhunterAffixEntry entry in map)
+        {
+            array.Add(BuildAffix(entry));
+        }
+        return array;
     }
 
     private static JArray BuildStats(IReadOnlyList<HeadhunterStatEntry> stats)

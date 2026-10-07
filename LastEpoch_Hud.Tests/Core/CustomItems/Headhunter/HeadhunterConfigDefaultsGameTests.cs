@@ -39,6 +39,7 @@ public sealed class HeadhunterConfigDefaultsGameTests
 
         Assert.Empty(problems);
         Assert.Equal(HeadhunterConfigDefaults.Stats.Count, resolved.Stats.Count);
+        Assert.Equal(HeadhunterAffixDefaults.AffixMap.Count, resolved.AffixCount);
     }
 
     private static HashSet<string> ReadStatNames()

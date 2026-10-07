@@ -36,7 +36,12 @@ internal static class HeadhunterConfigLoader
         Current = result.Config;
         ResolveAndCreateMechanic();
         Main.logger_instance?.Msg(
-            "Headhunter config loaded: " + Current.Stats.Count + " stat(s) from " + _store.FilePath
+            "Headhunter config loaded: "
+                + Current.Stats.Count
+                + " stat(s), "
+                + Resolved.AffixCount
+                + " affix mapping(s) from "
+                + _store.FilePath
         );
         _changes.Remember(_store.LastWriteUtc());
     }
@@ -68,7 +73,11 @@ internal static class HeadhunterConfigLoader
         Current = result.Config;
         ResolveAndCreateMechanic();
         Main.logger_instance?.Msg(
-            "Headhunter config reloaded: " + Current.Stats.Count + " stat(s)"
+            "Headhunter config reloaded: "
+                + Current.Stats.Count
+                + " stat(s), "
+                + Resolved.AffixCount
+                + " affix mapping(s)"
         );
     }
 
