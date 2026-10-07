@@ -5,7 +5,7 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 /// <summary>Config ready for per-kill use: game stat ids, fractions, buff names.</summary>
 public sealed class HeadhunterResolvedConfig
 {
-    private readonly Dictionary<int, int> _rowById = new();
+    private readonly Dictionary<HeadhunterStatKey, int> _rowByKey = new();
 
     public HeadhunterResolvedConfig(
         string mechanic,
@@ -22,7 +22,7 @@ public sealed class HeadhunterResolvedConfig
         Stats = stats;
         for (int i = 0; i < stats.Count; i++)
         {
-            _rowById.Add(stats[i].StatId, i);
+            _rowByKey.Add(stats[i].Key, i);
         }
     }
 
@@ -32,8 +32,8 @@ public sealed class HeadhunterResolvedConfig
     public HeadhunterTriggers Triggers { get; }
     public IReadOnlyList<HeadhunterBuffStat> Stats { get; }
 
-    public bool TryGetRow(int statId, out int row)
+    public bool TryGetRow(HeadhunterStatKey key, out int row)
     {
-        return _rowById.TryGetValue(statId, out row);
+        return _rowByKey.TryGetValue(key, out row);
     }
 }

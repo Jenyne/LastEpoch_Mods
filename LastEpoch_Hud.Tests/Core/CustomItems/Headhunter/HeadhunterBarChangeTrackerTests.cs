@@ -58,6 +58,15 @@ public sealed class HeadhunterBarChangeTrackerTests
         Assert.True(tracker.Update(Entries()));
     }
 
+    [Fact]
+    public void Update_SameStatDifferentTags_True()
+    {
+        HeadhunterBarChangeTracker tracker = new();
+        tracker.Update([new(1, 5, 0.5f, 0, 1)]);
+
+        Assert.True(tracker.Update([new(1, 5, 0.5f, 1, 1, 8)]));
+    }
+
     private static HeadhunterBarEntry[] Entries(params int[] ids)
     {
         return ids.Select(id => new HeadhunterBarEntry(id, 5, 0.5f, 0, 1)).ToArray();

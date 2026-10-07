@@ -62,7 +62,7 @@ public sealed class RareModsMechanic : IHeadhunterMechanic
             return;
         }
 
-        AddKillStats(kill.ModStatIds);
+        AddKillStats(kill.ModStats);
     }
 
     private void AddRandomRow()
@@ -96,16 +96,16 @@ public sealed class RareModsMechanic : IHeadhunterMechanic
         }
     }
 
-    private void AddKillStats(IReadOnlyList<int> ids)
+    private void AddKillStats(IReadOnlyList<HeadhunterStatKey> mods)
     {
-        if (ids == null)
+        if (mods == null)
         {
             return;
         }
 
-        for (int i = 0; i < ids.Count; i++)
+        for (int i = 0; i < mods.Count; i++)
         {
-            if (!_config.TryGetRow(ids[i], out int row) || !_handled.Add(row))
+            if (!_config.TryGetRow(mods[i], out int row) || !_handled.Add(row))
             {
                 continue;
             }
@@ -140,7 +140,8 @@ public sealed class RareModsMechanic : IHeadhunterMechanic
                 stat.AddedFor(stacks),
                 stat.IncreasedFor(stacks),
                 _config.DurationSeconds,
-                stacks
+                stacks,
+                stat.Tags
             )
         );
     }

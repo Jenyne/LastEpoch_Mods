@@ -15,6 +15,13 @@ internal static class HeadhunterTestData
         ["FakeC"] = 3,
     };
 
+    public static readonly IReadOnlyDictionary<string, int> TagIds = new Dictionary<string, int>
+    {
+        ["FakeTag"] = 8,
+        ["OtherTag"] = 16,
+        ["ZeroTag"] = 0,
+    };
+
     public static HeadhunterTriggers AllTriggers => new(true, true, true, true, true);
 
     public static HeadhunterConfig Config(
@@ -38,6 +45,21 @@ internal static class HeadhunterTestData
         return new HeadhunterStatEntry(stat, added, increased, true);
     }
 
+    public static HeadhunterStatEntry Tagged(
+        string stat,
+        string tag,
+        float added = 0f,
+        float increased = 0f
+    )
+    {
+        return new HeadhunterStatEntry(stat, added, increased, true, tag);
+    }
+
+    public static HeadhunterStatKey[] Mods(params int[] statIds)
+    {
+        return statIds.Select(id => new HeadhunterStatKey(id, 0)).ToArray();
+    }
+
     public static HeadhunterStatEntry Disabled(string stat)
     {
         return new HeadhunterStatEntry(stat, 0f, 0f, false);
@@ -48,6 +70,7 @@ internal static class HeadhunterTestData
         return HeadhunterConfigResolver.Resolve(
             config,
             StatIds,
+            TagIds,
             new List<HeadhunterConfigProblem>()
         );
     }

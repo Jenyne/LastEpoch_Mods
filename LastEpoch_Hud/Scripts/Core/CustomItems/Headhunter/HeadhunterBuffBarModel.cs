@@ -25,13 +25,19 @@ public sealed class HeadhunterBuffBarModel
         int count = Math.Min(stats.Count, remaining.Count);
         for (int i = 0; i < count; i++)
         {
-            AddIfLive(stats[i].StatId, i, ShownStacks(stacks, i), remaining[i], durationSeconds);
+            AddIfLive(stats[i], i, ShownStacks(stacks, i), remaining[i], durationSeconds);
         }
 
         return _entries;
     }
 
-    private void AddIfLive(int statId, int row, int stacks, float remaining, float duration)
+    private void AddIfLive(
+        HeadhunterBuffStat stat,
+        int row,
+        int stacks,
+        float remaining,
+        float duration
+    )
     {
         if (remaining <= 0f)
         {
@@ -40,11 +46,12 @@ public sealed class HeadhunterBuffBarModel
 
         _entries.Add(
             new HeadhunterBarEntry(
-                statId,
+                stat.StatId,
                 (int)Math.Ceiling(remaining),
                 Elapsed(remaining, duration),
                 row,
-                stacks
+                stacks,
+                stat.Tags
             )
         );
     }

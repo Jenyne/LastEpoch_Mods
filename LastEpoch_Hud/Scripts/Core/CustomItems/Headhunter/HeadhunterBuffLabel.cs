@@ -13,11 +13,14 @@ public static class HeadhunterBuffLabel
         float added,
         float increased,
         bool addedAsPercent,
-        int stacks
+        int stacks,
+        string gameTagName = null,
+        string enumTagName = null
     )
     {
         string name = string.IsNullOrEmpty(gameName) ? StatNameWords.Split(enumName) : gameName;
-        StringBuilder text = new(name);
+        string tag = TagText(gameTagName, enumTagName);
+        StringBuilder text = new(tag == null ? name : tag + " " + name);
         AppendValue(text, addedAsPercent ? added * 100f : added, addedAsPercent);
         AppendValue(text, increased * 100f, true);
         if (stacks > 1)
@@ -26,6 +29,16 @@ public static class HeadhunterBuffLabel
         }
 
         return text.ToString();
+    }
+
+    private static string TagText(string gameTagName, string enumTagName)
+    {
+        if (!string.IsNullOrEmpty(gameTagName))
+        {
+            return gameTagName;
+        }
+
+        return string.IsNullOrEmpty(enumTagName) ? null : enumTagName;
     }
 
     private static void AppendValue(StringBuilder text, float value, bool percent)

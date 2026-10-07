@@ -179,4 +179,19 @@ public sealed class HeadhunterBuffBarModelTests
 
         Assert.Equal(1, Assert.Single(result).Stacks);
     }
+
+    [Fact]
+    public void Build_TaggedRow_EntryCarriesTags()
+    {
+        HeadhunterBuffStat[] stats = [new(1, "HH_FakeA_FakeTag", 0, 0, 8)];
+
+        IReadOnlyList<HeadhunterBarEntry> result = new HeadhunterBuffBarModel().Build(
+            stats,
+            new[] { 10f },
+            null,
+            60f
+        );
+
+        Assert.Equal(8, Assert.Single(result).Tags);
+    }
 }

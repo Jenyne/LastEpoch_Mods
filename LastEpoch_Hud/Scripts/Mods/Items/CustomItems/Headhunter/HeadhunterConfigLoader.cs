@@ -12,6 +12,7 @@ internal static class HeadhunterConfigLoader
     private static readonly CustomItemConfigStore _store = new("headhunter.json");
 
     private static readonly Dictionary<string, int> _statIds = EnumIdMap.Build(typeof(SP));
+    private static readonly Dictionary<string, int> _tagIds = EnumIdMap.Build(typeof(AT));
 
     private static readonly HashSet<string> _knownStats = new(
         _statIds.Keys,
@@ -108,6 +109,7 @@ internal static class HeadhunterConfigLoader
         HeadhunterResolvedConfig resolved = HeadhunterConfigResolver.Resolve(
             Current,
             _statIds,
+            _tagIds,
             problems
         );
         Stacks = new HeadhunterStackState(resolved.Stats.Count);

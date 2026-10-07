@@ -111,4 +111,31 @@ public sealed class HeadhunterBuffLabelTests
 
         Assert.StartsWith("Foo Bar", label);
     }
+
+    [Fact]
+    public void Format_Tagged_PrefixesGameTagName()
+    {
+        string label = HeadhunterBuffLabel.Format("Gn", "FooBar", 0f, 0.1f, false, 1, "Gt", "Et");
+
+        Assert.StartsWith("Gt Gn", label);
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    public void Format_Tagged_NoGameTagName_UsesEnumTagName(string gameTagName)
+    {
+        string label = HeadhunterBuffLabel.Format(
+            "Gn",
+            "FooBar",
+            0f,
+            0.1f,
+            false,
+            1,
+            gameTagName,
+            "Et"
+        );
+
+        Assert.StartsWith("Et Gn", label);
+    }
 }

@@ -16,6 +16,7 @@ internal static class HeadhunterConfigKeys
     public const string MinionKills = "minionKills";
     public const string Stats = "stats";
     public const string Stat = "stat";
+    public const string Tag = "tag";
     public const string Added = "added";
     public const string Increased = "increased";
     public const string Enabled = "enabled";

@@ -22,7 +22,8 @@ public sealed class HeadhunterClearRule
                     stats[i].Added,
                     stats[i].Increased,
                     config.DurationSeconds,
-                    0
+                    0,
+                    stats[i].Tags
                 )
             );
         }

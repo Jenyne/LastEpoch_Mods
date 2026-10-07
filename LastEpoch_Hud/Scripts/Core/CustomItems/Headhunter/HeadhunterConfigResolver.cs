@@ -11,6 +11,7 @@ public static class HeadhunterConfigResolver
     public static HeadhunterResolvedConfig Resolve(
         HeadhunterConfig config,
         IReadOnlyDictionary<string, int> statIds,
+        IReadOnlyDictionary<string, int> tagIds,
         ICollection<HeadhunterConfigProblem> problems
     )
     {
@@ -19,18 +20,19 @@ public static class HeadhunterConfigResolver
             config.DurationSeconds,
             config.MaxStacks,
             config.Triggers,
-            ResolveStats(config.Stats, statIds, problems)
+            ResolveStats(config.Stats, statIds, tagIds, problems)
         );
     }
 
     private static List<HeadhunterBuffStat> ResolveStats(
         IReadOnlyList<HeadhunterStatEntry> entries,
         IReadOnlyDictionary<string, int> statIds,
+        IReadOnlyDictionary<string, int> tagIds,
         ICollection<HeadhunterConfigProblem> problems
     )
     {
         var result = new List<HeadhunterBuffStat>();
-        var seen = new HashSet<int>();
+        var seen = new HashSet<HeadhunterStatKey>();
         for (int i = 0; i < entries.Count; i++)
         {
             HeadhunterStatEntry entry = entries[i];
@@ -41,39 +43,67 @@ public static class HeadhunterConfigResolver
 
             if (!statIds.TryGetValue(entry.Stat, out int statId))
             {
-                AddProblem(problems, i, "Unknown stat: " + entry.Stat);
+                AddProblem(problems, i, HeadhunterConfigKeys.Stat, "Unknown stat: " + entry.Stat);
                 continue;
             }
 
-            if (!seen.Add(statId))
+            if (!TryResolveTag(entry, tagIds, out int tags))
             {
-                AddProblem(problems, i, "Stat shares a game id with an earlier row: " + entry.Stat);
+                AddProblem(problems, i, HeadhunterConfigKeys.Tag, "Unknown tag: " + entry.Tag);
                 continue;
             }
 
-            result.Add(ToBuffStat(entry, statId));
+            if (!seen.Add(new HeadhunterStatKey(statId, tags)))
+            {
+                AddProblem(
+                    problems,
+                    i,
+                    HeadhunterConfigKeys.Stat,
+                    "Stat and tag share a game id with an earlier row: " + entry.Stat
+                );
+                continue;
+            }
+
+            result.Add(ToBuffStat(entry, statId, tags));
         }
 
         return result;
     }
 
+    private static bool TryResolveTag(
+        HeadhunterStatEntry entry,
+        IReadOnlyDictionary<string, int> tagIds,
+        out int tags
+    )
+    {
+        tags = 0;
+        return entry.Tag == null || tagIds.TryGetValue(entry.Tag, out tags);
+    }
+
     private static void AddProblem(
         ICollection<HeadhunterConfigProblem> problems,
         int index,
+        string field,
         string message
     )
     {
-        string path = HeadhunterConfigKeys.Stats + "[" + index + "]." + HeadhunterConfigKeys.Stat;
+        string path = HeadhunterConfigKeys.Stats + "[" + index + "]." + field;
         problems.Add(new HeadhunterConfigProblem(path, message));
     }
 
-    private static HeadhunterBuffStat ToBuffStat(HeadhunterStatEntry entry, int statId)
+    private static HeadhunterBuffStat ToBuffStat(HeadhunterStatEntry entry, int statId, int tags)
     {
         return new HeadhunterBuffStat(
             statId,
-            BuffPrefix + entry.Stat,
+            BuffName(entry, tags),
             entry.Added,
-            entry.Increased / PercentPerFraction
+            entry.Increased / PercentPerFraction,
+            tags
         );
+    }
+
+    private static string BuffName(HeadhunterStatEntry entry, int tags)
+    {
+        return tags == 0 ? BuffPrefix + entry.Stat : BuffPrefix + entry.Stat + "_" + entry.Tag;
     }
 }

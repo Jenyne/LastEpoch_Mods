@@ -59,7 +59,9 @@ internal static class HeadhunterBarHover
             stat.AddedFor(stacks),
             stat.IncreasedFor(stacks),
             addedAsPercent,
-            stacks
+            stacks,
+            HeadhunterStatNames.GameTagName(stat.Tags),
+            stat.Tags == 0 ? null : HeadhunterStatNames.TagEnumName(stat.Tags)
         );
         HeadhunterBuffBarView.ShowTooltip(_index, label);
     }

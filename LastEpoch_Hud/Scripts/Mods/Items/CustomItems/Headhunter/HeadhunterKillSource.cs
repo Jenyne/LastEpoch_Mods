@@ -19,7 +19,7 @@ internal static class HeadhunterKillSource
         Ability,
         Actor
     >(OnMinionKill);
-    private static readonly List<int> _modStatIds = new();
+    private static readonly List<HeadhunterStatKey> _modStats = new();
     private static readonly KillDeduper _deduper = new();
     private static readonly IntervalGate _trackerRetry = new(1.0);
     private static System.IntPtr _hookedActor;
@@ -159,13 +159,13 @@ internal static class HeadhunterKillSource
             return;
         }
 
-        ReadModStatIds(killed);
-        HeadhunterKillHandler.Handle(new KillInfo(kind, byMinion, _modStatIds));
+        ReadModStats(killed);
+        HeadhunterKillHandler.Handle(new KillInfo(kind, byMinion, _modStats));
     }
 
-    private static void ReadModStatIds(Actor killed)
+    private static void ReadModStats(Actor killed)
     {
-        _modStatIds.Clear();
+        _modStats.Clear();
         var manager = MonsterRarityManager.getInstance();
         if (manager.IsNullOrDestroyed())
         {
@@ -209,7 +209,7 @@ internal static class HeadhunterKillSource
 
         foreach (Stats.Stat stat in statsMod.stats)
         {
-            _modStatIds.Add((int)stat.property);
+            _modStats.Add(new HeadhunterStatKey((int)stat.property, (int)stat.tags));
         }
     }
 }

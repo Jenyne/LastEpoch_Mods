@@ -24,13 +24,16 @@ public static class HeadhunterConfigWriter
 
     internal static JObject BuildStat(HeadhunterStatEntry entry)
     {
-        return new JObject
+        var row = new JObject { [HeadhunterConfigKeys.Stat] = entry.Stat };
+        if (!string.IsNullOrEmpty(entry.Tag))
         {
-            [HeadhunterConfigKeys.Stat] = entry.Stat,
-            [HeadhunterConfigKeys.Added] = entry.Added,
-            [HeadhunterConfigKeys.Increased] = entry.Increased,
-            [HeadhunterConfigKeys.Enabled] = entry.Enabled,
-        };
+            row[HeadhunterConfigKeys.Tag] = entry.Tag;
+        }
+
+        row[HeadhunterConfigKeys.Added] = entry.Added;
+        row[HeadhunterConfigKeys.Increased] = entry.Increased;
+        row[HeadhunterConfigKeys.Enabled] = entry.Enabled;
+        return row;
     }
 
     private static JObject BuildTriggers(HeadhunterTriggers triggers)

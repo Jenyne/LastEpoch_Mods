@@ -21,6 +21,7 @@ internal sealed class HeadhunterBarSlot
     private readonly GameObject _stackPanel;
     private readonly Text _stackText;
     private int _statId = -1;
+    private int _tags;
     private int _row = -1;
     private int _stacks;
     private int _seconds = -1;
@@ -51,7 +52,7 @@ internal sealed class HeadhunterBarSlot
     public void Show(HeadhunterBarEntry entry)
     {
         _root.SetActive(true);
-        ApplyIcon(entry.StatId);
+        ApplyIcon(entry.StatId, entry.Tags);
         _row = entry.Row;
         ApplyStacks(entry.Stacks);
         if (entry.SecondsLeft != _seconds)
@@ -117,15 +118,16 @@ internal sealed class HeadhunterBarSlot
         outline.effectColor = _outlineColor;
     }
 
-    private void ApplyIcon(int statId)
+    private void ApplyIcon(int statId, int tags)
     {
-        if (statId == _statId && !_icon.sprite.IsNullOrDestroyed())
+        if (statId == _statId && tags == _tags && !_icon.sprite.IsNullOrDestroyed())
         {
             return;
         }
 
         _statId = statId;
-        Sprite sprite = HeadhunterBuffIcons.For(statId);
+        _tags = tags;
+        Sprite sprite = HeadhunterBuffIcons.For(statId, tags);
         if (sprite.IsNullOrDestroyed())
         {
             return;

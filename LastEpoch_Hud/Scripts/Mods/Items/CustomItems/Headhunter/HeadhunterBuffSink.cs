@@ -92,7 +92,7 @@ internal static class HeadhunterBuffSink
             action.Added,
             action.Increased,
             null,
-            AT.None,
+            (AT)action.Tags,
             0,
             0,
             action.BuffName

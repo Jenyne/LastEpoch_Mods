@@ -7,6 +7,24 @@ namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 internal static class HeadhunterStatNames
 {
     public static readonly Func<int, string> EnumName = id => ((SP)id).ToString();
+    public static readonly Func<int, string> TagEnumName = id => ((AT)id).ToString();
+
+    public static string GameTagName(int tags)
+    {
+        if (tags == 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            return Tags.getTagStringForPropertyTag((AT)tags);
+        }
+        catch (Exception)
+        {
+            return null;
+        }
+    }
 
     public static bool TryRead(int statId, out string name, out bool addedAsPercent)
     {

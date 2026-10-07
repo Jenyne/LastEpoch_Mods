@@ -10,12 +10,13 @@ public static class HeadhunterKillLog
     public static string Format(
         KillInfo kill,
         IReadOnlyList<BuffAction> actions,
-        Func<int, string> statName
+        Func<int, string> statName,
+        Func<int, string> tagName
     )
     {
         var text = new StringBuilder("Headhunter kill: kind=");
         text.Append(kill.Kind).Append(" byMinion=").Append(kill.ByMinion).Append(" mods=[");
-        AppendMods(text, kill.ModStatIds, statName);
+        AppendMods(text, kill.ModStats, statName, tagName);
         text.Append("] actions=[");
         AppendActions(text, actions);
         return text.Append(']').ToString();
@@ -23,19 +24,29 @@ public static class HeadhunterKillLog
 
     private static void AppendMods(
         StringBuilder text,
-        IReadOnlyList<int> ids,
-        Func<int, string> statName
+        IReadOnlyList<HeadhunterStatKey> mods,
+        Func<int, string> statName,
+        Func<int, string> tagName
     )
     {
-        if (ids == null)
+        if (mods == null)
         {
             return;
         }
 
-        for (int i = 0; i < ids.Count; i++)
+        for (int i = 0; i < mods.Count; i++)
         {
             AppendSeparator(text, i);
-            text.Append(statName(ids[i]));
+            text.Append(statName(mods[i].StatId));
+            AppendTag(text, mods[i].Tags, tagName);
+        }
+    }
+
+    private static void AppendTag(StringBuilder text, int tags, Func<int, string> tagName)
+    {
+        if (tags != 0)
+        {
+            text.Append('[').Append(tagName(tags)).Append(']');
         }
     }
 

@@ -1,6 +1,6 @@
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 
-/// <summary>One buff change. Increased is a game fraction (0.1 = 10 %).</summary>
+/// <summary>One buff change. Increased is a game fraction (0.1 = 10 %). Tags is the game ability tag id (0 = none).</summary>
 public readonly record struct BuffAction(
     BuffActionKind Kind,
     string BuffName,
@@ -8,5 +8,6 @@ public readonly record struct BuffAction(
     float Added,
     float Increased,
     float DurationSeconds,
-    int Stacks
+    int Stacks,
+    int Tags = 0
 );

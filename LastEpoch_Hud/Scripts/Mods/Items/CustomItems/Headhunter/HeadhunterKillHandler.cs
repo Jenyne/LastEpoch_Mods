@@ -35,7 +35,12 @@ internal static class HeadhunterKillHandler
         }
 
         Main.logger_instance?.Msg(
-            HeadhunterKillLog.Format(kill, actions, HeadhunterStatNames.EnumName)
+            HeadhunterKillLog.Format(
+                kill,
+                actions,
+                HeadhunterStatNames.EnumName,
+                HeadhunterStatNames.TagEnumName
+            )
         );
     }
 }

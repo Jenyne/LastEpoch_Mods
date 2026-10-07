@@ -55,6 +55,21 @@ public sealed class HeadhunterClearRuleTests
         Assert.Equal("HH_FakeA", actions[0].BuffName);
     }
 
+    [Fact]
+    public void RemoveAll_TaggedRow_CarriesTags()
+    {
+        HeadhunterResolvedConfig config = HeadhunterTestData.Resolve(
+            HeadhunterTestData.Config(
+                HeadhunterTestData.AllTriggers,
+                HeadhunterTestData.Tagged("FakeA", "FakeTag")
+            )
+        );
+
+        IReadOnlyList<BuffAction> actions = new HeadhunterClearRule().RemoveAll(config);
+
+        Assert.Equal(8, Assert.Single(actions).Tags);
+    }
+
     private static HeadhunterResolvedConfig ThreeStatConfig()
     {
         return HeadhunterTestData.Resolve(

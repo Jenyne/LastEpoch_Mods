@@ -6,5 +6,9 @@ public readonly record struct HeadhunterBarEntry(
     int SecondsLeft,
     float Elapsed,
     int Row,
-    int Stacks
-);
+    int Stacks,
+    int Tags = 0
+)
+{
+    public HeadhunterStatKey Key => new(StatId, Tags);
+}

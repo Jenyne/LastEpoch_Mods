@@ -67,7 +67,13 @@ internal static class HeadhunterBuffBar
             return;
         }
 
-        Main.logger_instance?.Msg(HeadhunterBarLog.Format(entries, HeadhunterStatNames.EnumName));
+        Main.logger_instance?.Msg(
+            HeadhunterBarLog.Format(
+                entries,
+                HeadhunterStatNames.EnumName,
+                HeadhunterStatNames.TagEnumName
+            )
+        );
     }
 
     private static bool ShouldShow(StatBuffs buffs)

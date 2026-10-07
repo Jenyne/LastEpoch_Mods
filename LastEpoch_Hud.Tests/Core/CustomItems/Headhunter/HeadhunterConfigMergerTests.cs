@@ -359,6 +359,44 @@ public sealed class HeadhunterConfigMergerTests
         Assert.Equal(5, (int)JObject.Parse(result.Text)["maxStacks"]);
     }
 
+    [Fact]
+    public void Merge_TaggedDefault_FileHasUntaggedSameStat_Appends()
+    {
+        HeadhunterMergeResult result = MergeTagged(
+            """{"defaultsVersion":1,"stats":[{"stat":"FakeA"}]}"""
+        );
+
+        JToken added = JObject.Parse(result.Text)["stats"][1];
+        Assert.Equal(1, result.Added);
+        Assert.Equal("FakeTag", (string)added["tag"]);
+    }
+
+    [Fact]
+    public void Merge_TaggedDefault_FileHasSameStatAndTag_NotAppended()
+    {
+        HeadhunterMergeResult result = MergeTagged(
+            """{"defaultsVersion":1,"stats":[{"stat":"FakeA","tag":"FakeTag"}]}"""
+        );
+
+        Assert.True(result.Changed);
+        Assert.Equal(0, result.Added);
+        Assert.Single((JArray)JObject.Parse(result.Text)["stats"]);
+    }
+
+    [Fact]
+    public void Merge_UntaggedDefault_FileHasOnlyTaggedSameStat_Appends()
+    {
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            """{"defaultsVersion":1,"stats":[{"stat":"FakeA","tag":"FakeTag"}]}""",
+            TaggedDefaults(new HeadhunterStatEntry("FakeA", 1f, 2f, true))
+        );
+
+        var rows = (JArray)JObject.Parse(result.Text)["stats"];
+        Assert.Equal(1, result.Added);
+        Assert.Equal(2, rows.Count);
+        Assert.Null(((JObject)rows[1]).Property("tag"));
+    }
+
     private static HeadhunterMergeResult Merge(string json)
     {
         return HeadhunterConfigMerger.Merge(json, _defaults);
@@ -377,5 +415,23 @@ public sealed class HeadhunterConfigMergerTests
         return ((JArray)JObject.Parse(result.Text)["stats"])
             .Select(row => (string)row["stat"])
             .ToList();
+    }
+
+    private static HeadhunterMergeResult MergeTagged(string json)
+    {
+        return HeadhunterConfigMerger.Merge(
+            json,
+            TaggedDefaults(new HeadhunterStatEntry("FakeA", 1f, 2f, true, "FakeTag"))
+        );
+    }
+
+    private static HeadhunterMergeDefaults TaggedDefaults(HeadhunterStatEntry entry)
+    {
+        return new HeadhunterMergeDefaults
+        {
+            Version = 2,
+            Stats = new List<HeadhunterVersionedStat> { new(entry, 2) },
+            Fields = new List<HeadhunterVersionedField>(),
+        };
     }
 }

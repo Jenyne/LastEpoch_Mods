@@ -234,7 +234,7 @@ public static class HeadhunterConfigParser
         }
 
         var stats = new List<HeadhunterStatEntry>();
-        var seen = new HashSet<string>(StringComparer.Ordinal);
+        var seen = new HashSet<(string Stat, string Tag)>();
         for (int index = 0; index < array.Count; index++)
         {
             string path = HeadhunterConfigKeys.Stats + "[" + index + "]";
@@ -250,7 +250,7 @@ public static class HeadhunterConfigParser
             {
                 continue;
             }
-            if (!seen.Add(entry.Stat))
+            if (!seen.Add((entry.Stat, entry.Tag)))
             {
                 Report(problems, path + "." + HeadhunterConfigKeys.Stat, "Duplicate stat.");
                 continue;
@@ -315,8 +315,34 @@ public static class HeadhunterConfigParser
         {
             return false;
         }
-        entry = new HeadhunterStatEntry(stat, added, increased, enabled);
+        if (!TryReadTag(obj, path, problems, out string tag))
+        {
+            return false;
+        }
+        entry = new HeadhunterStatEntry(stat, added, increased, enabled, tag);
         return true;
+    }
+
+    private static bool TryReadTag(
+        JObject obj,
+        string path,
+        List<HeadhunterConfigProblem> problems,
+        out string tag
+    )
+    {
+        tag = null;
+        JToken token = obj[HeadhunterConfigKeys.Tag];
+        if (token == null || token.Type == JTokenType.Null)
+        {
+            return true;
+        }
+        if (token is JValue { Value: string text } && text.Length > 0)
+        {
+            tag = text;
+            return true;
+        }
+        Report(problems, path + "." + HeadhunterConfigKeys.Tag, "Must be a non-empty text.");
+        return false;
     }
 
     private static bool TryReadField(

@@ -69,4 +69,49 @@ public sealed class HeadhunterConfigWriterTests
     {
         Assert.Contains("\n", HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
     }
+
+    [Fact]
+    public void Write_TaggedRow_WritesTag()
+    {
+        HeadhunterConfig config = HeadhunterTestData.Config(
+            HeadhunterTestData.AllTriggers,
+            HeadhunterTestData.Tagged("FakeA", "FakeTag")
+        );
+
+        var root = JObject.Parse(HeadhunterConfigWriter.Write(config));
+
+        Assert.Equal("FakeTag", (string)root["stats"][0]["tag"]);
+    }
+
+    [Fact]
+    public void Write_UntaggedRow_OmitsTag()
+    {
+        HeadhunterConfig config = HeadhunterTestData.Config(
+            HeadhunterTestData.AllTriggers,
+            HeadhunterTestData.Entry("FakeA")
+        );
+
+        var root = JObject.Parse(HeadhunterConfigWriter.Write(config));
+
+        Assert.Null(((JObject)root["stats"][0]).Property("tag"));
+    }
+
+    [Fact]
+    public void Write_Parse_RoundTrip_KeepsTag()
+    {
+        HeadhunterConfig config = HeadhunterTestData.Config(
+            HeadhunterTestData.AllTriggers,
+            HeadhunterTestData.Entry("FakeA"),
+            HeadhunterTestData.Tagged("FakeA", "FakeTag", 1f, 2f)
+        );
+        var known = new HashSet<string>(StringComparer.Ordinal) { "FakeA" };
+
+        HeadhunterConfigParseResult result = HeadhunterConfigParser.Parse(
+            HeadhunterConfigWriter.Write(config),
+            known
+        );
+
+        Assert.Empty(result.Problems);
+        Assert.Equal(config.Stats, result.Config.Stats);
+    }
 }

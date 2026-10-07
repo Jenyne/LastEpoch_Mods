@@ -360,6 +360,68 @@ public sealed class HeadhunterConfigParserTests
         Assert.True(Parse("{}").IsReadable);
     }
 
+    [Fact]
+    public void Parse_Stats_ReadsTag()
+    {
+        HeadhunterConfigParseResult result = ParseStats(
+            "[{\"stat\":\"FakeA\",\"tag\":\"FakeTag\"}]"
+        );
+
+        Assert.Equal("FakeTag", Assert.Single(result.Config.Stats).Tag);
+    }
+
+    [Theory]
+    [InlineData("[{\"stat\":\"FakeA\"}]")]
+    [InlineData("[{\"stat\":\"FakeA\",\"tag\":null}]")]
+    public void Parse_Stats_MissingOrNullTag_IsNull(string statsJson)
+    {
+        HeadhunterConfigParseResult result = ParseStats(statsJson);
+
+        Assert.Empty(result.Problems);
+        Assert.Null(Assert.Single(result.Config.Stats).Tag);
+    }
+
+    [Theory]
+    [InlineData("5")]
+    [InlineData("\"\"")]
+    public void Parse_Stats_InvalidTag_SkipsRowWithProblem(string tagJson)
+    {
+        HeadhunterConfigParseResult result = ParseStats(
+            "[{\"stat\":\"FakeA\",\"tag\":" + tagJson + "}]"
+        );
+
+        Assert.Empty(result.Config.Stats);
+        Assert.Equal(new[] { "stats[0].tag" }, Paths(result));
+    }
+
+    [Fact]
+    public void Parse_Stats_SameStatDifferentTags_KeepsBoth()
+    {
+        HeadhunterConfigParseResult result = ParseStats(
+            "[{\"stat\":\"FakeA\"},{\"stat\":\"FakeA\",\"tag\":\"FakeTag\"},{\"stat\":\"FakeA\",\"tag\":\"OtherTag\"}]"
+        );
+
+        Assert.Empty(result.Problems);
+        Assert.Equal(
+            new string[] { null, "FakeTag", "OtherTag" },
+            result.Config.Stats.Select(entry => entry.Tag)
+        );
+    }
+
+    [Fact]
+    public void Parse_Stats_DuplicateStatAndTag_KeepsFirst()
+    {
+        HeadhunterConfigParseResult result = ParseStats(
+            "[{\"stat\":\"FakeA\",\"tag\":\"FakeTag\",\"added\":1},{\"stat\":\"FakeA\",\"tag\":\"FakeTag\",\"added\":2}]"
+        );
+
+        Assert.Equal(
+            new HeadhunterStatEntry("FakeA", 1f, 0f, true, "FakeTag"),
+            Assert.Single(result.Config.Stats)
+        );
+        Assert.Equal(new[] { "stats[1].stat" }, Paths(result));
+    }
+
     private static HeadhunterConfigParseResult Parse(string json)
     {
         return HeadhunterConfigParser.Parse(json, _known);

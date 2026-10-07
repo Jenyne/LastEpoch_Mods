@@ -77,7 +77,7 @@ public static class HeadhunterConfigMerger
         int added = 0;
         foreach (HeadhunterVersionedStat row in stats)
         {
-            if (row.Since <= fileVersion || ContainsStat(rows, row.Entry.Stat))
+            if (row.Since <= fileVersion || ContainsRow(rows, row.Entry))
             {
                 continue;
             }
@@ -87,7 +87,7 @@ public static class HeadhunterConfigMerger
         return added;
     }
 
-    private static bool ContainsStat(JArray rows, string stat)
+    private static bool ContainsRow(JArray rows, HeadhunterStatEntry entry)
     {
         foreach (JToken row in rows)
         {
@@ -99,12 +99,20 @@ public static class HeadhunterConfigMerger
             {
                 continue;
             }
-            if (string.Equals(name, stat, StringComparison.Ordinal))
+            if (
+                string.Equals(name, entry.Stat, StringComparison.Ordinal)
+                && string.Equals(ReadTag(obj), entry.Tag, StringComparison.Ordinal)
+            )
             {
                 return true;
             }
         }
         return false;
+    }
+
+    private static string ReadTag(JObject row)
+    {
+        return row[HeadhunterConfigKeys.Tag] is JValue { Value: string tag } ? tag : null;
     }
 
     private static int AddFields(

@@ -18,6 +18,7 @@ public sealed class HeadhunterConfigResolverTests
         HeadhunterResolvedConfig result = HeadhunterConfigResolver.Resolve(
             config,
             HeadhunterTestData.StatIds,
+            HeadhunterTestData.TagIds,
             problems
         );
 
@@ -56,6 +57,7 @@ public sealed class HeadhunterConfigResolverTests
         HeadhunterResolvedConfig result = HeadhunterConfigResolver.Resolve(
             config,
             HeadhunterTestData.StatIds,
+            HeadhunterTestData.TagIds,
             problems
         );
 
@@ -74,7 +76,12 @@ public sealed class HeadhunterConfigResolverTests
             HeadhunterTestData.Entry("FakeY")
         );
 
-        HeadhunterConfigResolver.Resolve(config, HeadhunterTestData.StatIds, problems);
+        HeadhunterConfigResolver.Resolve(
+            config,
+            HeadhunterTestData.StatIds,
+            HeadhunterTestData.TagIds,
+            problems
+        );
 
         Assert.Equal(["stats[2].stat"], problems.Select(problem => problem.Path));
     }
@@ -93,11 +100,12 @@ public sealed class HeadhunterConfigResolverTests
         HeadhunterResolvedConfig result = HeadhunterConfigResolver.Resolve(
             config,
             sharedIds,
+            HeadhunterTestData.TagIds,
             problems
         );
 
         Assert.Equal("HH_FakeA", Assert.Single(result.Stats).BuffName);
-        Assert.True(result.TryGetRow(1, out int row));
+        Assert.True(result.TryGetRow(new HeadhunterStatKey(1, 0), out int row));
         Assert.Equal("HH_FakeA", result.Stats[row].BuffName);
         Assert.Equal(["stats[1].stat"], problems.Select(problem => problem.Path));
     }
@@ -147,8 +155,96 @@ public sealed class HeadhunterConfigResolverTests
             )
         );
 
-        bool found = result.TryGetRow(statId, out int row);
+        bool found = result.TryGetRow(new HeadhunterStatKey(statId, 0), out int row);
 
         Assert.Equal(expectedRow, found ? row : -1);
+    }
+
+    [Fact]
+    public void Resolve_TaggedRow_SetsTagsAndName()
+    {
+        HeadhunterResolvedConfig result = HeadhunterTestData.Resolve(
+            HeadhunterTestData.Config(
+                HeadhunterTestData.AllTriggers,
+                HeadhunterTestData.Tagged("FakeA", "FakeTag")
+            )
+        );
+
+        HeadhunterBuffStat stat = Assert.Single(result.Stats);
+        Assert.Equal(8, stat.Tags);
+        Assert.Equal("HH_FakeA_FakeTag", stat.BuffName);
+    }
+
+    [Fact]
+    public void Resolve_UntaggedRow_NameHasNoSuffix()
+    {
+        HeadhunterResolvedConfig result = HeadhunterTestData.Resolve(
+            HeadhunterTestData.Config(
+                HeadhunterTestData.AllTriggers,
+                HeadhunterTestData.Entry("FakeA")
+            )
+        );
+
+        HeadhunterBuffStat stat = Assert.Single(result.Stats);
+        Assert.Equal(0, stat.Tags);
+        Assert.Equal("HH_FakeA", stat.BuffName);
+    }
+
+    [Fact]
+    public void Resolve_UnknownTag_SkipsWithProblem()
+    {
+        var problems = new List<HeadhunterConfigProblem>();
+        HeadhunterConfig config = HeadhunterTestData.Config(
+            HeadhunterTestData.AllTriggers,
+            HeadhunterTestData.Tagged("FakeA", "NoSuchTag")
+        );
+
+        HeadhunterResolvedConfig result = HeadhunterConfigResolver.Resolve(
+            config,
+            HeadhunterTestData.StatIds,
+            HeadhunterTestData.TagIds,
+            problems
+        );
+
+        Assert.Empty(result.Stats);
+        Assert.Equal(["stats[0].tag"], problems.Select(problem => problem.Path));
+    }
+
+    [Fact]
+    public void Resolve_SameStatTwoTags_TwoRows()
+    {
+        HeadhunterResolvedConfig result = HeadhunterTestData.Resolve(
+            HeadhunterTestData.Config(
+                HeadhunterTestData.AllTriggers,
+                HeadhunterTestData.Entry("FakeA"),
+                HeadhunterTestData.Tagged("FakeA", "FakeTag")
+            )
+        );
+
+        Assert.True(result.TryGetRow(new HeadhunterStatKey(1, 0), out int untagged));
+        Assert.True(result.TryGetRow(new HeadhunterStatKey(1, 8), out int tagged));
+        Assert.Equal(0, untagged);
+        Assert.Equal(1, tagged);
+    }
+
+    [Fact]
+    public void Resolve_ZeroIdTag_DuplicatesUntagged_Skipped()
+    {
+        var problems = new List<HeadhunterConfigProblem>();
+        HeadhunterConfig config = HeadhunterTestData.Config(
+            HeadhunterTestData.AllTriggers,
+            HeadhunterTestData.Entry("FakeA"),
+            HeadhunterTestData.Tagged("FakeA", "ZeroTag")
+        );
+
+        HeadhunterResolvedConfig result = HeadhunterConfigResolver.Resolve(
+            config,
+            HeadhunterTestData.StatIds,
+            HeadhunterTestData.TagIds,
+            problems
+        );
+
+        Assert.Equal("HH_FakeA", Assert.Single(result.Stats).BuffName);
+        Assert.Equal(["stats[1].stat"], problems.Select(problem => problem.Path));
     }
 }
