@@ -29,69 +29,7 @@ public static class ForceDropItemCreator
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
-        ValidateIdentity(request);
-        var affixes = new Il2CppSystem.Collections.Generic.List<ItemAffix>();
-        ItemAffix regularSeal = null;
-        int ordinaryCount = 0;
-        foreach (var selected in request.Affixes)
-        {
-            var definition = ForceDropCatalog.Find(selected.Id);
-            if (
-                definition.IsNullOrDestroyed()
-                || CorruptedAffixAdapter.IsCorruption(definition)
-                || UniqueVariantAdapter.IsVariant(definition)
-                || !CorruptedAffixAdapter.FitsItem(definition, request.ItemType, request.SubType)
-            )
-                throw new InvalidOperationException(
-                    "An ordinary affix is not valid for the selected item."
-                );
-            RequireTier(definition, selected.Tier);
-            // Native metadata initialization is also used by variants and corruption.
-            var affix = new ItemAffix(
-                (ushort)selected.Id,
-                (byte)selected.Tier,
-                (byte)selected.Roll,
-                (byte)request.ItemType,
-                SealedAffixType.None
-            );
-            VerifyAffix(affix, selected, definition, ForceDropSeal.None);
-            affixes.Add(affix);
-            if (selected.Seal == ForceDropSeal.Regular)
-                regularSeal = affix;
-            else
-                ordinaryCount++;
-        }
-        byte rarity = (byte)request.Rarity;
-        if (rarity < 7)
-            rarity = (byte)ordinaryCount;
-        else if (ordinaryCount > 0)
-            rarity = 9;
-        var item = new ItemDataUnpacked
-        {
-            LvlReq = 0,
-            classReq = ItemList.ClassRequirement.Any,
-            itemType = (byte)request.ItemType,
-            subType = (ushort)request.SubType,
-            uniqueID = (ushort)request.UniqueId,
-            rarity = rarity,
-            forgingPotential = (byte)Math.Min(63, request.ForgingPotential),
-            legendaryPotential = (byte)request.LegendaryPotential,
-            weaversWill = (byte)request.WeaversWill,
-            affixes = affixes,
-            sockets = (byte)affixes.Count,
-        };
-        WriteRolls(item, request);
-        // The game owns seal ordering and flags. Do not fabricate a regular seal
-        // by assigning a boolean on a manually populated affix list.
-        if (!regularSeal.IsNullOrDestroyed())
-            item.SealAffix(regularSeal);
-        if (request.VariantIds.Count > 0)
-        {
-            var ids = new int[request.VariantIds.Count];
-            for (int i = 0; i < ids.Length; i++)
-                ids[i] = request.VariantIds[i];
-            UniqueVariantAdapter.Apply(item, ids);
-        }
+        var item = CreateBeforeCorruption(request);
         // Eligibility/slot allocation runs on the actual uncorrupted item. The
         // adapter marks corruption immediately after addition, BEFORE its first
         // refresh. Finish the native corruption action before final verification.
@@ -146,6 +84,128 @@ public static class ForceDropItemCreator
                 Items_Drop_ForginPotencial.Keep(item, 0);
             throw;
         }
+    }
+
+    // The picker uses this same seed as real drops, without RNG or spawning.
+    public static ItemDataUnpacked CreateBeforeCorruption(ResolvedForceDrop request)
+    {
+        if (request == null)
+            throw new ArgumentNullException(nameof(request));
+        ValidateIdentity(request);
+        var affixes = new Il2CppSystem.Collections.Generic.List<ItemAffix>();
+        ItemAffix regularSeal = null;
+        int ordinaryCount = 0;
+        int prefixes = 0,
+            suffixes = 0,
+            enchantments = 0,
+            weaverAffixes = 0;
+        foreach (var selected in request.Affixes)
+        {
+            var otherIds = new List<int>();
+            foreach (var other in request.Affixes)
+                if (other.Id != selected.Id)
+                    otherIds.Add(other.Id);
+            var context = new ForceDropLegalAffixes(
+                request.ItemType,
+                request.SubType,
+                request.Rarity,
+                otherIds
+            );
+            var definition = ForceDropCatalog.Find(selected.Id);
+            bool enchantment =
+                !definition.IsNullOrDestroyed()
+                && definition.specialAffixType == AffixList.SpecialAffixType.IdolEnchantment;
+            string reason = context.OrdinaryReason(
+                definition,
+                selected.Seal == ForceDropSeal.Regular,
+                enchantment
+            );
+            if (reason.Length > 0)
+                throw new InvalidOperationException("Affix " + selected.Id + ": " + reason);
+            RequireTier(definition, selected.Tier);
+            // Native metadata initialization is also used by variants and corruption.
+            var affix = new ItemAffix(
+                (ushort)selected.Id,
+                (byte)selected.Tier,
+                (byte)selected.Roll,
+                (byte)request.ItemType,
+                SealedAffixType.None
+            );
+            VerifyAffix(affix, selected, definition, ForceDropSeal.None);
+            affixes.Add(affix);
+            if (selected.Seal == ForceDropSeal.Regular)
+                regularSeal = affix;
+            else
+            {
+                ordinaryCount++;
+                if (enchantment)
+                    enchantments++;
+                else if (definition.type == AffixList.AffixType.PREFIX)
+                    prefixes++;
+                else
+                    suffixes++;
+                if (definition.specialAffixType == AffixList.SpecialAffixType.IdolWeaver)
+                    weaverAffixes++;
+            }
+        }
+        bool idol = request.ItemType >= 25 && request.ItemType <= 33;
+        if (prefixes > (idol ? 1 : 2) || suffixes > (idol ? 1 : 2) || enchantments > 2)
+            throw new InvalidOperationException(
+                "Too many ordinary prefixes or suffixes for this item."
+            );
+        var itemContext = new ForceDropLegalAffixes(
+            request.ItemType,
+            request.SubType,
+            request.Rarity,
+            Array.Empty<int>()
+        );
+        if (itemContext.IsWeaverIdol && weaverAffixes == 0)
+            throw new InvalidOperationException(
+                "A Weaver idol requires at least one Weaver affix."
+            );
+        byte rarity = (byte)request.Rarity;
+        if (rarity < 7)
+            rarity = (byte)ordinaryCount;
+        else if (ordinaryCount > 0)
+            rarity = 9;
+        var item = new ItemDataUnpacked
+        {
+            LvlReq = new ForceDropLegalAffixes(
+                request.ItemType,
+                request.SubType,
+                request.Rarity,
+                Array.Empty<int>()
+            ).BaseLevel,
+            classReq = ItemList.ClassRequirement.Any,
+            itemType = (byte)request.ItemType,
+            subType = (ushort)request.SubType,
+            uniqueID = (ushort)request.UniqueId,
+            rarity = rarity,
+            forgingPotential = (byte)Math.Min(63, request.ForgingPotential),
+            legendaryPotential = (byte)request.LegendaryPotential,
+            weaversWill = (byte)request.WeaversWill,
+            affixes = affixes,
+            sockets = (byte)affixes.Count,
+        };
+        WriteRolls(item, request);
+        // The game owns seal ordering and flags. Do not fabricate a regular seal
+        // by assigning a boolean on a manually populated affix list.
+        if (!regularSeal.IsNullOrDestroyed())
+            item.SealAffix(regularSeal);
+        if (request.VariantIds.Count > 0)
+        {
+            var ids = new int[request.VariantIds.Count];
+            for (int i = 0; i < ids.Length; i++)
+                ids[i] = request.VariantIds[i];
+            UniqueVariantAdapter.Apply(item, ids);
+        }
+        // Native level-dependent corruption checks must see the real item level.
+        foreach (var selected in request.Affixes)
+            item.LvlReq = Math.Max(
+                item.LvlReq,
+                item.CalculateLevelRequirementWithAffixAtTier(selected.Id, selected.Tier)
+            );
+        return item;
     }
 
     static void RequireTier(AffixList.Affix definition, int tier)

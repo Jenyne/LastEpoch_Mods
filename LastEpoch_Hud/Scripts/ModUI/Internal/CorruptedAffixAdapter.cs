@@ -121,7 +121,7 @@ public static class CorruptedAffixAdapter
     {
         catalog.Clear();
         foreach (var definition in ForceDropCatalog.Definitions())
-            if (IsCorruption(definition))
+            if (!definition.IsNullOrDestroyed())
                 catalog.Add(definition);
     }
 
@@ -137,22 +137,23 @@ public static class CorruptedAffixAdapter
             throw new InvalidOperationException(
                 "Chosen corrupted affixes are unsupported by this game's item wrappers"
             );
-        AffixList.Affix definition = null;
-        foreach (var a in catalog)
-            if (a.affixId == id)
-            {
-                definition = a;
-                break;
-            }
+        var definition = ForceDropCatalog.Find(id);
+        var pool = new ForceDropCorruptionPool(item);
+        var legalOutcome = pool.Outcome(id, tier);
         if (
             definition.IsNullOrDestroyed()
-            || !FitsItem(definition, item.itemType, item.subType)
-            || tier < 0
-            || tier >= ForceDropCatalog.MaximumTier(definition)
+            || legalOutcome.IsNullOrDestroyed()
             || roll < 0
             || roll > 255
         )
-            throw new InvalidOperationException("The corrupted affix cannot roll on this item");
+            throw new InvalidOperationException(
+                "No legal corruption outcome for affix "
+                    + id
+                    + " at T"
+                    + (tier + 1)
+                    + ": "
+                    + pool.Error
+            );
         // Let the native constructor initialize item-type-dependent metadata.
         var affix = new ItemAffix(
             (ushort)id,
@@ -164,7 +165,7 @@ public static class CorruptedAffixAdapter
         if (
             affix.affixId != id
             || !affix.IsSealedCorrupted
-            || affix.specialAffixType != AffixList.SpecialAffixType.Corrupted
+            || affix.specialAffixType != definition.specialAffixType
         )
             throw new InvalidOperationException(
                 "Corruption constructor rejected affix "
@@ -188,7 +189,7 @@ public static class CorruptedAffixAdapter
             // The native operation owns sealed-affix ordering, socket counts and
             // rarity-specific packing flags. Appending an affix manually causes
             // the unpacker to put the corruption seal on an ordinary affix.
-            AddUsingNativeCorruptionSlot(item, affix);
+            AddUsingNativeCorruptionSlot(item, affix, definition, legalOutcome);
         }
         else if (storage is PropertyInfo property)
             property.SetValue(item, affix);
@@ -225,18 +226,25 @@ public static class CorruptedAffixAdapter
         VerifySelection(item, id, tier, roll);
     }
 
-    static void AddUsingNativeCorruptionSlot(ItemDataUnpacked item, ItemAffix selected)
+    static void AddUsingNativeCorruptionSlot(
+        ItemDataUnpacked item,
+        ItemAffix selected,
+        AffixList.Affix definition,
+        WeightedCorruptionOutcome legalOutcome
+    )
     {
         if (item.hasSealedAffixFromCorruption)
             throw new InvalidOperationException(
                 "This item already has a corrupted affix; no item was dropped"
             );
+        var weights = new float[7];
+        weights[selected.affixTier] = 1;
         var outcome = new WeightedCorruptionOutcome
         {
-            corruptionOutcome = CorruptionOutcome.AddsCorruptedAffix,
+            corruptionOutcome = legalOutcome.corruptionOutcome,
             replacesAffix = false,
             tierWeights = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<float>(
-                new float[] { 1, 1, 1, 1, 1, 1, 1 }
+                weights
             ),
         };
         // Do not use a forced unique-id match: that parameter filters unique
@@ -244,12 +252,12 @@ public static class CorruptedAffixAdapter
         if (
             !item.AddRandomSpecialAffix(
                 outcome,
-                AffixList.SpecialAffixType.Corrupted,
+                definition.specialAffixType,
                 false,
                 100,
                 out int addedId,
                 out _,
-                false,
+                legalOutcome.corruptionOutcome.ToString() == "AddChampionAffix",
                 new Il2CppSystem.Nullable<ushort>(),
                 false
             )
@@ -359,7 +367,7 @@ public static class CorruptedAffixAdapter
             || saved.IsNullOrDestroyed()
             || saved.affixId != id
             || !saved.IsSealedCorrupted
-            || saved.specialAffixType != AffixList.SpecialAffixType.Corrupted
+            || saved.specialAffixType != ForceDropCatalog.Find(id)?.specialAffixType
         )
         {
             string entries = "";

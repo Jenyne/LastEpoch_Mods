@@ -368,5 +368,19 @@
   "CustomItem.SandsOfSilk.Subtype": "",
   "CustomItem.SandsOfSilk.Name": "",
   "CustomItem.SandsOfSilk.Lore": "",
-  "End of Time waypoint required. Bind a key or modifier + key.": ""
+  "End of Time waypoint required. Bind a key or modifier + key.": "",
+  "Exclusive unique modifiers": "",
+  "Native modifiers · separate from ordinary affixes": "",
+  "Corruption-exclusive": "",
+  "Standard": "",
+  "Experimental": "",
+  "Champion": "",
+  "Personal": "",
+  "Choose every exclusive unique modifier.": "",
+  "This item has no legal affix slot here. Clear the selection.": "",
+  "Enchantment 1": "",
+  "Enchantment 2": "",
+  "Idol enchantment": "",
+  "Weaver idol": "",
+  "A Weaver idol requires at least one Weaver affix.": ""
 }

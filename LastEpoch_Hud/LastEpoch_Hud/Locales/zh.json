@@ -379,5 +379,19 @@
   "CustomItem.SandsOfSilk.Subtype": "遮蔽长衣",
   "CustomItem.SandsOfSilk.Name": "流丝之沙",
   "CustomItem.SandsOfSilk.Lore": "沙漠永远在流动。",
-  "End of Time waypoint required. Bind a key or modifier + key.": "需要解锁时间终焉传送点。绑定按键或组合键。"
+  "End of Time waypoint required. Bind a key or modifier + key.": "需要解锁时间终焉传送点。绑定按键或组合键。",
+  "Exclusive unique modifiers": "独特物品专属词缀",
+  "Native modifiers · separate from ordinary affixes": "原生词缀 · 与普通词缀分开",
+  "Corruption-exclusive": "腐化专属",
+  "Standard": "普通",
+  "Experimental": "实验",
+  "Champion": "勇士",
+  "Personal": "专属",
+  "Choose every exclusive unique modifier.": "请选择该独特物品的所有专属词缀。",
+  "This item has no legal affix slot here. Clear the selection.": "此物品无法合法使用该词缀栏位。请清除选择。",
+  "Enchantment 1": "附魔 1",
+  "Enchantment 2": "附魔 2",
+  "Idol enchantment": "神像附魔",
+  "Weaver idol": "编织者神像",
+  "A Weaver idol requires at least one Weaver affix.": "编织者神像至少需要一个编织者词缀。"
 }

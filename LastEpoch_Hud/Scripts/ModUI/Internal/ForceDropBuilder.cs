@@ -87,6 +87,79 @@ public static class ForceDropBuilder
     static string result = "";
     public static bool IsReady => !root.IsNullOrDestroyed();
 
+    static readonly Dictionary<int, ForceDropLegalAffixes> legalContexts =
+        new Dictionary<int, ForceDropLegalAffixes>();
+    static string legalContextKey = "",
+        corruptionPoolKey = "";
+    static ForceDropCorruptionPool corruptionPool;
+    static string corruptionPoolError = "";
+
+    static string SelectionKey()
+    {
+        var key = new StringBuilder()
+            .Append(FD.item_type)
+            .Append(':')
+            .Append(FD.item_subtype)
+            .Append(':')
+            .Append(FD.item_rarity)
+            .Append(':')
+            .Append(FD.item_unique_id)
+            .Append(':')
+            .Append(corrupted)
+            .Append(':')
+            .Append(lp.value)
+            .Append(':')
+            .Append(ww.value);
+        foreach (var row in rows)
+            key.Append(':').Append(row.id).Append('/').Append(row.tier.value);
+        foreach (int id in variantIds)
+            key.Append(':').Append(id);
+        return key.ToString();
+    }
+
+    static ForceDropLegalAffixes LegalContext(int editingSlot)
+    {
+        string key = SelectionKey();
+        if (key != legalContextKey)
+        {
+            legalContextKey = key;
+            legalContexts.Clear();
+        }
+        if (!legalContexts.TryGetValue(editingSlot, out var context))
+        {
+            var ids = new List<int>();
+            for (int slot = 0; slot < rows.Length; slot++)
+                if (slot != editingSlot && rows[slot].id >= 0)
+                    ids.Add(rows[slot].id);
+            context = new ForceDropLegalAffixes(FD.item_type, FD.item_subtype, FD.item_rarity, ids);
+            legalContexts[editingSlot] = context;
+        }
+        return context;
+    }
+
+    static ForceDropCorruptionPool CorruptionPool()
+    {
+        string key = SelectionKey();
+        if (key == corruptionPoolKey)
+            return corruptionPool;
+        corruptionPoolKey = key;
+        corruptionPool = null;
+        corruptionPoolError = "";
+        try
+        {
+            var request = ResolveItem(true, false);
+            corruptionPool = new ForceDropCorruptionPool(
+                ForceDropItemCreator.CreateBeforeCorruption(request)
+            );
+            corruptionPoolError = corruptionPool.Error;
+        }
+        catch (Exception ex)
+        {
+            corruptionPoolError = ex.Message;
+        }
+        return corruptionPool;
+    }
+
     sealed class Choice
     {
         public int id;
@@ -94,6 +167,7 @@ public static class ForceDropBuilder
         public string name;
         public string aliases;
         public Action select;
+        public bool corruptionExclusive;
     }
 
     sealed class Number
@@ -127,6 +201,7 @@ public static class ForceDropBuilder
         public int id = -1;
         public string name = "None";
         public Button select;
+        public Text slotLabel;
         public Number tier,
             roll;
     }
@@ -220,15 +295,10 @@ public static class ForceDropBuilder
         // Keep the exclusive modifier next to the item preview and outside the affix grid.
         bool twoVariants = variantCount == 2;
         Rect(ragePage, .04f, .28f, .96f, twoVariants ? .54f : .45f);
-        LocaleRegistry.Apply(
-            variantHeader,
-            twoVariants ? "Exclusive glove modifiers" : "Unsated Rage modifier"
-        );
+        LocaleRegistry.Apply(variantHeader, "Exclusive unique modifiers");
         LocaleRegistry.Apply(
             variantDescription,
-            twoVariants
-                ? "Two exclusive modifiers · separate from LP"
-                : "Exclusive ring modifier · separate from LP"
+            "Native modifiers · separate from ordinary affixes"
         );
         Rect(variantHeader.gameObject, .03f, twoVariants ? .78f : .72f, .97f, .97f);
         Rect(variantDescription.gameObject, .03f, .02f, .97f, twoVariants ? .22f : .25f);
@@ -267,6 +337,29 @@ public static class ForceDropBuilder
             lp.mode.interactable = !corrupted;
         if (ww.mode != null)
             ww.mode.interactable = !corrupted;
+        for (int slot = 0; slot < rows.Length; slot++)
+        {
+            var context = LegalContext(slot);
+            bool enchantment = context.IsHereticalIdol && (slot == 1 || slot == 3);
+            bool available = ForceDropLegalRules.SlotAllowed(
+                slot,
+                context.IsIdol,
+                context.IsUnique,
+                context.IsSet,
+                context.IsHereticalIdol
+            );
+            LocaleRegistry.Apply(
+                rows[slot].slotLabel,
+                enchantment ? "Enchantment " + (slot == 1 ? 1 : 2)
+                    : slot == 4 ? "Sealed"
+                    : slot < 2 ? "Prefix " + (slot + 1)
+                    : "Suffix " + (slot - 1)
+            );
+            rows[slot].select.interactable = available;
+            rows[slot].tier.input.interactable = available;
+            rows[slot].roll.input.interactable = available && !rows[slot].roll.random;
+            rows[slot].roll.mode.interactable = available;
+        }
         RefreshPreview();
         return true;
     }
@@ -415,7 +508,7 @@ public static class ForceDropBuilder
                 i == 4 ? "Sealed"
                 : i < 2 ? "Prefix " + (i + 1)
                 : "Suffix " + (i - 1);
-            Label(affixPage, slot, .03f, y, .17f, y + .12f, 12);
+            row.slotLabel = Label(affixPage, slot, .03f, y, .17f, y + .12f, 12);
             row.select = Button(
                 affixPage,
                 "None",
@@ -724,38 +817,57 @@ public static class ForceDropBuilder
                 },
             }
         );
-        foreach (var a in CorruptedAffixAdapter.Catalog())
-        {
-            if (!CorruptedAffixAdapter.FitsItem(a, FD.item_type, FD.item_subtype))
-                continue;
-            int id = a.affixId;
-            bool used = false;
-            foreach (var row in rows)
-                if (row.id == id)
-                {
-                    used = true;
-                    break;
-                }
-            if (used || choices.Exists(x => x.id == id))
-                continue;
-            string name = NativeItemNames.AffixName(a);
-            choices.Add(
-                new Choice
-                {
-                    id = id,
-                    name = name,
-                    aliases = NativeItemNames.AffixAliases(a),
-                    select = () =>
+        var pool = CorruptionPool();
+        if (pool == null || corruptionPoolError.Length > 0)
+            result = corruptionPoolError;
+        if (pool != null)
+            foreach (var a in pool.Definitions())
+            {
+                int id = a.affixId;
+                string name = NativeItemNames.AffixName(a);
+                string family =
+                    a.specialAffixType == AffixList.SpecialAffixType.Personal
+                        ? "Champion"
+                        : a.specialAffixType.ToString();
+                choices.Add(
+                    new Choice
                     {
-                        corruptionId = id;
-                        corruptionName = name;
-                        corrupted = true;
-                        Caption(corruptButton, "Corrupted: Yes");
-                        Caption(corruptionSelect, name);
-                    },
-                }
-            );
-        }
+                        id = id,
+                        name =
+                            name
+                            + " · "
+                            + L(
+                                CorruptedAffixAdapter.IsCorruption(a)
+                                    ? "Corruption-exclusive"
+                                    : family
+                            ),
+                        aliases = NativeItemNames.AffixAliases(a) + "\n" + family,
+                        corruptionExclusive = CorruptedAffixAdapter.IsCorruption(a),
+                        select = () =>
+                        {
+                            corruptionId = id;
+                            corruptionName = name;
+                            corrupted = true;
+                            Caption(corruptButton, "Corrupted: Yes");
+                            Caption(corruptionSelect, name);
+                            RefreshTierLimits();
+                        },
+                    }
+                );
+            }
+        choices.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
+        Main.logger_instance.Msg(
+            "Force Drop legal corruption pool: base="
+                + FD.item_type
+                + ", subtype="
+                + FD.item_subtype
+                + ", unique="
+                + FD.item_unique_id
+                + ", choices="
+                + (choices.Count - 1)
+                + ", status="
+                + corruptionPoolError
+        );
         OpenPicker("Corrupted affix");
     }
 
@@ -843,51 +955,95 @@ public static class ForceDropBuilder
         var list = AffixList.get();
         if (list.IsNullOrDestroyed())
             return;
+        var exclusions = new Dictionary<string, int>();
         foreach (var a in ForceDropCatalog.Definitions())
-            AddAffixChoice(a, slot);
+        {
+            string reason = AddAffixChoice(a, slot);
+            if (reason.Length > 0)
+            {
+                exclusions.TryGetValue(reason, out int count);
+                exclusions[reason] = count + 1;
+            }
+        }
+        var excluded = new StringBuilder();
+        foreach (var pair in exclusions)
+            excluded.Append(pair.Key).Append('=').Append(pair.Value).Append(';');
         choices.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
+        Main.logger_instance.Msg(
+            "Force Drop legal affix pool: base="
+                + FD.item_type
+                + ", subtype="
+                + FD.item_subtype
+                + ", unique="
+                + FD.item_unique_id
+                + ", slot="
+                + slot
+                + ", choices="
+                + (choices.Count - 1)
+                + ", excluded="
+                + excluded
+        );
         OpenPicker(
-            slot == 4 ? "Sealed affix"
+            LegalContext(slot).IsHereticalIdol && (slot == 1 || slot == 3) ? "Idol enchantment"
+            : slot == 4 ? "Sealed affix"
             : slot < 2 ? "Prefix"
             : "Suffix"
         );
     }
 
-    static void AddAffixChoice(AffixList.Affix a, int slot)
+    static string AddAffixChoice(AffixList.Affix a, int slot)
     {
+        var context = LegalContext(slot);
         if (
-            a.IsNullOrDestroyed()
-            || CorruptedAffixAdapter.IsCorruption(a)
-            || UniqueVariantAdapter.IsVariant(a)
-            || ForceDropCatalog.MaximumTier(a) == 0
-            || FD.item_type < 0
-            || FD.item_subtype < 0
+            !ForceDropLegalRules.SlotAllowed(
+                slot,
+                context.IsIdol,
+                context.IsUnique,
+                context.IsSet,
+                context.IsHereticalIdol
+            )
         )
-            return;
-        if (a.type != AffixList.AffixType.PREFIX && a.type != AffixList.AffixType.SUFFIX)
-            return;
+            return "Unavailable slot";
+        string reason = context.OrdinaryReason(
+            a,
+            slot == 4,
+            context.IsHereticalIdol && (slot == 1 || slot == 3)
+        );
+        if (reason.Length > 0)
+            return reason;
         if (
             slot < 4
+            && !(context.IsHereticalIdol && (slot == 1 || slot == 3))
             && a.type != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX)
         )
-            return;
-        if (!CorruptedAffixAdapter.FitsItem(a, FD.item_type, FD.item_subtype))
-            return;
+            return "Placement or duplicate exclusion";
         int id = a.affixId;
         for (int other = 0; other < rows.Length; other++)
             if (other != slot && rows[other].id == id)
-                return;
+                return "Placement or duplicate exclusion";
         if (corrupted && corruptionId == id)
-            return;
+            return "Placement or duplicate exclusion";
         if (choices.Exists(x => x.id == id))
-            return;
+            return "Placement or duplicate exclusion";
         string name = NativeItemNames.AffixName(a);
         choices.Add(
             new Choice
             {
                 id = id,
-                name = name,
-                aliases = NativeItemNames.AffixAliases(a),
+                name =
+                    a.specialAffixType == AffixList.SpecialAffixType.Standard
+                        ? name
+                        : name
+                            + " · "
+                            + L(
+                                context.IsChampion(a) ? "Champion"
+                                : a.specialAffixType == AffixList.SpecialAffixType.IdolWeaver
+                                    ? "Weaver idol"
+                                : a.specialAffixType == AffixList.SpecialAffixType.IdolEnchantment
+                                    ? "Idol enchantment"
+                                : a.specialAffixType.ToString()
+                            ),
+                aliases = NativeItemNames.AffixAliases(a) + "\n" + a.specialAffixType,
                 select = () =>
                 {
                     rows[slot].id = id;
@@ -896,6 +1052,7 @@ public static class ForceDropBuilder
                 },
             }
         );
+        return "";
     }
 
     static AffixList.Affix FindAffix(int id) => ForceDropCatalog.Find(id);
@@ -907,10 +1064,22 @@ public static class ForceDropBuilder
                 row.tier,
                 row.id < 0 ? 7 : ForceDropCatalog.MaximumTier(FindAffix(row.id))
             );
-        SetTierLimit(
-            corruptionTier,
-            corruptionId < 0 ? 7 : ForceDropCatalog.MaximumTier(FindAffix(corruptionId))
-        );
+        if (corruptionId < 0)
+            SetTierLimit(corruptionTier, 7);
+        else
+        {
+            var pool = CorruptionPool();
+            int mask = pool == null ? 0 : pool.TierMask(corruptionId);
+            SetTierLimit(corruptionTier, ForceDropLegalTiers.MaximumDisplayTier(mask));
+            int value = ForceDropLegalTiers.ClampDisplayTier(mask, corruptionTier.value);
+            if (value > 0 && value != corruptionTier.value)
+            {
+                corruptionTier.value = value;
+                corruptionTier.input.SetTextWithoutNotify(
+                    value.ToString(CultureInfo.InvariantCulture)
+                );
+            }
+        }
     }
 
     static void SetTierLimit(Number number, int maximum)
@@ -993,9 +1162,7 @@ public static class ForceDropBuilder
             for (int slot = 0; slot < variantCount; slot++)
             {
                 if (!variantCatalog.Exists(a => a.affixId == variantIds[slot]))
-                    return variantCount == 1
-                        ? "Choose the ring's exclusive Rage modifier."
-                        : "Choose both exclusive glove modifiers.";
+                    return "Choose every exclusive unique modifier.";
                 if (!ids.Add(variantIds[slot]))
                     return "Exclusive unique modifiers must be different and separate from ordinary affixes.";
             }
@@ -1006,52 +1173,57 @@ public static class ForceDropBuilder
             if (row.id < 0)
                 continue;
             var definition = FindAffix(row.id);
+            var context = LegalContext(slot);
             if (
-                definition.IsNullOrDestroyed()
-                || CorruptedAffixAdapter.IsCorruption(definition)
-                || UniqueVariantAdapter.IsVariant(definition)
+                !ForceDropLegalRules.SlotAllowed(
+                    slot,
+                    context.IsIdol,
+                    context.IsUnique,
+                    context.IsSet,
+                    context.IsHereticalIdol
+                )
             )
-                return "Choose a regular affix for "
-                    + (
-                        slot == 4 ? "Sealed"
-                        : slot < 2 ? "Prefix"
-                        : "Suffix"
-                    )
-                    + ".";
-            if (
-                definition.type != AffixList.AffixType.PREFIX
-                && definition.type != AffixList.AffixType.SUFFIX
-            )
-                return "Special modifiers belong in the Corruption row.";
+                return "This item has no legal affix slot here. Clear the selection.";
+            string reason = context.OrdinaryReason(
+                definition,
+                slot == 4,
+                context.IsHereticalIdol && (slot == 1 || slot == 3)
+            );
+            if (reason.Length > 0)
+                return NativeItemNames.AffixName(row.id, row.name) + ": " + reason;
             if (
                 slot < 4
+                && !(context.IsHereticalIdol && (slot == 1 || slot == 3))
                 && definition.type
                     != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX)
             )
                 return "Affix type does not match its slot.";
-            if (!CorruptedAffixAdapter.FitsItem(definition, FD.item_type, FD.item_subtype))
-                return "An affix cannot roll on the selected item. Choose it again.";
             if (row.tier.value > ForceDropCatalog.MaximumTier(definition))
                 return "The selected tier does not exist for this affix.";
         }
+        var itemContext = LegalContext(-1);
+        if (itemContext.IsWeaverIdol)
+        {
+            bool hasWeaver = false;
+            foreach (var row in rows)
+            {
+                var definition = FindAffix(row.id);
+                hasWeaver |=
+                    !definition.IsNullOrDestroyed()
+                    && definition.specialAffixType == AffixList.SpecialAffixType.IdolWeaver;
+            }
+            if (!hasWeaver)
+                return "A Weaver idol requires at least one Weaver affix.";
+        }
         if (corrupted && corruptionId >= 0)
         {
-            AffixList.Affix definition = null;
-            foreach (var entry in CorruptedAffixAdapter.Catalog())
-                if (entry.affixId == corruptionId)
-                {
-                    definition = entry;
-                    break;
-                }
+            var pool = CorruptionPool();
+            if (!CorruptedAffixAdapter.IsSupported || pool == null)
+                return "Corruption selection unavailable: " + corruptionPoolError;
             if (
-                !CorruptedAffixAdapter.IsSupported
-                || definition.IsNullOrDestroyed()
-                || !CorruptedAffixAdapter.IsCorruption(definition)
-                || !CorruptedAffixAdapter.FitsItem(definition, FD.item_type, FD.item_subtype)
+                !ForceDropLegalTiers.Supports(pool.TierMask(corruptionId), corruptionTier.value - 1)
             )
-                return "The corrupted affix is not valid for this item.";
-            if (corruptionTier.value > ForceDropCatalog.MaximumTier(definition))
-                return "The selected tier does not exist for this affix.";
+                return "The chosen corruption affix or tier is not permitted by this item's native outcomes.";
             if (!ids.Add(corruptionId))
                 return "Corruption cannot duplicate another affix.";
         }
@@ -1149,10 +1321,12 @@ public static class ForceDropBuilder
     static int Roll(Number n) =>
         n.random ? UnityEngine.Random.Range(0, 256) : Mathf.RoundToInt(n.value / 100f * 255f);
 
-    static ResolvedForceDrop ResolveItem()
+    static ResolvedForceDrop ResolveItem(bool previewOnly = false, bool includeCorruption = true)
     {
         bool equipment = FD.item_type < 100;
         bool unique = FD.item_rarity >= 7;
+        int ResolvedRoll(Number n) => previewOnly ? 255 : Roll(n);
+        int ResolvedNumber(Number n) => previewOnly ? n.value : Sample(n);
         var selected = new List<ResolvedForceDropAffix>();
         if (equipment)
             for (int slot = 0; slot < rows.Length; slot++)
@@ -1163,18 +1337,18 @@ public static class ForceDropBuilder
                         new ResolvedForceDropAffix(
                             row.id,
                             row.tier.value - 1,
-                            Roll(row.roll),
+                            ResolvedRoll(row.roll),
                             slot == 4 ? ForceDropSeal.Regular : ForceDropSeal.None
                         )
                     );
             }
         var implicitValues = new int[implicits.Length];
         for (int i = 0; i < implicitValues.Length; i++)
-            implicitValues[i] = equipment ? Roll(implicits[i]) : 0;
+            implicitValues[i] = equipment ? ResolvedRoll(implicits[i]) : 0;
         var uniqueValues = new int[uniqueRolls.Length];
         if (unique)
             for (int i = 0; i < uniqueValues.Length; i++)
-                uniqueValues[i] = Roll(uniqueRolls[i]);
+                uniqueValues[i] = ResolvedRoll(uniqueRolls[i]);
         bool usesLP =
             unique && FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential;
         return new ResolvedForceDrop(
@@ -1182,9 +1356,9 @@ public static class ForceDropBuilder
             FD.item_subtype,
             unique ? FD.item_unique_id : 0,
             FD.item_rarity,
-            equipment && !unique && !corrupted ? Sample(forging) : 0,
-            usesLP && !corrupted ? Sample(lp) : 0,
-            unique && !usesLP && !corrupted ? Sample(ww) : 0,
+            equipment && !unique && !corrupted ? ResolvedNumber(forging) : 0,
+            usesLP && !corrupted ? ResolvedNumber(lp) : 0,
+            unique && !usesLP && !corrupted ? ResolvedNumber(ww) : 0,
             corrupted,
             implicitValues,
             uniqueValues,
@@ -1192,11 +1366,11 @@ public static class ForceDropBuilder
             UniqueVariantAdapter.VariantCount(SelectedRageEntry()) > 0
                 ? SelectedVariantIds()
                 : Array.Empty<int>(),
-            corrupted && corruptionId >= 0
+            includeCorruption && corrupted && corruptionId >= 0
                 ? new ResolvedForceDropAffix(
                     corruptionId,
                     corruptionTier.value - 1,
-                    Roll(corruptionRoll),
+                    ResolvedRoll(corruptionRoll),
                     ForceDropSeal.Corruption
                 )
                 : null
@@ -1495,6 +1669,7 @@ public static class ForceDropBuilder
                         .73f - row * step - .004f
                     );
                     Caption(button, column[index].name);
+                    button.GetComponentInChildren<Text>(true).color = gold;
                     button.gameObject.SetActive(true);
                     visiblePicks.Add(column[index]);
                 }
@@ -1520,6 +1695,11 @@ public static class ForceDropBuilder
                     .739f - row * .058f
                 );
                 Caption(button, filtered[index].name);
+                button.GetComponentInChildren<Text>(true).color = filtered[
+                    index
+                ].corruptionExclusive
+                    ? new Color(.80f, .56f, 1f)
+                    : gold;
                 button.gameObject.SetActive(true);
                 visiblePicks.Add(filtered[index]);
             }

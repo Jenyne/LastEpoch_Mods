@@ -20,18 +20,28 @@ public static class UniqueVariantAdapter
 
     public static int VariantCount(UniqueList.Entry entry)
     {
-        if (IsUnsated(entry))
-            return 1;
         if (
-            !entry.IsNullOrDestroyed()
-            && string.Equals(
-                (entry.name ?? "").Replace(" ", "").Replace("_", ""),
-                "WithstandtheElements",
-                StringComparison.OrdinalIgnoreCase
-            )
+            entry.IsNullOrDestroyed()
+            || !entry.dropsSpecificLegendaryAffixes
+            || entry.droppableLegendaryAffixes.IsNullOrDestroyed()
+            || entry.droppableLegendaryAffixes.Count == 0
         )
-            return 2;
-        return 0;
+            return 0;
+        // Fixed FakeUniqueMod pools use the same native representation. Exulis
+        // instead has tiered Corrupted modifiers and needs its own selection
+        // route; do not misrepresent those as fixed T1 unique modifiers.
+        foreach (int id in entry.droppableLegendaryAffixes)
+        {
+            var definition = ForceDropCatalog.Find(id);
+            if (
+                definition.IsNullOrDestroyed()
+                || definition.specialAffixType != AffixList.SpecialAffixType.FakeUniqueMod
+            )
+                return 0;
+        }
+        return entry.droppableLegendaryAffixCount >= 1 && entry.droppableLegendaryAffixCount <= 2
+            ? entry.droppableLegendaryAffixCount
+            : 0;
     }
 
     public static bool HasVariants(UniqueList.Entry entry)
@@ -51,21 +61,8 @@ public static class UniqueVariantAdapter
 
     public static bool IsVariant(AffixList.Affix definition)
     {
-        if (definition.IsNullOrDestroyed())
-            return false;
-        if (definition.specialAffixType == AffixList.SpecialAffixType.FakeUniqueMod)
-            return true;
-        var uniques = UniqueList.instance;
-        if (uniques.IsNullOrDestroyed())
-            return false;
-        foreach (var entry in uniques.uniques)
-            if (
-                VariantCount(entry) > 0
-                && !entry.droppableLegendaryAffixes.IsNullOrDestroyed()
-                && entry.droppableLegendaryAffixes.Contains(definition.affixId)
-            )
-                return true;
-        return false;
+        return !definition.IsNullOrDestroyed()
+            && definition.specialAffixType == AffixList.SpecialAffixType.FakeUniqueMod;
     }
 
     public static List<AffixList.Affix> Catalog(UniqueList.Entry entry)

@@ -379,5 +379,19 @@
   "CustomItem.SandsOfSilk.Subtype": "가려진 조끼",
   "CustomItem.SandsOfSilk.Name": "비단의 모래",
   "CustomItem.SandsOfSilk.Lore": "사막은 끝없이 흐른다.",
-  "End of Time waypoint required. Bind a key or modifier + key.": "시간의 끝 웨이포인트가 필요합니다. 키 또는 보조 키 + 키를 지정하세요."
+  "End of Time waypoint required. Bind a key or modifier + key.": "시간의 끝 웨이포인트가 필요합니다. 키 또는 보조 키 + 키를 지정하세요.",
+  "Exclusive unique modifiers": "고유 아이템 전용 속성",
+  "Native modifiers · separate from ordinary affixes": "기본 속성 · 일반 접사와 별도",
+  "Corruption-exclusive": "타락 전용",
+  "Standard": "일반",
+  "Experimental": "실험",
+  "Champion": "챔피언",
+  "Personal": "개인",
+  "Choose every exclusive unique modifier.": "고유 아이템의 전용 속성을 모두 선택하세요.",
+  "This item has no legal affix slot here. Clear the selection.": "이 아이템에는 이 접사 슬롯을 사용할 수 없습니다. 선택을 해제하세요.",
+  "Enchantment 1": "인챈트 1",
+  "Enchantment 2": "인챈트 2",
+  "Idol enchantment": "우상 인챈트",
+  "Weaver idol": "직조자 우상",
+  "A Weaver idol requires at least one Weaver affix.": "직조자 우상에는 직조자 접사가 하나 이상 필요합니다."
 }
