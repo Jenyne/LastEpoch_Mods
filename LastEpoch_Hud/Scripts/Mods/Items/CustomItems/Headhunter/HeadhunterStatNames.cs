@@ -20,8 +20,9 @@ internal static class HeadhunterStatNames
         {
             return Tags.getTagStringForPropertyTag((AT)tags);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            ErrorLog.Report(ex, "HeadhunterStatNames.GameTagName");
             return null;
         }
     }
@@ -42,8 +43,9 @@ internal static class HeadhunterStatNames
             addedAsPercent = info.displayAddedAsPercentage;
             return !string.IsNullOrEmpty(name);
         }
-        catch (Exception)
+        catch (Exception ex)
         {
+            ErrorLog.Report(ex, "HeadhunterStatNames.TryRead");
             return false;
         }
     }
