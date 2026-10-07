@@ -36,6 +36,7 @@ public static class HeadhunterConfigWriter
     {
         return new JObject
         {
+            [HeadhunterConfigKeys.Magic] = triggers.Magic,
             [HeadhunterConfigKeys.Rare] = triggers.Rare,
             [HeadhunterConfigKeys.Boss] = triggers.Boss,
             [HeadhunterConfigKeys.Miniboss] = triggers.Miniboss,

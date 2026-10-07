@@ -170,6 +170,12 @@ public static class HeadhunterConfigParser
                 HeadhunterConfigKeys.MinionKills,
                 HeadhunterConfigDefaults.Triggers.MinionKills,
                 problems
+            ),
+            ReadTrigger(
+                triggers,
+                HeadhunterConfigKeys.Magic,
+                HeadhunterConfigDefaults.Triggers.Magic,
+                problems
             )
         );
     }

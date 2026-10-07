@@ -1,6 +1,6 @@
-using System;
 using System.Collections.Generic;
 using System.Linq;
+using Newtonsoft.Json.Linq;
 
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 
@@ -8,7 +8,7 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 public static class HeadhunterConfigDefaults
 {
     public const int CurrentVersion = 1;
-    public const int DefaultsVersion = 2;
+    public const int DefaultsVersion = 3;
     public const int UnstampedDefaultsVersion = 1;
     public const string Mechanic = HeadhunterMechanics.RareModsId;
     public const float DurationSeconds = 60f;
@@ -16,7 +16,7 @@ public static class HeadhunterConfigDefaults
     public const float EntryIncreased = 0f;
     public const bool EntryEnabled = true;
 
-    public static readonly HeadhunterTriggers Triggers = new(true, true, true, true);
+    public static readonly HeadhunterTriggers Triggers = new(true, true, true, true, true);
 
     public static readonly IReadOnlyList<HeadhunterVersionedStat> VersionedStats =
         new List<HeadhunterVersionedStat>
@@ -39,7 +39,10 @@ public static class HeadhunterConfigDefaults
         .ToList();
 
     public static readonly IReadOnlyList<HeadhunterVersionedField> VersionedFields =
-        Array.Empty<HeadhunterVersionedField>();
+        new List<HeadhunterVersionedField>
+        {
+            new(HeadhunterConfigKeys.Triggers, HeadhunterConfigKeys.Magic, new JValue(true), 3),
+        };
 
     public static readonly HeadhunterMergeDefaults MergeDefaults = new()
     {

@@ -14,7 +14,7 @@ internal static class HeadhunterTestData
         ["FakeC"] = 3,
     };
 
-    public static HeadhunterTriggers AllTriggers => new(true, true, true, true);
+    public static HeadhunterTriggers AllTriggers => new(true, true, true, true, true);
 
     public static HeadhunterConfig Config(
         HeadhunterTriggers triggers,

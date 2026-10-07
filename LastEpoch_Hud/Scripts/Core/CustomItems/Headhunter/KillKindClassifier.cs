@@ -1,9 +1,9 @@
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 
-/// <summary>Turns the monster rarity flags into a kill kind. Magic counts as Normal.</summary>
+/// <summary>Turns the monster rarity flags into a kill kind. Boss beats miniboss, rare, then magic.</summary>
 public static class KillKindClassifier
 {
-    public static KillKind Classify(bool isBoss, bool isMiniboss, bool isRare)
+    public static KillKind Classify(bool isBoss, bool isMiniboss, bool isRare, bool isMagic)
     {
         if (isBoss)
         {
@@ -15,6 +15,11 @@ public static class KillKindClassifier
             return KillKind.Miniboss;
         }
 
-        return isRare ? KillKind.Rare : KillKind.Normal;
+        if (isRare)
+        {
+            return KillKind.Rare;
+        }
+
+        return isMagic ? KillKind.Magic : KillKind.Normal;
     }
 }

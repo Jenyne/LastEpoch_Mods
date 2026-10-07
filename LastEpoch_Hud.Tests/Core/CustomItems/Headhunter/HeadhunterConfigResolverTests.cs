@@ -105,7 +105,7 @@ public sealed class HeadhunterConfigResolverTests
     [Fact]
     public void Resolve_CopiesMechanicDurationTriggers()
     {
-        var triggers = new HeadhunterTriggers(true, false, true, false);
+        var triggers = new HeadhunterTriggers(true, false, true, false, true);
         HeadhunterConfig config = HeadhunterTestData.Config(
             triggers,
             HeadhunterTestData.Entry("FakeA")

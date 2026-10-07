@@ -141,7 +141,8 @@ internal static class HeadhunterKillSource
         KillKind kind = KillKindClassifier.Classify(
             killed.isBoss(),
             killed.isMiniboss(),
-            killed.IsRare
+            killed.IsRare,
+            killed.rarity == Actor.Rarity.Magic
         );
         if (kind == KillKind.Normal)
         {

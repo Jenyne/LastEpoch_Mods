@@ -5,5 +5,6 @@ public readonly record struct HeadhunterTriggers(
     bool Rare,
     bool Boss,
     bool Miniboss,
-    bool MinionKills
+    bool MinionKills,
+    bool Magic
 );

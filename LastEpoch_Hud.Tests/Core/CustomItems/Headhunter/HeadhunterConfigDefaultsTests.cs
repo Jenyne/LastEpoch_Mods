@@ -1,4 +1,5 @@
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
+using Newtonsoft.Json.Linq;
 
 namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter;
 
@@ -29,8 +30,42 @@ public sealed class HeadhunterConfigDefaultsTests
     public void Config_Triggers_AreAllOn()
     {
         Assert.Equal(
-            new HeadhunterTriggers(true, true, true, true),
+            new HeadhunterTriggers(true, true, true, true, true),
             HeadhunterConfigDefaults.Config.Triggers
+        );
+    }
+
+    [Fact]
+    public void VersionedFields_AddMagicTrigger_AtCurrentVersion()
+    {
+        Assert.Contains(
+            HeadhunterConfigDefaults.VersionedFields,
+            field =>
+                field.Parent == "triggers"
+                && field.Key == "magic"
+                && field.Value.Type == JTokenType.Boolean
+                && (bool)field.Value
+                && field.Since == 3
+        );
+    }
+
+    [Fact]
+    public void DefaultsVersion_EqualsNewestSince()
+    {
+        int newest = HeadhunterConfigDefaults
+            .VersionedStats.Select(row => row.Since)
+            .Concat(HeadhunterConfigDefaults.VersionedFields.Select(field => field.Since))
+            .Max();
+
+        Assert.Equal(HeadhunterConfigDefaults.DefaultsVersion, newest);
+    }
+
+    [Fact]
+    public void VersionedFields_SinceWithinRange()
+    {
+        Assert.All(
+            HeadhunterConfigDefaults.VersionedFields,
+            field => Assert.InRange(field.Since, 1, HeadhunterConfigDefaults.DefaultsVersion)
         );
     }
 

@@ -292,6 +292,37 @@ public sealed class HeadhunterConfigMergerTests
         Assert.Equal(HeadhunterConfigDefaults.Stats, parsed.Config.Stats);
     }
 
+    [Fact]
+    public void Merge_Stamp2File_AddsMagicTrigger_KeepsPlayerTriggers()
+    {
+        var config = new HeadhunterConfig
+        {
+            Version = HeadhunterConfigDefaults.CurrentVersion,
+            Mechanic = HeadhunterConfigDefaults.Mechanic,
+            DurationSeconds = HeadhunterConfigDefaults.DurationSeconds,
+            Triggers = new HeadhunterTriggers(false, true, true, true, true),
+            Stats = HeadhunterConfigDefaults.Stats,
+        };
+        var file = JObject.Parse(HeadhunterConfigWriter.Write(config));
+        ((JObject)file["triggers"]).Remove("magic");
+        file["defaultsVersion"] = 2;
+        var known = HeadhunterConfigDefaults
+            .Stats.Select(entry => entry.Stat)
+            .ToHashSet(StringComparer.Ordinal);
+
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            file.ToString(),
+            HeadhunterConfigDefaults.MergeDefaults
+        );
+
+        HeadhunterConfigParseResult parsed = HeadhunterConfigParser.Parse(result.Text, known);
+        Assert.Empty(parsed.Problems);
+        Assert.True(parsed.Config.Triggers.Magic);
+        Assert.False(parsed.Config.Triggers.Rare);
+        Assert.Equal(3, (int)JObject.Parse(result.Text)["defaultsVersion"]);
+        Assert.Equal(1, result.Added);
+    }
+
     private static HeadhunterMergeResult Merge(string json)
     {
         return HeadhunterConfigMerger.Merge(json, _defaults);

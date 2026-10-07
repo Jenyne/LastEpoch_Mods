@@ -29,7 +29,7 @@ public sealed class HeadhunterConfigWriterTests
             Version = 1,
             Mechanic = "fake_id",
             DurationSeconds = 12.5f,
-            Triggers = new HeadhunterTriggers(true, false, true, false),
+            Triggers = new HeadhunterTriggers(true, false, true, false, false),
             Stats = new List<HeadhunterStatEntry>
             {
                 new("FakeA", 1.5f, 0f, true),

@@ -40,6 +40,7 @@ public sealed class RareModsMechanic : IHeadhunterMechanic
             KillKind.Rare => _config.Triggers.Rare,
             KillKind.Boss => _config.Triggers.Boss,
             KillKind.Miniboss => _config.Triggers.Miniboss,
+            KillKind.Magic => _config.Triggers.Magic,
             _ => false,
         };
     }

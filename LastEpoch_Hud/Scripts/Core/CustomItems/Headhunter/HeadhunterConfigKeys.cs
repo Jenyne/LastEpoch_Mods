@@ -11,6 +11,7 @@ internal static class HeadhunterConfigKeys
     public const string Rare = "rare";
     public const string Boss = "boss";
     public const string Miniboss = "miniboss";
+    public const string Magic = "magic";
     public const string MinionKills = "minionKills";
     public const string Stats = "stats";
     public const string Stat = "stat";

@@ -11,25 +11,42 @@ public sealed class RareModsMechanicTests
         HeadhunterTestData.Entry("FakeC"),
     ];
 
-    [Theory]
-    [InlineData(KillKind.Normal)]
-    [InlineData(KillKind.Magic)]
-    public void OnKill_ReturnsNothing_ForNormalOrMagic(KillKind kind)
+    [Fact]
+    public void OnKill_ReturnsNothing_ForNormal()
     {
         RareModsMechanic mechanic = CreateMechanic(HeadhunterTestData.AllTriggers);
 
         IReadOnlyList<BuffAction> actions = mechanic.OnKill(
-            new KillInfo(kind, false, [1]),
+            new KillInfo(KillKind.Normal, false, [1]),
             Active(1)
         );
 
         Assert.Empty(actions);
     }
 
+    [Fact]
+    public void OnKill_MagicKill_ActsLikeRare()
+    {
+        RareModsMechanic mechanic = CreateMechanic(HeadhunterTestData.AllTriggers);
+
+        var magic = mechanic
+            .OnKill(new KillInfo(KillKind.Magic, false, [1, 2]), Active(1))
+            .Select(action => (action.Kind, action.StatId))
+            .ToList();
+        var rare = mechanic
+            .OnKill(new KillInfo(KillKind.Rare, false, [1, 2]), Active(1))
+            .Select(action => (action.Kind, action.StatId))
+            .ToList();
+
+        Assert.NotEmpty(magic);
+        Assert.Equal(rare, magic);
+    }
+
     [Theory]
     [InlineData(KillKind.Rare)]
     [InlineData(KillKind.Boss)]
     [InlineData(KillKind.Miniboss)]
+    [InlineData(KillKind.Magic)]
     public void OnKill_ReturnsNothing_WhenKindTriggerOff(KillKind kind)
     {
         RareModsMechanic mechanic = CreateMechanic(TriggersWithout(kind));
@@ -45,7 +62,9 @@ public sealed class RareModsMechanicTests
     [Fact]
     public void OnKill_ReturnsNothing_ForMinionKill_WhenMinionTriggerOff()
     {
-        RareModsMechanic mechanic = CreateMechanic(new HeadhunterTriggers(true, true, true, false));
+        RareModsMechanic mechanic = CreateMechanic(
+            new HeadhunterTriggers(true, true, true, false, true)
+        );
 
         IReadOnlyList<BuffAction> actions = mechanic.OnKill(
             new KillInfo(KillKind.Rare, true, [1]),
@@ -265,9 +284,10 @@ public sealed class RareModsMechanicTests
     {
         return kind switch
         {
-            KillKind.Rare => new HeadhunterTriggers(false, true, true, true),
-            KillKind.Boss => new HeadhunterTriggers(true, false, true, true),
-            _ => new HeadhunterTriggers(true, true, false, true),
+            KillKind.Rare => new HeadhunterTriggers(false, true, true, true, true),
+            KillKind.Boss => new HeadhunterTriggers(true, false, true, true, true),
+            KillKind.Miniboss => new HeadhunterTriggers(true, true, false, true, true),
+            _ => new HeadhunterTriggers(true, true, true, true, false),
         };
     }
 }

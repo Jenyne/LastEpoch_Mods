@@ -43,7 +43,7 @@ public sealed class HeadhunterConfigParserTests
 
         Assert.Empty(result.Problems);
         Assert.Equal(30f, result.Config.DurationSeconds);
-        Assert.Equal(new HeadhunterTriggers(true, false, true, true), result.Config.Triggers);
+        Assert.Equal(new HeadhunterTriggers(true, false, true, true, true), result.Config.Triggers);
         Assert.Equal(HeadhunterConfigDefaults.Mechanic, result.Config.Mechanic);
         Assert.Equivalent(HeadhunterConfigDefaults.Stats, result.Config.Stats, strict: true);
     }
@@ -138,8 +138,35 @@ public sealed class HeadhunterConfigParserTests
     {
         HeadhunterConfigParseResult result = Parse("{\"triggers\":{\"rare\":1,\"boss\":false}}");
 
-        Assert.Equal(new HeadhunterTriggers(true, false, true, true), result.Config.Triggers);
+        Assert.Equal(new HeadhunterTriggers(true, false, true, true, true), result.Config.Triggers);
         Assert.Equal(new[] { "triggers.rare" }, Paths(result));
+    }
+
+    [Fact]
+    public void Parse_MagicTrigger_DefaultsOn_WhenMissing()
+    {
+        HeadhunterConfigParseResult result = Parse("{\"triggers\":{}}");
+
+        Assert.True(result.Config.Triggers.Magic);
+        Assert.Empty(result.Problems);
+    }
+
+    [Fact]
+    public void Parse_MagicTrigger_ReadsFalse()
+    {
+        HeadhunterConfigParseResult result = Parse("{\"triggers\":{\"magic\":false}}");
+
+        Assert.False(result.Config.Triggers.Magic);
+        Assert.Empty(result.Problems);
+    }
+
+    [Fact]
+    public void Parse_MagicTrigger_Invalid_ReportsProblem()
+    {
+        HeadhunterConfigParseResult result = Parse("{\"triggers\":{\"magic\":5}}");
+
+        Assert.True(result.Config.Triggers.Magic);
+        Assert.Equal(new[] { "triggers.magic" }, Paths(result));
     }
 
     [Fact]
