@@ -1,6 +1,6 @@
 using System;
 
-namespace LastEpoch_Hud.Scripts.Core.CustomItems;
+namespace LastEpoch_Hud.Scripts.Core.CustomItems.Mjolner;
 
 /// <summary>Mjolner trigger chance from its fraction settings (0.3 = 30%).</summary>
 public static class MjolnerTriggerChance

@@ -1,6 +1,7 @@
 using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 
-namespace LastEpoch_Hud.Tests.Core.CustomItems;
+namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter;
 
 public sealed class HeadhunterDescriptionTests
 {

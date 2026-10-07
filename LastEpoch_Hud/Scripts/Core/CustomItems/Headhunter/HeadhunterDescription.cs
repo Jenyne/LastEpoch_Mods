@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace LastEpoch_Hud.Scripts.Core.CustomItems;
+namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 
 /// <summary>Headhunter description text from its config.</summary>
 public static class HeadhunterDescription

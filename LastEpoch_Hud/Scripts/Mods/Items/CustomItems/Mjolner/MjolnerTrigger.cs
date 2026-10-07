@@ -1,5 +1,5 @@
 using Il2Cpp;
-using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Mjolner;
 using MelonLoader;
 using UnityEngine;
 

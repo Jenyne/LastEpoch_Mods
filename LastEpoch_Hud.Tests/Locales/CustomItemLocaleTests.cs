@@ -1,5 +1,7 @@
 using System.Text.Json;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Mjolner;
 using LastEpoch_Hud.Tests.Support;
 
 namespace LastEpoch_Hud.Tests.Locales;

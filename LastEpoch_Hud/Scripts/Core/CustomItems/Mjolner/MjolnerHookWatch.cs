@@ -1,4 +1,4 @@
-namespace LastEpoch_Hud.Scripts.Core.CustomItems;
+namespace LastEpoch_Hud.Scripts.Core.CustomItems.Mjolner;
 
 /// <summary>Says when the Mjolner hit hook must be added, moved or removed. Holds the trigger memory itself; never reset.</summary>
 public sealed class MjolnerHookWatch

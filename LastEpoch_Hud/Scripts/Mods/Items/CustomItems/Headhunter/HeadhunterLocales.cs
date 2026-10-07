@@ -1,5 +1,5 @@
 using System.Collections.Generic;
-using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 

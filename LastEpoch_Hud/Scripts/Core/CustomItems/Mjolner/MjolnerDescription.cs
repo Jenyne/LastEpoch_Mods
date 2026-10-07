@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace LastEpoch_Hud.Scripts.Core.CustomItems;
+namespace LastEpoch_Hud.Scripts.Core.CustomItems.Mjolner;
 
 /// <summary>Mjolner description text from its settings.</summary>
 public static class MjolnerDescription

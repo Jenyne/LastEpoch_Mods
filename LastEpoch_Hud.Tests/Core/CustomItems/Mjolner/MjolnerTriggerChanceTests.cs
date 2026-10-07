@@ -1,6 +1,6 @@
-using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Mjolner;
 
-namespace LastEpoch_Hud.Tests.Core.CustomItems;
+namespace LastEpoch_Hud.Tests.Core.CustomItems.Mjolner;
 
 public sealed class MjolnerTriggerChanceTests
 {
