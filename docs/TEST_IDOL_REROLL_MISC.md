@@ -2,7 +2,7 @@
 
 Branch: `feat/idol-reroll-misc`
 Base: Syncingoutt/master `2bc921dc` (v4.4.21, including language-switch and custom-item fixes).
-Status: prepared for in-game testing; gameplay and persistence not yet confirmed.
+Status: user confirmed idol rerolling works perfectly on 2026-10-07, after testing build `98570ae2`.
 
 ## Changes
 
@@ -37,4 +37,4 @@ The script builds Keyboard, runs repository tests with LAST_EPOCH_PATH, then cop
 9. Switch EN → FR → EN → KO → EN; captions must follow the selected language.
 10. Check other zone-restricted crafting still uses its normal limits.
 
-Metadata validation found each patch method in the supplied game assembly catalog; OnUse overloads use explicit parameter types. CSharpier checks pass for all 219 C# files. Locale JSON/key coverage and whitespace checks pass. The local test runner is blocked by a process-information initialization error in this environment. Windows compile, patch-resolution tests and gameplay remain required.
+Metadata validation found each patch method in the supplied game assembly catalog; OnUse overloads use explicit parameter types. CSharpier checks pass for all 219 C# files. Locale JSON/key coverage and whitespace checks pass. The local test runner is blocked by a process-information initialization error in this environment. The user subsequently confirmed that idol rerolling works perfectly in game on 2026-10-07. No separate automated test output or individually reported restart/locale results accompanied that confirmation.
