@@ -32,28 +32,32 @@ public sealed class MaxrollPreviewSession
         MaxrollLink.Parse(input);
         var request = new Request();
         pending = request;
-        request.Task = Task.Run(async () =>
+        // An explicit delegate avoids compiler-generated nullable metadata on an
+        // inferred async delegate, which conflicts with some game/loader references.
+        request.Task = Task.Run(new Func<Task<Result>>(() => LoadRequestAsync(input, request)));
+    }
+
+    async Task<Result> LoadRequestAsync(string input, Request request)
+    {
+        try
         {
-            try
+            return new Result
             {
-                return new Result
-                {
-                    Build = await retrieve(input, request.Token).ConfigureAwait(false),
-                };
-            }
-            catch (OperationCanceledException) when (request.Token.IsCancellationRequested)
-            {
-                return new Result();
-            }
-            catch (Exception ex)
-            {
-                return new Result { Error = ex.Message };
-            }
-            finally
-            {
-                request.Dispose();
-            }
-        });
+                Build = await retrieve(input, request.Token).ConfigureAwait(false),
+            };
+        }
+        catch (OperationCanceledException) when (request.Token.IsCancellationRequested)
+        {
+            return new Result();
+        }
+        catch (Exception ex)
+        {
+            return new Result { Error = ex.Message };
+        }
+        finally
+        {
+            request.Dispose();
+        }
     }
 
     public void Cancel()

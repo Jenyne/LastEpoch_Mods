@@ -6,23 +6,28 @@ This adds a read-only **Maxroll Build Preview** window at **Items → Force Drop
 
 ## Build and install the HUD preview
 
-Close Last Epoch first. From your repository in PowerShell:
+Close Last Epoch first. From your repository in PowerShell, paste this entire block together. Fetch, switch and update failures stop the block; the install script builds and runs tests before replacing the DLL.
 
 ```powershell
-$ErrorActionPreference = "Stop"
-$gamePath = "D:\SteamLibrary\steamapps\common\Last Epoch"
-git fetch origin
-if ($LASTEXITCODE -ne 0) { throw "Fetch failed" }
-git switch feat/maxroll-build-preview
-if ($LASTEXITCODE -ne 0) { throw "Switch failed; if this is a new local branch, use git switch --track origin/feat/maxroll-build-preview" }
-git pull --ff-only origin feat/maxroll-build-preview
-if ($LASTEXITCODE -ne 0) { throw "Pull failed" }
-dotnet build .\LastEpoch_Hud\LastEpoch_Hud.csproj -c Release -p:LastEpochPath="$gamePath"
-if ($LASTEXITCODE -ne 0) { throw "Build failed; nothing was installed" }
-Copy-Item .\Build\Release\net6.0\LastEpoch_Hud.dll "$gamePath\Mods\LastEpoch_Hud.dll" -Force
+& {
+    $ErrorActionPreference = "Stop"
+    $branch = "feat/maxroll-build-preview"
+    git fetch origin
+    if ($LASTEXITCODE -ne 0) { throw "Fetch failed" }
+    git show-ref --verify --quiet "refs/heads/$branch"
+    if ($LASTEXITCODE -eq 0) {
+        git switch $branch
+    } else {
+        git switch --track "origin/$branch"
+    }
+    if ($LASTEXITCODE -ne 0) { throw "Branch switch failed" }
+    git pull --ff-only origin $branch
+    if ($LASTEXITCODE -ne 0) { throw "Update failed" }
+    .\scripts\Test-MaxrollPreview.ps1 -GamePath "D:\SteamLibrary\steamapps\common\Last Epoch"
+}
 ```
 
-Manually copy the updated `en.json` and any desired `fr.json`, `ko.json` or `zh.json` from `LastEpoch_Hud\LastEpoch_Hud\Locales` to `Last Epoch\Mods\LastEpoch_Hud\Locales`. Keep the filenames unchanged. The new labels are included in English, French, Korean and Chinese.
+The script also installs the supplied English, French, Korean and Chinese locale files. If copying them by hand, move the desired `en.json`, `fr.json`, `ko.json` or `zh.json` from `LastEpoch_Hud\LastEpoch_Hud\Locales` to `Last Epoch\Mods\LastEpoch_Hud\Locales` and keep the filenames unchanged.
 
 Open **Items → Force Drop → Maxroll Build Preview**. Paste a public Last Epoch planner URL and click **Load Build**. Previous/Next beside the gear variant name changes the selected profile or equipment embed. The four category buttons list equipment, idols, blessings and Weaver items. Empty grid positions remain visible. Click an item to inspect every original top-level field; Previous/Next under the details pages through modifiers and remaining fields.
 
@@ -100,6 +105,8 @@ Send back preview.json and any retrieval message if a guide doesn't resolve corr
 
 ## Preparation checks
 
-The reader and inspection command compiled through Roslyn. New Maxroll tests were executed by direct invocation with the project's xUnit 4.0.1 assertions; all 46 cases passed. This was used because the local dotnet CLI/MSBuild test runner fails while reading process information before tests start; the full project runner remains to be checked on Windows.
+The reader and inspection command compiled through Roslyn. New Maxroll tests were executed by direct invocation with the project's xUnit 4.0.1 assertions; all 47 cases passed. This includes verifying that retrieval runs off the calling thread. This was used because the local dotnet CLI/MSBuild test runner fails while reading process information before tests start; the full project runner remains to be checked on Windows.
+
+The original inferred async delegate reproduced CS0656 when compiled with a conflicting `NullableAttribute` constructor. The explicit delegate and named async worker compile successfully with that same conflict and .NET 6 references; cancellation, error handling and main-thread result publication remain covered by session tests. Windows still needs a full build and in-game preview check.
 
 Live retrieval of `zge0t60e#2` selected Aspirational Gear, resolved 23 item placements with zero capture issues, and matched every selected original item field and empty grid position. Formatting and locale completeness/placeholder checks passed. The new UI compiled against the supplied Unity/TMP/Harmony assemblies with stand-ins for the surrounding mod context and unavailable native game catalog. Core compiled against .NET 6 reference assemblies. A full mod build remains blocked in this environment by an unreadable supplied Il2CppLE.dll; Windows build and HUD behavior require the in-game checks above. No game construction or legal-item validation is claimed by these checks.

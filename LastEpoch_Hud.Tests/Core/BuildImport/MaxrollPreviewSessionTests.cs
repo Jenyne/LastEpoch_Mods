@@ -10,6 +10,38 @@ public sealed class MaxrollPreviewSessionTests
         MaxrollBuildParser.Parse("{\"name\":\"" + name + "\",\"items\":{}}");
 
     [Fact]
+    public async Task Retrieval_RunsOffTheCallingThread()
+    {
+        var started = new TaskCompletionSource<int>(
+            TaskCreationOptions.RunContinuationsAsynchronously
+        );
+        var session = new MaxrollPreviewSession(
+            (_, _) =>
+            {
+                started.SetResult(Environment.CurrentManagedThreadId);
+                return Task.FromResult(Build("Background"));
+            }
+        );
+        // A dedicated caller cannot be reused as the pool worker after it returns.
+        var caller = Task.Factory.StartNew(
+            () =>
+            {
+                int thread = Environment.CurrentManagedThreadId;
+                session.Load(Link);
+                return thread;
+            },
+            CancellationToken.None,
+            TaskCreationOptions.LongRunning,
+            TaskScheduler.Default
+        );
+        int callingThread = await caller.WaitAsync(TimeSpan.FromSeconds(3));
+        int retrievalThread = await started.Task.WaitAsync(TimeSpan.FromSeconds(3));
+        Assert.NotEqual(callingThread, retrievalThread);
+        await Poll(session);
+        Assert.NotNull(session.Build);
+    }
+
+    [Fact]
     public async Task Results_ArePublishedOnlyWhenPolled()
     {
         var completed = new TaskCompletionSource<MaxrollBuild>(
