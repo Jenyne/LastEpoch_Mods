@@ -95,13 +95,13 @@ The same runtime reported `sockets=1` for two affixes (ring modifier plus corrup
 
 ## Runtime confirmation on `aff4c2f3`
 
-The user confirmed successful Unsated Rage drops with its selected fixed modifier, from zero through four ordinary affixes plus corruption. Several different corruption modifiers were tested without errors. The supplied log identifies build `aff4c2f3` and contains no rejection for those combinations. This confirms item creation for the tested selections; equip/stat behavior and save/reload were not reported in this test.
+The user confirmed successful Unsated Rage drops with its selected fixed modifier, from zero through four ordinary affixes plus corruption. Several different corruption modifiers were tested without errors. The supplied log identifies build `aff4c2f3` and contains no rejection for those combinations. The follow-up confirms the tested items remain unchanged after save/reload. Creation and persistence are confirmed for those selections; equip/stat behavior was not separately reported.
 
 The remaining failed case adds a regular sealed affix to the ring's four ordinary affixes and selected corruption. The log shows that affix 25 changes from `Regular` to `None` during `UniqueVariantAdapter.Apply`. Its ID, tier, roll and other signature fields are unchanged, as are the other four ordinary affixes. This intermediate refresh runs before `CorruptedAffixAdapter.Apply`, so this rejection is a loss of the regular seal on the unique/legendary path, not a failure to add the selected corruption. Verification rejects the item before it is dropped.
 
 This regular-sealed unique combination belongs to the requested illegal-item investigation. It remains unsupported by the current creation path. The result does not establish whether another native representation could preserve it, and the seal check must not be bypassed to claim support. The later route-aware picker should distinguish it from legal sealed-plus-corrupted base equipment and explain the exclusion.
 
-Remaining runtime checks: effects and persistence for the successfully created ring combinations; Withstand the Elements with both fixed modifiers and corruption; and base equipment with independent regular and corruption seals. These results do not certify every item, corruption family or illegal combination.
+Remaining runtime checks: equip/stat effects for the successfully created ring combinations; creation, effects and persistence for Withstand the Elements with both fixed modifiers and corruption; and base equipment with independent regular and corruption seals. These results do not certify every item, corruption family or illegal combination.
 
 ## Verification completed here
 
@@ -110,7 +110,7 @@ Remaining runtime checks: effects and persistence for the successfully created r
 - Changed Force Drop HUD and adapters compile against the supplied Unity/TMP/Harmony assemblies with game context stubs.
 - Formatting and diff checks pass; the layout-building code and Harmony patch count are unchanged.
 
-The supplied `Il2CppLE.dll` has unreadable metadata in this environment, so these checks are not a full mod/game SDK build. The guarded Windows script runs the actual build and full test suite. Native creation has the limited runtime confirmation above; the remaining combinations, equip behavior and persistence still need game testing.
+The supplied `Il2CppLE.dll` has unreadable metadata in this environment, so these checks are not a full mod/game SDK build. The guarded Windows script runs the actual build and full test suite. Native creation and persistence have the limited runtime confirmation above; the remaining combinations and equip/stat behavior still need game testing.
 
 ## Next stages
 
