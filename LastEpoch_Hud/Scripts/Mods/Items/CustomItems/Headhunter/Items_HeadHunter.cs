@@ -27,6 +27,7 @@ public class Items_HeadHunter : MonoBehaviour
         HeadhunterKillSource.EnsureHooked();
         HeadhunterConfigLoader.ReloadIfChanged(Time.unscaledTime);
         HeadhunterBuffBar.Tick(Time.unscaledTime);
+        HeadhunterBarHover.Tick();
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)

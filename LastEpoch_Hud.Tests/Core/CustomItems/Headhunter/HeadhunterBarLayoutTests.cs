@@ -152,6 +152,37 @@ public sealed class HeadhunterBarLayoutTests
         Assert.Equal(-540f, y, 0.001f);
     }
 
+    [Theory]
+    [InlineData(1)]
+    [InlineData(3)]
+    public void PanelWidth_CountTimesEntryPlusGaps(int count)
+    {
+        float expected =
+            (count * HeadhunterBarLayout.EntrySize) + ((count - 1) * HeadhunterBarLayout.Spacing);
+
+        Assert.Equal(expected, HeadhunterBarLayout.PanelWidth(count), 0.001f);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(-1)]
+    public void PanelWidth_NonPositive_Zero(int count)
+    {
+        Assert.Equal(0f, HeadhunterBarLayout.PanelWidth(count));
+    }
+
+    [Fact]
+    public void ToLocal_Point_MatchesPlacementOverload()
+    {
+        HeadhunterBarPlacement placement = new(1060, 640, 1f);
+
+        (float px, float py) = HeadhunterBarLayout.ToLocal(placement, 1920, 1080, 2f);
+        (float x, float y) = HeadhunterBarLayout.ToLocal(1060, 640, 1920, 1080, 2f);
+
+        Assert.Equal(px, x, 0.001f);
+        Assert.Equal(py, y, 0.001f);
+    }
+
     private static HeadhunterBarPlacement Shift(
         HeadhunterBarPlacement placement,
         bool moveX,

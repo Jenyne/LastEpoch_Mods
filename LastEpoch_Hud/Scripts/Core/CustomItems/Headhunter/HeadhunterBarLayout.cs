@@ -8,6 +8,8 @@ public static class HeadhunterBarLayout
     public const float GapRatio = 0.2f;
     public const float SizeRatio = 0.75f;
     public const float MoveTolerance = 0.02f;
+    public const float EntrySize = 60f;
+    public const float Spacing = 4f;
 
     public static bool TryPlace(
         SkillBarBounds bounds,
@@ -63,9 +65,29 @@ public static class HeadhunterBarLayout
         float canvasScale
     )
     {
-        return (
-            (placement.X - (screenW * 0.5f)) / canvasScale,
-            (placement.Y - (screenH * 0.5f)) / canvasScale
-        );
+        return ToLocal(placement.X, placement.Y, screenW, screenH, canvasScale);
+    }
+
+    /// <summary>Screen pixels to canvas units, relative to the screen center.</summary>
+    public static (float X, float Y) ToLocal(
+        float x,
+        float y,
+        float screenW,
+        float screenH,
+        float canvasScale
+    )
+    {
+        return ((x - (screenW * 0.5f)) / canvasScale, (y - (screenH * 0.5f)) / canvasScale);
+    }
+
+    /// <summary>Row width in canvas units for the given icon count.</summary>
+    public static float PanelWidth(int count)
+    {
+        if (count <= 0)
+        {
+            return 0f;
+        }
+
+        return (count * EntrySize) + ((count - 1) * Spacing);
     }
 }

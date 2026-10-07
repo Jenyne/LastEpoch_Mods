@@ -34,6 +34,10 @@ internal sealed class HeadhunterBarSlot
         _timer.gameObject.SetActive(true);
     }
 
+    public int StatId => _statId;
+
+    public Font TextFont => _text.font;
+
     public void Show(HeadhunterBarEntry entry)
     {
         _root.SetActive(true);

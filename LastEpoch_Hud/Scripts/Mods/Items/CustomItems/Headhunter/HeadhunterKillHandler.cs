@@ -10,7 +10,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 internal static class HeadhunterKillHandler
 {
     private static readonly HashSet<int> _active = new();
-    private static readonly Func<int, string> _statName = id => ((SP)id).ToString();
 
     public static void Handle(KillInfo kill)
     {
@@ -35,6 +34,8 @@ internal static class HeadhunterKillHandler
             return;
         }
 
-        Main.logger_instance?.Msg(HeadhunterKillLog.Format(kill, actions, _statName));
+        Main.logger_instance?.Msg(
+            HeadhunterKillLog.Format(kill, actions, HeadhunterStatNames.EnumName)
+        );
     }
 }

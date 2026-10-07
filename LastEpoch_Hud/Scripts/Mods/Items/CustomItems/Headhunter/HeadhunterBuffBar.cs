@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
+using LastEpoch_Hud.Scripts.ModUI;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 
@@ -10,6 +12,7 @@ internal static class HeadhunterBuffBar
 {
     private static readonly RefreshGate _gate = new(1.0);
     private static readonly HeadhunterBuffBarModel _model = new();
+    private static readonly HeadhunterBarChangeTracker _changes = new();
     private static float[] _remaining = Array.Empty<float>();
 
     public static void MarkDirty()
@@ -40,13 +43,30 @@ internal static class HeadhunterBuffBar
         if (!ShouldShow(buffs))
         {
             HeadhunterBuffBarView.Hide();
+            LogIfChanged(Array.Empty<HeadhunterBarEntry>());
             return;
         }
 
         HeadhunterResolvedConfig config = HeadhunterConfigLoader.Resolved;
         float[] remaining = RemainingFor(config.Stats.Count);
         HeadhunterBuffSink.FillRemaining(buffs, config.Stats, remaining);
-        HeadhunterBuffBarView.Show(_model.Build(config.Stats, remaining, config.DurationSeconds));
+        IReadOnlyList<HeadhunterBarEntry> entries = _model.Build(
+            config.Stats,
+            remaining,
+            config.DurationSeconds
+        );
+        HeadhunterBuffBarView.Show(entries);
+        LogIfChanged(entries);
+    }
+
+    private static void LogIfChanged(IReadOnlyList<HeadhunterBarEntry> entries)
+    {
+        if (!_changes.Update(entries) || !ModSettings.Debug.Enabled.Value)
+        {
+            return;
+        }
+
+        Main.logger_instance?.Msg(HeadhunterBarLog.Format(entries, HeadhunterStatNames.EnumName));
     }
 
     private static bool ShouldShow(StatBuffs buffs)
