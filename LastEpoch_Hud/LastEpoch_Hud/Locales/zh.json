@@ -367,7 +367,7 @@
   "CustomItem.Headhunter.Subtype": "HH 皮腰带",
   "CustomItem.Headhunter.Name": "猎头者",
   "CustomItem.Headhunter.Lore": "人的灵魂统治着白骨洞穴,\r\n透过血肉之窗学习与审判。心脏不过是肉。\r\n头颅才是人之所在。\"\r\n- 卡奥姆的顾问拉维安加",
-  "CustomItem.Headhunter.Description": "当你或你的召唤物击杀稀有怪物或首领时, 你获得其词缀, 持续{0}秒。再次击杀会刷新持续时间。",
+  "CustomItem.Headhunter.Description": "当你或你的召唤物击杀魔法或稀有怪物时, 你获得其词缀作为增益, 持续{0}秒, 最多叠加{1}次。首领会赋予一个随机词缀。每次击杀魔法怪物、稀有怪物或首领都会刷新所有词缀。拥有的不同词缀越多, 你的体型越大。",
   "CustomItem.Mjolner.Name": "妙尔尼尔",
   "CustomItem.Mjolner.Lore": "直视风暴之眼, 你便能赢得它的敬意。",
   "CustomItem.Mjolner.DescriptionProc": "如果你至少拥有{0}点力量和{1}点智力, 则有{2}%至{3}%的几率在攻击命中时触发一个闪电法术",
