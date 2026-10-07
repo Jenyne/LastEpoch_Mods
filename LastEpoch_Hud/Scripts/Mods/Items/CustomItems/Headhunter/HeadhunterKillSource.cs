@@ -3,37 +3,49 @@ using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 using MelonLoader;
+using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 
 /// <summary>Hooks the player's kill events and reports Headhunter-relevant kills.</summary>
 internal static class HeadhunterKillSource
 {
-    private static readonly System.Action<Ability, Actor> _onKillAction = new(OnKill);
-    private static readonly System.Action<Summoned, Ability, Actor> _onMinionKillAction = new(
-        OnMinionKill
-    );
+    private static readonly AbilityEventListener.OnKillAction _onKill = new System.Action<
+        Ability,
+        Actor
+    >(OnKill);
+    private static readonly SummonTracker.MinionKillAction _onMinionKill = new System.Action<
+        Summoned,
+        Ability,
+        Actor
+    >(OnMinionKill);
     private static readonly List<int> _modStatIds = new();
-    private static bool _killHooked;
-    private static bool _minionKillHooked;
+    private static readonly KillDeduper _deduper = new();
+    private static readonly IntervalGate _trackerRetry = new(1.0);
+    private static System.IntPtr _hookedActor;
+    private static AbilityEventListener _listener;
+    private static SummonTracker _tracker;
 
     public static void EnsureHooked()
     {
-        if (!_killHooked)
+        if (Refs_Manager.player_actor.IsNullOrDestroyed())
         {
-            HookKill();
+            return;
         }
 
-        if (!_minionKillHooked)
+        if (Refs_Manager.player_actor.Pointer != _hookedActor || _listener.IsNullOrDestroyed())
         {
-            HookMinionKill();
+            Unhook();
+            HookListener();
+            _hookedActor = Refs_Manager.player_actor.Pointer;
         }
-    }
 
-    public static void ResetHooks()
-    {
-        _killHooked = false;
-        _minionKillHooked = false;
+        if (!_tracker.IsNullOrDestroyed() || !_trackerRetry.IsDue(Time.unscaledTime))
+        {
+            return;
+        }
+
+        HookTracker();
     }
 
     internal static bool IsHeadhunterWorn()
@@ -48,28 +60,49 @@ internal static class HeadhunterKillSource
         );
     }
 
-    private static void HookKill()
+    private static void Unhook()
     {
-        AbilityEventListener listener = PlayerComponent<AbilityEventListener>();
-        if (listener.IsNullOrDestroyed())
+        if (!_listener.IsNullOrDestroyed())
+        {
+            _listener.remove_onKillEvent(_onKill);
+        }
+
+        if (!_tracker.IsNullOrDestroyed())
+        {
+            _tracker.remove_minionKillEvent(_onMinionKill);
+        }
+
+        _listener = null;
+        _tracker = null;
+    }
+
+    private static void HookListener()
+    {
+        _listener = PlayerComponent<AbilityEventListener>();
+        if (_listener.IsNullOrDestroyed())
         {
             return;
         }
 
-        listener.add_onKillEvent(_onKillAction);
-        _killHooked = true;
+        _listener.remove_onKillEvent(_onKill);
+        _listener.add_onKillEvent(_onKill);
     }
 
-    private static void HookMinionKill()
+    private static void HookTracker()
     {
-        SummonTracker tracker = PlayerComponent<SummonTracker>();
+        if (!Refs_Manager.player_actor.TryGetExistingSummonTracker(out SummonTracker tracker))
+        {
+            return;
+        }
+
         if (tracker.IsNullOrDestroyed())
         {
             return;
         }
 
-        tracker.add_minionKillEvent(_onMinionKillAction);
-        _minionKillHooked = true;
+        tracker.remove_minionKillEvent(_onMinionKill);
+        tracker.add_minionKillEvent(_onMinionKill);
+        _tracker = tracker;
     }
 
     private static T PlayerComponent<T>()
@@ -116,6 +149,11 @@ internal static class HeadhunterKillSource
         }
 
         if (!IsHeadhunterWorn())
+        {
+            return;
+        }
+
+        if (!_deduper.TryClaim(Time.frameCount, killed.GetInstanceID()))
         {
             return;
         }

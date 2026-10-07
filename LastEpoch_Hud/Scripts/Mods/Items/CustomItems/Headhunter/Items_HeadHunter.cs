@@ -2,7 +2,6 @@ using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 using MelonLoader;
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 
@@ -10,14 +9,12 @@ namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 public class Items_HeadHunter : MonoBehaviour
 {
     private static readonly CustomUniqueRegistrar _registrar = new(CreateDefinition());
-    private bool _inGame;
 
     public Items_HeadHunter(System.IntPtr ptr)
         : base(ptr) { }
 
     private void Awake()
     {
-        SceneManager.add_sceneLoaded(new System.Action<Scene, LoadSceneMode>(OnSceneLoaded));
         HeadhunterConfigLoader.Load();
     }
 
@@ -28,21 +25,6 @@ public class Items_HeadHunter : MonoBehaviour
         HeadhunterConfigLoader.ReloadIfChanged(Time.unscaledTime);
         HeadhunterBuffBar.Tick(Time.unscaledTime);
         HeadhunterBarHover.Tick();
-    }
-
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        if (!Scenes.IsGameScene())
-        {
-            _inGame = false;
-            return;
-        }
-        if (!_inGame)
-        {
-            //Check itemlist here
-            HeadhunterKillSource.ResetHooks();
-        }
-        _inGame = true;
     }
 
     private static CustomUniqueDefinition CreateDefinition()
