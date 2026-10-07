@@ -300,14 +300,8 @@ public class Save_Manager : MonoBehaviour
                 },
                 Headhunter =
                 {
-                    enable = true,
                     BaseDrop = true,
                     UniqueDrop = true,
-                    MinGenerated = 1,
-                    MaxGenerated = 5,
-                    BuffDuration = 20f,
-                    AddValue = 1f,
-                    IncreasedValue = 1f,
                     WeaverWill = false,
                 },
                 Mjolner =
@@ -878,12 +872,6 @@ public class Save_Manager : MonoBehaviour
 
         public struct Headhunter
         {
-            public bool enable;
-            public int MinGenerated;
-            public int MaxGenerated;
-            public float BuffDuration;
-            public float AddValue;
-            public float IncreasedValue;
             public bool WeaverWill;
             public bool BaseDrop;
             public bool UniqueDrop;

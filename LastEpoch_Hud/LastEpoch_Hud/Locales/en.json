@@ -356,7 +356,7 @@
   "CustomItem.Headhunter.Subtype": "HH Leather belt",
   "CustomItem.Headhunter.Name": "Headhunter",
   "CustomItem.Headhunter.Lore": "A man's soul rules from a cavern of bone, learns and\r\njudges through flesh-born windows. The heart is meat.\r\nThe head is where the Man is.\"\r\n- Lavianga, Advisor to Kaom",
-  "CustomItem.Headhunter.Description": "When you or your minions Kill a monster, you gain {0} to {1} random Modifiers for {2} seconds",
+  "CustomItem.Headhunter.Description": "When you or your minions kill a Magic or Rare monster, you gain its modifiers as buffs for {0} seconds, stacking up to {1} times. Bosses grant one random modifier. Every Magic, Rare or boss kill refreshes all of them. The more different modifiers you hold, the larger you grow.",
   "CustomItem.Mjolner.Name": "Mjölner",
   "CustomItem.Mjolner.Lore": "Look the storm in the eye and you will have its respect.",
   "CustomItem.Mjolner.DescriptionProc": "If you have at least {0} Strength and {1} Intelligence, {2} to {3}% chance to Trigger a Lightning Spell on Hit with an Attack",

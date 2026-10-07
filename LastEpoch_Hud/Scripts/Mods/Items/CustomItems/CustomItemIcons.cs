@@ -26,6 +26,17 @@ public static class CustomItemIcons
         LoadAll();
     }
 
+    /// <summary>The item's icon, reloaded when Unity unloaded it; null when unavailable.</summary>
+    public static Sprite Get(int index)
+    {
+        if (IsUnloaded(index))
+        {
+            Reload(index);
+        }
+
+        return _sprites[index].IsNullOrDestroyed() ? null : _sprites[index];
+    }
+
     /// <summary>Puts the item's icon on the image; does nothing when either is missing.</summary>
     public static void Apply(Image image, int index)
     {
@@ -34,19 +45,15 @@ public static class CustomItemIcons
             return;
         }
 
-        if (IsUnloaded(index))
-        {
-            Reload(index);
-        }
-
-        if (_sprites[index].IsNullOrDestroyed())
+        Sprite sprite = Get(index);
+        if (sprite == null)
         {
             return;
         }
 
         // A native override sprite can mask Image.sprite entirely.
         image.overrideSprite = null;
-        image.sprite = _sprites[index];
+        image.sprite = sprite;
     }
 
     private static void LoadAll()

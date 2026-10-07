@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 using Il2Cpp;
-using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Mjolner;
 using MelonLoader;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Mjolner;

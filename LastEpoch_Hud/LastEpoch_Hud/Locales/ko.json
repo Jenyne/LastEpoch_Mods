@@ -367,7 +367,7 @@
   "CustomItem.Headhunter.Subtype": "HH 가죽 허리띠",
   "CustomItem.Headhunter.Name": "헤드헌터",
   "CustomItem.Headhunter.Lore": "사람의 영혼은 뼈의 동굴에서 다스리며,\r\n살에서 난 창문을 통해 배우고 판단한다. 심장은 고기일 뿐이다.\r\n머리야말로 사람이 있는 곳이다.\"\r\n- 카옴의 조언자 라비앙가",
-  "CustomItem.Headhunter.Description": "당신이나 당신의 하수인이 몬스터를 처치하면 {2}초 동안 무작위 속성 {0}~{1}개를 획득합니다",
+  "CustomItem.Headhunter.Description": "당신이나 당신의 하수인이 마법 또는 희귀 몬스터를 처치하면 그 속성을 {0}초 동안 버프로 획득하며 최대 {1}회까지 중첩됩니다. 보스는 무작위 속성 하나를 부여합니다. 마법, 희귀 몬스터 또는 보스를 처치할 때마다 모든 속성이 갱신됩니다. 서로 다른 속성이 많을수록 더 커집니다.",
   "CustomItem.Mjolner.Name": "묠니르",
   "CustomItem.Mjolner.Lore": "폭풍의 눈을 똑바로 바라보면 그 존중을 얻을 것이다.",
   "CustomItem.Mjolner.DescriptionProc": "힘이 최소 {0}, 지능이 최소 {1}이라면, 공격 적중 시 {2}~{3}% 확률로 번개 주문을 발동합니다",

@@ -1,14 +1,15 @@
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Mjolner;
 using MelonLoader;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Mjolner;
 
+/// <summary>Casts Mjolner's triggered skills and holds their run state.</summary>
 internal static class MjolnerTrigger
 {
     internal static Ability[] Abilities;
     private static System.DateTime[] _times;
-    private static bool _initializing;
     private static bool _trigger;
 
     internal static void AllSkills(Actor hitActor)
@@ -19,11 +20,7 @@ internal static class MjolnerTrigger
         }
 
         _trigger = true;
-        Save_Manager.Data.Mjolner mjolner = Save_Manager.instance.data.Items.Mjolner;
-        float itemRoll = Random.Range(mjolner.MinTriggerChance, mjolner.MaxTriggerChance);
-        float itemRollPercent = (itemRoll / 255) * 100;
-        float rollPercent = Random.Range(0f, 100f);
-        if (rollPercent <= itemRollPercent && !Refs_Manager.player_treedata.IsNullOrDestroyed())
+        if (ShouldProc())
         {
             CastLightningSpells(hitActor);
         }
@@ -31,22 +28,18 @@ internal static class MjolnerTrigger
         _trigger = false;
     }
 
-    internal static void InitializeSocketedSkills()
+    /// <summary>Drops run state: re-reads socketed skills, restarts their cooldowns, clears the re-entry flag.</summary>
+    internal static void ResetRun()
     {
-        if (_initializing)
+        _trigger = false;
+        Abilities = new Ability[3];
+        _times = new System.DateTime[3];
+        if (Refs_Manager.ability_manager.IsNullOrDestroyed())
         {
             return;
         }
 
-        _initializing = true;
-        Abilities = new Ability[3];
-        _times = new System.DateTime[3];
-        if (!Refs_Manager.ability_manager.IsNullOrDestroyed())
-        {
-            FindSocketedAbilities();
-        }
-
-        _initializing = false;
+        FindSocketedAbilities();
     }
 
     internal static void SocketedSkills(Actor hitActor)
@@ -80,6 +73,22 @@ internal static class MjolnerTrigger
         }
 
         _trigger = false;
+    }
+
+    private static bool ShouldProc()
+    {
+        if (Refs_Manager.player_treedata.IsNullOrDestroyed())
+        {
+            return false;
+        }
+
+        Save_Manager.Data.Mjolner mjolner = Save_Manager.instance.data.Items.Mjolner;
+        return MjolnerTriggerChance.Procs(
+            mjolner.MinTriggerChance,
+            mjolner.MaxTriggerChance,
+            Random.value,
+            Random.value
+        );
     }
 
     private static void CastLightningSpells(Actor hitActor)

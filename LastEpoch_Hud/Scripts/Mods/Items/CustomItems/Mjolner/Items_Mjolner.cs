@@ -1,5 +1,6 @@
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Affixes;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -10,8 +11,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Mjolner;
 public class Items_Mjolner : MonoBehaviour
 {
     private static readonly CustomUniqueRegistrar _registrar = new(CreateDefinition());
-
-    private bool _inGame;
 
     public Items_Mjolner(System.IntPtr ptr)
         : base(ptr) { }
@@ -34,19 +33,7 @@ public class Items_Mjolner : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (!Scenes.IsGameScene())
-        {
-            _inGame = false;
-            return;
-        }
-
-        MjolnerTrigger.InitializeSocketedSkills();
-        if (!_inGame)
-        {
-            MjolnerHitEvents.Reset();
-        }
-
-        _inGame = true;
+        MjolnerHitEvents.MarkSceneLoaded();
     }
 
     private static CustomUniqueDefinition CreateDefinition()
@@ -63,51 +50,8 @@ public class Items_Mjolner : MonoBehaviour
                     Save_Manager.instance.data.Items.Mjolner.UniqueDrop,
                     true
                 ),
-            Mods = Mods,
-            TooltipEntries = TooltipEntries,
+            Mods = CustomUniqueAffixes.MjolnerMods,
+            TooltipEntries = () => CustomUniqueAffixes.MjolnerTooltip,
         };
-    }
-
-    private static Il2CppSystem.Collections.Generic.List<UniqueItemMod> Mods()
-    {
-        var mods = new Il2CppSystem.Collections.Generic.List<UniqueItemMod>();
-        mods.Add(
-            new UniqueItemMod
-            {
-                canRoll = true,
-                property = SP.Damage,
-                tags = AT.Lightning,
-                type = BaseStats.ModType.INCREASED,
-                maxValue = 1.0f,
-                value = 0.8f,
-            }
-        );
-        mods.Add(
-            new UniqueItemMod
-            {
-                canRoll = true,
-                property = SP.Damage,
-                tags = AT.Physical,
-                type = BaseStats.ModType.INCREASED,
-                maxValue = 1.2f,
-                value = 0.8f,
-            }
-        );
-
-        return mods;
-    }
-
-    private static Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry> TooltipEntries()
-    {
-        var entries = new Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry>();
-        entries.Add(new UniqueModDisplayListEntry(0));
-        entries.Add(new UniqueModDisplayListEntry(1));
-        if (Save_Manager.instance.data.Items.Mjolner.ProcAnyLightningSpell)
-        {
-            entries.Add(new UniqueModDisplayListEntry(2));
-        }
-        entries.Add(new UniqueModDisplayListEntry(128));
-
-        return entries;
     }
 }

@@ -1,5 +1,7 @@
 using System.Text.Json;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Mjolner;
 using LastEpoch_Hud.Tests.Support;
 
 namespace LastEpoch_Hud.Tests.Locales;
@@ -48,11 +50,11 @@ public sealed class CustomItemLocaleTests
         var filled = new Dictionary<string, (string Text, string[] Expected)>
         {
             [CustomItemLocaleKeys.HeadhunterDescription] = (
-                HeadhunterDescription.Text(texts, 7001, 7002, 7003f),
-                ["7001", "7002", "7003"]
+                HeadhunterDescription.Text(texts, 7001f, 7002),
+                ["7001", "7002"]
             ),
             [CustomItemLocaleKeys.MjolnerDescriptionProc] = (
-                MjolnerDescription.LightningProc(texts, 7004, 7005, 255f, 127.5f),
+                MjolnerDescription.LightningProc(texts, 7004, 7005, 1f, 0.5f),
                 ["7004", "7005", "100", "50"]
             ),
             [CustomItemLocaleKeys.MjolnerDescriptionSocketed] = (
