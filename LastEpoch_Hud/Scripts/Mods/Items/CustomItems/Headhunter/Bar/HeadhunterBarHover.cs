@@ -1,6 +1,6 @@
 using System;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Bar;
-using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Resolve;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Bar;

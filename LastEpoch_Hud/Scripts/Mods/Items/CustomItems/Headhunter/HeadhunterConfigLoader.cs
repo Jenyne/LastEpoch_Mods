@@ -4,6 +4,9 @@ using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Buffs;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Defaults;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Json;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Resolve;
 using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Buffs;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;

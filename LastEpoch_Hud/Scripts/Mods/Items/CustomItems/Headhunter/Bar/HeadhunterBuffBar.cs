@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Bar;
-using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Resolve;
 using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Buffs;
 using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Kills;
 using LastEpoch_Hud.Scripts.ModUI;

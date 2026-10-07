@@ -2,7 +2,7 @@ using System;
 using System.Collections.Generic;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Buffs;
-using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Resolve;
 using MelonLoader;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Buffs;

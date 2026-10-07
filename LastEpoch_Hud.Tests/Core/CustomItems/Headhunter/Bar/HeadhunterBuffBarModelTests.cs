@@ -1,6 +1,6 @@
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Bar;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Buffs;
-using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Resolve;
 
 namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter.Bar;
 

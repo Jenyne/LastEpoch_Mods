@@ -1,6 +1,6 @@
 using System;
 using System.Collections.Generic;
-using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Resolve;
 
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Buffs;
 

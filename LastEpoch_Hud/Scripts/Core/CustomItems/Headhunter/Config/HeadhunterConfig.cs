@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Defaults;
 
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
 
