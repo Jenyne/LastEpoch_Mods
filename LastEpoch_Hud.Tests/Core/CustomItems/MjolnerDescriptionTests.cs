@@ -14,25 +14,25 @@ public sealed class MjolnerDescriptionTests
     [Fact]
     public void LightningProc_Template_FilledFromSettings()
     {
-        Assert.Equal("105|95|50|100", Proc(_texts, 127.5f, 255f));
+        Assert.Equal("105|95|25|75", Proc(_texts, 0.25f, 0.75f));
     }
 
     [Fact]
-    public void LightningProc_Chance_ScaledFrom255AndTruncated()
+    public void LightningProc_Chance_ClampedToPercentRange()
     {
-        Assert.Equal("105|95|50|0", Proc(_texts, 130f, 2f));
+        Assert.Equal("105|95|0|100", Proc(_texts, -1f, 2f));
     }
 
     [Fact]
     public void LightningProc_MissingTemplate_ReturnsNull()
     {
-        Assert.Null(Proc(new Dictionary<string, string>(), 127.5f, 255f));
+        Assert.Null(Proc(new Dictionary<string, string>(), 0.25f, 0.75f));
     }
 
     [Fact]
     public void LightningProc_NullTexts_ReturnsNull()
     {
-        Assert.Null(Proc(null, 127.5f, 255f));
+        Assert.Null(Proc(null, 0.25f, 0.75f));
     }
 
     [Fact]

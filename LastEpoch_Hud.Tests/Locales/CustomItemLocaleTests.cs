@@ -52,7 +52,7 @@ public sealed class CustomItemLocaleTests
                 ["7001"]
             ),
             [CustomItemLocaleKeys.MjolnerDescriptionProc] = (
-                MjolnerDescription.LightningProc(texts, 7004, 7005, 255f, 127.5f),
+                MjolnerDescription.LightningProc(texts, 7004, 7005, 1f, 0.5f),
                 ["7004", "7005", "100", "50"]
             ),
             [CustomItemLocaleKeys.MjolnerDescriptionSocketed] = (

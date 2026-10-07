@@ -18,8 +18,8 @@ public static class MjolnerDescription
             template,
             strRequirement,
             intRequirement,
-            Percent(minTriggerChance),
-            Percent(maxTriggerChance)
+            MjolnerTriggerChance.Percent(minTriggerChance),
+            MjolnerTriggerChance.Percent(maxTriggerChance)
         );
     }
 
@@ -43,10 +43,5 @@ public static class MjolnerDescription
             skill2,
             socketedCooldownMs / 1000
         );
-    }
-
-    private static int Percent(float raw)
-    {
-        return (int)((raw / 255f) * 100f);
     }
 }

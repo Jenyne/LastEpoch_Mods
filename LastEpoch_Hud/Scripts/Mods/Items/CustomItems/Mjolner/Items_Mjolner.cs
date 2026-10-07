@@ -102,10 +102,6 @@ public class Items_Mjolner : MonoBehaviour
         var entries = new Il2CppSystem.Collections.Generic.List<UniqueModDisplayListEntry>();
         entries.Add(new UniqueModDisplayListEntry(0));
         entries.Add(new UniqueModDisplayListEntry(1));
-        if (Save_Manager.instance.data.Items.Mjolner.ProcAnyLightningSpell)
-        {
-            entries.Add(new UniqueModDisplayListEntry(2));
-        }
         entries.Add(new UniqueModDisplayListEntry(128));
 
         return entries;
