@@ -30,13 +30,13 @@ internal static class HeadhunterBuffIcons
 
     private static Sprite Resolve(int statId, int tags)
     {
-        Sprite sprite = tags == 0 ? null : FromGameStatIcons(statId, tags);
-        if (!sprite.IsNullOrDestroyed())
+        if (tags != 0)
         {
-            return sprite;
+            Sprite tagged = FromGameStatIcons(statId, tags);
+            return tagged.IsNullOrDestroyed() ? For(statId, 0) : tagged;
         }
 
-        sprite = FromBundle(statId);
+        Sprite sprite = FromBundle(statId);
         if (!sprite.IsNullOrDestroyed())
         {
             return sprite;
