@@ -293,7 +293,16 @@ public static class ForceDropBuilder
         pickButtons.Clear();
         pickerHeaders.Clear();
         root = Panel(FD.content_obj, "ForceDropBuilder", 0, 0, 1, 1);
-        Label(root, "Force Drop", 0.02f, 0.955f, 0.98f, 0.995f, 22);
+        Label(root, "Force Drop", 0.02f, 0.955f, 0.60f, 0.995f, 22);
+        Button(
+            root,
+            "Maxroll Build Preview",
+            .64f,
+            .955f,
+            .98f,
+            .995f,
+            () => MaxrollPreviewControls.Open(font, template)
+        );
         var left = Panel(root, "Choose item", 0.01f, 0.02f, 0.29f, 0.945f);
         var middle = Panel(root, "Customize", 0.30f, 0.02f, 0.73f, 0.945f);
         var right = Panel(root, "Preview", 0.74f, 0.02f, 0.99f, 0.945f);

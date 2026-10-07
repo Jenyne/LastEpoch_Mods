@@ -2,7 +2,35 @@
 
 Branch: `feat/maxroll-build-preview`, based on upstream v4.4.21 (`2bc921dc`).
 
-This adds a game-independent reader shared with the mod's Core code and a .NET 8 inspection command. It captures planner data; it does not install a game DLL, add HUD controls, create items, change skills/blessings or write character saves. Item creation and game-catalog validation are later work.
+This adds a read-only **Maxroll Build Preview** window at **Items → Force Drop**, a shared game-independent reader and a .NET 8 inspection command. It captures planner data without creating items, changing skills/blessings or writing character saves. Item creation and game-catalog validation are later work.
+
+## Build and install the HUD preview
+
+Close Last Epoch first. From your repository in PowerShell:
+
+```powershell
+$ErrorActionPreference = "Stop"
+$gamePath = "D:\SteamLibrary\steamapps\common\Last Epoch"
+git fetch origin
+if ($LASTEXITCODE -ne 0) { throw "Fetch failed" }
+git switch feat/maxroll-build-preview
+if ($LASTEXITCODE -ne 0) { throw "Switch failed; if this is a new local branch, use git switch --track origin/feat/maxroll-build-preview" }
+git pull --ff-only origin feat/maxroll-build-preview
+if ($LASTEXITCODE -ne 0) { throw "Pull failed" }
+dotnet build .\LastEpoch_Hud\LastEpoch_Hud.csproj -c Release -p:LastEpochPath="$gamePath"
+if ($LASTEXITCODE -ne 0) { throw "Build failed; nothing was installed" }
+Copy-Item .\Build\Release\net6.0\LastEpoch_Hud.dll "$gamePath\Mods\LastEpoch_Hud.dll" -Force
+```
+
+Manually copy the updated `en.json` and any desired `fr.json`, `ko.json` or `zh.json` from `LastEpoch_Hud\LastEpoch_Hud\Locales` to `Last Epoch\Mods\LastEpoch_Hud\Locales`. Keep the filenames unchanged. The new labels are included in English, French, Korean and Chinese.
+
+Open **Items → Force Drop → Maxroll Build Preview**. Paste a public Last Epoch planner URL and click **Load Build**. Previous/Next beside the gear variant name changes the selected profile or equipment embed. The four category buttons list equipment, idols, blessings and Weaver items. Empty grid positions remain visible. Click an item to inspect every original top-level field; Previous/Next under the details pages through modifiers and remaining fields.
+
+Names come from the game's current locale where available, with IDs shown as fallbacks. Normal, sealed, primordial and corrupted modifiers are separate; corruption rows are purple. JSON tier and roll values are shown as supplied by Maxroll: rolls are normalized 0..1, not the final in-game stat values. **Copy Item JSON** copies the complete original definition, including fields too long for a row. **Build Issues** shows reader diagnostics; a clean reader result does not certify game legality.
+
+Loading runs in the background. Cancel, Close, hiding the HUD or leaving the game cancels a pending request; a late response cannot replace another build. Loaded previews are kept while the mod remains running, not persisted across game restarts. The window creates no items and does not populate or overwrite the current Force Drop selection.
+
+The HUD currently accepts planner links; offline clipboard JSON can be inspected through the console command below.
 
 ## Fetch and inspect
 
@@ -52,7 +80,7 @@ The reader accepts exact HTTPS `maxroll.gg` / `www.maxroll.gg` Last Epoch planne
 
 These are the site's current endpoints, not a documented stable developer API. Clipboard JSON is the offline fallback.
 
-## Test at home
+## Reader test at home
 
 1. Paste a guide's planner URL and compare the reported selected variant with Maxroll.
 2. Try `#1`, `#2` and a profile-name fragment; check that each gives the corresponding equipment.
@@ -61,10 +89,17 @@ These are the site's current endpoints, not a documented stable developer API. C
 5. Try a bad variant such as `#999`; the tool should save the archive and request explicit selection, rather than displaying another gear set.
 6. Save a clipboard export and inspect it using `--file` without a network request.
 
-Send back preview.json and any retrieval message if a guide doesn't resolve correctly. No in-game test is required for this phase.
+Send back preview.json and any retrieval message if a guide doesn't resolve correctly. For the HUD preview, also check:
+
+1. Load the sample above and confirm `Aspirational Gear`; switch to `Endgame Gear` and compare both ring slots and idol positions with the planner.
+2. Select several unique and base items, page through their fields and copy an item JSON. Confirm that the copied rolls match the planner data.
+3. Switch English → French → Korean → English while the window is open. Labels and available game item/affix names should refresh without replacing the entered link or selected gear.
+4. Load a malformed link, try an unknown fragment such as `#999`, and check that errors request a valid link/explicit variant instead of silently substituting gear.
+5. Cancel or close during loading, reopen the window and load another link. Check responsiveness and that late results do not appear.
+6. Confirm that closing the preview returns to the unchanged Force Drop screen and no inventory or character data changed.
 
 ## Preparation checks
 
-The reader and inspection command compiled through Roslyn. New Maxroll tests were executed by direct invocation with the project's xUnit 4.0.1 assertions; all 41 cases passed. This was used because the local dotnet CLI/MSBuild test runner fails while reading process information before tests start; the full project runner remains to be checked on Windows.
+The reader and inspection command compiled through Roslyn. New Maxroll tests were executed by direct invocation with the project's xUnit 4.0.1 assertions; all 46 cases passed. This was used because the local dotnet CLI/MSBuild test runner fails while reading process information before tests start; the full project runner remains to be checked on Windows.
 
-Live retrieval of `zge0t60e#2` selected Aspirational Gear, resolved 23 item placements with zero capture issues, and matched every selected original item field and empty grid position. Formatting and whitespace checks passed. No game construction or legal-item validation is claimed by these checks.
+Live retrieval of `zge0t60e#2` selected Aspirational Gear, resolved 23 item placements with zero capture issues, and matched every selected original item field and empty grid position. Formatting and locale completeness/placeholder checks passed. The new UI compiled against the supplied Unity/TMP/Harmony assemblies with stand-ins for the surrounding mod context and unavailable native game catalog. Core compiled against .NET 6 reference assemblies. A full mod build remains blocked in this environment by an unreadable supplied Il2CppLE.dll; Windows build and HUD behavior require the in-game checks above. No game construction or legal-item validation is claimed by these checks.

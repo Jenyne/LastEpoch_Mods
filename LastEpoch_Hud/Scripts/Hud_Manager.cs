@@ -181,6 +181,9 @@ public partial class Hud_Manager : MonoBehaviour
                 }
             }
         }
+        ModUI.MaxrollPreviewControls.Tick(
+            !hud_object.IsNullOrDestroyed() && hud_object.activeInHierarchy
+        );
     }
 
     void Init_Hud()
