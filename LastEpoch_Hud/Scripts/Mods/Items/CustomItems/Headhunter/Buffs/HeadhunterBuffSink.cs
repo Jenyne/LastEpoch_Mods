@@ -53,11 +53,11 @@ internal static class HeadhunterBuffSink
     {
         for (int i = 0; i < actions.Count; i++)
         {
-            ApplyOne(buffs, actions[i]);
+            Apply(buffs, actions[i]);
         }
     }
 
-    private static void ApplyOne(StatBuffs buffs, BuffAction action)
+    public static void Apply(StatBuffs buffs, BuffAction action)
     {
         switch (action.Kind)
         {
@@ -71,6 +71,11 @@ internal static class HeadhunterBuffSink
                 buffs.removeBuffsWithName(action.BuffName);
                 break;
         }
+    }
+
+    public static bool IsLive(StatBuffs buffs, string name)
+    {
+        return TryGetLive(buffs, name, out _);
     }
 
     private static void Refresh(StatBuffs buffs, BuffAction action)
@@ -92,12 +97,24 @@ internal static class HeadhunterBuffSink
             (SP)action.StatId,
             action.Added,
             action.Increased,
-            null,
+            MoreValues(action.More),
             (AT)action.Tags,
             0,
             0,
             action.BuffName
         );
+    }
+
+    private static Il2CppSystem.Collections.Generic.List<float> MoreValues(float more)
+    {
+        if (more == 0f)
+        {
+            return null;
+        }
+
+        var list = new Il2CppSystem.Collections.Generic.List<float>();
+        list.Add(more);
+        return list;
     }
 
     private static bool IsLiveCurrent(string name)

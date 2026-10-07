@@ -17,6 +17,7 @@ internal static class HeadhunterBuffClearer
         HeadhunterConfigLoader.Mechanic?.Reset();
         HeadhunterBuffBar.MarkDirty();
         HeadhunterModelScaler.Restore();
+        HeadhunterAreaBuff.Remove();
         HeadhunterAuraProbe.Revert();
     }
 
