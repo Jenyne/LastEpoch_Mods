@@ -181,4 +181,26 @@ public sealed class HeadhunterConfigWriterTests
         Assert.Empty(result.Problems);
         Assert.Equivalent(map, result.Config.AffixMap, strict: true);
     }
+
+    [Fact]
+    public void Write_RoundTrips_ValueGrowth()
+    {
+        var config = new HeadhunterConfig
+        {
+            Version = 1,
+            DurationSeconds = 12.5f,
+            MaxStacks = 7,
+            Triggers = new HeadhunterTriggers(true, true, true, true, true),
+            Stats = new List<HeadhunterStatEntry>(),
+            ValueGrowth = new HeadhunterGrowthCurve(3f, 12f),
+        };
+
+        HeadhunterConfigParseResult result = HeadhunterConfigParser.Parse(
+            HeadhunterConfigWriter.Write(config),
+            new HashSet<string>(StringComparer.Ordinal)
+        );
+
+        Assert.Empty(result.Problems);
+        Assert.Equal(new HeadhunterGrowthCurve(3f, 12f), result.Config.ValueGrowth);
+    }
 }

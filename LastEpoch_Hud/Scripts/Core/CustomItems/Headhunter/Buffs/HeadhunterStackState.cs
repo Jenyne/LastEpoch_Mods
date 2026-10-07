@@ -36,6 +36,16 @@ public sealed class HeadhunterStackState
         }
     }
 
+    /// <summary>Like <see cref="Sync"/>, from remaining times: a row is live when its time is above 0.</summary>
+    public void SyncRemaining(IReadOnlyList<float> remaining)
+    {
+        for (int i = 0; i < _counts.Length; i++)
+        {
+            bool live = i < remaining.Count && remaining[i] > 0f;
+            _counts[i] = SyncedCount(_counts[i], live);
+        }
+    }
+
     public int Get(int row)
     {
         return InRange(row) ? _counts[row] : 0;

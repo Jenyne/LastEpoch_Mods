@@ -53,6 +53,7 @@ internal static class HeadhunterBuffBar
         HeadhunterResolvedConfig config = HeadhunterConfigLoader.Resolved;
         float[] remaining = RemainingFor(config.Stats.Count);
         HeadhunterBuffSink.FillRemaining(buffs, config.Stats, remaining);
+        HeadhunterGrowthDriver.OnPoll(buffs, remaining);
         IReadOnlyList<HeadhunterBarEntry> entries = _model.Build(
             config.Stats,
             remaining,

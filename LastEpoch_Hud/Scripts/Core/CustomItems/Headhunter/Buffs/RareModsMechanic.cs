@@ -12,23 +12,28 @@ public sealed class RareModsMechanic
     private readonly HeadhunterStackState _stacks;
     private readonly List<BuffAction> _actions = new();
     private readonly HashSet<int> _handled = new();
+    private readonly List<(BuffActionKind Kind, int Row)> _queued = new();
     private readonly IHeadhunterRandom _random;
+    private readonly HeadhunterValueGrowth _growth;
 
     public RareModsMechanic(
         HeadhunterResolvedConfig config,
         HeadhunterStackState stacks,
-        IHeadhunterRandom random
+        IHeadhunterRandom random,
+        HeadhunterValueGrowth growth
     )
     {
         _config = config;
         _stacks = stacks;
         _random = random;
+        _growth = growth;
     }
 
     /// <summary>Buff changes for one kill. The list is reused: valid until the next call.</summary>
     public IReadOnlyList<BuffAction> OnKill(KillInfo kill, IReadOnlySet<int> liveRows)
     {
         _actions.Clear();
+        _queued.Clear();
         _handled.Clear();
         if (!Fires(kill))
         {
@@ -38,6 +43,7 @@ public sealed class RareModsMechanic
         _stacks.Sync(liveRows);
         AddOwnRows(kill);
         RefreshOtherLive();
+        EmitQueued();
         return _actions;
     }
 
@@ -45,6 +51,7 @@ public sealed class RareModsMechanic
     public void Reset()
     {
         _stacks.Reset();
+        _growth.Reset();
     }
 
     private bool Fires(KillInfo kill)
@@ -101,7 +108,7 @@ public sealed class RareModsMechanic
 
             _handled.Add(row);
             _stacks.TryAdd(row, _config.MaxStacks);
-            Emit(BuffActionKind.Add, row);
+            Queue(BuffActionKind.Add, row);
             return;
         }
     }
@@ -158,7 +165,7 @@ public sealed class RareModsMechanic
         }
 
         bool added = _stacks.TryAdd(row, _config.MaxStacks);
-        Emit(added ? BuffActionKind.Add : BuffActionKind.Refresh, row);
+        Queue(added ? BuffActionKind.Add : BuffActionKind.Refresh, row);
     }
 
     private void RefreshOtherLive()
@@ -170,7 +177,22 @@ public sealed class RareModsMechanic
                 continue;
             }
 
-            Emit(BuffActionKind.Refresh, row);
+            Queue(BuffActionKind.Refresh, row);
+        }
+    }
+
+    private void Queue(BuffActionKind kind, int row)
+    {
+        _queued.Add((kind, row));
+    }
+
+    private void EmitQueued()
+    {
+        bool factorChanged = _growth.Update(_stacks.Total);
+        for (int i = 0; i < _queued.Count; i++)
+        {
+            (BuffActionKind kind, int row) = _queued[i];
+            Emit(factorChanged ? BuffActionKind.Add : kind, row);
         }
     }
 
@@ -183,8 +205,8 @@ public sealed class RareModsMechanic
                 kind,
                 stat.BuffName,
                 stat.StatId,
-                stat.AddedFor(stacks),
-                stat.IncreasedFor(stacks),
+                stat.AddedFor(stacks, _growth.Factor),
+                stat.IncreasedFor(stacks, _growth.Factor),
                 _config.DurationSeconds,
                 stacks,
                 stat.Tags

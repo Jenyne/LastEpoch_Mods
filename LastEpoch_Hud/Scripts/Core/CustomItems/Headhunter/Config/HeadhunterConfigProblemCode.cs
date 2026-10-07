@@ -10,6 +10,7 @@ public enum HeadhunterConfigProblemCode
     NotWholeNumber,
     NotPositiveNumber,
     NotPositiveWholeNumber,
+    NotNonNegativeNumber,
     NotFiniteNumber,
     NotBool,
     NotObject,

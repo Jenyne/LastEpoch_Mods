@@ -139,6 +139,37 @@ internal static class HeadhunterTestData
         IHeadhunterRandom random
     )
     {
-        return new RareModsMechanic(config, stacks, random);
+        return Mechanic(config, stacks, random, new HeadhunterValueGrowth(config.ValueGrowth));
+    }
+
+    public static RareModsMechanic Mechanic(
+        HeadhunterResolvedConfig config,
+        HeadhunterStackState stacks,
+        IHeadhunterRandom random,
+        HeadhunterValueGrowth growth
+    )
+    {
+        return new RareModsMechanic(config, stacks, random, growth);
+    }
+
+    public static HeadhunterConfig ConfigWithGrowth(
+        HeadhunterGrowthCurve curve,
+        params HeadhunterStatEntry[] stats
+    )
+    {
+        return new HeadhunterConfig
+        {
+            Version = 1,
+            DurationSeconds = Duration,
+            MaxStacks = MaxStacks,
+            Triggers = AllTriggers,
+            Stats = stats,
+            ValueGrowth = curve,
+        };
+    }
+
+    public static HeadhunterResolvedConfig GrowthConfig(HeadhunterGrowthCurve curve)
+    {
+        return Resolve(ConfigWithGrowth(curve, Entry("FakeA", 0f, 10f), Entry("FakeB", 5f)));
     }
 }
