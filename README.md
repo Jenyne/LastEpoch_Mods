@@ -2,6 +2,8 @@
 
 Working Season 5 version of [Ash's Last Epoch HUD](https://github.com/RCInet/LastEpoch_Mods).
 
+This mod is offline only.
+
 In a zone, press **F3** to open and close the mod menu. Escape closes it.
 
 ## Install
