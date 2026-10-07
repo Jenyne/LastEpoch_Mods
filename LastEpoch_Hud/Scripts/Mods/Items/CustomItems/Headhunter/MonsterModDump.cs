@@ -13,11 +13,11 @@ internal static class MonsterModDump
 {
     private static readonly IntervalGate _gate = new(1.0);
     private static readonly CustomItemConfigStore _store = new("monster_mods.tsv");
-    private static bool _done;
+    private static readonly OneShotAttempt _attempt = new();
 
     public static void Tick(double now)
     {
-        if (_done)
+        if (_attempt.IsDone)
         {
             return;
         }
@@ -32,7 +32,17 @@ internal static class MonsterModDump
             return;
         }
 
+        if (!IsGameReady())
+        {
+            return;
+        }
+
         TryDump();
+    }
+
+    private static bool IsGameReady()
+    {
+        return Scenes.IsGameScene() && !Refs_Manager.player_actor.IsNullOrDestroyed();
     }
 
     private static void TryDump()
@@ -43,9 +53,18 @@ internal static class MonsterModDump
         }
         catch (Exception ex)
         {
-            _done = true;
-            ErrorLog.Report(ex, "MonsterModDump");
+            ReportFailure(ex);
         }
+    }
+
+    private static void ReportFailure(Exception ex)
+    {
+        if (!_attempt.ShouldReportFailure())
+        {
+            return;
+        }
+
+        ErrorLog.Report(ex, "MonsterModDump");
     }
 
     private static void Dump()
@@ -62,7 +81,7 @@ internal static class MonsterModDump
             return;
         }
 
-        _done = true;
+        _attempt.MarkDone();
         _store.Write(MonsterModTsv.Build(rows));
         Main.logger_instance?.Msg(MonsterModDumpLog.Line(rows, _store.FilePath));
     }
