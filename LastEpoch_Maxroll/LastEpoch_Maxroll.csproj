@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>disable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile
+      Include="..\LastEpoch_Hud\Scripts\Core\BuildImport\*.cs"
+      Link="Core\%(Filename)%(Extension)"
+    />
+  </ItemGroup>
+</Project>
