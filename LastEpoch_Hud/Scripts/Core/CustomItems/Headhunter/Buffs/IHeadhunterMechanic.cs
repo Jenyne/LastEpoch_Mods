@@ -1,0 +1,11 @@
+using System.Collections.Generic;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Kills;
+
+namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Buffs;
+
+/// <summary>One Headhunter rule set.</summary>
+public interface IHeadhunterMechanic
+{
+    /// <summary>Buff changes for one kill. The list is reused: valid until the next call.</summary>
+    IReadOnlyList<BuffAction> OnKill(KillInfo kill, IReadOnlySet<int> liveRows);
+}

@@ -1,5 +1,7 @@
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
+using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Bar;
+using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Kills;
 using MelonLoader;
 using UnityEngine;
 
