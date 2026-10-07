@@ -36,6 +36,40 @@ public sealed class HeadhunterMechanicsTests
         Assert.Equal(["mechanic"], problems.Select(problem => problem.Path));
     }
 
+    [Fact]
+    public void Create_MechanicReset_ClearsPassedStacks()
+    {
+        HeadhunterResolvedConfig table = HeadhunterTestData.Resolve(
+            HeadhunterTestData.Config(
+                HeadhunterTestData.AllTriggers,
+                HeadhunterTestData.Entry("FakeA", 5f, 10f)
+            )
+        );
+        HeadhunterResolvedConfig resolved = new(
+            HeadhunterMechanics.RareModsId,
+            HeadhunterTestData.Duration,
+            HeadhunterTestData.MaxStacks,
+            HeadhunterTestData.AllTriggers,
+            table.Stats
+        );
+        var state = new HeadhunterStackState(table.Stats.Count);
+        IHeadhunterMechanic mechanic = HeadhunterMechanics.Create(
+            resolved,
+            state,
+            new FakeHeadhunterRandom(0),
+            new List<HeadhunterConfigProblem>()
+        );
+        mechanic.OnKill(
+            new KillInfo(KillKind.Rare, false, HeadhunterTestData.Mods(1)),
+            new HashSet<int>()
+        );
+        Assert.True(state.Total > 0);
+
+        mechanic.Reset();
+
+        Assert.Equal(0, state.Total);
+    }
+
     private static HeadhunterResolvedConfig ResolvedWithMechanic(string mechanic)
     {
         return new HeadhunterResolvedConfig(
