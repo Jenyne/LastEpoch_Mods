@@ -19,6 +19,7 @@ internal static class HeadhunterConfigLoader
     );
 
     private static readonly ConfigChangeDetector _changes = new(1.0);
+    private static readonly HeadhunterSystemRandom _random = new();
 
     public static HeadhunterConfig Current { get; private set; } = HeadhunterConfigDefaults.Config;
     public static HeadhunterResolvedConfig Resolved { get; private set; }
@@ -110,7 +111,7 @@ internal static class HeadhunterConfigLoader
             problems
         );
         Stacks = new HeadhunterStackState(resolved.Stats.Count);
-        Mechanic = HeadhunterMechanics.Create(resolved, Stacks, problems);
+        Mechanic = HeadhunterMechanics.Create(resolved, Stacks, _random, problems);
         Resolved = resolved;
         LogProblems(problems);
     }

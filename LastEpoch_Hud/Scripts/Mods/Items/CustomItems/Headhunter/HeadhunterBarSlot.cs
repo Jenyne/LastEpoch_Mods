@@ -42,8 +42,6 @@ internal sealed class HeadhunterBarSlot
         _timer.gameObject.SetActive(true);
     }
 
-    public int StatId => _statId;
-
     public int Row => _row;
 
     public int Stacks => _stacks;

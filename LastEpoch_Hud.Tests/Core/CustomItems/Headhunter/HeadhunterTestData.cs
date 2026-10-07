@@ -62,6 +62,15 @@ internal static class HeadhunterTestData
         HeadhunterStackState stacks
     )
     {
-        return new RareModsMechanic(config, stacks);
+        return Mechanic(config, stacks, new FakeHeadhunterRandom(0));
+    }
+
+    public static RareModsMechanic Mechanic(
+        HeadhunterResolvedConfig config,
+        HeadhunterStackState stacks,
+        IHeadhunterRandom random
+    )
+    {
+        return new RareModsMechanic(config, stacks, random);
     }
 }
