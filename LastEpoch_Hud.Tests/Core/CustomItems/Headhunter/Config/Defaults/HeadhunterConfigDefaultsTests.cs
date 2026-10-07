@@ -95,9 +95,32 @@ public sealed class HeadhunterConfigDefaultsTests
             .VersionedStats.Select(row => row.Since)
             .Concat(HeadhunterConfigDefaults.VersionedFields.Select(field => field.Since))
             .Concat(HeadhunterAffixDefaults.VersionedAffixes.Select(affix => affix.Since))
+            .Concat(HeadhunterAffixDefaults.VersionedRows.Select(row => row.Since))
             .Max();
 
         Assert.Equal(HeadhunterConfigDefaults.DefaultsVersion, newest);
+    }
+
+    [Fact]
+    public void VersionedStats_Mana_AddedAtVersion8()
+    {
+        HeadhunterVersionedStat row = HeadhunterConfigDefaults.VersionedStats.Single(candidate =>
+            candidate.Entry.Stat == "Mana"
+        );
+
+        Assert.Equal(new HeadhunterStatEntry("Mana", 0f, 5f, true), row.Entry);
+        Assert.Equal(8, row.Since);
+    }
+
+    [Fact]
+    public void VersionedStats_HealthLeech_DefaultHalfPercent()
+    {
+        HeadhunterVersionedStat row = HeadhunterConfigDefaults.VersionedStats.Single(candidate =>
+            candidate.Entry.Stat == "HealthLeech"
+        );
+
+        Assert.Equal(new HeadhunterStatEntry("HealthLeech", 0.005f, 0f, true), row.Entry);
+        Assert.Equal(2, row.Since);
     }
 
     [Fact]

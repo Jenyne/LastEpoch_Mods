@@ -29,7 +29,8 @@ public static class HeadhunterConfigMerger
         int added =
             AddStats(root, defaults.Stats, fileVersion)
             + AddFields(root, defaults.Fields, fileVersion)
-            + AddAffixes(root, defaults.Affixes, fileVersion);
+            + AddAffixes(root, defaults.Affixes, fileVersion)
+            + AddAffixRows(root, defaults.AffixRows, fileVersion);
         root[HeadhunterConfigKeys.DefaultsVersion] = defaults.Version;
         return new HeadhunterMergeResult(root.ToString(Formatting.Indented), true, added);
     }
@@ -146,11 +147,62 @@ public static class HeadhunterConfigMerger
         return added;
     }
 
+    private static int AddAffixRows(
+        JObject root,
+        IReadOnlyList<HeadhunterVersionedAffixRow> rows,
+        int fileVersion
+    )
+    {
+        if (rows == null || root[HeadhunterConfigKeys.AffixMap] is not JArray entries)
+        {
+            return 0;
+        }
+        int added = 0;
+        foreach (HeadhunterVersionedAffixRow row in rows)
+        {
+            if (row.Since <= fileVersion)
+            {
+                continue;
+            }
+            if (FindAffix(entries, row.ModKey)?[HeadhunterConfigKeys.Rows] is not JArray texts)
+            {
+                continue;
+            }
+            if (ContainsText(texts, row.Row))
+            {
+                continue;
+            }
+            texts.Add(row.Row);
+            added++;
+        }
+        return added;
+    }
+
+    private static bool ContainsText(JArray rows, string text)
+    {
+        foreach (JToken item in rows)
+        {
+            if (
+                item is JValue { Value: string value }
+                && string.Equals(value, text, StringComparison.Ordinal)
+            )
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static bool ContainsModKey(JArray entries, int modKey)
+    {
+        return FindAffix(entries, modKey) != null;
+    }
+
+    private static JObject FindAffix(JArray entries, int modKey)
     {
         if (entries == null)
         {
-            return false;
+            return null;
         }
         foreach (JToken entry in entries)
         {
@@ -161,10 +213,10 @@ public static class HeadhunterConfigMerger
                 && key == modKey
             )
             {
-                return true;
+                return obj;
             }
         }
-        return false;
+        return null;
     }
 
     private static string ReadTag(JObject row)

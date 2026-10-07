@@ -99,6 +99,60 @@ public sealed class HeadhunterAffixDefaultsTests
         );
     }
 
+    [Fact]
+    public void AffixRows_AllSinceRowsSince()
+    {
+        Assert.Equal(8, HeadhunterAffixDefaults.RowsSince);
+        Assert.True(HeadhunterConfigDefaults.DefaultsVersion >= HeadhunterAffixDefaults.RowsSince);
+        Assert.Equal(8, HeadhunterAffixDefaults.VersionedRows.Count);
+        Assert.All(
+            HeadhunterAffixDefaults.VersionedRows,
+            row => Assert.Equal(HeadhunterAffixDefaults.RowsSince, row.Since)
+        );
+    }
+
+    [Fact]
+    public void AffixRows_UniqueAndInTheirDefaultEntry()
+    {
+        var pairs = HeadhunterAffixDefaults
+            .VersionedRows.Select(row => (row.ModKey, row.Row))
+            .ToList();
+
+        Assert.Equal(pairs.Count, pairs.Distinct().Count());
+        Assert.All(
+            HeadhunterAffixDefaults.VersionedRows,
+            row =>
+            {
+                HeadhunterAffixEntry entry = HeadhunterAffixDefaults.AffixMap.Single(candidate =>
+                    candidate.ModKey == row.ModKey
+                );
+                Assert.Contains(row.Row, entry.Rows);
+            }
+        );
+    }
+
+    [Fact]
+    public void AffixRows_NameDefaultStatRows()
+    {
+        Assert.All(
+            HeadhunterAffixDefaults.VersionedRows,
+            row =>
+                Assert.Contains(
+                    HeadhunterConfigDefaults.Config.Stats,
+                    stat => stat.RowText == row.Row
+                )
+        );
+    }
+
+    [Fact]
+    public void MergeDefaults_AffixRows_AreVersionedRows()
+    {
+        Assert.Same(
+            HeadhunterAffixDefaults.VersionedRows,
+            HeadhunterConfigDefaults.MergeDefaults.AffixRows
+        );
+    }
+
     private static Dictionary<string, int> Ids(IEnumerable<string> names)
     {
         return names

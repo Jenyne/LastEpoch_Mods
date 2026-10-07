@@ -9,7 +9,7 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Defaults;
 public static class HeadhunterConfigDefaults
 {
     public const int CurrentVersion = 1;
-    public const int DefaultsVersion = 7;
+    public const int DefaultsVersion = 8;
     public const int UnstampedDefaultsVersion = 1;
     public const float DurationSeconds = 60f;
     public const int MaxStacks = 10;
@@ -32,7 +32,7 @@ public static class HeadhunterConfigDefaults
             new(new HeadhunterStatEntry("ManaRegen", 0f, 10f, true), 2),
             new(new HeadhunterStatEntry("ManaEfficiency", 0f, 5f, true), 2),
             new(new HeadhunterStatEntry("IncreasedLeechRate", 0f, 10f, true), 2),
-            new(new HeadhunterStatEntry("HealthLeech", 0.01f, 0f, true), 2),
+            new(new HeadhunterStatEntry("HealthLeech", 0.005f, 0f, true), 2),
             new(new HeadhunterStatEntry("DodgeRating", 50f, 0f, true), 5),
             new(new HeadhunterStatEntry("HealthRegen", 5f, 0f, true), 5),
             new(new HeadhunterStatEntry("StunAvoidance", 100f, 0f, true), 5),
@@ -51,6 +51,7 @@ public static class HeadhunterConfigDefaults
             new(new HeadhunterStatEntry("NecroticResistance", 0.05f, 0f, true), 5),
             new(new HeadhunterStatEntry("PoisonResistance", 0.05f, 0f, true), 5),
             new(new HeadhunterStatEntry("VoidResistance", 0.05f, 0f, true), 5),
+            new(new HeadhunterStatEntry("Mana", 0f, 5f, true), 8),
         };
 
     public static readonly IReadOnlyList<HeadhunterStatEntry> Stats = VersionedStats
@@ -78,6 +79,7 @@ public static class HeadhunterConfigDefaults
         Stats = VersionedStats,
         Fields = VersionedFields,
         Affixes = HeadhunterAffixDefaults.VersionedAffixes,
+        AffixRows = HeadhunterAffixDefaults.VersionedRows,
     };
 
     public static readonly HeadhunterConfig Config = new()
