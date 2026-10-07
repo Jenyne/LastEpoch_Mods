@@ -61,7 +61,7 @@ If creation is rejected, keep the complete error and `Latest.log`. Do not mark a
 
 ## First runtime feedback and diagnostic update
 
-The October 7 test on `a4df9452` loaded successfully, but rejected two drops while testing Unsated Rage. One reported a changed existing affix during variant addition; the other reported a socket-count mismatch after final decoding. The screenshot shows Unsated Rage with four ordinary T7 affixes and its Sanguine Rage modifier, with no seal or corruption selected. These failures are unresolved; the original messages do not contain enough data to identify the changed fields or interpret the socket count.
+The October 7 test on `a4df9452` loaded successfully, but rejected two drops while testing Unsated Rage. One reported a changed existing affix during variant addition; the other reported a socket-count mismatch after final decoding. The screenshot shows Unsated Rage with four ordinary T7 affixes and its Sanguine Rage modifier, with no seal or corruption selected. At that stage, the original messages did not contain enough data to identify the changed fields or interpret the socket count. The later results below supersede this initial status.
 
 The diagnostic update retains every rejection check. Variant errors now print complete expected and actual ordinary-affix signatures (`id:tier:roll:seal:specialType:placement`). Final packing errors print both item snapshots and the packed ID in Base64. Snapshot affix signatures use numeric special-type/placement values and the named seal. This makes a native storage change distinguishable from an incorrect validator assumption without permitting an unverified item to drop.
 
@@ -89,11 +89,19 @@ Retest the ring with its exclusive modifier, four ordinary affixes and the same 
 
 The `96b3efb8` test used only the Unsated Rage modifier and corruption. Corruption marking now survived (`corrupted=True`, presence flag True), but the unpacked seal belonged to fixed modifier 1131 while selected corruption 1016 became unsealed. The item was rejected before spawning. This narrows the issue to the relative order of the fixed unique modifier and native seal sequence.
 
-Fixed modifiers are now placed first before packing. The helper moves the existing affix objects without changing their IDs, tiers, rolls, types or seals, preserving the native order of all remaining affixes. It is applied after adding variants, after native corruption-slot insertion, and before the creator's final refresh. Both glove modifiers receive the same treatment. Missing, duplicate or unrelated fixed modifiers remain rejected. The ordering correction still needs game confirmation.
+Fixed modifiers are now placed first before packing. The helper moves the existing affix objects without changing their IDs, tiers, rolls, types or seals, preserving the native order of all remaining affixes. It is applied after adding variants, after native corruption-slot insertion, and before the creator's final refresh. Both glove modifiers receive the same treatment. Missing, duplicate or unrelated fixed modifiers remain rejected. Unsated Rage creation is confirmed in the follow-up below; the glove combination still needs game confirmation.
 
 The same runtime reported `sockets=1` for two affixes (ring modifier plus corruption). For unique/set/legendary items, that field is therefore not a total-affix invariant even when nonzero. The snapshot validates its byte range and round-trip value, permitting native zero normalization; the entire decoded affix multiset remains mandatory. Ordinary item count checks remain strict. A seal migrating to the wrong affix still fails verification.
 
-Retest the modifier-only ring with the same corruption, then add ordinary affixes and a regular seal. Verify both the ring's exclusive effect and the corruption effect, and save/reload. Test Withstand the Elements with two exclusive modifiers and corruption as well. Do not mark the earlier ordinary-affix mutation report resolved until that combination is tested.
+## Runtime confirmation on `aff4c2f3`
+
+The user confirmed successful Unsated Rage drops with its selected fixed modifier, from zero through four ordinary affixes plus corruption. Several different corruption modifiers were tested without errors. The supplied log identifies build `aff4c2f3` and contains no rejection for those combinations. This confirms item creation for the tested selections; equip/stat behavior and save/reload were not reported in this test.
+
+The remaining failed case adds a regular sealed affix to the ring's four ordinary affixes and selected corruption. The log shows that affix 25 changes from `Regular` to `None` during `UniqueVariantAdapter.Apply`. Its ID, tier, roll and other signature fields are unchanged, as are the other four ordinary affixes. This intermediate refresh runs before `CorruptedAffixAdapter.Apply`, so this rejection is a loss of the regular seal on the unique/legendary path, not a failure to add the selected corruption. Verification rejects the item before it is dropped.
+
+This regular-sealed unique combination belongs to the requested illegal-item investigation. It remains unsupported by the current creation path. The result does not establish whether another native representation could preserve it, and the seal check must not be bypassed to claim support. The later route-aware picker should distinguish it from legal sealed-plus-corrupted base equipment and explain the exclusion.
+
+Remaining runtime checks: effects and persistence for the successfully created ring combinations; Withstand the Elements with both fixed modifiers and corruption; and base equipment with independent regular and corruption seals. These results do not certify every item, corruption family or illegal combination.
 
 ## Verification completed here
 
@@ -102,7 +110,7 @@ Retest the modifier-only ring with the same corruption, then add ordinary affixe
 - Changed Force Drop HUD and adapters compile against the supplied Unity/TMP/Harmony assemblies with game context stubs.
 - Formatting and diff checks pass; the layout-building code and Harmony patch count are unchanged.
 
-The supplied `Il2CppLE.dll` has unreadable metadata in this environment, so these checks are not a full mod/game SDK build. The guarded Windows script runs the actual build and full test suite. Native packing, equip behavior and persistence remain pending the game tests above.
+The supplied `Il2CppLE.dll` has unreadable metadata in this environment, so these checks are not a full mod/game SDK build. The guarded Windows script runs the actual build and full test suite. Native creation has the limited runtime confirmation above; the remaining combinations, equip behavior and persistence still need game testing.
 
 ## Next stages
 
