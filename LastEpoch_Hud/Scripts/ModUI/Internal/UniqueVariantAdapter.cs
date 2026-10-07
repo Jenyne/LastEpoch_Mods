@@ -152,7 +152,7 @@ public static class UniqueVariantAdapter
             || item.legendaryPotential != potential
             || item.weaversWill != weaversWill
             || item.uniqueID != uniqueId
-            || item.sockets != item.affixes.Count
+            || (item.sockets != 0 && item.sockets != item.affixes.Count)
             || remaining.Count != original.Count
         )
             throw new InvalidOperationException(

@@ -93,7 +93,11 @@ public sealed class ForceDropPackingSnapshot
     {
         if (Affixes.Any(a => a == null))
             return "Missing affix data";
-        if (Sockets != Affixes.Count)
+        // The runtime's decoded Unsated Rage retained its exact fixed modifier
+        // while sockets became zero. Unique-family packing carries affixes
+        // independently of this live field. Zero is valid only on that route;
+        // the complete decoded affix list is still compared below.
+        if (Sockets != Affixes.Count && !(UsesUniqueStorage && Sockets == 0))
             return "Socket count does not match the affix count (sockets="
                 + Sockets
                 + ", affixes="
@@ -190,6 +194,8 @@ public sealed class ForceDropPackingSnapshot
             return "Item identity changed during packing";
         if (Rarity != actual.Rarity)
             return "Item rarity changed during packing";
+        if (Sockets != actual.Sockets && !(UsesUniqueStorage && actual.Sockets == 0))
+            return "Item socket count changed during packing";
         if (
             ForgingPotential != actual.ForgingPotential
             || LegendaryPotential != actual.LegendaryPotential
@@ -213,4 +219,6 @@ public sealed class ForceDropPackingSnapshot
             return "Affix identity, tier, roll, special type or seal ownership changed during packing";
         return "";
     }
+
+    bool UsesUniqueStorage => Rarity == 7 || Rarity == 8 || Rarity == 9;
 }

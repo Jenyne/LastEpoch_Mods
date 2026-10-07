@@ -13,7 +13,7 @@ This pass keeps the current Force Drop layout and changes its creation path. It 
 - Tier ranges follow the selected definition. In the supplied catalog, ordinary idol affixes have one tier; their fields now stop at T1. The existing route cap remains T7.
 - Regular sealing uses the game's seal operation. A regular seal and a corruption seal are tracked independently. The corruption operation's regular-seal output no longer incorrectly vetoes their coexistence.
 - Corruption is marked after affix addition. Corrupted items retain zero forging potential; the old creator restored the selected FP afterward. The existing FP field stays in place and is disabled while corrupted; the preview shows 0.
-- Every completed item, including a noncorrupted drop, is decoded from its final packed ID and compared. Checks cover base/subtype/unique identity, rarity, potential, implicit and unique rolls, affix IDs/tiers/rolls/special types, seal ownership, and socket counts. FP above 63 still uses the existing mod persistence extension; its native packed value is checked separately from the restored live value.
+- Every completed item, including a noncorrupted drop, is decoded from its final packed ID and compared. Checks cover base/subtype/unique identity, rarity, potential, implicit and unique rolls, affix IDs/tiers/rolls/special types, and seal ownership. Base-item socket counts remain strict; unique/set/legendary items may decode sockets as zero while preserving their complete affix list. FP above 63 still uses the existing mod persistence extension; its native packed value is checked separately from the restored live value.
 - Batch status reports completed items if a later copy fails. Rejected items never reach the ground-drop call.
 - The testing script checks the Release DLL it just built, instead of an older Keyboard build.
 
@@ -67,9 +67,17 @@ The diagnostic update retains every rejection check. Variant errors now print co
 
 Rebuild with the same script above, repeat the same Unsated Rage selections, and supply the complete new `Latest.log`. If time permits, also try the ring with only its exclusive modifier, then with one ordinary affix. The update is diagnostic, not a confirmed fix for either failure.
 
+## Socket validation correction
+
+The follow-up `77512efd` runtime log isolates the ring-only rejection: Unsated Rage (base 21, subtype 10, unique 477) with modifier 1138 decoded with `sockets=0` and exactly one affix. The affix ID, T1, roll 255, FakeUniqueMod type, prefix placement, unique identity, rarity, potential and all roll bytes matched the live item exactly. The saved modifier was intact; the assertion that sockets must equal affix count was wrong for this unique.
+
+The correction accepts zero decoded sockets for unique/set/legendary storage (rarities 7–9). It still requires the exact complete affix multiset, including every selected variant and transferred affix, and checks all other item fields and seal flags. Nonzero mismatched counts remain rejected, and ordinary item socket checks are unchanged. The variant adapter also accepts this zero-socket representation. Construction, saved bytes and the HUD layout are unchanged.
+
+Retest the ring with only its modifier, then with four ordinary affixes, and the nonvariant unique sword. Confirm effects and save/reload after successful drops. This corrects the demonstrated false rejection; the earlier `Unique variant changed an existing affix` report remains unresolved until reproduced with detailed signatures. The sword's older generic rejection did not provide decoded values, so its outcome still needs game testing.
+
 ## Verification completed here
 
-- 40 game-independent regression cases passed using xUnit assertions, including exact rejection evidence for changed rolls and socket counts.
+- 51 game-independent regression cases passed using xUnit assertions, including the exact ring runtime regression, preservation of independent seals, and rejection of missing/changed affixes despite zero sockets.
 - New core compiled for .NET 6.
 - Changed Force Drop HUD and adapters compile against the supplied Unity/TMP/Harmony assemblies with game context stubs.
 - Formatting and diff checks pass; the layout-building code and Harmony patch count are unchanged.

@@ -12,6 +12,102 @@ public sealed class ForceDropPackingSnapshotTests
     };
 
     [Fact]
+    public void UnsatedRuntimeRegression_ZeroDecodedSocketsPreservesTheModifier()
+    {
+        Assert.Equal("", Unsated(sockets: 1).Difference(Unsated(sockets: 0)));
+    }
+
+    [Theory]
+    [InlineData("missing")]
+    [InlineData("id")]
+    [InlineData("tier")]
+    [InlineData("roll")]
+    [InlineData("special")]
+    [InlineData("placement")]
+    public void UniqueZeroSockets_DoesNotHideChangedOrMissingAffixes(string changed)
+    {
+        var affixes =
+            changed == "missing"
+                ? Array.Empty<PackedForceDropAffix>()
+                : new[]
+                {
+                    new PackedForceDropAffix(
+                        changed == "id" ? 1137 : 1138,
+                        changed == "tier" ? 1 : 0,
+                        changed == "roll" ? 254 : 255,
+                        ForceDropSeal.None,
+                        changed == "special" ? 0 : 7,
+                        changed == "placement" ? 1 : 0
+                    ),
+                };
+        Assert.NotEqual("", Unsated(1).Difference(Unsated(0, affixes)));
+    }
+
+    [Theory]
+    [InlineData(7)]
+    [InlineData(8)]
+    [InlineData(9)]
+    public void UniqueFamily_ZeroSocketsDoesNotEraseIndependentSeals(int rarity)
+    {
+        Assert.Equal("", Snapshot(rarity: rarity).Difference(Snapshot(rarity: rarity, sockets: 0)));
+        var changed = SealedAndCorrupted.ToArray();
+        changed[0] = new PackedForceDropAffix(419, 4, 101, ForceDropSeal.None, 0);
+        Assert.NotEqual(
+            "",
+            Snapshot(rarity: rarity)
+                .Difference(Snapshot(rarity: rarity, sockets: 0, affixes: changed, regular: false))
+        );
+    }
+
+    [Fact]
+    public void BaseItem_ZeroSocketsWithAnAffixRemainsInvalid()
+    {
+        var affixes = new[] { new PackedForceDropAffix(13, 6, 255, ForceDropSeal.None, 0) };
+        var expected = Snapshot(
+            affixes: affixes,
+            rarity: 1,
+            uniqueId: 0,
+            regular: false,
+            corruption: false,
+            corrupted: false,
+            lp: 0
+        );
+        var actual = Snapshot(
+            affixes: affixes,
+            rarity: 1,
+            uniqueId: 0,
+            regular: false,
+            corruption: false,
+            corrupted: false,
+            lp: 0,
+            sockets: 0
+        );
+        Assert.Contains("Socket count", expected.Difference(actual));
+    }
+
+    static ForceDropPackingSnapshot Unsated(int sockets, PackedForceDropAffix[] affixes = null)
+    {
+        // Exact values from the user's 77512efd runtime rejection, 11:23:50.
+        return new ForceDropPackingSnapshot(
+            21,
+            10,
+            477,
+            7,
+            0,
+            0,
+            0,
+            false,
+            sockets,
+            false,
+            false,
+            false,
+            new[] { 255, 255, 255 },
+            Enumerable.Repeat(255, 8),
+            affixes ?? new[] { new PackedForceDropAffix(1138, 0, 255, ForceDropSeal.None, 7, 0) }
+        );
+    }
+
+    [Fact]
     public void SocketRejection_RecordsBothCountsAndDecodedAffixes()
     {
         string error = Snapshot().Difference(Snapshot(sockets: 2));
