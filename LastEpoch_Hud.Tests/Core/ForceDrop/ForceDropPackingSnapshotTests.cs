@@ -12,6 +12,26 @@ public sealed class ForceDropPackingSnapshotTests
     };
 
     [Fact]
+    public void SocketRejection_RecordsBothCountsAndDecodedAffixes()
+    {
+        string error = Snapshot().Difference(Snapshot(sockets: 2));
+        Assert.Contains("sockets=2, affixes=3", error);
+        Assert.Contains("expected={", error);
+        Assert.Contains("decoded={", error);
+        Assert.Contains("1020:6:87:Corruption:6:0", error);
+    }
+
+    [Fact]
+    public void AffixRejection_RecordsTheExactChangedRoll()
+    {
+        var saved = SealedAndCorrupted.ToArray();
+        saved[2] = new PackedForceDropAffix(1020, 6, 88, ForceDropSeal.Corruption, 6);
+        string error = Snapshot().Difference(Snapshot(affixes: saved));
+        Assert.Contains("1020:6:87:Corruption:6:0", error);
+        Assert.Contains("1020:6:88:Corruption:6:0", error);
+    }
+
+    [Fact]
     public void NativeReordering_IsAllowedWithoutLosingSealOwnership()
     {
         Assert.Equal(

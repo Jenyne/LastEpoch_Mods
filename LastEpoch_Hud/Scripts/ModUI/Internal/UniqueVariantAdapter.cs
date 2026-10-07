@@ -156,12 +156,40 @@ public static class UniqueVariantAdapter
             || remaining.Count != original.Count
         )
             throw new InvalidOperationException(
-                "Unique variant storage verification failed; no item was dropped"
+                "Unique variant storage verification failed (unique="
+                    + item.uniqueID
+                    + ", rarity="
+                    + rarity
+                    + "->"
+                    + item.rarity
+                    + ", lp="
+                    + potential
+                    + "->"
+                    + item.legendaryPotential
+                    + ", ww="
+                    + weaversWill
+                    + "->"
+                    + item.weaversWill
+                    + ", sockets="
+                    + item.sockets
+                    + ", affixes="
+                    + item.affixes.Count
+                    + ", expectedOrdinary=["
+                    + string.Join(",", original)
+                    + "], actualOrdinary=["
+                    + string.Join(",", remaining)
+                    + "]); no item was dropped"
             );
         for (int i = 0; i < original.Count; i++)
             if (original[i] != remaining[i])
                 throw new InvalidOperationException(
-                    "Unique variant changed an existing affix; no item was dropped"
+                    "Unique variant changed an existing affix (unique="
+                        + item.uniqueID
+                        + ", expectedOrdinary=["
+                        + string.Join(",", original)
+                        + "], actualOrdinary=["
+                        + string.Join(",", remaining)
+                        + "]); no item was dropped"
                 );
     }
 
@@ -175,7 +203,9 @@ public static class UniqueVariantAdapter
             + ":"
             + affix.sealedAffixType
             + ":"
-            + affix.specialAffixType;
+            + affix.specialAffixType
+            + ":"
+            + affix.affixType;
     }
 
     public static void VerifySelection(ItemDataUnpacked item, params int[] ids)

@@ -59,9 +59,17 @@ The script stops before replacing the installed DLL if the build or tests fail, 
 
 If creation is rejected, keep the complete error and `Latest.log`. Do not mark an item working from its label alone: equip/stat behavior and save/reload still require game testing.
 
+## First runtime feedback and diagnostic update
+
+The October 7 test on `a4df9452` loaded successfully, but rejected two drops while testing Unsated Rage. One reported a changed existing affix during variant addition; the other reported a socket-count mismatch after final decoding. The screenshot shows Unsated Rage with four ordinary T7 affixes and its Sanguine Rage modifier, with no seal or corruption selected. These failures are unresolved; the original messages do not contain enough data to identify the changed fields or interpret the socket count.
+
+The diagnostic update retains every rejection check. Variant errors now print complete expected and actual ordinary-affix signatures (`id:tier:roll:seal:specialType:placement`). Final packing errors print both item snapshots and the packed ID in Base64. Snapshot affix signatures use numeric special-type/placement values and the named seal. This makes a native storage change distinguishable from an incorrect validator assumption without permitting an unverified item to drop.
+
+Rebuild with the same script above, repeat the same Unsated Rage selections, and supply the complete new `Latest.log`. If time permits, also try the ring with only its exclusive modifier, then with one ordinary affix. The update is diagnostic, not a confirmed fix for either failure.
+
 ## Verification completed here
 
-- 38 game-independent regression cases passed using xUnit assertions.
+- 40 game-independent regression cases passed using xUnit assertions, including exact rejection evidence for changed rolls and socket counts.
 - New core compiled for .NET 6.
 - Changed Force Drop HUD and adapters compile against the supplied Unity/TMP/Harmony assemblies with game context stubs.
 - Formatting and diff checks pass; the layout-building code and Harmony patch count are unchanged.

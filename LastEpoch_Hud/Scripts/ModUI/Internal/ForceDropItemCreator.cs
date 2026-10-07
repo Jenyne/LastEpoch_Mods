@@ -121,10 +121,21 @@ public static class ForceDropItemCreator
                 Items_Drop_ForginPotencial.Stamp(item, (byte)forging);
             VerifyRequest(item, request, forging);
             var expected = Snapshot(item);
-            var restored = new ItemDataUnpacked(item.GetID());
+            var packed = item.GetID();
+            var restored = new ItemDataUnpacked(packed);
             string error = expected.Difference(Snapshot(restored));
             if (error.Length != 0)
-                throw new InvalidOperationException(error + "; no item was dropped.");
+            {
+                var bytes = new List<byte>();
+                foreach (byte value in packed)
+                    bytes.Add(value);
+                throw new InvalidOperationException(
+                    error
+                        + "; packed="
+                        + Convert.ToBase64String(bytes.ToArray())
+                        + "; no item was dropped."
+                );
+            }
             return item;
         }
         catch

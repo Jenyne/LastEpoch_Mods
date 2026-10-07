@@ -94,7 +94,11 @@ public sealed class ForceDropPackingSnapshot
         if (Affixes.Any(a => a == null))
             return "Missing affix data";
         if (Sockets != Affixes.Count)
-            return "Socket count does not match the affix count";
+            return "Socket count does not match the affix count (sockets="
+                + Sockets
+                + ", affixes="
+                + Affixes.Count
+                + ")";
         if (Affixes.Select(a => a.Id).Distinct().Count() != Affixes.Count)
             return "Duplicate affix IDs";
         if (
@@ -121,6 +125,58 @@ public sealed class ForceDropPackingSnapshot
     }
 
     public string Difference(ForceDropPackingSnapshot actual)
+    {
+        string error = Compare(actual);
+        if (error.Length == 0)
+            return "";
+        return error
+            + "; expected={"
+            + Describe()
+            + "}; decoded={"
+            + (actual == null ? "missing" : actual.Describe())
+            + "}";
+    }
+
+    // Rejected items never reach the ground. Keep their exact construction and
+    // decode evidence in the error log instead of guessing from a generic label.
+    public string Describe()
+    {
+        return "base="
+            + ItemType
+            + ", sub="
+            + SubType
+            + ", unique="
+            + UniqueId
+            + ", rarity="
+            + Rarity
+            + ", fp="
+            + ForgingPotential
+            + ", lp="
+            + LegendaryPotential
+            + ", ww="
+            + WeaversWill
+            + ", corrupted="
+            + Corrupted
+            + ", sockets="
+            + Sockets
+            + ", count="
+            + Affixes.Count
+            + ", regular="
+            + RegularSeal
+            + ", primordial="
+            + PrimordialSeal
+            + ", corruption="
+            + CorruptionSeal
+            + ", implicit=["
+            + string.Join(",", ImplicitRolls)
+            + "], uniqueRolls=["
+            + string.Join(",", UniqueRolls)
+            + "], affixes=["
+            + string.Join(",", Affixes.Select(a => a == null ? "missing" : a.Signature))
+            + "]";
+    }
+
+    string Compare(ForceDropPackingSnapshot actual)
     {
         string error = IntegrityError();
         if (error.Length != 0)
