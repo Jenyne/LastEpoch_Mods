@@ -183,24 +183,10 @@ public sealed class HeadhunterConfigWriterTests
     }
 
     [Fact]
-    public void Write_RoundTrips_ValueGrowth()
+    public void Write_Defaults_HasNoScaling()
     {
-        var config = new HeadhunterConfig
-        {
-            Version = 1,
-            DurationSeconds = 12.5f,
-            MaxStacks = 7,
-            Triggers = new HeadhunterTriggers(true, true, true, true, true),
-            Stats = new List<HeadhunterStatEntry>(),
-            ValueGrowth = new HeadhunterGrowthCurve(3f, 12f),
-        };
+        var written = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
 
-        HeadhunterConfigParseResult result = HeadhunterConfigParser.Parse(
-            HeadhunterConfigWriter.Write(config),
-            new HashSet<string>(StringComparer.Ordinal)
-        );
-
-        Assert.Empty(result.Problems);
-        Assert.Equal(new HeadhunterGrowthCurve(3f, 12f), result.Config.ValueGrowth);
+        Assert.Null(written["scaling"]);
     }
 }

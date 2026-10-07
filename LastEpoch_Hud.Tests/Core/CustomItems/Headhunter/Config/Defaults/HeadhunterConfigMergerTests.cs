@@ -550,7 +550,7 @@ public sealed class HeadhunterConfigMergerTests
     }
 
     [Fact]
-    public void Merge_V6File_AddsScaling()
+    public void Merge_V6File_NoScalingAdded()
     {
         var file = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
         file.Remove("scaling");
@@ -562,35 +562,8 @@ public sealed class HeadhunterConfigMergerTests
         );
 
         var merged = JObject.Parse(result.Text);
-        JToken values = merged["scaling"]["values"];
-        Assert.Equal(
-            (
-                HeadhunterConfigDefaults.ValueGrowth.PerStackPercent,
-                HeadhunterConfigDefaults.ValueGrowth.CapPercent
-            ),
-            ((float)values["perStack"], (float)values["cap"])
-        );
+        Assert.Null(merged["scaling"]);
         Assert.Equal(HeadhunterConfigDefaults.DefaultsVersion, (int)merged["defaultsVersion"]);
-    }
-
-    [Fact]
-    public void Merge_PlayerScaling_Kept()
-    {
-        var file = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
-        file["scaling"] = new JObject
-        {
-            ["values"] = new JObject { ["perStack"] = 5f, ["cap"] = 50f },
-        };
-        file["defaultsVersion"] = 6;
-
-        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
-            file.ToString(),
-            HeadhunterConfigDefaults.MergeDefaults
-        );
-
-        JToken values = JObject.Parse(result.Text)["scaling"]["values"];
-        Assert.Equal(5f, (float)values["perStack"]);
-        Assert.Equal(50f, (float)values["cap"]);
     }
 
     [Fact]

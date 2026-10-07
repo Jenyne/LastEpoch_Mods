@@ -23,8 +23,4 @@ internal static class HeadhunterConfigKeys
     public const string ModKey = "modKey";
     public const string Note = "note";
     public const string Rows = "rows";
-    public const string Scaling = "scaling";
-    public const string Values = "values";
-    public const string PerStack = "perStack";
-    public const string Cap = "cap";
 }

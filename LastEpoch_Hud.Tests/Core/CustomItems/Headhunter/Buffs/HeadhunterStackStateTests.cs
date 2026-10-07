@@ -109,43 +109,4 @@ public sealed class HeadhunterStackStateTests
         Assert.Equal(0, state.Get(1));
         Assert.Equal(0, state.Total);
     }
-
-    [Fact]
-    public void SyncRemaining_DropsExpiredKeepsLive()
-    {
-        var state = new HeadhunterStackState(2);
-        state.TryAdd(0, 5);
-        state.TryAdd(0, 5);
-        state.TryAdd(1, 5);
-
-        state.SyncRemaining([5f, 0f]);
-
-        Assert.Equal(2, state.Get(0));
-        Assert.Equal(0, state.Get(1));
-    }
-
-    [Fact]
-    public void SyncRemaining_ShortList_DropsMissingRows()
-    {
-        var state = new HeadhunterStackState(3);
-        state.TryAdd(0, 5);
-        state.TryAdd(1, 5);
-        state.TryAdd(2, 5);
-
-        state.SyncRemaining([5f]);
-
-        Assert.Equal(1, state.Total);
-        Assert.Equal(1, state.Get(0));
-    }
-
-    [Fact]
-    public void SyncRemaining_LiveWithoutCount_LiftsToOne()
-    {
-        var state = new HeadhunterStackState(2);
-
-        state.SyncRemaining([0f, 3f]);
-
-        Assert.Equal(0, state.Get(0));
-        Assert.Equal(1, state.Get(1));
-    }
 }

@@ -13,15 +13,13 @@ public sealed class HeadhunterResolvedConfig
         int maxStacks,
         HeadhunterTriggers triggers,
         IReadOnlyList<HeadhunterBuffStat> stats,
-        IReadOnlyDictionary<int, int[]> affixRows = null,
-        HeadhunterGrowthCurve valueGrowth = default
+        IReadOnlyDictionary<int, int[]> affixRows = null
     )
     {
         DurationSeconds = durationSeconds;
         MaxStacks = maxStacks;
         Triggers = triggers;
         Stats = stats;
-        ValueGrowth = valueGrowth;
         _affixRows = affixRows ?? new Dictionary<int, int[]>();
         for (int i = 0; i < stats.Count; i++)
         {
@@ -33,7 +31,6 @@ public sealed class HeadhunterResolvedConfig
     public int MaxStacks { get; }
     public HeadhunterTriggers Triggers { get; }
     public IReadOnlyList<HeadhunterBuffStat> Stats { get; }
-    public HeadhunterGrowthCurve ValueGrowth { get; }
     public int AffixCount => _affixRows.Count;
 
     public bool TryGetRow(HeadhunterStatKey key, out int row)

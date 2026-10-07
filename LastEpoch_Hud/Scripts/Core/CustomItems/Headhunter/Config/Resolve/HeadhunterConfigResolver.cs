@@ -29,8 +29,7 @@ public static class HeadhunterConfigResolver
             config.MaxStacks,
             config.Triggers,
             stats,
-            HeadhunterAffixMapResolver.Resolve(config.AffixMap, config.Stats, rowByText, problems),
-            config.ValueGrowth
+            HeadhunterAffixMapResolver.Resolve(config.AffixMap, config.Stats, rowByText, problems)
         );
     }
 

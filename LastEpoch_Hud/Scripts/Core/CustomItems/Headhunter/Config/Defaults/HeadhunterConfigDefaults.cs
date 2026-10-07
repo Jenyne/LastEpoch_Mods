@@ -1,6 +1,5 @@
 using System.Collections.Generic;
 using System.Linq;
-using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Json;
 using Newtonsoft.Json.Linq;
 
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Defaults;
@@ -58,19 +57,11 @@ public static class HeadhunterConfigDefaults
         .Select(row => row.Entry)
         .ToList();
 
-    public static readonly HeadhunterGrowthCurve ValueGrowth = new(2f, 30f);
-
     public static readonly IReadOnlyList<HeadhunterVersionedField> VersionedFields =
         new List<HeadhunterVersionedField>
         {
             new(HeadhunterConfigKeys.Triggers, HeadhunterConfigKeys.Magic, new JValue(true), 3),
             new("", HeadhunterConfigKeys.MaxStacks, new JValue(MaxStacks), 4),
-            new(
-                "",
-                HeadhunterConfigKeys.Scaling,
-                HeadhunterConfigWriter.BuildScaling(ValueGrowth),
-                7
-            ),
         };
 
     public static readonly HeadhunterMergeDefaults MergeDefaults = new()
@@ -89,7 +80,6 @@ public static class HeadhunterConfigDefaults
         MaxStacks = MaxStacks,
         Triggers = Triggers,
         Stats = Stats,
-        ValueGrowth = ValueGrowth,
         AffixMap = HeadhunterAffixDefaults.AffixMap,
     };
 }

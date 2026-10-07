@@ -12,7 +12,6 @@ public sealed class HeadhunterConfig
     public int MaxStacks { get; init; } = HeadhunterConfigDefaults.MaxStacks;
     public HeadhunterTriggers Triggers { get; init; }
     public IReadOnlyList<HeadhunterStatEntry> Stats { get; init; }
-    public HeadhunterGrowthCurve ValueGrowth { get; init; }
     public IReadOnlyList<HeadhunterAffixEntry> AffixMap { get; init; } =
         Array.Empty<HeadhunterAffixEntry>();
 }

@@ -23,13 +23,11 @@ internal static class HeadhunterKillHandler
             return;
         }
 
-        float factorBefore = HeadhunterConfigLoader.Growth.Factor;
         HeadhunterBuffSink.FillActive(buffs, HeadhunterConfigLoader.Resolved.Stats, _liveRows);
         IReadOnlyList<BuffAction> actions = mechanic.OnKill(kill, _liveRows);
         HeadhunterBuffSink.Apply(buffs, actions);
         HeadhunterBuffBar.MarkDirty();
         LogKill(kill, actions);
-        HeadhunterGrowthDriver.LogIfFactorChanged(factorBefore);
     }
 
     private static void LogKill(KillInfo kill, IReadOnlyList<BuffAction> actions)

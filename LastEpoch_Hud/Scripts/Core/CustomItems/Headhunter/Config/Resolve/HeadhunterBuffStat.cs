@@ -11,13 +11,13 @@ public readonly record struct HeadhunterBuffStat(
 {
     public HeadhunterStatKey Key => new(StatId, Tags);
 
-    public float AddedFor(int stacks, float factor)
+    public float AddedFor(int stacks)
     {
-        return Added * stacks * factor;
+        return Added * stacks;
     }
 
-    public float IncreasedFor(int stacks, float factor)
+    public float IncreasedFor(int stacks)
     {
-        return Increased * stacks * factor;
+        return Increased * stacks;
     }
 }

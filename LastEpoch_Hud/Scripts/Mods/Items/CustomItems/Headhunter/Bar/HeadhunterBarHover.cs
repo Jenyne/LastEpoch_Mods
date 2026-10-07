@@ -18,8 +18,7 @@ internal static class HeadhunterBarHover
             int index = HoveredIndex();
             int row = HeadhunterBuffBarView.RowAt(index);
             int stacks = HeadhunterBuffBarView.StacksAt(index);
-            int growthTotal = HeadhunterConfigLoader.Growth?.AppliedTotal ?? 0;
-            if (!_hover.Changed(row, stacks, HeadhunterBuffBarView.LayoutVersion, growthTotal))
+            if (!_hover.Changed(row, stacks, HeadhunterBuffBarView.LayoutVersion))
             {
                 return;
             }
@@ -54,13 +53,12 @@ internal static class HeadhunterBarHover
         }
 
         HeadhunterBuffStat stat = config.Stats[row];
-        float factor = HeadhunterConfigLoader.Growth?.Factor ?? 1f;
         HeadhunterStatNames.TryRead(stat.StatId, out string gameName, out bool addedAsPercent);
         string label = HeadhunterBuffLabel.Format(
             gameName,
             HeadhunterStatNames.EnumName(stat.StatId),
-            stat.AddedFor(stacks, factor),
-            stat.IncreasedFor(stacks, factor),
+            stat.AddedFor(stacks),
+            stat.IncreasedFor(stacks),
             addedAsPercent,
             stacks,
             HeadhunterStatNames.GameTagName(stat.Tags),

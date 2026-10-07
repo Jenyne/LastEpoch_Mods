@@ -1,6 +1,7 @@
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Defaults;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Json;
+using Newtonsoft.Json.Linq;
 using Code = LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.HeadhunterConfigProblemCode;
 
 namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter.Config.Json;
@@ -70,6 +71,23 @@ public sealed class HeadhunterConfigParserTests
 
         Assert.Empty(result.Problems);
         Assert.Single(result.Config.Stats);
+    }
+
+    [Theory]
+    [InlineData("""{"values":{"perStack":2,"cap":30}}""")]
+    [InlineData("""{"values":{"perStack":-1,"cap":"x"}}""")]
+    [InlineData("5")]
+    public void Parse_LegacyScalingSection_NoProblems(string scaling)
+    {
+        var known = HeadhunterConfigDefaults
+            .Stats.Select(entry => entry.Stat)
+            .ToHashSet(StringComparer.Ordinal);
+        var root = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+        root["scaling"] = JToken.Parse(scaling);
+
+        HeadhunterConfigParseResult result = HeadhunterConfigParser.Parse(root.ToString(), known);
+
+        Assert.Empty(result.Problems);
     }
 
     [Fact]
