@@ -12,7 +12,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 public class Items_HeadHunter : MonoBehaviour
 {
     private static readonly CustomUniqueRegistrar _registrar = new(CreateDefinition());
-    private static readonly HeadhunterRunResetWatch _resetWatch = new();
 
     public Items_HeadHunter(System.IntPtr ptr)
         : base(ptr) { }
@@ -25,23 +24,7 @@ public class Items_HeadHunter : MonoBehaviour
 
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        _resetWatch.MarkSceneLoaded();
-    }
-
-    private void Update()
-    {
-        _registrar.Update();
-        ResetRunIfNeeded();
-        HeadhunterKillSource.EnsureHooked();
-        HeadhunterConfigLoader.ReloadIfChanged(Time.unscaledTime);
-        HeadhunterBuffBar.Tick(Time.unscaledTime);
-        HeadhunterBarHover.Tick();
-        MonsterModDump.Tick(Time.unscaledTime);
-    }
-
-    private static void ResetRunIfNeeded()
-    {
-        if (!_resetWatch.ShouldReset(PlayerId()))
+        if (!HeadhunterRunReset.IsCharacterExit(scene.name))
         {
             return;
         }
@@ -53,14 +36,14 @@ public class Items_HeadHunter : MonoBehaviour
         }
     }
 
-    private static long PlayerId()
+    private void Update()
     {
-        if (Refs_Manager.player_actor.IsNullOrDestroyed())
-        {
-            return 0;
-        }
-
-        return Refs_Manager.player_actor.Pointer.ToInt64();
+        _registrar.Update();
+        HeadhunterKillSource.EnsureHooked();
+        HeadhunterConfigLoader.ReloadIfChanged(Time.unscaledTime);
+        HeadhunterBuffBar.Tick(Time.unscaledTime);
+        HeadhunterBarHover.Tick();
+        MonsterModDump.Tick(Time.unscaledTime);
     }
 
     private static CustomUniqueDefinition CreateDefinition()
