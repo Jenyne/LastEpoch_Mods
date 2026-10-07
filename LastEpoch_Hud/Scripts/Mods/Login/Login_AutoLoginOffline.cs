@@ -25,6 +25,12 @@ public class Login_AutoLoginOffline
             && save.data.Login.Enable_AutoLoginOffline;
     }
 
+    public static bool BlockOnlineSelection()
+    {
+        var save = Save_Manager.instance;
+        return save.IsNullOrDestroyed() || !save.initialized || CanRun();
+    }
+
     public static void Tick()
     {
         try
@@ -162,10 +168,7 @@ public class Login_AutoLoginOffline
         static bool Prefix()
         {
             // Cover controller/events even if the hidden button is invoked directly.
-            var save = Save_Manager.instance;
-            if (save.IsNullOrDestroyed() || !save.initialized)
-                return false;
-            return !CanRun();
+            return !BlockOnlineSelection();
         }
     }
 }

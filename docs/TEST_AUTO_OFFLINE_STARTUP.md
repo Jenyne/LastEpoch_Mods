@@ -10,6 +10,7 @@ This is a startup convenience and accidental-online prevention test, not the pro
 - `Main.OnLateUpdate` waits for `Save_Manager.initialized`, an active panel, the controller's `LandingZone` state, an interactable offline button, and no active loading indicator or Steam-required transition.
 - Readiness must hold across at least two frames and 250 ms. It then calls the game's `OnPlayOfflineClicked()` once for that landing visit.
 - The online button is hidden and `OnPlayOnlineClicked` is blocked while `Login.Enable_AutoLoginOffline` is true. Online activation is also blocked until config loading finishes.
+- On offline character selection, buttons owned by `OnlineOfflineSwitch` are disabled and hidden, retaining the parent status label/icon. `OnlineOfflineSwitch.OnButtonPressed`, `CharacterSelect.SwitchOnlineOffline`, and online requests to `CharacterSelect.SetIsOnlineTabShowing` are blocked. A toggle back to offline from an already-online tab is allowed.
 - A manual offline click consumes the pending automatic attempt. Leaving the panel clears its cached reference. Returning to the landing screen starts a new visit.
 - The game remains responsible for mode changes, local character loading, and scene transitions. The bootstrap does not launch a character automatically, force `IsOnlinePlay`, change the login FSM, or access character save files.
 - Logs report dispatch and arrival at `CharacterSelectScene` with `GameplayEnvironment.IsOnlinePlay == false`. A 30-second timeout reports lack of confirmation without dispatching another transition.
@@ -39,10 +40,12 @@ Use `-BuildOnly` to compile without installing. To revert, close the game and co
 3. Choose a disposable offline character and enter/leave gameplay. Confirm the existing offline characters and mod features still work.
 4. Return to the landing screen. Confirm one offline transition per visit and no loop or repeated dispatch logs.
 5. Click Play Offline immediately before the automatic action. Confirm one transition rather than two.
-6. Test with a controller: the landing online action must not start online while auto-offline is enabled.
+6. Confirm the character screen's Switch to Online button disappears and `[Offline] Character selection online switch hidden.` is logged. Test with a controller: neither the landing online action nor the character screen mode-switch action should start online while auto-offline is enabled. If an activation still reaches a patched handler, expect a blocked-action log and no online transition.
 7. If character loading stalls, confirm the timeout warning and no repeated automatic clicks. Report the screen and log; do not treat compilation as proof of in-game success.
 8. For compatibility, set `Enable_AutoLoginOffline` false with the game closed and relaunch: normal manual landing behavior should return. Use the enabled setting for mod testing.
 
 Unit tests exercise settling time, readiness interruptions, single dispatch, manual-click consumption, and a new landing visit. Patch-target checks validate that each hook resolves against the supplied game assemblies. Actual UI completion still requires an in-game test on the current installation.
 
 Validation completed for this branch: Release build against the supplied 1.5 assemblies, all 1,011 tests with game assemblies enabled (zero failures or skips), and CSharpier formatting. The game itself and PowerShell helper were not executed in this environment.
+
+The user's first in-game run (build `2ec2b0bb`, LE 1.5.12) confirmed automatic offline dispatch at 13:23:13.155 and offline character selection at 13:23:16.730. The new character selection button hiding and action blocks require another in-game run.
