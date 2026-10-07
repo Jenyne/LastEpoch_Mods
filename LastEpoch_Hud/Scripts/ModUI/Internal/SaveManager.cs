@@ -45,6 +45,8 @@ public class SaveManager : MonoBehaviour
     void Update()
     {
         LocaleRegistry.TickIfLocaleChanged();
+        if (initialized)
+            Mods.Diagnostics.ForceDropCatalogAudit.Tick();
         if (KeybindCapture.Active)
             KeybindCapture.Tick();
 

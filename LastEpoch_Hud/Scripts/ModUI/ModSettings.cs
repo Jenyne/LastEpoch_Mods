@@ -57,6 +57,13 @@ public static class ModSettings
         public static readonly BoolSetting ProfileGameTypes = Group.Bool("ProfileGameTypes");
     }
 
+    // Diagnostic audit branch: opt in through SaveModUI.json, no HUD controls.
+    public static class ForceDropAudit
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("ForceDropAudit");
+        public static readonly BoolSetting DumpOnNextLaunch = Group.Bool("DumpOnNextLaunch");
+    }
+
     //
     // CHARACTER TAB
     //
