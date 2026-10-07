@@ -6,7 +6,7 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 public static class HeadhunterConfigDefaults
 {
     public const int CurrentVersion = 1;
-    public const string Mechanic = "rare_mods";
+    public const string Mechanic = HeadhunterMechanics.RareModsId;
     public const float DurationSeconds = 60f;
     public const float EntryAdded = 0f;
     public const float EntryIncreased = 0f;
