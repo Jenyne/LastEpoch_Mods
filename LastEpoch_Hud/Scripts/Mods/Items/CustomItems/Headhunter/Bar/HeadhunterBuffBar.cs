@@ -48,6 +48,7 @@ internal static class HeadhunterBuffBar
             HeadhunterBuffBarView.Hide();
             HeadhunterModelScaler.Apply(0);
             HeadhunterAreaBuff.Sync(0);
+            HeadhunterReach.Sync(0);
             HeadhunterAuraProbe.Tick(now, 0);
             LogIfChanged(Array.Empty<HeadhunterBarEntry>());
             return;
@@ -65,6 +66,7 @@ internal static class HeadhunterBuffBar
         HeadhunterBuffBarView.Show(entries, HeadhunterConfigLoader.Current.Bar);
         HeadhunterModelScaler.Apply(entries.Count);
         HeadhunterAreaBuff.Sync(entries.Count);
+        HeadhunterReach.Sync(entries.Count);
         HeadhunterAuraProbe.Tick(now, entries.Count);
         LogIfChanged(entries);
     }
