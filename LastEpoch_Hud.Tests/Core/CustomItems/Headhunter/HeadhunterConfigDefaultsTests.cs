@@ -5,6 +5,30 @@ namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter;
 
 public sealed class HeadhunterConfigDefaultsTests
 {
+    private static readonly (string Stat, string Tag)[] _approvedPairs =
+    {
+        ("DodgeRating", null),
+        ("HealthRegen", null),
+        ("StunAvoidance", null),
+        ("IncreasedCooldownRecoverySpeed", null),
+        ("Damage", "Fire"),
+        ("Damage", "Cold"),
+        ("Damage", "Lightning"),
+        ("Damage", "Necrotic"),
+        ("Damage", "Poison"),
+        ("Damage", "Void"),
+        ("Damage", "Physical"),
+        ("Damage", "Minion"),
+        ("FireResistance", null),
+        ("ColdResistance", null),
+        ("LightningResistance", null),
+        ("NecroticResistance", null),
+        ("PoisonResistance", null),
+        ("VoidResistance", null),
+    };
+
+    public static TheoryData<string, string> ApprovedMapRows => BuildApprovedMapRows();
+
     [Fact]
     public void Config_Version_IsCurrentVersion()
     {
@@ -96,11 +120,59 @@ public sealed class HeadhunterConfigDefaultsTests
     }
 
     [Fact]
-    public void Config_Stats_HaveUniqueNames()
+    public void Config_Stats_HaveUniqueRowKeys()
     {
-        var names = HeadhunterConfigDefaults.Config.Stats.Select(entry => entry.Stat).ToList();
+        var keys = HeadhunterConfigDefaults
+            .Config.Stats.Select(entry => (entry.Stat, entry.Tag))
+            .ToList();
 
-        Assert.Equal(names.Count, names.Distinct(StringComparer.Ordinal).Count());
+        Assert.Equal(keys.Count, keys.Distinct().Count());
+    }
+
+    [Theory]
+    [MemberData(nameof(ApprovedMapRows))]
+    public void Stats_ContainApprovedMapRows(string stat, string tag)
+    {
+        Assert.Contains(
+            HeadhunterConfigDefaults.Stats,
+            entry => entry.Stat == stat && entry.Tag == tag
+        );
+    }
+
+    [Theory]
+    [MemberData(nameof(ApprovedMapRows))]
+    public void VersionedStats_ApprovedMapRows_AddedAtVersion5(string stat, string tag)
+    {
+        HeadhunterVersionedStat row = HeadhunterConfigDefaults.VersionedStats.Single(candidate =>
+            candidate.Entry.Stat == stat && candidate.Entry.Tag == tag
+        );
+
+        Assert.Equal(5, row.Since);
+    }
+
+    [Fact]
+    public void VersionedStats_Since5Rows_AreExactlyApprovedMap()
+    {
+        var actual = HeadhunterConfigDefaults
+            .VersionedStats.Where(row => row.Since == 5)
+            .Select(row => (row.Entry.Stat, row.Entry.Tag))
+            .OrderBy(key => key.Stat)
+            .ThenBy(key => key.Tag)
+            .ToList();
+        var expected = _approvedPairs.OrderBy(key => key.Stat).ThenBy(key => key.Tag).ToList();
+
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
+    public void VersionedStats_Since_IsNonDecreasing()
+    {
+        IReadOnlyList<HeadhunterVersionedStat> rows = HeadhunterConfigDefaults.VersionedStats;
+
+        for (int i = 1; i < rows.Count; i++)
+        {
+            Assert.True(rows[i].Since >= rows[i - 1].Since);
+        }
     }
 
     [Fact]
@@ -125,5 +197,16 @@ public sealed class HeadhunterConfigDefaultsTests
     public void Config_Stats_AreAllEnabled()
     {
         Assert.All(HeadhunterConfigDefaults.Config.Stats, entry => Assert.True(entry.Enabled));
+    }
+
+    private static TheoryData<string, string> BuildApprovedMapRows()
+    {
+        var data = new TheoryData<string, string>();
+        foreach ((string stat, string tag) in _approvedPairs)
+        {
+            data.Add(stat, tag);
+        }
+
+        return data;
     }
 }

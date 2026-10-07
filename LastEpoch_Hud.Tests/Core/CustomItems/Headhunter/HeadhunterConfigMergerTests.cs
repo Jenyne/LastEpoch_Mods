@@ -340,8 +340,47 @@ public sealed class HeadhunterConfigMergerTests
 
         var merged = JObject.Parse(result.Text);
         Assert.Equal(10, (int)merged["maxStacks"]);
-        Assert.Equal(4, (int)merged["defaultsVersion"]);
+        Assert.Equal(HeadhunterConfigDefaults.DefaultsVersion, (int)merged["defaultsVersion"]);
         Assert.Equal(1, result.Added);
+    }
+
+    [Fact]
+    public void Merge_Stamp4File_AppendsVersion5Rows_KeepsPlayerRows()
+    {
+        var config = new HeadhunterConfig
+        {
+            Version = HeadhunterConfigDefaults.CurrentVersion,
+            Mechanic = HeadhunterConfigDefaults.Mechanic,
+            DurationSeconds = HeadhunterConfigDefaults.DurationSeconds,
+            MaxStacks = HeadhunterConfigDefaults.MaxStacks,
+            Triggers = HeadhunterConfigDefaults.Triggers,
+            Stats = HeadhunterConfigDefaults
+                .VersionedStats.Where(row => row.Since <= 4)
+                .Select(row => row.Entry)
+                .ToList(),
+        };
+        var file = JObject.Parse(HeadhunterConfigWriter.Write(config));
+        file["stats"][0]["added"] = 123;
+        file["defaultsVersion"] = 4;
+
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            file.ToString(),
+            HeadhunterConfigDefaults.MergeDefaults
+        );
+
+        var rows = (JArray)JObject.Parse(result.Text)["stats"];
+        var keys = rows.Select(row => ((string)row["stat"], (string)row["tag"])).ToList();
+        Assert.NotEqual(0, CountSince5());
+        Assert.Equal(CountSince5(), result.Added);
+        Assert.All(
+            HeadhunterConfigDefaults.Stats,
+            entry => Assert.Contains((entry.Stat, entry.Tag), keys)
+        );
+        Assert.Equal(123f, (float)rows[0]["added"]);
+        Assert.Equal(
+            HeadhunterConfigDefaults.DefaultsVersion,
+            (int)JObject.Parse(result.Text)["defaultsVersion"]
+        );
     }
 
     [Fact]
@@ -395,6 +434,11 @@ public sealed class HeadhunterConfigMergerTests
         Assert.Equal(1, result.Added);
         Assert.Equal(2, rows.Count);
         Assert.Null(((JObject)rows[1]).Property("tag"));
+    }
+
+    private static int CountSince5()
+    {
+        return HeadhunterConfigDefaults.VersionedStats.Count(row => row.Since == 5);
     }
 
     private static HeadhunterMergeResult Merge(string json)

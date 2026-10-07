@@ -8,7 +8,7 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 public static class HeadhunterConfigDefaults
 {
     public const int CurrentVersion = 1;
-    public const int DefaultsVersion = 4;
+    public const int DefaultsVersion = 5;
     public const int UnstampedDefaultsVersion = 1;
     public const string Mechanic = HeadhunterMechanics.RareModsId;
     public const float DurationSeconds = 60f;
@@ -25,14 +25,32 @@ public static class HeadhunterConfigDefaults
             new(new HeadhunterStatEntry("Damage", 0f, 10f, true), 1),
             new(new HeadhunterStatEntry("AttackSpeed", 0f, 5f, true), 1),
             new(new HeadhunterStatEntry("CastSpeed", 0f, 5f, true), 1),
-            new(new HeadhunterStatEntry("CriticalChance", 0f, 10f, true), 1),
+            new(new HeadhunterStatEntry("CriticalChance", 0.03f, 0f, true), 1),
             new(new HeadhunterStatEntry("Movespeed", 0f, 5f, true), 1),
-            new(new HeadhunterStatEntry("Health", 20f, 0f, true), 1),
+            new(new HeadhunterStatEntry("Health", 0f, 5f, true), 1),
             new(new HeadhunterStatEntry("Armour", 50f, 0f, true), 1),
             new(new HeadhunterStatEntry("ManaRegen", 0f, 10f, true), 2),
             new(new HeadhunterStatEntry("ManaEfficiency", 0f, 5f, true), 2),
             new(new HeadhunterStatEntry("IncreasedLeechRate", 0f, 10f, true), 2),
             new(new HeadhunterStatEntry("HealthLeech", 0.01f, 0f, true), 2),
+            new(new HeadhunterStatEntry("DodgeRating", 50f, 0f, true), 5),
+            new(new HeadhunterStatEntry("HealthRegen", 5f, 0f, true), 5),
+            new(new HeadhunterStatEntry("StunAvoidance", 100f, 0f, true), 5),
+            new(new HeadhunterStatEntry("IncreasedCooldownRecoverySpeed", 0.05f, 0f, true), 5),
+            new(new HeadhunterStatEntry("Damage", 0f, 10f, true, "Fire"), 5),
+            new(new HeadhunterStatEntry("Damage", 0f, 10f, true, "Cold"), 5),
+            new(new HeadhunterStatEntry("Damage", 0f, 10f, true, "Lightning"), 5),
+            new(new HeadhunterStatEntry("Damage", 0f, 10f, true, "Necrotic"), 5),
+            new(new HeadhunterStatEntry("Damage", 0f, 10f, true, "Poison"), 5),
+            new(new HeadhunterStatEntry("Damage", 0f, 10f, true, "Void"), 5),
+            new(new HeadhunterStatEntry("Damage", 0f, 10f, true, "Physical"), 5),
+            new(new HeadhunterStatEntry("Damage", 0f, 10f, true, "Minion"), 5),
+            new(new HeadhunterStatEntry("FireResistance", 0.05f, 0f, true), 5),
+            new(new HeadhunterStatEntry("ColdResistance", 0.05f, 0f, true), 5),
+            new(new HeadhunterStatEntry("LightningResistance", 0.05f, 0f, true), 5),
+            new(new HeadhunterStatEntry("NecroticResistance", 0.05f, 0f, true), 5),
+            new(new HeadhunterStatEntry("PoisonResistance", 0.05f, 0f, true), 5),
+            new(new HeadhunterStatEntry("VoidResistance", 0.05f, 0f, true), 5),
         };
 
     public static readonly IReadOnlyList<HeadhunterStatEntry> Stats = VersionedStats
