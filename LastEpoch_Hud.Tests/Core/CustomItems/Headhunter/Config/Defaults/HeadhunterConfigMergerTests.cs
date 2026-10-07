@@ -553,7 +553,6 @@ public sealed class HeadhunterConfigMergerTests
     public void Merge_V6File_NoScalingAdded()
     {
         var file = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
-        file.Remove("scaling");
         file["defaultsVersion"] = 6;
 
         HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
@@ -564,6 +563,46 @@ public sealed class HeadhunterConfigMergerTests
         var merged = JObject.Parse(result.Text);
         Assert.Null(merged["scaling"]);
         Assert.Equal(HeadhunterConfigDefaults.DefaultsVersion, (int)merged["defaultsVersion"]);
+    }
+
+    [Fact]
+    public void Merge_V8File_AddsModelSize()
+    {
+        var file = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+        file.Remove("modelSize");
+        file["defaultsVersion"] = 8;
+
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            file.ToString(),
+            HeadhunterConfigDefaults.MergeDefaults
+        );
+
+        var merged = JObject.Parse(result.Text);
+        Assert.True(
+            JToken.DeepEquals(
+                HeadhunterConfigWriter.BuildModelSize(HeadhunterConfigDefaults.ModelSize),
+                merged["modelSize"]
+            )
+        );
+        Assert.Equal(1, result.Added);
+        Assert.Equal(9, (int)merged["defaultsVersion"]);
+    }
+
+    [Fact]
+    public void Merge_PlayerModelSize_Kept()
+    {
+        var file = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+        file["modelSize"] = new JObject { ["perBuff"] = 1, ["cap"] = 5 };
+        file["defaultsVersion"] = 8;
+
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            file.ToString(),
+            HeadhunterConfigDefaults.MergeDefaults
+        );
+
+        var merged = JObject.Parse(result.Text);
+        Assert.Equal(1f, (float)merged["modelSize"]["perBuff"]);
+        Assert.Equal(5f, (float)merged["modelSize"]["cap"]);
     }
 
     [Fact]

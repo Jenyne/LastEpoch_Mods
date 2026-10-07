@@ -22,4 +22,5 @@ public enum HeadhunterConfigProblemCode
     DuplicateStatId,
     DuplicateModKey,
     UnknownRow,
+    NotPercent,
 }

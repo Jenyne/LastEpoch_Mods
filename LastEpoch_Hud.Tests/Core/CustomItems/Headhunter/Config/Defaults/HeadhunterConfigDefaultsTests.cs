@@ -1,5 +1,6 @@
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Defaults;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Json;
 using Newtonsoft.Json.Linq;
 
 namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter.Config.Defaults;
@@ -62,6 +63,22 @@ public sealed class HeadhunterConfigDefaultsTests
                 && field.Value.Type == JTokenType.Integer
                 && (int)field.Value == 10
                 && field.Since == 4
+        );
+    }
+
+    [Fact]
+    public void VersionedFields_ModelSize_AddedAtVersion9()
+    {
+        Assert.Contains(
+            HeadhunterConfigDefaults.VersionedFields,
+            field =>
+                field.Parent == ""
+                && field.Key == "modelSize"
+                && JToken.DeepEquals(
+                    field.Value,
+                    HeadhunterConfigWriter.BuildModelSize(HeadhunterConfigDefaults.ModelSize)
+                )
+                && field.Since == 9
         );
     }
 

@@ -189,4 +189,34 @@ public sealed class HeadhunterConfigWriterTests
 
         Assert.Null(written["scaling"]);
     }
+
+    [Fact]
+    public void Write_RoundTrips_ModelSize()
+    {
+        HeadhunterConfig config = new()
+        {
+            Version = 1,
+            DurationSeconds = 10f,
+            Triggers = HeadhunterTestData.AllTriggers,
+            Stats = new List<HeadhunterStatEntry>(),
+            ModelSize = new HeadhunterSizeCurve(3f, 15f),
+        };
+
+        HeadhunterConfigParseResult result = HeadhunterConfigParser.Parse(
+            HeadhunterConfigWriter.Write(config),
+            new HashSet<string>(StringComparer.Ordinal)
+        );
+
+        Assert.Empty(result.Problems);
+        Assert.Equal(config.ModelSize, result.Config.ModelSize);
+    }
+
+    [Fact]
+    public void Write_Defaults_HasModelSize()
+    {
+        var root = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+
+        Assert.Equal(2f, (float)root["modelSize"]["perBuff"]);
+        Assert.Equal(20f, (float)root["modelSize"]["cap"]);
+    }
 }

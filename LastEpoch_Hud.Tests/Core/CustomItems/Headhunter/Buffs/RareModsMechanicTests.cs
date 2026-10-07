@@ -357,14 +357,7 @@ public sealed class RareModsMechanicTests
     [Fact]
     public void OnKill_TotalStacksRise_OtherLiveStaysRefreshWithOwnValue()
     {
-        HeadhunterResolvedConfig config = HeadhunterTestData.Resolve(
-            HeadhunterTestData.Config(
-                HeadhunterTestData.AllTriggers,
-                HeadhunterTestData.Entry("FakeA", 0f, 10f),
-                HeadhunterTestData.Entry("FakeB", 5f)
-            )
-        );
-        RareModsMechanic mechanic = HeadhunterTestData.Mechanic(config);
+        RareModsMechanic mechanic = CreateMechanic(HeadhunterTestData.AllTriggers);
         Fire(mechanic, Active(), 1);
         Fire(mechanic, Active(0), 1);
         Fire(mechanic, Active(0), 1);
@@ -374,9 +367,10 @@ public sealed class RareModsMechanicTests
         BuffAction b = Assert.Single(actions, action => action.StatId == 2);
         BuffAction a = Assert.Single(actions, action => action.StatId == 1);
         Assert.Equal(BuffActionKind.Add, b.Kind);
-        Assert.Equal(5f, b.Added);
+        Assert.Equal(1, b.Stacks);
         Assert.Equal(BuffActionKind.Refresh, a.Kind);
         Assert.Equal(3, a.Stacks);
+        Assert.Equal(15f, a.Added);
         Assert.Equal(0.3f, a.Increased, 5);
     }
 

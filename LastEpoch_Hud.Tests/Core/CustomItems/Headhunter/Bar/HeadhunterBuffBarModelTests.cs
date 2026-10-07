@@ -32,6 +32,25 @@ public sealed class HeadhunterBuffBarModelTests
     }
 
     [Fact]
+    public void Build_StackedRows_CountOncePerRow()
+    {
+        var stacks = new HeadhunterStackState(3);
+        for (int i = 0; i < 5; i++)
+        {
+            stacks.TryAdd(0, 10);
+        }
+
+        IReadOnlyList<HeadhunterBarEntry> result = new HeadhunterBuffBarModel().Build(
+            _stats,
+            new[] { 5f, 0f, 9f },
+            stacks,
+            60f
+        );
+
+        Assert.Equal(2, result.Count);
+    }
+
+    [Fact]
     public void Build_SkipsExpired_KeepsTableOrder()
     {
         IReadOnlyList<HeadhunterBarEntry> result = new HeadhunterBuffBarModel().Build(

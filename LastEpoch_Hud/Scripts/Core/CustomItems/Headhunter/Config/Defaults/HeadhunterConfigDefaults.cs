@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.Linq;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Json;
 using Newtonsoft.Json.Linq;
 
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Defaults;
@@ -8,7 +9,7 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Defaults;
 public static class HeadhunterConfigDefaults
 {
     public const int CurrentVersion = 1;
-    public const int DefaultsVersion = 8;
+    public const int DefaultsVersion = 9;
     public const int UnstampedDefaultsVersion = 1;
     public const float DurationSeconds = 60f;
     public const int MaxStacks = 10;
@@ -57,11 +58,19 @@ public static class HeadhunterConfigDefaults
         .Select(row => row.Entry)
         .ToList();
 
+    public static readonly HeadhunterSizeCurve ModelSize = new(2f, 20f);
+
     public static readonly IReadOnlyList<HeadhunterVersionedField> VersionedFields =
         new List<HeadhunterVersionedField>
         {
             new(HeadhunterConfigKeys.Triggers, HeadhunterConfigKeys.Magic, new JValue(true), 3),
             new("", HeadhunterConfigKeys.MaxStacks, new JValue(MaxStacks), 4),
+            new(
+                "",
+                HeadhunterConfigKeys.ModelSize,
+                HeadhunterConfigWriter.BuildModelSize(ModelSize),
+                9
+            ),
         };
 
     public static readonly HeadhunterMergeDefaults MergeDefaults = new()
@@ -81,5 +90,6 @@ public static class HeadhunterConfigDefaults
         Triggers = Triggers,
         Stats = Stats,
         AffixMap = HeadhunterAffixDefaults.AffixMap,
+        ModelSize = ModelSize,
     };
 }

@@ -16,6 +16,7 @@ internal static class HeadhunterBuffClearer
         RemoveBuffs(config);
         HeadhunterConfigLoader.Mechanic?.Reset();
         HeadhunterBuffBar.MarkDirty();
+        HeadhunterModelScaler.Restore();
     }
 
     private static void RemoveBuffs(HeadhunterResolvedConfig config)

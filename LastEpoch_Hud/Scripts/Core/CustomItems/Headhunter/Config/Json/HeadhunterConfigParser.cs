@@ -27,6 +27,7 @@ public static class HeadhunterConfigParser
             Triggers = ReadTriggers(root, problems),
             Stats = ReadStats(root, knownStats, problems),
             AffixMap = HeadhunterAffixMapParser.Read(root, problems),
+            ModelSize = HeadhunterModelSizeParser.Read(root, problems),
         };
         return Result(config, problems, true);
     }
@@ -56,7 +57,7 @@ public static class HeadhunterConfigParser
         problems.Add(new HeadhunterConfigProblem(code, path, message));
     }
 
-    private static bool TryReadNumber(JToken token, out float value)
+    internal static bool TryReadNumber(JToken token, out float value)
     {
         value = 0f;
         if (token is not JValue { Value: long or double } number)

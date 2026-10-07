@@ -46,6 +46,7 @@ internal static class HeadhunterBuffBar
         if (!ShouldShow(buffs))
         {
             HeadhunterBuffBarView.Hide();
+            HeadhunterModelScaler.Apply(0);
             LogIfChanged(Array.Empty<HeadhunterBarEntry>());
             return;
         }
@@ -60,6 +61,7 @@ internal static class HeadhunterBuffBar
             config.DurationSeconds
         );
         HeadhunterBuffBarView.Show(entries);
+        HeadhunterModelScaler.Apply(entries.Count);
         LogIfChanged(entries);
     }
 

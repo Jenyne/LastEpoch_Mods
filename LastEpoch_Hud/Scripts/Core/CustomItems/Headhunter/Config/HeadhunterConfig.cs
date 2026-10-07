@@ -14,4 +14,5 @@ public sealed class HeadhunterConfig
     public IReadOnlyList<HeadhunterStatEntry> Stats { get; init; }
     public IReadOnlyList<HeadhunterAffixEntry> AffixMap { get; init; } =
         Array.Empty<HeadhunterAffixEntry>();
+    public HeadhunterSizeCurve ModelSize { get; init; } = HeadhunterConfigDefaults.ModelSize;
 }

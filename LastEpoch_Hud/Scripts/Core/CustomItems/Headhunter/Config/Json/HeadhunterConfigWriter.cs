@@ -19,6 +19,7 @@ public static class HeadhunterConfigWriter
             [HeadhunterConfigKeys.Triggers] = BuildTriggers(config.Triggers),
             [HeadhunterConfigKeys.Stats] = BuildStats(config.Stats),
             [HeadhunterConfigKeys.AffixMap] = BuildAffixMap(config.AffixMap),
+            [HeadhunterConfigKeys.ModelSize] = BuildModelSize(config.ModelSize),
         };
         return root.ToString(Formatting.Indented);
     }
@@ -47,6 +48,15 @@ public static class HeadhunterConfigWriter
 
         row[HeadhunterConfigKeys.Rows] = new JArray(entry.Rows);
         return row;
+    }
+
+    internal static JObject BuildModelSize(HeadhunterSizeCurve curve)
+    {
+        return new JObject
+        {
+            [HeadhunterConfigKeys.PerBuff] = curve.PerBuffPercent,
+            [HeadhunterConfigKeys.Cap] = curve.CapPercent,
+        };
     }
 
     private static JObject BuildTriggers(HeadhunterTriggers triggers)
