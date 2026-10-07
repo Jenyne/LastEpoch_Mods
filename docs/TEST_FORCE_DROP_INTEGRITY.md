@@ -71,7 +71,7 @@ Rebuild with the same script above, repeat the same Unsated Rage selections, and
 
 The follow-up `77512efd` runtime log isolates the ring-only rejection: Unsated Rage (base 21, subtype 10, unique 477) with modifier 1138 decoded with `sockets=0` and exactly one affix. The affix ID, T1, roll 255, FakeUniqueMod type, prefix placement, unique identity, rarity, potential and all roll bytes matched the live item exactly. The saved modifier was intact; the assertion that sockets must equal affix count was wrong for this unique.
 
-The correction accepts zero decoded sockets for unique/set/legendary storage (rarities 7–9). It still requires the exact complete affix multiset, including every selected variant and transferred affix, and checks all other item fields and seal flags. Nonzero mismatched counts remain rejected, and ordinary item socket checks are unchanged. The variant adapter also accepts this zero-socket representation. Construction, saved bytes and the HUD layout are unchanged.
+The correction accepts zero decoded sockets for unique/set/legendary storage (rarities 7–9). It still requires the exact complete affix multiset, including every selected variant and transferred affix, and checks all other item fields and seal flags. A different nonzero decoded socket value remains a round-trip failure; ordinary item socket checks are unchanged. The variant adapter also accepts the unique representation. This socket correction did not change construction or the HUD layout.
 
 Retest the ring with only its modifier, then with four ordinary affixes, and the nonvariant unique sword. Confirm effects and save/reload after successful drops. This corrects the demonstrated false rejection; the earlier `Unique variant changed an existing affix` report remains unresolved until reproduced with detailed signatures. The sword's older generic rejection did not provide decoded values, so its outcome still needs game testing.
 
@@ -85,9 +85,19 @@ Resolved corrupted requests normalize FP, LP and Weaver's Will to zero, includin
 
 Retest the ring with its exclusive modifier, four ordinary affixes and the same corruption choice. Then add a regular sealed affix if available for the selected item, and repeat on a base item. After successful creation, verify tooltip/stats and save/reload. Preserve the complete rejection if any stage fails; corruption errors now also print the item corruption bit and changed existing-affix signatures.
 
+## Fixed unique modifier packing order
+
+The `96b3efb8` test used only the Unsated Rage modifier and corruption. Corruption marking now survived (`corrupted=True`, presence flag True), but the unpacked seal belonged to fixed modifier 1131 while selected corruption 1016 became unsealed. The item was rejected before spawning. This narrows the issue to the relative order of the fixed unique modifier and native seal sequence.
+
+Fixed modifiers are now placed first before packing. The helper moves the existing affix objects without changing their IDs, tiers, rolls, types or seals, preserving the native order of all remaining affixes. It is applied after adding variants, after native corruption-slot insertion, and before the creator's final refresh. Both glove modifiers receive the same treatment. Missing, duplicate or unrelated fixed modifiers remain rejected. The ordering correction still needs game confirmation.
+
+The same runtime reported `sockets=1` for two affixes (ring modifier plus corruption). For unique/set/legendary items, that field is therefore not a total-affix invariant even when nonzero. The snapshot validates its byte range and round-trip value, permitting native zero normalization; the entire decoded affix multiset remains mandatory. Ordinary item count checks remain strict. A seal migrating to the wrong affix still fails verification.
+
+Retest the modifier-only ring with the same corruption, then add ordinary affixes and a regular seal. Verify both the ring's exclusive effect and the corruption effect, and save/reload. Test Withstand the Elements with two exclusive modifiers and corruption as well. Do not mark the earlier ordinary-affix mutation report resolved until that combination is tested.
+
 ## Verification completed here
 
-- 55 game-independent regression cases passed using xUnit assertions, including the exact ring socket regression, preservation of independent seals, rejection of a corruption modifier losing its seal, and potential normalization without losing selected modifiers.
+- 63 game-independent regression cases passed using xUnit assertions, including fixed-modifier ordering, preservation of seal/ordinary data, independent unique socket counts, rejection of seals assigned to the ring modifier, and corrupted potential normalization.
 - New core compiled for .NET 6.
 - Changed Force Drop HUD and adapters compile against the supplied Unity/TMP/Harmony assemblies with game context stubs.
 - Formatting and diff checks pass; the layout-building code and Harmony patch count are unchanged.

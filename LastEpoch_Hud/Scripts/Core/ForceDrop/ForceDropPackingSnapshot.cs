@@ -95,9 +95,12 @@ public sealed class ForceDropPackingSnapshot
             return "Missing affix data";
         // The runtime's decoded Unsated Rage retained its exact fixed modifier
         // while sockets became zero. Unique-family packing carries affixes
-        // independently of this live field. Zero is valid only on that route;
-        // the complete decoded affix list is still compared below.
-        if (Sockets != Affixes.Count && !(UsesUniqueStorage && Sockets == 0))
+        // independently of this live field. With corruption the runtime also
+        // reports one socket for two affixes (variant plus corruption). Verify
+        // that route by its complete affix list and stored socket value instead.
+        if (Sockets < 0 || Sockets > byte.MaxValue)
+            return "Socket count is outside the packed range";
+        if (!UsesUniqueStorage && Sockets != Affixes.Count)
             return "Socket count does not match the affix count (sockets="
                 + Sockets
                 + ", affixes="

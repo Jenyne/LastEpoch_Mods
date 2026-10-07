@@ -195,6 +195,10 @@ public static class CorruptedAffixAdapter
         else
             ((FieldInfo)storage).SetValue(item, affix);
         VerifyStoredCorruption(item, id, "before packing");
+        // The native insertion orders ordinary item seals. A fixed unique
+        // modifier must still precede that sequence in unique serialization;
+        // otherwise unpacking assigns the corruption seal to the ring variant.
+        UniqueVariantAdapter.PrepareForPacking(item);
         // Native eligibility/slot allocation must see an uncorrupted item, but
         // the very first refresh must serialize a corrupted item. Otherwise the
         // runtime removes FromCorruption while keeping the selected affix ID.
@@ -364,6 +368,10 @@ public static class CorruptedAffixAdapter
                     ? " null"
                     : " "
                         + entry.affixId
+                        + ":"
+                        + entry.affixTier
+                        + ":"
+                        + entry.affixRoll
                         + ":"
                         + entry.sealedAffixType
                         + ":"

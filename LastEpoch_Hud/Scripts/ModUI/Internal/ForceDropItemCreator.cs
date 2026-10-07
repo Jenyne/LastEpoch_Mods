@@ -112,6 +112,7 @@ public static class ForceDropItemCreator
         }
         int forging = request.Corrupted || request.Rarity >= 7 ? 0 : request.ForgingPotential;
         item.forgingPotential = (byte)Math.Min(63, forging);
+        UniqueVariantAdapter.PrepareForPacking(item);
         item.RefreshIDAndValues();
         try
         {

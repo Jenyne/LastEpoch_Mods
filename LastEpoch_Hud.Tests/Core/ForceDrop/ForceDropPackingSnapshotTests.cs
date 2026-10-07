@@ -12,6 +12,44 @@ public sealed class ForceDropPackingSnapshotTests
     };
 
     [Fact]
+    public void UniqueVariantAndCorruption_CanHaveAnIndependentSocketCount()
+    {
+        var affixes = new[]
+        {
+            new PackedForceDropAffix(1131, 0, 255, ForceDropSeal.None, 7),
+            new PackedForceDropAffix(1016, 6, 255, ForceDropSeal.Corruption, 6),
+        };
+        var live = Snapshot(affixes: affixes, regular: false, sockets: 1);
+        Assert.Equal("", live.Difference(Snapshot(affixes: affixes, regular: false, sockets: 0)));
+        Assert.Equal("", live.Difference(Snapshot(affixes: affixes, regular: false, sockets: 1)));
+        // A different nonzero stored value is still a round-trip mismatch.
+        Assert.NotEqual(
+            "",
+            live.Difference(Snapshot(affixes: affixes, regular: false, sockets: 2))
+        );
+    }
+
+    [Fact]
+    public void RingModifierCannotReceiveTheCorruptionSealInstead()
+    {
+        var expected = new[]
+        {
+            new PackedForceDropAffix(1131, 0, 255, ForceDropSeal.None, 7),
+            new PackedForceDropAffix(1016, 6, 255, ForceDropSeal.Corruption, 6),
+        };
+        var swapped = new[]
+        {
+            new PackedForceDropAffix(1016, 6, 255, ForceDropSeal.None, 6),
+            new PackedForceDropAffix(1131, 0, 255, ForceDropSeal.Corruption, 7),
+        };
+        Assert.Contains(
+            "seal ownership",
+            Snapshot(affixes: expected, regular: false, sockets: 1)
+                .Difference(Snapshot(affixes: swapped, regular: false, sockets: 1))
+        );
+    }
+
+    [Fact]
     public void UnsatedRuntimeRegression_ZeroDecodedSocketsPreservesTheModifier()
     {
         Assert.Equal("", Unsated(sockets: 1).Difference(Unsated(sockets: 0)));
@@ -111,7 +149,8 @@ public sealed class ForceDropPackingSnapshotTests
     public void SocketRejection_RecordsBothCountsAndDecodedAffixes()
     {
         string error = Snapshot().Difference(Snapshot(sockets: 2));
-        Assert.Contains("sockets=2, affixes=3", error);
+        Assert.Contains("socket count changed", error);
+        Assert.Contains("sockets=2, count=3", error);
         Assert.Contains("expected={", error);
         Assert.Contains("decoded={", error);
         Assert.Contains("1020:6:87:Corruption:6:0", error);

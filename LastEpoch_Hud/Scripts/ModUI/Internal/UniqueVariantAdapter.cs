@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.ForceDrop;
 
 namespace LastEpoch_Hud.Scripts.ModUI;
 
@@ -140,6 +141,7 @@ public static class UniqueVariantAdapter
         foreach (var affix in additions)
             item.affixes.Add(affix);
         item.sockets = (byte)item.affixes.Count;
+        PrepareForPacking(item);
         item.RefreshIDAndValues();
         VerifySelection(item, ids);
         var remaining = new List<string>();
@@ -152,7 +154,6 @@ public static class UniqueVariantAdapter
             || item.legendaryPotential != potential
             || item.weaversWill != weaversWill
             || item.uniqueID != uniqueId
-            || (item.sockets != 0 && item.sockets != item.affixes.Count)
             || remaining.Count != original.Count
         )
             throw new InvalidOperationException(
@@ -191,6 +192,43 @@ public static class UniqueVariantAdapter
                         + string.Join(",", remaining)
                         + "]); no item was dropped"
                 );
+    }
+
+    public static void PrepareForPacking(ItemDataUnpacked item)
+    {
+        var entry = UniqueList.getUnique(item.uniqueID);
+        if (!HasVariants(entry))
+            return;
+        var ids = new List<int>();
+        var variants = new List<int>();
+        foreach (var affix in item.affixes)
+        {
+            if (affix.IsNullOrDestroyed())
+                throw new InvalidOperationException("Missing affix before unique packing.");
+            ids.Add(affix.affixId);
+            bool belongsToPool = entry.droppableLegendaryAffixes.Contains(affix.affixId);
+            if (
+                affix.specialAffixType == AffixList.SpecialAffixType.FakeUniqueMod
+                && !belongsToPool
+            )
+                throw new InvalidOperationException("The unique has an unrelated fixed modifier.");
+            if (belongsToPool)
+                variants.Add(affix.affixId);
+        }
+        if (variants.Count != VariantCount(entry))
+            throw new InvalidOperationException(
+                "A fixed unique modifier is missing before packing."
+            );
+        var order = ForceDropPackingOrder.UniquePrefixIndices(ids, variants);
+        bool changed = false;
+        for (int i = 0; i < order.Count; i++)
+            changed |= order[i] != i;
+        if (!changed)
+            return;
+        var ordered = new Il2CppSystem.Collections.Generic.List<ItemAffix>();
+        foreach (int index in order)
+            ordered.Add(item.affixes[index]);
+        item.affixes = ordered;
     }
 
     static string Signature(ItemAffix affix)
