@@ -49,6 +49,24 @@ public sealed class HeadhunterConfigDefaultsTests
     }
 
     [Fact]
+    public void VersionedStats_SinceWithinRange()
+    {
+        Assert.All(
+            HeadhunterConfigDefaults.VersionedStats,
+            row => Assert.InRange(row.Since, 1, HeadhunterConfigDefaults.DefaultsVersion)
+        );
+    }
+
+    [Fact]
+    public void Stats_EqualVersionedStatEntries_InOrder()
+    {
+        Assert.Equal(
+            HeadhunterConfigDefaults.VersionedStats.Select(row => row.Entry),
+            HeadhunterConfigDefaults.Stats
+        );
+    }
+
+    [Fact]
     public void Config_Stats_AreAllEnabled()
     {
         Assert.All(HeadhunterConfigDefaults.Config.Stats, entry => Assert.True(entry.Enabled));

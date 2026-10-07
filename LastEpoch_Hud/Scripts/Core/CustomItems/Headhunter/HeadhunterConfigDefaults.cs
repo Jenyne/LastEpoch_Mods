@@ -1,4 +1,6 @@
+using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 
@@ -6,6 +8,8 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 public static class HeadhunterConfigDefaults
 {
     public const int CurrentVersion = 1;
+    public const int DefaultsVersion = 2;
+    public const int UnstampedDefaultsVersion = 1;
     public const string Mechanic = HeadhunterMechanics.RareModsId;
     public const float DurationSeconds = 60f;
     public const float EntryAdded = 0f;
@@ -14,19 +18,34 @@ public static class HeadhunterConfigDefaults
 
     public static readonly HeadhunterTriggers Triggers = new(true, true, true, true);
 
-    public static readonly IReadOnlyList<HeadhunterStatEntry> Stats = new List<HeadhunterStatEntry>
+    public static readonly IReadOnlyList<HeadhunterVersionedStat> VersionedStats =
+        new List<HeadhunterVersionedStat>
+        {
+            new(new HeadhunterStatEntry("Damage", 0f, 10f, true), 1),
+            new(new HeadhunterStatEntry("AttackSpeed", 0f, 5f, true), 1),
+            new(new HeadhunterStatEntry("CastSpeed", 0f, 5f, true), 1),
+            new(new HeadhunterStatEntry("CriticalChance", 0f, 10f, true), 1),
+            new(new HeadhunterStatEntry("Movespeed", 0f, 5f, true), 1),
+            new(new HeadhunterStatEntry("Health", 20f, 0f, true), 1),
+            new(new HeadhunterStatEntry("Armour", 50f, 0f, true), 1),
+            new(new HeadhunterStatEntry("ManaRegen", 0f, 10f, true), 2),
+            new(new HeadhunterStatEntry("ManaEfficiency", 0f, 5f, true), 2),
+            new(new HeadhunterStatEntry("IncreasedLeechRate", 0f, 10f, true), 2),
+            new(new HeadhunterStatEntry("HealthLeech", 0.01f, 0f, true), 2),
+        };
+
+    public static readonly IReadOnlyList<HeadhunterStatEntry> Stats = VersionedStats
+        .Select(row => row.Entry)
+        .ToList();
+
+    public static readonly IReadOnlyList<HeadhunterVersionedField> VersionedFields =
+        Array.Empty<HeadhunterVersionedField>();
+
+    public static readonly HeadhunterMergeDefaults MergeDefaults = new()
     {
-        new("Damage", 0f, 10f, true),
-        new("AttackSpeed", 0f, 5f, true),
-        new("CastSpeed", 0f, 5f, true),
-        new("CriticalChance", 0f, 10f, true),
-        new("Movespeed", 0f, 5f, true),
-        new("Health", 20f, 0f, true),
-        new("Armour", 50f, 0f, true),
-        new("ManaRegen", 0f, 10f, true),
-        new("ManaEfficiency", 0f, 5f, true),
-        new("IncreasedLeechRate", 0f, 10f, true),
-        new("HealthLeech", 0.01f, 0f, true),
+        Version = DefaultsVersion,
+        Stats = VersionedStats,
+        Fields = VersionedFields,
     };
 
     public static readonly HeadhunterConfig Config = new()

@@ -1,4 +1,5 @@
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
+using Newtonsoft.Json.Linq;
 
 namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter;
 
@@ -44,6 +45,14 @@ public sealed class HeadhunterConfigWriterTests
 
         Assert.Empty(result.Problems);
         Assert.Equivalent(config, result.Config, strict: true);
+    }
+
+    [Fact]
+    public void Write_StampsDefaultsVersion()
+    {
+        var root = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+
+        Assert.Equal(HeadhunterConfigDefaults.DefaultsVersion, (int)root["defaultsVersion"]);
     }
 
     [Fact]

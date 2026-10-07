@@ -12,12 +12,24 @@ public static class HeadhunterConfigWriter
         var root = new JObject
         {
             [HeadhunterConfigKeys.Version] = config.Version,
+            [HeadhunterConfigKeys.DefaultsVersion] = HeadhunterConfigDefaults.DefaultsVersion,
             [HeadhunterConfigKeys.Mechanic] = config.Mechanic,
             [HeadhunterConfigKeys.DurationSeconds] = config.DurationSeconds,
             [HeadhunterConfigKeys.Triggers] = BuildTriggers(config.Triggers),
             [HeadhunterConfigKeys.Stats] = BuildStats(config.Stats),
         };
         return root.ToString(Formatting.Indented);
+    }
+
+    internal static JObject BuildStat(HeadhunterStatEntry entry)
+    {
+        return new JObject
+        {
+            [HeadhunterConfigKeys.Stat] = entry.Stat,
+            [HeadhunterConfigKeys.Added] = entry.Added,
+            [HeadhunterConfigKeys.Increased] = entry.Increased,
+            [HeadhunterConfigKeys.Enabled] = entry.Enabled,
+        };
     }
 
     private static JObject BuildTriggers(HeadhunterTriggers triggers)
@@ -36,15 +48,7 @@ public static class HeadhunterConfigWriter
         var array = new JArray();
         foreach (HeadhunterStatEntry entry in stats)
         {
-            array.Add(
-                new JObject
-                {
-                    [HeadhunterConfigKeys.Stat] = entry.Stat,
-                    [HeadhunterConfigKeys.Added] = entry.Added,
-                    [HeadhunterConfigKeys.Increased] = entry.Increased,
-                    [HeadhunterConfigKeys.Enabled] = entry.Enabled,
-                }
-            );
+            array.Add(BuildStat(entry));
         }
         return array;
     }

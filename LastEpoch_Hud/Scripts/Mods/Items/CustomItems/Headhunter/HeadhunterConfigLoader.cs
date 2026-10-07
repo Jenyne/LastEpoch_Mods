@@ -27,7 +27,8 @@ internal static class HeadhunterConfigLoader
     public static void Load()
     {
         ExportDefaultsIfMissing();
-        HeadhunterConfigParseResult result = ParseFile();
+        string text = MergeNewDefaults(_store.Read());
+        HeadhunterConfigParseResult result = HeadhunterConfigParser.Parse(text, _knownStats);
         LogProblems(result.Problems);
         Current = result.Config;
         ResolveAndCreateMechanic();
@@ -80,6 +81,23 @@ internal static class HeadhunterConfigLoader
             return;
         }
         _store.Write(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+    }
+
+    private static string MergeNewDefaults(string text)
+    {
+        HeadhunterMergeResult merge = HeadhunterConfigMerger.Merge(
+            text,
+            HeadhunterConfigDefaults.MergeDefaults
+        );
+        if (!merge.Changed)
+        {
+            return text;
+        }
+        _store.Write(merge.Text);
+        Main.logger_instance?.Msg(
+            "Headhunter config: merged " + merge.Added + " new default(s) into " + _store.FilePath
+        );
+        return merge.Text;
     }
 
     private static void ResolveAndCreateMechanic()

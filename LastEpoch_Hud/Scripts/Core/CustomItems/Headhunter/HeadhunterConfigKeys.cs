@@ -4,6 +4,7 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 internal static class HeadhunterConfigKeys
 {
     public const string Version = "version";
+    public const string DefaultsVersion = "defaultsVersion";
     public const string Mechanic = "mechanic";
     public const string DurationSeconds = "durationSeconds";
     public const string Triggers = "triggers";

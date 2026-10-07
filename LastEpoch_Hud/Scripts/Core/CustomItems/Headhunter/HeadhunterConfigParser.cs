@@ -29,6 +29,21 @@ public static class HeadhunterConfigParser
         return Result(config, problems, true);
     }
 
+    internal static bool TryGetInt(JToken token, out int value)
+    {
+        value = 0;
+        if (token is not JValue { Value: long number })
+        {
+            return false;
+        }
+        if (number < int.MinValue || number > int.MaxValue)
+        {
+            return false;
+        }
+        value = (int)number;
+        return true;
+    }
+
     private static HeadhunterConfigParseResult Result(
         HeadhunterConfig config,
         List<HeadhunterConfigProblem> problems,
@@ -84,21 +99,6 @@ public static class HeadhunterConfigParser
             Report(problems, HeadhunterConfigKeys.Version, "Unsupported version " + version + ".");
         }
         return version;
-    }
-
-    private static bool TryGetInt(JToken token, out int value)
-    {
-        value = 0;
-        if (token is not JValue { Value: long number })
-        {
-            return false;
-        }
-        if (number < int.MinValue || number > int.MaxValue)
-        {
-            return false;
-        }
-        value = (int)number;
-        return true;
     }
 
     private static string ReadMechanic(JObject root, List<HeadhunterConfigProblem> problems)
