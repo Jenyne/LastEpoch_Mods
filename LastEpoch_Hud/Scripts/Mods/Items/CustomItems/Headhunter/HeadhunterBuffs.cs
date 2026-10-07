@@ -26,7 +26,7 @@ public static class HeadhunterBuffs
             int maxAddValue = MaxStack;
             int maxIncreasedValue = MaxStack;
             bool found = false;
-            foreach (HeadhunterBuffEntry entry in HeadhunterConfig.BuffConfig)
+            foreach (HeadhunterBuffEntry entry in HeadhunterLegacyConfig.BuffConfig)
             {
                 if (randomBuff.name.Contains(entry.Property))
                 {
@@ -114,7 +114,7 @@ public static class HeadhunterBuffs
         for (int i = 0; i < System.Enum.GetValues(typeof(SP)).Length; i++)
         {
             var property = (SP)i;
-            foreach (HeadhunterBuffEntry entry in HeadhunterConfig.BuffConfig)
+            foreach (HeadhunterBuffEntry entry in HeadhunterLegacyConfig.BuffConfig)
             {
                 if (entry.Property == property.ToString())
                 {

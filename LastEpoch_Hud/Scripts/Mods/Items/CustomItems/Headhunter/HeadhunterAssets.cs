@@ -24,12 +24,12 @@ public static class HeadhunterAssets
             {
                 if (IsBuffsJson(name))
                 {
-                    HeadhunterConfig.Json = Hud_Manager
+                    HeadhunterLegacyConfig.Json = Hud_Manager
                         .asset_bundle.LoadAsset(name)
                         .TryCast<TextAsset>();
                 }
             }
-            Loaded = !HeadhunterConfig.Json.IsNullOrDestroyed();
+            Loaded = !HeadhunterLegacyConfig.Json.IsNullOrDestroyed();
         }
         catch (System.Exception ex)
         {
@@ -43,6 +43,6 @@ public static class HeadhunterAssets
         return name.Replace("\\", "/").ToLowerInvariant().Contains("/headhunter/")
             && Functions.Check_Json(name)
             && name.Contains("hh_buffs")
-            && HeadhunterConfig.Json.IsNullOrDestroyed();
+            && HeadhunterLegacyConfig.Json.IsNullOrDestroyed();
     }
 }

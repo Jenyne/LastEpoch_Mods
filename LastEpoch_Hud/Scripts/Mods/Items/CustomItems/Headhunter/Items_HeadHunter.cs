@@ -19,6 +19,7 @@ public class Items_HeadHunter : MonoBehaviour
     private void Awake()
     {
         SceneManager.add_sceneLoaded(new System.Action<Scene, LoadSceneMode>(OnSceneLoaded));
+        HeadhunterConfigLoader.Load();
     }
 
     private void Update()
@@ -45,7 +46,7 @@ public class Items_HeadHunter : MonoBehaviour
             && (HeadhunterKillEvents.OnMinionKillEventInitialized)
         )
         {
-            Initialized = HeadhunterConfig.LoadConfig();
+            Initialized = HeadhunterLegacyConfig.LoadConfig();
         }
     }
 

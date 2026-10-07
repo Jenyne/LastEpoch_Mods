@@ -6,7 +6,7 @@ using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 
-public static class HeadhunterConfig
+public static class HeadhunterLegacyConfig
 {
     public static TextAsset Json;
     internal static List<HeadhunterBuffEntry> BuffConfig = new();
