@@ -8,6 +8,7 @@ public sealed class HeadhunterConfig
     public int Version { get; init; }
     public string Mechanic { get; init; }
     public float DurationSeconds { get; init; }
+    public int MaxStacks { get; init; } = HeadhunterConfigDefaults.MaxStacks;
     public HeadhunterTriggers Triggers { get; init; }
     public IReadOnlyList<HeadhunterStatEntry> Stats { get; init; }
 }

@@ -6,10 +6,10 @@ using LastEpoch_Hud.Scripts.ModUI;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 
-/// <summary>Handles one Headhunter kill: active buffs, mechanic, sink, debug line.</summary>
+/// <summary>Handles one Headhunter kill: live rows, mechanic, sink, debug line.</summary>
 internal static class HeadhunterKillHandler
 {
-    private static readonly HashSet<int> _active = new();
+    private static readonly HashSet<int> _liveRows = new();
 
     public static void Handle(KillInfo kill)
     {
@@ -20,8 +20,8 @@ internal static class HeadhunterKillHandler
             return;
         }
 
-        HeadhunterBuffSink.FillActive(buffs, HeadhunterConfigLoader.Resolved.Stats, _active);
-        IReadOnlyList<BuffAction> actions = mechanic.OnKill(kill, _active);
+        HeadhunterBuffSink.FillActive(buffs, HeadhunterConfigLoader.Resolved.Stats, _liveRows);
+        IReadOnlyList<BuffAction> actions = mechanic.OnKill(kill, _liveRows);
         HeadhunterBuffSink.Apply(buffs, actions);
         HeadhunterBuffBar.MarkDirty();
         LogKill(kill, actions);

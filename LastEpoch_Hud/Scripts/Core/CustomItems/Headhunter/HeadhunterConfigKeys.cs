@@ -7,6 +7,7 @@ internal static class HeadhunterConfigKeys
     public const string DefaultsVersion = "defaultsVersion";
     public const string Mechanic = "mechanic";
     public const string DurationSeconds = "durationSeconds";
+    public const string MaxStacks = "maxStacks";
     public const string Triggers = "triggers";
     public const string Rare = "rare";
     public const string Boss = "boss";

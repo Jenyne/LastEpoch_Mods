@@ -29,6 +29,7 @@ public sealed class HeadhunterConfigWriterTests
             Version = 1,
             Mechanic = "fake_id",
             DurationSeconds = 12.5f,
+            MaxStacks = 7,
             Triggers = new HeadhunterTriggers(true, false, true, false, false),
             Stats = new List<HeadhunterStatEntry>
             {
@@ -45,6 +46,14 @@ public sealed class HeadhunterConfigWriterTests
 
         Assert.Empty(result.Problems);
         Assert.Equivalent(config, result.Config, strict: true);
+    }
+
+    [Fact]
+    public void Write_ContainsMaxStacks()
+    {
+        var root = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+
+        Assert.Equal(HeadhunterConfigDefaults.MaxStacks, (int)root["maxStacks"]);
     }
 
     [Fact]

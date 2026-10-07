@@ -18,6 +18,14 @@ public sealed class HeadhunterClearRuleTests
     }
 
     [Fact]
+    public void RemoveAll_StacksZero()
+    {
+        IReadOnlyList<BuffAction> actions = new HeadhunterClearRule().RemoveAll(ThreeStatConfig());
+
+        Assert.All(actions, action => Assert.Equal(0, action.Stacks));
+    }
+
+    [Fact]
     public void RemoveAll_EmptyTable_ReturnsEmpty()
     {
         HeadhunterResolvedConfig config = HeadhunterTestData.Resolve(

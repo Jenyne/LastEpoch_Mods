@@ -6,6 +6,7 @@ namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter;
 internal static class HeadhunterTestData
 {
     public const float Duration = 7f;
+    public const int MaxStacks = 3;
 
     public static readonly IReadOnlyDictionary<string, int> StatIds = new Dictionary<string, int>
     {
@@ -26,6 +27,7 @@ internal static class HeadhunterTestData
             Version = 1,
             Mechanic = "fake_mechanic",
             DurationSeconds = Duration,
+            MaxStacks = MaxStacks,
             Triggers = triggers,
             Stats = stats,
         };
@@ -48,5 +50,18 @@ internal static class HeadhunterTestData
             StatIds,
             new List<HeadhunterConfigProblem>()
         );
+    }
+
+    public static RareModsMechanic Mechanic(HeadhunterResolvedConfig config)
+    {
+        return Mechanic(config, new HeadhunterStackState(config.Stats.Count));
+    }
+
+    public static RareModsMechanic Mechanic(
+        HeadhunterResolvedConfig config,
+        HeadhunterStackState stacks
+    )
+    {
+        return new RareModsMechanic(config, stacks);
     }
 }

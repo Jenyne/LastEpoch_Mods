@@ -7,7 +7,12 @@ public sealed class HeadhunterBarLogTests
     [Fact]
     public void Format_ListsNamesInOrderWithCount()
     {
-        HeadhunterBarEntry[] entries = [new(1, 5, 0.5f), new(2, 5, 0.5f), new(3, 5, 0.5f)];
+        HeadhunterBarEntry[] entries =
+        [
+            new(1, 5, 0.5f, 0, 1),
+            new(2, 5, 0.5f, 1, 1),
+            new(3, 5, 0.5f, 2, 1),
+        ];
 
         string line = HeadhunterBarLog.Format(entries, Name);
 

@@ -97,8 +97,8 @@ public sealed class HeadhunterConfigResolverTests
         );
 
         Assert.Equal("HH_FakeA", Assert.Single(result.Stats).BuffName);
-        Assert.True(result.TryGetStat(1, out HeadhunterBuffStat stat));
-        Assert.Equal("HH_FakeA", stat.BuffName);
+        Assert.True(result.TryGetRow(1, out int row));
+        Assert.Equal("HH_FakeA", result.Stats[row].BuffName);
         Assert.Equal(["stats[1].stat"], problems.Select(problem => problem.Path));
     }
 
@@ -118,20 +118,37 @@ public sealed class HeadhunterConfigResolverTests
         Assert.Equal(triggers, result.Triggers);
     }
 
+    [Fact]
+    public void Resolve_CopiesMaxStacks()
+    {
+        HeadhunterConfig config = HeadhunterTestData.Config(
+            HeadhunterTestData.AllTriggers,
+            HeadhunterTestData.Entry("FakeA")
+        );
+
+        HeadhunterResolvedConfig result = HeadhunterTestData.Resolve(config);
+
+        Assert.Equal(HeadhunterTestData.MaxStacks, result.MaxStacks);
+    }
+
     [Theory]
-    [InlineData(1, true)]
-    [InlineData(2, false)]
-    [InlineData(99, false)]
-    public void TryGetStat_FindsKeptStatsOnly(int statId, bool expected)
+    [InlineData(2, 0)]
+    [InlineData(3, 1)]
+    [InlineData(1, -1)]
+    [InlineData(99, -1)]
+    public void TryGetRow_ReturnsTableRow(int statId, int expectedRow)
     {
         HeadhunterResolvedConfig result = HeadhunterTestData.Resolve(
             HeadhunterTestData.Config(
                 HeadhunterTestData.AllTriggers,
-                HeadhunterTestData.Entry("FakeA"),
-                HeadhunterTestData.Disabled("FakeB")
+                HeadhunterTestData.Disabled("FakeA"),
+                HeadhunterTestData.Entry("FakeB"),
+                HeadhunterTestData.Entry("FakeC")
             )
         );
 
-        Assert.Equal(expected, result.TryGetStat(statId, out _));
+        bool found = result.TryGetRow(statId, out int row);
+
+        Assert.Equal(expectedRow, found ? row : -1);
     }
 }

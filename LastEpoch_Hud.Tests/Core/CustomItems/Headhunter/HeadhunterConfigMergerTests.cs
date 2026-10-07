@@ -112,7 +112,7 @@ public sealed class HeadhunterConfigMergerTests
         Assert.Null(JObject.Parse(result.Text)["triggers"]);
         Assert.True(result.Changed);
         Assert.Equal(2, result.Added);
-        Assert.Equal(3, (int)JObject.Parse(result.Text)["defaultsVersion"]);
+        Assert.Equal(_defaults.Version, (int)JObject.Parse(result.Text)["defaultsVersion"]);
     }
 
     [Theory]
@@ -182,7 +182,7 @@ public sealed class HeadhunterConfigMergerTests
         HeadhunterMergeResult result = Merge("""{"defaultsVersion":1,"stats":[]}""");
 
         Assert.True(result.Changed);
-        Assert.Equal(3, (int)JObject.Parse(result.Text)["defaultsVersion"]);
+        Assert.Equal(_defaults.Version, (int)JObject.Parse(result.Text)["defaultsVersion"]);
     }
 
     [Theory]
@@ -319,8 +319,44 @@ public sealed class HeadhunterConfigMergerTests
         Assert.Empty(parsed.Problems);
         Assert.True(parsed.Config.Triggers.Magic);
         Assert.False(parsed.Config.Triggers.Rare);
-        Assert.Equal(3, (int)JObject.Parse(result.Text)["defaultsVersion"]);
+        Assert.Equal(
+            HeadhunterConfigDefaults.DefaultsVersion,
+            (int)JObject.Parse(result.Text)["defaultsVersion"]
+        );
         Assert.Equal(1, result.Added);
+    }
+
+    [Fact]
+    public void Merge_Stamp3File_AddsMaxStacks()
+    {
+        var file = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+        file.Remove("maxStacks");
+        file["defaultsVersion"] = 3;
+
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            file.ToString(),
+            HeadhunterConfigDefaults.MergeDefaults
+        );
+
+        var merged = JObject.Parse(result.Text);
+        Assert.Equal(10, (int)merged["maxStacks"]);
+        Assert.Equal(4, (int)merged["defaultsVersion"]);
+        Assert.Equal(1, result.Added);
+    }
+
+    [Fact]
+    public void Merge_Stamp3File_KeepsPlayerMaxStacks()
+    {
+        var file = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+        file["maxStacks"] = 5;
+        file["defaultsVersion"] = 3;
+
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            file.ToString(),
+            HeadhunterConfigDefaults.MergeDefaults
+        );
+
+        Assert.Equal(5, (int)JObject.Parse(result.Text)["maxStacks"]);
     }
 
     private static HeadhunterMergeResult Merge(string json)

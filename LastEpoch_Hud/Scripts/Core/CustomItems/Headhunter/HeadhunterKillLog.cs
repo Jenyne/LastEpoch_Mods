@@ -45,6 +45,15 @@ public static class HeadhunterKillLog
         {
             AppendSeparator(text, i);
             text.Append(actions[i].Kind).Append(' ').Append(actions[i].BuffName);
+            AppendStacks(text, actions[i].Stacks);
+        }
+    }
+
+    private static void AppendStacks(StringBuilder text, int stacks)
+    {
+        if (stacks > 1)
+        {
+            text.Append(" x").Append(stacks);
         }
     }
 

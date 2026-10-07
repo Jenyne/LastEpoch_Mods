@@ -7,5 +7,6 @@ public readonly record struct BuffAction(
     int StatId,
     float Added,
     float Increased,
-    float DurationSeconds
+    float DurationSeconds,
+    int Stacks
 );

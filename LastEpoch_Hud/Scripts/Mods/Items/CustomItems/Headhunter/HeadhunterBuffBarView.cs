@@ -34,14 +34,24 @@ internal static class HeadhunterBuffBarView
         return HeadhunterBarGeometry.IndexAt(_placement, _canvasScale, _shownCount, x, y);
     }
 
-    public static int StatAt(int index)
+    public static int RowAt(int index)
     {
         if (index < 0 || index >= _shownCount)
         {
             return -1;
         }
 
-        return _slots[index].StatId;
+        return _slots[index].Row;
+    }
+
+    public static int StacksAt(int index)
+    {
+        if (index < 0 || index >= _shownCount)
+        {
+            return 0;
+        }
+
+        return _slots[index].Stacks;
     }
 
     public static void ShowTooltip(int index, string text)

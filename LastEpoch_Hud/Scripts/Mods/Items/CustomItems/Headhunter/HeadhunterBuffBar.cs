@@ -53,6 +53,7 @@ internal static class HeadhunterBuffBar
         IReadOnlyList<HeadhunterBarEntry> entries = _model.Build(
             config.Stats,
             remaining,
+            HeadhunterConfigLoader.Stacks,
             config.DurationSeconds
         );
         HeadhunterBuffBarView.Show(entries);

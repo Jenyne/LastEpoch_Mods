@@ -12,6 +12,7 @@ public sealed class HeadhunterBuffBarModel
     public IReadOnlyList<HeadhunterBarEntry> Build(
         IReadOnlyList<HeadhunterBuffStat> stats,
         IReadOnlyList<float> remaining,
+        HeadhunterStackState stacks,
         float durationSeconds
     )
     {
@@ -24,13 +25,13 @@ public sealed class HeadhunterBuffBarModel
         int count = Math.Min(stats.Count, remaining.Count);
         for (int i = 0; i < count; i++)
         {
-            AddIfLive(stats[i].StatId, remaining[i], durationSeconds);
+            AddIfLive(stats[i].StatId, i, ShownStacks(stacks, i), remaining[i], durationSeconds);
         }
 
         return _entries;
     }
 
-    private void AddIfLive(int statId, float remaining, float duration)
+    private void AddIfLive(int statId, int row, int stacks, float remaining, float duration)
     {
         if (remaining <= 0f)
         {
@@ -41,9 +42,16 @@ public sealed class HeadhunterBuffBarModel
             new HeadhunterBarEntry(
                 statId,
                 (int)Math.Ceiling(remaining),
-                Elapsed(remaining, duration)
+                Elapsed(remaining, duration),
+                row,
+                stacks
             )
         );
+    }
+
+    private static int ShownStacks(HeadhunterStackState stacks, int row)
+    {
+        return stacks == null ? 1 : Math.Max(1, stacks.Get(row));
     }
 
     private static float Elapsed(float remaining, float duration)

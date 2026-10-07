@@ -15,14 +15,15 @@ internal static class HeadhunterBarHover
         try
         {
             int index = HoveredIndex();
-            int statId = HeadhunterBuffBarView.StatAt(index);
-            if (!_hover.Changed(statId, HeadhunterBuffBarView.LayoutVersion))
+            int row = HeadhunterBuffBarView.RowAt(index);
+            int stacks = HeadhunterBuffBarView.StacksAt(index);
+            if (!_hover.Changed(row, stacks, HeadhunterBuffBarView.LayoutVersion))
             {
                 return;
             }
 
             _index = index;
-            Redraw(statId);
+            Redraw(row, stacks);
         }
         catch (Exception ex)
         {
@@ -41,28 +42,24 @@ internal static class HeadhunterBarHover
         return HeadhunterBuffBarView.IndexAt(mouse.x, mouse.y);
     }
 
-    private static void Redraw(int statId)
+    private static void Redraw(int row, int stacks)
     {
-        if (statId < 0)
-        {
-            HeadhunterBuffBarView.HideTooltip();
-            return;
-        }
-
         HeadhunterResolvedConfig config = HeadhunterConfigLoader.Resolved;
-        if (config == null || !config.TryGetStat(statId, out HeadhunterBuffStat stat))
+        if (row < 0 || config == null || row >= config.Stats.Count)
         {
             HeadhunterBuffBarView.HideTooltip();
             return;
         }
 
-        HeadhunterStatNames.TryRead(statId, out string gameName, out bool addedAsPercent);
+        HeadhunterBuffStat stat = config.Stats[row];
+        HeadhunterStatNames.TryRead(stat.StatId, out string gameName, out bool addedAsPercent);
         string label = HeadhunterBuffLabel.Format(
             gameName,
-            HeadhunterStatNames.EnumName(statId),
-            stat.Added,
-            stat.Increased,
-            addedAsPercent
+            HeadhunterStatNames.EnumName(stat.StatId),
+            stat.AddedFor(stacks),
+            stat.IncreasedFor(stacks),
+            addedAsPercent,
+            stacks
         );
         HeadhunterBuffBarView.ShowTooltip(_index, label);
     }

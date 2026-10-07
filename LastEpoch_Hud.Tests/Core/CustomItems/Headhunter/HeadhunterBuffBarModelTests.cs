@@ -22,6 +22,7 @@ public sealed class HeadhunterBuffBarModelTests
         IReadOnlyList<HeadhunterBarEntry> result = model.Build(
             nullStats ? null : _stats,
             nullRemaining ? null : new[] { 10f },
+            null,
             60f
         );
 
@@ -34,6 +35,7 @@ public sealed class HeadhunterBuffBarModelTests
         IReadOnlyList<HeadhunterBarEntry> result = new HeadhunterBuffBarModel().Build(
             _stats,
             new[] { 10f, 0f, 50f },
+            null,
             60f
         );
 
@@ -46,6 +48,7 @@ public sealed class HeadhunterBuffBarModelTests
         IReadOnlyList<HeadhunterBarEntry> result = new HeadhunterBuffBarModel().Build(
             _stats,
             new[] { -1f, 5f, -0.5f },
+            null,
             60f
         );
 
@@ -61,6 +64,7 @@ public sealed class HeadhunterBuffBarModelTests
         IReadOnlyList<HeadhunterBarEntry> result = new HeadhunterBuffBarModel().Build(
             _stats,
             new[] { remaining, 0f, 0f },
+            null,
             60f
         );
 
@@ -73,6 +77,7 @@ public sealed class HeadhunterBuffBarModelTests
         IReadOnlyList<HeadhunterBarEntry> result = new HeadhunterBuffBarModel().Build(
             _stats,
             new[] { 30f, 0f, 0f },
+            null,
             60f
         );
 
@@ -88,6 +93,7 @@ public sealed class HeadhunterBuffBarModelTests
         IReadOnlyList<HeadhunterBarEntry> result = new HeadhunterBuffBarModel().Build(
             _stats,
             new[] { remaining, 0f, 0f },
+            null,
             duration
         );
 
@@ -100,6 +106,7 @@ public sealed class HeadhunterBuffBarModelTests
         IReadOnlyList<HeadhunterBarEntry> result = new HeadhunterBuffBarModel().Build(
             _stats,
             new[] { 10f, 10f },
+            null,
             60f
         );
 
@@ -112,6 +119,7 @@ public sealed class HeadhunterBuffBarModelTests
         IReadOnlyList<HeadhunterBarEntry> result = new HeadhunterBuffBarModel().Build(
             _stats.Take(2).ToArray(),
             new[] { 10f, 10f, 10f },
+            null,
             60f
         );
 
@@ -122,10 +130,53 @@ public sealed class HeadhunterBuffBarModelTests
     public void Build_ReusesList_NoLeftovers()
     {
         var model = new HeadhunterBuffBarModel();
-        model.Build(_stats, new[] { 10f, 10f, 10f }, 60f);
+        model.Build(_stats, new[] { 10f, 10f, 10f }, null, 60f);
 
-        IReadOnlyList<HeadhunterBarEntry> result = model.Build(_stats, new[] { 0f, 10f, 0f }, 60f);
+        IReadOnlyList<HeadhunterBarEntry> result = model.Build(
+            _stats,
+            new[] { 0f, 10f, 0f },
+            null,
+            60f
+        );
 
         Assert.Equal(new[] { 2 }, result.Select(e => e.StatId));
+    }
+
+    [Fact]
+    public void Build_CarriesRowAndStacks()
+    {
+        var stacks = new HeadhunterStackState(3);
+        for (int i = 0; i < 4; i++)
+        {
+            stacks.TryAdd(1, 10);
+        }
+
+        IReadOnlyList<HeadhunterBarEntry> result = new HeadhunterBuffBarModel().Build(
+            _stats,
+            new[] { 0f, 10f, 0f },
+            stacks,
+            60f
+        );
+
+        HeadhunterBarEntry entry = Assert.Single(result);
+        Assert.Equal(1, entry.Row);
+        Assert.Equal(4, entry.Stacks);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void Build_NullOrZeroStacks_ShowsOne(bool useNull)
+    {
+        HeadhunterStackState stacks = useNull ? null : new HeadhunterStackState(3);
+
+        IReadOnlyList<HeadhunterBarEntry> result = new HeadhunterBuffBarModel().Build(
+            _stats,
+            new[] { 10f, 0f, 0f },
+            stacks,
+            60f
+        );
+
+        Assert.Equal(1, Assert.Single(result).Stacks);
     }
 }

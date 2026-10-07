@@ -8,7 +8,7 @@ public sealed class HeadhunterBuffLabelTests
     [Fact]
     public void Format_Increased_Percent()
     {
-        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0f, 0.1f, false);
+        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0f, 0.1f, false, 1);
 
         Assert.Contains("+10%", label);
     }
@@ -16,7 +16,7 @@ public sealed class HeadhunterBuffLabelTests
     [Fact]
     public void Format_Added_Flat()
     {
-        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 20f, 0f, false);
+        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 20f, 0f, false, 1);
 
         Assert.Contains("+20", label);
         Assert.DoesNotContain("%", label);
@@ -25,7 +25,7 @@ public sealed class HeadhunterBuffLabelTests
     [Fact]
     public void Format_AddedAsPercent()
     {
-        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0.01f, 0f, true);
+        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0.01f, 0f, true, 1);
 
         Assert.Contains("+1%", label);
     }
@@ -33,7 +33,7 @@ public sealed class HeadhunterBuffLabelTests
     [Fact]
     public void Format_NegativeIncreased_Minus()
     {
-        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0f, -0.05f, false);
+        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0f, -0.05f, false, 1);
 
         Assert.Contains("-5%", label);
     }
@@ -41,7 +41,7 @@ public sealed class HeadhunterBuffLabelTests
     [Fact]
     public void Format_ZeroParts_NameOnly()
     {
-        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0f, 0f, false);
+        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0f, 0f, false, 1);
 
         Assert.Equal("FakeName", label);
     }
@@ -49,7 +49,7 @@ public sealed class HeadhunterBuffLabelTests
     [Fact]
     public void Format_Both_NameAddedIncreased()
     {
-        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 20f, 0.1f, false);
+        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 20f, 0.1f, false, 1);
 
         int name = label.IndexOf("FakeName", StringComparison.Ordinal);
         int added = label.IndexOf("+20", StringComparison.Ordinal);
@@ -63,7 +63,7 @@ public sealed class HeadhunterBuffLabelTests
     [Fact]
     public void Format_Decimals_MaxTwo()
     {
-        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0f, 0.123456f, false);
+        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0f, 0.123456f, false, 1);
 
         Assert.Contains("+12.35%", label);
         Assert.DoesNotContain("12.345", label);
@@ -76,7 +76,7 @@ public sealed class HeadhunterBuffLabelTests
         CultureInfo.CurrentCulture = new CultureInfo("de-DE");
         try
         {
-            string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0f, 0.025f, false);
+            string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0f, 0.025f, false, 1);
 
             Assert.Contains("+2.5%", label);
         }
@@ -86,12 +86,28 @@ public sealed class HeadhunterBuffLabelTests
         }
     }
 
+    [Fact]
+    public void Format_AppendsCount_WhenAboveOne()
+    {
+        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0f, 0.3f, false, 3);
+
+        Assert.Equal("FakeName +30% (x3)", label);
+    }
+
+    [Fact]
+    public void Format_NoCount_AtOne()
+    {
+        string label = HeadhunterBuffLabel.Format("FakeName", "FooBar", 0f, 0.3f, false, 1);
+
+        Assert.Equal("FakeName +30%", label);
+    }
+
     [Theory]
     [InlineData(null)]
     [InlineData("")]
     public void Format_NoGameName_UsesSplitEnumName(string gameName)
     {
-        string label = HeadhunterBuffLabel.Format(gameName, "FooBar", 0f, 0.1f, false);
+        string label = HeadhunterBuffLabel.Format(gameName, "FooBar", 0f, 0.1f, false, 1);
 
         Assert.StartsWith("Foo Bar", label);
     }

@@ -2,19 +2,21 @@ using System.Collections.Generic;
 
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 
-/// <summary>Rare, boss or miniboss kill: gain its mod stats as buffs, refresh all active ones.</summary>
+/// <summary>Rare, boss or miniboss kill: stack its mod stats as buffs, refresh all live ones.</summary>
 public sealed class RareModsMechanic : IHeadhunterMechanic
 {
     private readonly HeadhunterResolvedConfig _config;
+    private readonly HeadhunterStackState _stacks;
     private readonly List<BuffAction> _actions = new();
     private readonly HashSet<int> _handled = new();
 
-    public RareModsMechanic(HeadhunterResolvedConfig config)
+    public RareModsMechanic(HeadhunterResolvedConfig config, HeadhunterStackState stacks)
     {
         _config = config;
+        _stacks = stacks;
     }
 
-    public IReadOnlyList<BuffAction> OnKill(KillInfo kill, IReadOnlySet<int> activeStatIds)
+    public IReadOnlyList<BuffAction> OnKill(KillInfo kill, IReadOnlySet<int> liveRows)
     {
         _actions.Clear();
         _handled.Clear();
@@ -23,8 +25,9 @@ public sealed class RareModsMechanic : IHeadhunterMechanic
             return _actions;
         }
 
-        AddKillStats(kill.ModStatIds, activeStatIds);
-        RefreshOtherActive(activeStatIds);
+        _stacks.Sync(liveRows);
+        AddKillStats(kill.ModStatIds);
+        RefreshOtherLive();
         return _actions;
     }
 
@@ -45,7 +48,7 @@ public sealed class RareModsMechanic : IHeadhunterMechanic
         };
     }
 
-    private void AddKillStats(IReadOnlyList<int> ids, IReadOnlySet<int> active)
+    private void AddKillStats(IReadOnlyList<int> ids)
     {
         if (ids == null)
         {
@@ -54,39 +57,42 @@ public sealed class RareModsMechanic : IHeadhunterMechanic
 
         for (int i = 0; i < ids.Count; i++)
         {
-            if (!_config.TryGetStat(ids[i], out HeadhunterBuffStat stat) || !_handled.Add(ids[i]))
+            if (!_config.TryGetRow(ids[i], out int row) || !_handled.Add(row))
             {
                 continue;
             }
 
-            Emit(active.Contains(stat.StatId) ? BuffActionKind.Refresh : BuffActionKind.Add, stat);
+            bool added = _stacks.TryAdd(row, _config.MaxStacks);
+            Emit(added ? BuffActionKind.Add : BuffActionKind.Refresh, row);
         }
     }
 
-    private void RefreshOtherActive(IReadOnlySet<int> active)
+    private void RefreshOtherLive()
     {
-        IReadOnlyList<HeadhunterBuffStat> stats = _config.Stats;
-        for (int i = 0; i < stats.Count; i++)
+        for (int row = 0; row < _config.Stats.Count; row++)
         {
-            if (!active.Contains(stats[i].StatId) || !_handled.Add(stats[i].StatId))
+            if (_stacks.Get(row) == 0 || !_handled.Add(row))
             {
                 continue;
             }
 
-            Emit(BuffActionKind.Refresh, stats[i]);
+            Emit(BuffActionKind.Refresh, row);
         }
     }
 
-    private void Emit(BuffActionKind kind, HeadhunterBuffStat stat)
+    private void Emit(BuffActionKind kind, int row)
     {
+        HeadhunterBuffStat stat = _config.Stats[row];
+        int stacks = _stacks.Get(row);
         _actions.Add(
             new BuffAction(
                 kind,
                 stat.BuffName,
                 stat.StatId,
-                stat.Added,
-                stat.Increased,
-                _config.DurationSeconds
+                stat.AddedFor(stacks),
+                stat.IncreasedFor(stacks),
+                _config.DurationSeconds,
+                stacks
             )
         );
     }

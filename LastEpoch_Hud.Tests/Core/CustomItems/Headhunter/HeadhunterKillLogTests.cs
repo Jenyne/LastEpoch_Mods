@@ -11,7 +11,7 @@ public sealed class HeadhunterKillLogTests
     {
         string line = HeadhunterKillLog.Format(
             new KillInfo(KillKind.Rare, false, [1, 2]),
-            [new BuffAction(BuffActionKind.Add, "HH_FakeA", 1, 0f, 0f, 1f)],
+            [new BuffAction(BuffActionKind.Add, "HH_FakeA", 1, 0f, 0f, 1f, 1)],
             _statName
         );
 
@@ -69,9 +69,9 @@ public sealed class HeadhunterKillLogTests
         string line = HeadhunterKillLog.Format(
             new KillInfo(KillKind.Rare, false, [1]),
             [
-                new BuffAction(BuffActionKind.Add, "HH_FakeA", 1, 0f, 0f, 1f),
-                new BuffAction(BuffActionKind.Refresh, "HH_FakeB", 2, 0f, 0f, 1f),
-                new BuffAction(BuffActionKind.Add, "HH_FakeC", 3, 0f, 0f, 1f),
+                new BuffAction(BuffActionKind.Add, "HH_FakeA", 1, 0f, 0f, 1f, 1),
+                new BuffAction(BuffActionKind.Refresh, "HH_FakeB", 2, 0f, 0f, 1f, 1),
+                new BuffAction(BuffActionKind.Add, "HH_FakeC", 3, 0f, 0f, 1f, 1),
             ],
             _statName
         );
@@ -89,6 +89,30 @@ public sealed class HeadhunterKillLogTests
         );
 
         Assert.Contains("Miniboss", line);
+    }
+
+    [Fact]
+    public void Format_ShowsStacks_AboveOne()
+    {
+        string line = HeadhunterKillLog.Format(
+            new KillInfo(KillKind.Rare, false, [1]),
+            [new BuffAction(BuffActionKind.Add, "HH_FakeA", 1, 0f, 0f, 1f, 2)],
+            _statName
+        );
+
+        Assert.Contains("Add HH_FakeA x2", line);
+    }
+
+    [Fact]
+    public void Format_NoStacks_AtOne()
+    {
+        string line = HeadhunterKillLog.Format(
+            new KillInfo(KillKind.Rare, false, [1]),
+            [new BuffAction(BuffActionKind.Add, "HH_FakeA", 1, 0f, 0f, 1f, 1)],
+            _statName
+        );
+
+        Assert.DoesNotContain(" x1", line);
     }
 
     private static void AssertInOrder(string line, params string[] parts)

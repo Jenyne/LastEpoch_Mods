@@ -11,6 +11,7 @@ public sealed class HeadhunterMechanicsTests
 
         IHeadhunterMechanic mechanic = HeadhunterMechanics.Create(
             ResolvedWithMechanic(HeadhunterMechanics.RareModsId),
+            new HeadhunterStackState(0),
             problems
         );
 
@@ -25,6 +26,7 @@ public sealed class HeadhunterMechanicsTests
 
         IHeadhunterMechanic mechanic = HeadhunterMechanics.Create(
             ResolvedWithMechanic("fake_id"),
+            new HeadhunterStackState(0),
             problems
         );
 
@@ -37,6 +39,7 @@ public sealed class HeadhunterMechanicsTests
         return new HeadhunterResolvedConfig(
             mechanic,
             HeadhunterTestData.Duration,
+            HeadhunterTestData.MaxStacks,
             HeadhunterTestData.AllTriggers,
             []
         );

@@ -26,7 +26,7 @@ public sealed class HeadhunterBarChangeTrackerTests
         HeadhunterBarChangeTracker tracker = new();
         tracker.Update(Entries(1, 2));
 
-        HeadhunterBarEntry[] later = [new(1, 2, 0.9f), new(2, 1, 0.99f)];
+        HeadhunterBarEntry[] later = [new(1, 2, 0.9f, 0, 1), new(2, 1, 0.99f, 0, 1)];
 
         Assert.False(tracker.Update(later));
     }
@@ -60,6 +60,6 @@ public sealed class HeadhunterBarChangeTrackerTests
 
     private static HeadhunterBarEntry[] Entries(params int[] ids)
     {
-        return ids.Select(id => new HeadhunterBarEntry(id, 5, 0.5f)).ToArray();
+        return ids.Select(id => new HeadhunterBarEntry(id, 5, 0.5f, 0, 1)).ToArray();
     }
 }

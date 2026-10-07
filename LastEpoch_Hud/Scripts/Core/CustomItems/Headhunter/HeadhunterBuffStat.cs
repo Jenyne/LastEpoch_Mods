@@ -6,4 +6,15 @@ public readonly record struct HeadhunterBuffStat(
     string BuffName,
     float Added,
     float Increased
-);
+)
+{
+    public float AddedFor(int stacks)
+    {
+        return Added * stacks;
+    }
+
+    public float IncreasedFor(int stacks)
+    {
+        return Increased * stacks;
+    }
+}

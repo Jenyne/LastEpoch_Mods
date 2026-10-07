@@ -11,6 +11,7 @@ internal static class HeadhunterBuffClearer
 
     public static void ClearAll(HeadhunterResolvedConfig config)
     {
+        HeadhunterConfigLoader.Stacks?.Reset();
         StatBuffs buffs = HeadhunterBuffSink.PlayerBuffs();
         if (config == null || buffs == null)
         {

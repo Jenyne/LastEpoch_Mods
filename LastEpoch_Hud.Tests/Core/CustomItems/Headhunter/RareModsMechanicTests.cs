@@ -27,16 +27,12 @@ public sealed class RareModsMechanicTests
     [Fact]
     public void OnKill_MagicKill_ActsLikeRare()
     {
-        RareModsMechanic mechanic = CreateMechanic(HeadhunterTestData.AllTriggers);
-
-        var magic = mechanic
+        BuffAction[] magic = CreateMechanic(HeadhunterTestData.AllTriggers)
             .OnKill(new KillInfo(KillKind.Magic, false, [1, 2]), Active(1))
-            .Select(action => (action.Kind, action.StatId))
-            .ToList();
-        var rare = mechanic
+            .ToArray();
+        BuffAction[] rare = CreateMechanic(HeadhunterTestData.AllTriggers)
             .OnKill(new KillInfo(KillKind.Rare, false, [1, 2]), Active(1))
-            .Select(action => (action.Kind, action.StatId))
-            .ToList();
+            .ToArray();
 
         Assert.NotEmpty(magic);
         Assert.Equal(rare, magic);
@@ -77,12 +73,11 @@ public sealed class RareModsMechanicTests
     [Fact]
     public void OnKill_TreatsMinionKillLikePlayerKill_WhenMinionTriggerOn()
     {
-        RareModsMechanic mechanic = CreateMechanic(HeadhunterTestData.AllTriggers);
-        BuffAction[] player = mechanic
+        BuffAction[] player = CreateMechanic(HeadhunterTestData.AllTriggers)
             .OnKill(new KillInfo(KillKind.Rare, false, [1, 2]), Active(1))
             .ToArray();
 
-        BuffAction[] minion = mechanic
+        BuffAction[] minion = CreateMechanic(HeadhunterTestData.AllTriggers)
             .OnKill(new KillInfo(KillKind.Rare, true, [1, 2]), Active(1))
             .ToArray();
 
@@ -107,18 +102,19 @@ public sealed class RareModsMechanicTests
     }
 
     [Fact]
-    public void OnKill_RefreshesStat_WhenAlreadyActive()
+    public void OnKill_LiveStatInKill_AddsStack()
     {
         RareModsMechanic mechanic = CreateMechanic(HeadhunterTestData.AllTriggers);
 
         IReadOnlyList<BuffAction> actions = mechanic.OnKill(
             new KillInfo(KillKind.Rare, false, [1]),
-            Active(1)
+            Active(0)
         );
 
         BuffAction action = Assert.Single(actions);
-        Assert.Equal(BuffActionKind.Refresh, action.Kind);
+        Assert.Equal(BuffActionKind.Add, action.Kind);
         Assert.Equal(1, action.StatId);
+        Assert.Equal(2, action.Stacks);
     }
 
     [Fact]
@@ -144,7 +140,7 @@ public sealed class RareModsMechanicTests
                 HeadhunterTestData.Disabled("FakeB")
             )
         );
-        var mechanic = new RareModsMechanic(config);
+        RareModsMechanic mechanic = HeadhunterTestData.Mechanic(config);
 
         IReadOnlyList<BuffAction> actions = mechanic.OnKill(
             new KillInfo(KillKind.Rare, false, [2]),
@@ -164,7 +160,7 @@ public sealed class RareModsMechanicTests
 
         IReadOnlyList<BuffAction> actions = mechanic.OnKill(
             new KillInfo(KillKind.Boss, false, mods),
-            Active(3, 1)
+            Active(2, 0)
         );
 
         Assert.Equal(
@@ -180,11 +176,11 @@ public sealed class RareModsMechanicTests
 
         IReadOnlyList<BuffAction> actions = mechanic.OnKill(
             new KillInfo(KillKind.Rare, false, [2]),
-            Active(1, 2, 99)
+            Active(0, 99)
         );
 
         Assert.Equal(
-            [(BuffActionKind.Refresh, 2), (BuffActionKind.Refresh, 1)],
+            [(BuffActionKind.Add, 2), (BuffActionKind.Refresh, 1)],
             actions.Select(action => (action.Kind, action.StatId))
         );
     }
@@ -202,11 +198,11 @@ public sealed class RareModsMechanicTests
             sharedIds,
             new List<HeadhunterConfigProblem>()
         );
-        var mechanic = new RareModsMechanic(config);
+        RareModsMechanic mechanic = HeadhunterTestData.Mechanic(config);
 
         IReadOnlyList<BuffAction> actions = mechanic.OnKill(
             new KillInfo(KillKind.Boss, false, []),
-            Active(1)
+            Active(0)
         );
 
         BuffAction action = Assert.Single(actions);
@@ -231,7 +227,8 @@ public sealed class RareModsMechanicTests
                 1,
                 5f,
                 0.1f,
-                HeadhunterTestData.Duration
+                HeadhunterTestData.Duration,
+                1
             ),
             Assert.Single(actions)
         );
@@ -268,9 +265,135 @@ public sealed class RareModsMechanicTests
         );
     }
 
+    [Fact]
+    public void OnKill_FirstKill_AddsOneStackBaseValue()
+    {
+        RareModsMechanic mechanic = CreateMechanic(HeadhunterTestData.AllTriggers);
+
+        BuffAction action = Assert.Single(Fire(mechanic, Active(), 1));
+
+        Assert.Equal(BuffActionKind.Add, action.Kind);
+        Assert.Equal(1, action.Stacks);
+        Assert.Equal(5f, action.Added);
+        Assert.Equal(0.1f, action.Increased, 5);
+        Assert.Equal(HeadhunterTestData.Duration, action.DurationSeconds);
+    }
+
+    [Fact]
+    public void OnKill_SecondKill_AddsDoubleValueFullDuration()
+    {
+        RareModsMechanic mechanic = CreateMechanic(HeadhunterTestData.AllTriggers);
+        Fire(mechanic, Active(), 1);
+
+        BuffAction action = Assert.Single(Fire(mechanic, Active(0), 1));
+
+        Assert.Equal(BuffActionKind.Add, action.Kind);
+        Assert.Equal(2, action.Stacks);
+        Assert.Equal(10f, action.Added);
+        Assert.Equal(0.2f, action.Increased, 5);
+        Assert.Equal(HeadhunterTestData.Duration, action.DurationSeconds);
+    }
+
+    [Fact]
+    public void OnKill_AtCap_RefreshesCappedValue()
+    {
+        RareModsMechanic mechanic = CreateMechanic(HeadhunterTestData.AllTriggers);
+        Fire(mechanic, Active(), 1);
+        Fire(mechanic, Active(0), 1);
+        Fire(mechanic, Active(0), 1);
+
+        BuffAction action = Assert.Single(Fire(mechanic, Active(0), 1));
+
+        Assert.Equal(BuffActionKind.Refresh, action.Kind);
+        Assert.Equal(HeadhunterTestData.MaxStacks, action.Stacks);
+        Assert.Equal(15f, action.Added);
+        Assert.Equal(0.3f, action.Increased, 5);
+    }
+
+    [Fact]
+    public void OnKill_RowExpired_RestartsAtOne()
+    {
+        RareModsMechanic mechanic = CreateMechanic(HeadhunterTestData.AllTriggers);
+        Fire(mechanic, Active(), 1);
+        Fire(mechanic, Active(0), 1);
+
+        BuffAction action = Assert.Single(Fire(mechanic, Active(), 1));
+
+        Assert.Equal(BuffActionKind.Add, action.Kind);
+        Assert.Equal(1, action.Stacks);
+    }
+
+    [Fact]
+    public void OnKill_LiveRowLostState_CountsAsOne()
+    {
+        RareModsMechanic mechanic = CreateMechanic(HeadhunterTestData.AllTriggers);
+
+        BuffAction action = Assert.Single(Fire(mechanic, Active(0), 1));
+
+        Assert.Equal(BuffActionKind.Add, action.Kind);
+        Assert.Equal(2, action.Stacks);
+    }
+
+    [Fact]
+    public void OnKill_RefreshOthers_KeepsStacksAndValue()
+    {
+        RareModsMechanic mechanic = CreateMechanic(HeadhunterTestData.AllTriggers);
+        Fire(mechanic, Active(), 1);
+        Fire(mechanic, Active(0), 1);
+
+        BuffAction refresh = Fire(mechanic, Active(0), 2).Single(a => a.StatId == 1);
+
+        Assert.Equal(BuffActionKind.Refresh, refresh.Kind);
+        Assert.Equal(2, refresh.Stacks);
+        Assert.Equal(10f, refresh.Added);
+        Assert.Equal(0.2f, refresh.Increased, 5);
+    }
+
+    [Fact]
+    public void OnKill_SameStatTwice_OneStack()
+    {
+        RareModsMechanic mechanic = CreateMechanic(HeadhunterTestData.AllTriggers);
+        Fire(mechanic, Active(), 1, 1);
+
+        BuffAction action = Assert.Single(Fire(mechanic, Active(0), 1, 1));
+
+        Assert.Equal(BuffActionKind.Add, action.Kind);
+        Assert.Equal(2, action.Stacks);
+    }
+
+    [Fact]
+    public void OnKill_NonFiring_KeepsCounts()
+    {
+        var state = new HeadhunterStackState(3);
+        RareModsMechanic mechanic = HeadhunterTestData.Mechanic(
+            HeadhunterTestData.Resolve(
+                HeadhunterTestData.Config(HeadhunterTestData.AllTriggers, _threeStats)
+            ),
+            state
+        );
+        Fire(mechanic, Active(), 1);
+
+        IReadOnlyList<BuffAction> actions = mechanic.OnKill(
+            new KillInfo(KillKind.Normal, false, [1]),
+            Active()
+        );
+
+        Assert.Empty(actions);
+        Assert.Equal(1, state.Get(0));
+    }
+
+    private static BuffAction[] Fire(
+        RareModsMechanic mechanic,
+        HashSet<int> liveRows,
+        params int[] statIds
+    )
+    {
+        return mechanic.OnKill(new KillInfo(KillKind.Rare, false, statIds), liveRows).ToArray();
+    }
+
     private static RareModsMechanic CreateMechanic(HeadhunterTriggers triggers)
     {
-        return new RareModsMechanic(
+        return HeadhunterTestData.Mechanic(
             HeadhunterTestData.Resolve(HeadhunterTestData.Config(triggers, _threeStats))
         );
     }

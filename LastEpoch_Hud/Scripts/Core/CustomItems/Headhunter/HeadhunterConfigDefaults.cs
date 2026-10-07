@@ -8,10 +8,11 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 public static class HeadhunterConfigDefaults
 {
     public const int CurrentVersion = 1;
-    public const int DefaultsVersion = 3;
+    public const int DefaultsVersion = 4;
     public const int UnstampedDefaultsVersion = 1;
     public const string Mechanic = HeadhunterMechanics.RareModsId;
     public const float DurationSeconds = 60f;
+    public const int MaxStacks = 10;
     public const float EntryAdded = 0f;
     public const float EntryIncreased = 0f;
     public const bool EntryEnabled = true;
@@ -42,6 +43,7 @@ public static class HeadhunterConfigDefaults
         new List<HeadhunterVersionedField>
         {
             new(HeadhunterConfigKeys.Triggers, HeadhunterConfigKeys.Magic, new JValue(true), 3),
+            new("", HeadhunterConfigKeys.MaxStacks, new JValue(MaxStacks), 4),
         };
 
     public static readonly HeadhunterMergeDefaults MergeDefaults = new()
@@ -56,6 +58,7 @@ public static class HeadhunterConfigDefaults
         Version = CurrentVersion,
         Mechanic = Mechanic,
         DurationSeconds = DurationSeconds,
+        MaxStacks = MaxStacks,
         Triggers = Triggers,
         Stats = Stats,
     };

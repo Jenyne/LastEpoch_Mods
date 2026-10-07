@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
@@ -8,6 +9,9 @@ namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 /// <summary>Applies Headhunter buff actions to the player's buffs.</summary>
 internal static class HeadhunterBuffSink
 {
+    private static readonly Func<string, bool> _isLiveCached = IsLiveCurrent;
+    private static StatBuffs _current;
+
     public static StatBuffs PlayerBuffs()
     {
         if (Refs_Manager.player_actor.IsNullOrDestroyed())
@@ -22,17 +26,12 @@ internal static class HeadhunterBuffSink
     public static void FillActive(
         StatBuffs buffs,
         IReadOnlyList<HeadhunterBuffStat> stats,
-        HashSet<int> active
+        HashSet<int> liveRows
     )
     {
-        active.Clear();
-        for (int i = 0; i < stats.Count; i++)
-        {
-            if (TryGetLive(buffs, stats[i].BuffName, out _))
-            {
-                active.Add(stats[i].StatId);
-            }
-        }
+        _current = buffs;
+        HeadhunterLiveRows.Fill(stats, _isLiveCached, liveRows);
+        _current = null;
     }
 
     public static void FillRemaining(
@@ -98,6 +97,11 @@ internal static class HeadhunterBuffSink
             0,
             action.BuffName
         );
+    }
+
+    private static bool IsLiveCurrent(string name)
+    {
+        return TryGetLive(_current, name, out _);
     }
 
     private static bool TryGetLive(StatBuffs buffs, string name, out Buff buff)

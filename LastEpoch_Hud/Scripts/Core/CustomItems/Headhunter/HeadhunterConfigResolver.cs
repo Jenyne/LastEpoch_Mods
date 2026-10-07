@@ -17,6 +17,7 @@ public static class HeadhunterConfigResolver
         return new HeadhunterResolvedConfig(
             config.Mechanic,
             config.DurationSeconds,
+            config.MaxStacks,
             config.Triggers,
             ResolveStats(config.Stats, statIds, problems)
         );

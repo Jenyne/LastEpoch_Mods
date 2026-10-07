@@ -12,13 +12,19 @@ public static class HeadhunterBuffLabel
         string enumName,
         float added,
         float increased,
-        bool addedAsPercent
+        bool addedAsPercent,
+        int stacks
     )
     {
         string name = string.IsNullOrEmpty(gameName) ? StatNameWords.Split(enumName) : gameName;
         StringBuilder text = new(name);
         AppendValue(text, addedAsPercent ? added * 100f : added, addedAsPercent);
         AppendValue(text, increased * 100f, true);
+        if (stacks > 1)
+        {
+            text.Append(" (x").Append(stacks).Append(')');
+        }
+
         return text.ToString();
     }
 

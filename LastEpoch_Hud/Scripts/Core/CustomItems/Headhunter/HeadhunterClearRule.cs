@@ -21,7 +21,8 @@ public sealed class HeadhunterClearRule
                     stats[i].StatId,
                     stats[i].Added,
                     stats[i].Increased,
-                    config.DurationSeconds
+                    config.DurationSeconds,
+                    0
                 )
             );
         }

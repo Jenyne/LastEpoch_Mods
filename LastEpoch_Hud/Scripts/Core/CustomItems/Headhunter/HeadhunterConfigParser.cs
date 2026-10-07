@@ -23,6 +23,7 @@ public static class HeadhunterConfigParser
             Version = ReadVersion(root, problems),
             Mechanic = ReadMechanic(root, problems),
             DurationSeconds = ReadDuration(root, problems),
+            MaxStacks = ReadMaxStacks(root, problems),
             Triggers = ReadTriggers(root, problems),
             Stats = ReadStats(root, knownStats, problems),
         };
@@ -129,6 +130,21 @@ public static class HeadhunterConfigParser
         }
         Report(problems, HeadhunterConfigKeys.DurationSeconds, "Must be a number above 0.");
         return HeadhunterConfigDefaults.DurationSeconds;
+    }
+
+    private static int ReadMaxStacks(JObject root, List<HeadhunterConfigProblem> problems)
+    {
+        JToken token = root[HeadhunterConfigKeys.MaxStacks];
+        if (token == null)
+        {
+            return HeadhunterConfigDefaults.MaxStacks;
+        }
+        if (TryGetInt(token, out int stacks) && stacks >= 1)
+        {
+            return stacks;
+        }
+        Report(problems, HeadhunterConfigKeys.MaxStacks, "Must be a whole number of at least 1.");
+        return HeadhunterConfigDefaults.MaxStacks;
     }
 
     private static HeadhunterTriggers ReadTriggers(

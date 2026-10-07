@@ -6,5 +6,5 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 public interface IHeadhunterMechanic
 {
     /// <summary>Buff changes for one kill. The list is reused: valid until the next call.</summary>
-    IReadOnlyList<BuffAction> OnKill(KillInfo kill, IReadOnlySet<int> activeStatIds);
+    IReadOnlyList<BuffAction> OnKill(KillInfo kill, IReadOnlySet<int> liveRows);
 }

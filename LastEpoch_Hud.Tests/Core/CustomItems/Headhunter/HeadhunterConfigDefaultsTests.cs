@@ -27,6 +27,26 @@ public sealed class HeadhunterConfigDefaultsTests
     }
 
     [Fact]
+    public void Config_MaxStacks_Is10()
+    {
+        Assert.Equal(10, HeadhunterConfigDefaults.Config.MaxStacks);
+    }
+
+    [Fact]
+    public void VersionedFields_AddMaxStacks_AtVersion4()
+    {
+        Assert.Contains(
+            HeadhunterConfigDefaults.VersionedFields,
+            field =>
+                field.Parent == ""
+                && field.Key == "maxStacks"
+                && field.Value.Type == JTokenType.Integer
+                && (int)field.Value == 10
+                && field.Since == 4
+        );
+    }
+
+    [Fact]
     public void Config_Triggers_AreAllOn()
     {
         Assert.Equal(

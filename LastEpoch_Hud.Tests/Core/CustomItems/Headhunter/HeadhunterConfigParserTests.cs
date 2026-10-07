@@ -125,6 +125,40 @@ public sealed class HeadhunterConfigParserTests
     }
 
     [Fact]
+    public void MaxStacks_Missing_Defaults10()
+    {
+        HeadhunterConfigParseResult result = Parse("{}");
+
+        Assert.Equal(10, result.Config.MaxStacks);
+        Assert.Empty(result.Problems);
+    }
+
+    [Theory]
+    [InlineData("0")]
+    [InlineData("-1")]
+    [InlineData("2.5")]
+    [InlineData("\"x\"")]
+    [InlineData("true")]
+    public void MaxStacks_Invalid_DefaultsWithProblem(string value)
+    {
+        HeadhunterConfigParseResult result = Parse("{\"maxStacks\":" + value + "}");
+
+        Assert.Equal(10, result.Config.MaxStacks);
+        Assert.Equal(new[] { "maxStacks" }, Paths(result));
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(7)]
+    public void MaxStacks_ReadsValue(int value)
+    {
+        HeadhunterConfigParseResult result = Parse("{\"maxStacks\":" + value + "}");
+
+        Assert.Equal(value, result.Config.MaxStacks);
+        Assert.Empty(result.Problems);
+    }
+
+    [Fact]
     public void Parse_Triggers_AllOnWithProblem_WhenNotObject()
     {
         HeadhunterConfigParseResult result = Parse("{\"triggers\":true}");

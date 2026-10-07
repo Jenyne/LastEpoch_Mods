@@ -10,12 +10,13 @@ public static class HeadhunterMechanics
 
     public static IHeadhunterMechanic Create(
         HeadhunterResolvedConfig config,
+        HeadhunterStackState stacks,
         ICollection<HeadhunterConfigProblem> problems
     )
     {
         if (string.Equals(config.Mechanic, RareModsId, StringComparison.Ordinal))
         {
-            return new RareModsMechanic(config);
+            return new RareModsMechanic(config, stacks);
         }
 
         problems.Add(
@@ -24,6 +25,6 @@ public static class HeadhunterMechanics
                 "Unknown mechanic, using " + RareModsId
             )
         );
-        return new RareModsMechanic(config);
+        return new RareModsMechanic(config, stacks);
     }
 }
