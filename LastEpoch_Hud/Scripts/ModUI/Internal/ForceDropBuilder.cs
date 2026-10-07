@@ -16,6 +16,8 @@ namespace LastEpoch_Hud.Scripts.ModUI;
 public static class ForceDropBuilder
 {
     static readonly Color gold = new Color(0.96f, 0.81f, 0.48f);
+    static readonly Color setGreen = new Color(.42f, .90f, .44f);
+    static readonly Color corruptionPurple = new Color(.80f, .56f, 1f);
     static readonly Color dark = new Color(0.10f, 0.12f, 0.15f);
     static readonly Dictionary<int, Action> clicks = new Dictionary<int, Action>();
     static GameObject root,
@@ -35,7 +37,8 @@ public static class ForceDropBuilder
     static Font font;
     static Text preview,
         status,
-        pickerTitle;
+        pickerTitle,
+        corruptionSelectedLabel;
     static Button typeButton,
         rarityButton,
         dropButton,
@@ -167,8 +170,45 @@ public static class ForceDropBuilder
         public string name;
         public string aliases;
         public Action select;
-        public bool corruptionExclusive;
+        public ForceDropAffixFamily affixFamily;
+        public bool champion;
     }
+
+    // Sort by native family, never translated labels. None remains the first
+    // choice regardless of language; names are alphabetical within each family.
+    static int AffixGroup(Choice choice)
+    {
+        if (choice.id < 0)
+            return -1;
+        return choice.affixFamily switch
+        {
+            ForceDropAffixFamily.Standard => 0,
+            ForceDropAffixFamily.Experimental => 1,
+            ForceDropAffixFamily.Personal => choice.champion ? 2 : 3,
+            ForceDropAffixFamily.Set => 4,
+            ForceDropAffixFamily.IdolWeaver => 5,
+            ForceDropAffixFamily.IdolEnchantment => 6,
+            ForceDropAffixFamily.Corrupted => 7,
+            ForceDropAffixFamily.UniqueModifier => 8,
+            _ => 9,
+        };
+    }
+
+    static int CompareAffixChoices(Choice a, Choice b)
+    {
+        int comparison = AffixGroup(a).CompareTo(AffixGroup(b));
+        if (comparison == 0)
+            comparison = string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase);
+        return comparison != 0 ? comparison : a.id.CompareTo(b.id);
+    }
+
+    static Color AffixColor(ForceDropAffixFamily family) =>
+        family == ForceDropAffixFamily.Set ? setGreen
+        : family == ForceDropAffixFamily.Corrupted ? corruptionPurple
+        : gold;
+
+    static Color SelectedAffixColor(int id) =>
+        id < 0 ? gold : AffixColor(ForceDropLegalAffixes.Family(FindAffix(id)));
 
     sealed class Number
     {
@@ -202,6 +242,7 @@ public static class ForceDropBuilder
         public string name = "None";
         public Button select;
         public Text slotLabel;
+        public Text selectedLabel;
         public Number tier,
             roll;
     }
@@ -518,6 +559,7 @@ public static class ForceDropBuilder
                 y + .13f,
                 () => AffixPicker(index)
             );
+            row.selectedLabel = row.select.GetComponentInChildren<Text>(true);
             row.tier = NumericCompact(affixPage, .59f, y, .72f, y + .13f, 1, 7, 7);
             row.roll = NumericCompact(affixPage, .75f, y, .86f, y + .13f, 0, 100, 100);
             row.roll.mode = Button(
@@ -557,6 +599,7 @@ public static class ForceDropBuilder
             .80f,
             CorruptionPicker
         );
+        corruptionSelectedLabel = corruptionSelect.GetComponentInChildren<Text>(true);
         corruptionTier = NumericCompact(corruptionPanel, .64f, .25f, .77f, .80f, 1, 7, 7);
         corruptionRoll = NumericCompact(corruptionPanel, .80f, .25f, .96f, .80f, 0, 100, 100);
         Label(corruptionPanel, "Tier", .64f, .81f, .77f, .99f, 11);
@@ -842,7 +885,8 @@ public static class ForceDropBuilder
                                     : family
                             ),
                         aliases = NativeItemNames.AffixAliases(a) + "\n" + family,
-                        corruptionExclusive = CorruptedAffixAdapter.IsCorruption(a),
+                        affixFamily = ForceDropLegalAffixes.Family(a),
+                        champion = a.specialAffixType == AffixList.SpecialAffixType.Personal,
                         select = () =>
                         {
                             corruptionId = id;
@@ -855,7 +899,7 @@ public static class ForceDropBuilder
                     }
                 );
             }
-        choices.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
+        choices.Sort(CompareAffixChoices);
         Main.logger_instance.Msg(
             "Force Drop legal corruption pool: base="
                 + FD.item_type
@@ -968,7 +1012,7 @@ public static class ForceDropBuilder
         var excluded = new StringBuilder();
         foreach (var pair in exclusions)
             excluded.Append(pair.Key).Append('=').Append(pair.Value).Append(';');
-        choices.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
+        choices.Sort(CompareAffixChoices);
         Main.logger_instance.Msg(
             "Force Drop legal affix pool: base="
                 + FD.item_type
@@ -1044,6 +1088,8 @@ public static class ForceDropBuilder
                                 : a.specialAffixType.ToString()
                             ),
                 aliases = NativeItemNames.AffixAliases(a) + "\n" + a.specialAffixType,
+                affixFamily = ForceDropLegalAffixes.Family(a),
+                champion = context.IsChampion(a),
                 select = () =>
                 {
                     rows[slot].id = id;
@@ -1060,10 +1106,14 @@ public static class ForceDropBuilder
     static void RefreshTierLimits()
     {
         foreach (var row in rows)
+        {
             SetTierLimit(
                 row.tier,
                 row.id < 0 ? 7 : ForceDropCatalog.MaximumTier(FindAffix(row.id))
             );
+            row.selectedLabel.color = SelectedAffixColor(row.id);
+        }
+        corruptionSelectedLabel.color = SelectedAffixColor(corruptionId);
         if (corruptionId < 0)
             SetTierLimit(corruptionTier, 7);
         else
@@ -1613,7 +1663,10 @@ public static class ForceDropBuilder
         filtered.Clear();
         visiblePicks.Clear();
         foreach (var choice in choices)
-            if (NativeItemNames.Matches(pickerSearch.text, choice.name, choice.aliases))
+            if (
+                choice.id < 0
+                || NativeItemNames.Matches(pickerSearch.text, choice.name, choice.aliases)
+            )
                 filtered.Add(choice);
         pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker);
         pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker);
@@ -1695,11 +1748,9 @@ public static class ForceDropBuilder
                     .739f - row * .058f
                 );
                 Caption(button, filtered[index].name);
-                button.GetComponentInChildren<Text>(true).color = filtered[
-                    index
-                ].corruptionExclusive
-                    ? new Color(.80f, .56f, 1f)
-                    : gold;
+                button.GetComponentInChildren<Text>(true).color = AffixColor(
+                    filtered[index].affixFamily
+                );
                 button.gameObject.SetActive(true);
                 visiblePicks.Add(filtered[index]);
             }

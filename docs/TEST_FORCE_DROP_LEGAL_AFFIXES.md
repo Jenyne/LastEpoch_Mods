@@ -11,7 +11,7 @@ This branch contains the integrity fixes from `fix/force-drop-integrity`, includ
 - Set shards use their referenced Set piece's equipment type and native class metadata. A matching base can show the Set affix without having the Set unique's exact subtype. Only one Set affix is allowed. Reforged Set affixes are excluded from Legendary transfers.
 - Experimental affixes remain available on compatible native item types; a second Experimental affix is excluded. Champion membership comes from `ChampionDataList`, rather than treating every Personal affix as a Champion affix. Campaign Personal affixes are excluded from Legendary transfers.
 - Corruption choices include native-permitted Standard, Experimental, Champion, Set and corruption-exclusive definitions, rather than only the last family. The selected item's category, equipment outcomes, positive weights/chances, native eligibility and supported tier weights decide which families appear. Duplicate selections and conflicting Set/Experimental selections are excluded.
-- Corruption-exclusive choices are purple. Other special choices have family labels. Names still come from the game's locale, with translated labels supplied in EN/FR/KO/ZH.
+- Set choices are green and corruption-exclusive choices are purple, including the selected affix captions. Affix and corruption pickers group choices by native family, then alphabetically within each family. `None` comes first and stays available during searches. Other special choices retain family labels. Names still come from the game's locale, with translated labels supplied in EN/FR/KO/ZH.
 - Corruption tiers respect definition lengths, holes in outcome weights and native tier checks. Rune level thresholds for forgeable equipment are T5 below level requirement 35, T6 below 55 and T7 otherwise. These are not the 50/80 area thresholds for pre-corrupted drops. The preview seed uses actual native base/affix level requirements rather than forcing zero.
 - Ordinary idols use Prefix 1 and Suffix 1 at T1. Weaver subtypes can use the native Weaver pool and must retain at least one Weaver affix. Heretical subtypes use the two other rows for separate enchantments at their supported tiers. Regular seals are unavailable on idols and unique equipment in this legal path.
 - Fixed unique pools are detected from native metadata. Frostborn Solitude now uses the existing modifier selector alongside Unsated Rage and Withstand the Elements.
@@ -45,7 +45,8 @@ The script updates this branch, builds Release, runs the full suite against the 
 | Heretical class idol | Ordinary prefix/suffix stay T1; Enchantment 1/2 select distinct native enchantments through T7. Regular class idols must not offer those extra enchantment slots. |
 | Frostborn Solitude | Correct native fixed modifier, unique identity, tooltip/effects and persistence. |
 | Idol Altar | Native-compatible ordinary/corruption affixes remain visible; verify creation, grid effects and persistence. |
-| FR → EN → KO, change item/category and reopen pickers | Correct translated names/labels and refreshed pool; no purple formatting carried over to ordinary/category choices. |
+| Open an ordinary affix picker, then the corruption picker; search and clear a selection | `None` is first, including filtered searches. Set entries stay together in green; corruption-exclusive entries stay together in purple. Selecting either retains its color in the affix row; clearing restores gold. Within each family, names are alphabetical. |
+| FR → EN → KO, change item/category and reopen pickers | Correct translated names/labels and refreshed pool; native family grouping and `None` ordering survive language changes; no green/purple formatting carried over to ordinary/category choices. |
 
 Do not certify a family from its list alone. Check creation, tooltip/equip effects, native item identity and save/reload for the selected combinations. Send `Latest.log` with the exact item, affix names, slot and tier if a choice is missing or rejected. Exclusion summaries help distinguish wrong type/class from a missing native route.
 
@@ -77,6 +78,8 @@ Retest the uncorrupted Set ring from the latest screenshot first, then the same 
 - JSON parsing/key parity, formatting and diff checks pass. No Harmony patch was added or removed.
 
 The supplied `Il2CppLE.dll` has unreadable metadata in this environment, so a full game SDK build cannot be repeated here. The user's Windows builds have reached in-game startup at `0805d229` and `33fedcf1`. Remaining native creation/effect/persistence checks require the guarded Windows script and in-game tests above.
+
+The follow-up selector presentation change does not change eligibility or item packing. Its color/grouping/search checks above are pending a Windows build and in-game confirmation.
 
 ## Rule references
 
