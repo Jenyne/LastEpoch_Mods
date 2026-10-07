@@ -3,6 +3,7 @@ using LastEpoch_Hud.Scripts.Core.CustomItems;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Affixes;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Bar;
+using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Buffs;
 using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Kills;
 using LastEpoch_Hud.Scripts.ModUI;
 using MelonLoader;

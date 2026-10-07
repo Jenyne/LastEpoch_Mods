@@ -1,5 +1,6 @@
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Buffs;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Kills;
 
 namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter.Buffs;
 
