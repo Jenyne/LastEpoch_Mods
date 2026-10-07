@@ -145,6 +145,149 @@ public sealed class ForceDropPackingSnapshotTests
         );
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CorruptedBaseRuntimeRegression_PreservesEveryAffixWithZeroDecodedSockets(bool idol)
+    {
+        var live = CorruptedBase(idol, idol ? 4 : 5);
+        var decoded = CorruptedBase(idol, 0);
+        Assert.Equal("", live.IntegrityError());
+        Assert.Equal("", decoded.IntegrityError());
+        Assert.Equal("", live.Difference(decoded));
+        Assert.Equal("", live.Difference(CorruptedBase(idol, live.Sockets)));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CorruptedBase_DoesNotAcceptAnArbitrarySocketCount(bool idol)
+    {
+        var live = CorruptedBase(idol, idol ? 4 : 5);
+        Assert.Contains("Socket count", live.Difference(CorruptedBase(idol, 2)));
+        Assert.Contains(
+            "socket count changed",
+            live.Difference(CorruptedBase(idol, live.Affixes.Count))
+        );
+    }
+
+    [Theory]
+    [InlineData(true, "missing")]
+    [InlineData(true, "id")]
+    [InlineData(true, "tier")]
+    [InlineData(true, "roll")]
+    [InlineData(true, "special")]
+    [InlineData(true, "placement")]
+    [InlineData(true, "seal")]
+    [InlineData(false, "missing")]
+    [InlineData(false, "id")]
+    [InlineData(false, "tier")]
+    [InlineData(false, "roll")]
+    [InlineData(false, "special")]
+    [InlineData(false, "placement")]
+    [InlineData(false, "seal")]
+    public void CorruptedBase_ZeroSocketsDoesNotHideMissingOrChangedAffixes(
+        bool idol,
+        string changed
+    )
+    {
+        var live = CorruptedBase(idol, idol ? 4 : 5);
+        var saved = live.Affixes.ToArray();
+        int index = Array.FindIndex(saved, a => a.Seal == ForceDropSeal.Corruption);
+        var affix = saved[index];
+        if (changed == "missing")
+            saved = saved.Where((_, i) => i != index).ToArray();
+        else
+            saved[index] = new PackedForceDropAffix(
+                changed == "id" ? affix.Id + 1 : affix.Id,
+                changed == "tier" ? affix.Tier + 1 : affix.Tier,
+                changed == "roll" ? affix.Roll - 1 : affix.Roll,
+                changed == "seal" ? ForceDropSeal.None : affix.Seal,
+                changed == "special" ? 0 : affix.SpecialType,
+                changed == "placement" ? 1 : affix.AffixType
+            );
+        Assert.NotEqual("", live.Difference(CorruptedBase(idol, 0, saved)));
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void CorruptedBase_CorruptedFlagAloneDoesNotAllowZeroSockets(bool idol)
+    {
+        var live = CorruptedBase(idol, idol ? 4 : 5);
+        var saved = live.Affixes.Where(a => a.Seal != ForceDropSeal.Corruption).ToArray();
+        Assert.Contains(
+            "Socket count",
+            live.Difference(CorruptedBase(idol, 0, saved, corruption: false))
+        );
+    }
+
+    [Fact]
+    public void CorruptedBase_ZeroSocketsDoesNotHideALostRegularSeal()
+    {
+        var live = CorruptedBase(false, 5);
+        var saved = live.Affixes.ToArray();
+        var seal = saved[0];
+        saved[0] = new PackedForceDropAffix(
+            seal.Id,
+            seal.Tier,
+            seal.Roll,
+            ForceDropSeal.None,
+            seal.SpecialType,
+            seal.AffixType
+        );
+        Assert.Contains(
+            "corruption or seal flags",
+            live.Difference(CorruptedBase(false, 0, saved, regular: false))
+        );
+    }
+
+    static ForceDropPackingSnapshot CorruptedBase(
+        bool idol,
+        int sockets,
+        PackedForceDropAffix[] affixes = null,
+        bool? regular = null,
+        bool corruption = true
+    )
+    {
+        // Exact live/decoded data from build 0805d229, 13:07:53 and 13:09:17.
+        affixes ??= idol
+            ? new[]
+            {
+                new PackedForceDropAffix(1070, 0, 255, ForceDropSeal.Corruption, 6, 0),
+                new PackedForceDropAffix(757, 0, 255, ForceDropSeal.None, 0, 0),
+                new PackedForceDropAffix(938, 6, 255, ForceDropSeal.None, 4, 1),
+                new PackedForceDropAffix(296, 0, 255, ForceDropSeal.None, 0, 1),
+                new PackedForceDropAffix(897, 6, 255, ForceDropSeal.None, 4, 1),
+            }
+            : new[]
+            {
+                new PackedForceDropAffix(502, 6, 255, ForceDropSeal.Regular, 0, 0),
+                new PackedForceDropAffix(995, 0, 255, ForceDropSeal.Corruption, 6, 0),
+                new PackedForceDropAffix(72, 0, 255, ForceDropSeal.None, 0, 0),
+                new PackedForceDropAffix(960, 6, 255, ForceDropSeal.None, 3, 0),
+                new PackedForceDropAffix(825, 0, 255, ForceDropSeal.None, 0, 1),
+                new PackedForceDropAffix(45, 6, 255, ForceDropSeal.None, 0, 1),
+            };
+        return new ForceDropPackingSnapshot(
+            idol ? 33 : 21,
+            idol ? 10 : 11,
+            0,
+            4,
+            0,
+            0,
+            0,
+            true,
+            sockets,
+            regular ?? !idol,
+            false,
+            corruption,
+            new[] { 255, 255, 255 },
+            Array.Empty<int>(),
+            affixes
+        );
+    }
+
     [Fact]
     public void SocketRejection_RecordsBothCountsAndDecodedAffixes()
     {

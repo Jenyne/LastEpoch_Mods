@@ -38,7 +38,7 @@ The script updates this branch, builds Release, runs the full suite against the 
 | Base gloves/boots/belt | Compatible Experimental choices; after selecting one, a second is excluded in both ordinary and corruption rows. |
 | Forgeable base equipment; inspect corruption | Standard, compatible Champion/Experimental/Set and corruption-exclusive choices appear where the native outcome permits. Try a corruption from each available family. |
 | Low-level base equipment, then add a high-level ordinary affix | Corruption tier limit reflects the actual resulting level requirement. A one-tier definition remains T1, even under Maximum. |
-| Base helmet or amulet with four ordinary affixes + regular seal + corruption | Both seals retain their own modifier. This legal base-item combination still needs runtime confirmation. |
+| Base ring, helmet or amulet with four ordinary affixes + regular seal + corruption | Both seals retain their own modifier. This legal base-item combination still needs runtime confirmation. |
 | Unsated Rage with its modifier + zero through four ordinary affixes + corruption | Earlier confirmed creation/persistence remains working under the new filters. |
 | Withstand the Elements with two modifiers + ordinary affixes + corruption | Correct independent fixed modifiers and selected corruption; verify effects and save/reload. |
 | Small/Minor/Humble/Stout Weaver idol | Weaver choices appear only on Weaver subtypes; one prefix and one suffix, at least one Weaver affix, all T1. |
@@ -48,6 +48,14 @@ The script updates this branch, builds Release, runs the full suite against the 
 | FR → EN → KO, change item/category and reopen pickers | Correct translated names/labels and refreshed pool; no purple formatting carried over to ordinary/category choices. |
 
 Do not certify a family from its list alone. Check creation, tooltip/equip effects, native item identity and save/reload for the selected combinations. Send `Latest.log` with the exact item, affix names, slot and tier if a choice is missing or rejected. Exclusion summaries help distinguish wrong type/class from a missing native route.
+
+## Corrupted base-item socket regression
+
+The user's `0805d229` test log demonstrates two false packing rejections: a Heretical idol with two ordinary affixes, two enchantments and corruption, and a base ring with four ordinary affixes (including a Set affix), a regular seal and corruption. The live socket counts were 4/5 for 5/6 affixes respectively. Both decoded items reported zero sockets and retained every affix ID, tier, roll, family, placement and seal, along with the remaining item fields.
+
+The validator now accepts these observed socket representations only when the item is corrupted and has a corruption seal. It still compares the full saved affix list and every other field, rejects unrelated nonzero socket changes, and keeps uncorrupted base-item checks strict. No construction, filtering or HUD behavior changed in this correction.
+
+Retest those two combinations first, then inspect their tooltip/effects and save/reload. Their native saved data survived in the previous log, but actual spawning and persistence of these combinations are not yet confirmed. The regression suite includes both exact snapshots and rejection cases for altered/missing affixes and lost seals.
 
 ## Known boundaries
 
@@ -59,7 +67,7 @@ Do not certify a family from its list alone. Check creation, tooltip/equip effec
 
 ## Verification performed here
 
-- 81 game-independent core regression cases passed, including outcome tier holes, actual definition bounds, Rune level thresholds, Set versus Legendary routes, Champion versus Personal routes and ordinary/Weaver/Heretical idol slots.
+- 102 game-independent core regression cases passed, including the two corrupted base-item socket regressions, outcome tier holes, actual definition bounds, Rune level thresholds, Set versus Legendary routes, Champion versus Personal routes and ordinary/Weaver/Heretical idol slots.
 - 13 managed adapter fixtures passed for donor subtype/class intersections, the distinction between the two class enums, matching-type Set shards, idol routes and metadata-based fixed pools. These simulate native responses; they are not game execution.
 - The new core compiles against .NET 6 references. Changed HUD/adapters compile against the supplied Unity/TMP/Harmony assemblies with game context stubs.
 - JSON parsing/key parity, formatting and diff checks pass. No Harmony patch was added or removed.

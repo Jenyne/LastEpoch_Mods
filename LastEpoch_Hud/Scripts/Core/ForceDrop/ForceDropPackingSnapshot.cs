@@ -100,7 +100,14 @@ public sealed class ForceDropPackingSnapshot
         // that route by its complete affix list and stored socket value instead.
         if (Sockets < 0 || Sockets > byte.MaxValue)
             return "Socket count is outside the packed range";
-        if (!UsesUniqueStorage && Sockets != Affixes.Count)
+        // The runtime also excludes the corruption affix from the live socket
+        // count on base gear/idols, then decodes zero while preserving all affixes.
+        // Accept only those observed representations, not arbitrary count changes.
+        if (
+            !UsesUniqueStorage
+            && Sockets != Affixes.Count
+            && !(UsesCorruptionStorage && (Sockets == 0 || Sockets == Affixes.Count - 1))
+        )
             return "Socket count does not match the affix count (sockets="
                 + Sockets
                 + ", affixes="
@@ -197,7 +204,10 @@ public sealed class ForceDropPackingSnapshot
             return "Item identity changed during packing";
         if (Rarity != actual.Rarity)
             return "Item rarity changed during packing";
-        if (Sockets != actual.Sockets && !(UsesUniqueStorage && actual.Sockets == 0))
+        if (
+            Sockets != actual.Sockets
+            && !((UsesUniqueStorage || UsesCorruptionStorage) && actual.Sockets == 0)
+        )
             return "Item socket count changed during packing";
         if (
             ForgingPotential != actual.ForgingPotential
@@ -224,4 +234,6 @@ public sealed class ForceDropPackingSnapshot
     }
 
     bool UsesUniqueStorage => Rarity == 7 || Rarity == 8 || Rarity == 9;
+
+    bool UsesCorruptionStorage => Corrupted && CorruptionSeal;
 }
