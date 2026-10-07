@@ -1,40 +1,57 @@
 using System;
 using Il2CppInterop.Runtime;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 
-/// <summary>Loads the two buff bar prefabs from the HUD bundle once.</summary>
+/// <summary>Loads the two buff bar prefabs from the HUD bundle, again if they get destroyed.</summary>
 internal static class HeadhunterBuffBarAssets
 {
     private const string BarSuffix = "headhunter/prefab/buffs.prefab";
     private const string EntrySuffix = "headhunter/prefab/buff.prefab";
-    private static bool _attempted;
+    private static readonly HeadhunterAssetLoadGate _gate = new();
 
     public static GameObject BarPrefab { get; private set; }
     public static GameObject EntryPrefab { get; private set; }
 
     public static bool TryLoad()
     {
-        if (!BarPrefab.IsNullOrDestroyed() && !EntryPrefab.IsNullOrDestroyed())
+        if (PrefabsAlive())
         {
             return true;
         }
 
-        if (_attempted || Hud_Manager.asset_bundle.IsNullOrDestroyed())
+        long bundleId = BundleId();
+        if (!_gate.ShouldLoad(bundleId))
         {
             return false;
         }
 
-        _attempted = true;
         LoadAll();
-        if (!BarPrefab.IsNullOrDestroyed() && !EntryPrefab.IsNullOrDestroyed())
+        if (PrefabsAlive())
         {
             return true;
         }
 
+        _gate.MarkMissing(bundleId);
         Main.logger_instance?.Warning("Headhunter buff bar prefabs missing in the bundle");
         return false;
+    }
+
+    private static bool PrefabsAlive()
+    {
+        return !BarPrefab.IsNullOrDestroyed() && !EntryPrefab.IsNullOrDestroyed();
+    }
+
+    private static long BundleId()
+    {
+        if (Hud_Manager.asset_bundle.IsNullOrDestroyed())
+        {
+            return 0;
+        }
+
+        return Hud_Manager.asset_bundle.Pointer.ToInt64();
     }
 
     private static void LoadAll()
