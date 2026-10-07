@@ -9,7 +9,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 [RegisterTypeInIl2Cpp]
 public class Items_HeadHunter : MonoBehaviour
 {
-    public static bool Initialized;
     private static readonly CustomUniqueRegistrar _registrar = new(CreateDefinition());
     private bool _inGame;
 
@@ -24,30 +23,8 @@ public class Items_HeadHunter : MonoBehaviour
 
     private void Update()
     {
-        if (!HeadhunterAssets.Loaded)
-        {
-            HeadhunterAssets.Load();
-        }
         _registrar.Update();
-        if (!HeadhunterKillEvents.OnKillEventInitialized)
-        {
-            HeadhunterKillEvents.InitOnKillEvent();
-        }
-        if (!HeadhunterKillEvents.OnMinionKillEventInitialized)
-        {
-            HeadhunterKillEvents.InitOnMinionKillEvent();
-        }
-
-        if (
-            (!Initialized)
-            && (HeadhunterAssets.Loaded)
-            && (_registrar.IsRegistered)
-            && (HeadhunterKillEvents.OnKillEventInitialized)
-            && (HeadhunterKillEvents.OnMinionKillEventInitialized)
-        )
-        {
-            Initialized = HeadhunterLegacyConfig.LoadConfig();
-        }
+        HeadhunterKillSource.EnsureHooked();
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -60,8 +37,7 @@ public class Items_HeadHunter : MonoBehaviour
         if (!_inGame)
         {
             //Check itemlist here
-            HeadhunterKillEvents.OnKillEventInitialized = false;
-            HeadhunterKillEvents.OnMinionKillEventInitialized = false;
+            HeadhunterKillSource.ResetHooks();
         }
         _inGame = true;
     }

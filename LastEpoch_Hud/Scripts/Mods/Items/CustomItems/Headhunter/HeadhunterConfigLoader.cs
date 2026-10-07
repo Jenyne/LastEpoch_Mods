@@ -10,17 +10,22 @@ internal static class HeadhunterConfigLoader
 {
     private static readonly CustomItemConfigStore _store = new("headhunter.json");
 
+    private static readonly Dictionary<string, int> _statIds = EnumIdMap.Build(typeof(SP));
+
     public static HeadhunterConfig Current { get; private set; } = HeadhunterConfigDefaults.Config;
+    public static HeadhunterResolvedConfig Resolved { get; private set; }
+    public static IHeadhunterMechanic Mechanic { get; private set; }
 
     public static void Load()
     {
         ExportDefaultsIfMissing();
         HeadhunterConfigParseResult result = HeadhunterConfigParser.Parse(
             _store.Read(),
-            KnownStatNames()
+            new HashSet<string>(_statIds.Keys, StringComparer.Ordinal)
         );
         LogProblems(result.Problems);
         Current = result.Config;
+        ResolveAndCreateMechanic();
         Main.logger_instance?.Msg(
             "Headhunter config loaded: " + Current.Stats.Count + " stat(s) from " + _store.FilePath
         );
@@ -35,9 +40,17 @@ internal static class HeadhunterConfigLoader
         _store.Write(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
     }
 
-    private static HashSet<string> KnownStatNames()
+    private static void ResolveAndCreateMechanic()
     {
-        return new HashSet<string>(Enum.GetNames(typeof(SP)), StringComparer.Ordinal);
+        var problems = new List<HeadhunterConfigProblem>();
+        HeadhunterResolvedConfig resolved = HeadhunterConfigResolver.Resolve(
+            Current,
+            _statIds,
+            problems
+        );
+        Mechanic = HeadhunterMechanics.Create(resolved, problems);
+        Resolved = resolved;
+        LogProblems(problems);
     }
 
     private static void LogProblems(IReadOnlyList<HeadhunterConfigProblem> problems)
