@@ -25,6 +25,7 @@ public class Items_HeadHunter : MonoBehaviour
         HeadhunterConfigLoader.ReloadIfChanged(Time.unscaledTime);
         HeadhunterBuffBar.Tick(Time.unscaledTime);
         HeadhunterBarHover.Tick();
+        MonsterModDump.Tick(Time.unscaledTime);
     }
 
     private static CustomUniqueDefinition CreateDefinition()
