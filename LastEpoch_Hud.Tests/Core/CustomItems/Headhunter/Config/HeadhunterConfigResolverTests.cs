@@ -1,5 +1,6 @@
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
+using Code = LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.HeadhunterConfigProblemCode;
 
 namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter.Config;
 
@@ -63,7 +64,7 @@ public sealed class HeadhunterConfigResolverTests
         );
 
         Assert.Equal("HH_FakeA", Assert.Single(result.Stats).BuffName);
-        Assert.Equal(["stats[1].stat"], problems.Select(problem => problem.Path));
+        Assert.Equal([(Code.UnknownStat, "stats[1].stat")], HeadhunterTestData.Problems(problems));
     }
 
     [Fact]
@@ -84,7 +85,7 @@ public sealed class HeadhunterConfigResolverTests
             problems
         );
 
-        Assert.Equal(["stats[2].stat"], problems.Select(problem => problem.Path));
+        Assert.Equal([(Code.UnknownStat, "stats[2].stat")], HeadhunterTestData.Problems(problems));
     }
 
     [Fact]
@@ -108,7 +109,10 @@ public sealed class HeadhunterConfigResolverTests
         Assert.Equal("HH_FakeA", Assert.Single(result.Stats).BuffName);
         Assert.True(result.TryGetRow(new HeadhunterStatKey(1, 0), out int row));
         Assert.Equal("HH_FakeA", result.Stats[row].BuffName);
-        Assert.Equal(["stats[1].stat"], problems.Select(problem => problem.Path));
+        Assert.Equal(
+            [(Code.DuplicateStatId, "stats[1].stat")],
+            HeadhunterTestData.Problems(problems)
+        );
     }
 
     [Fact]
@@ -207,7 +211,7 @@ public sealed class HeadhunterConfigResolverTests
         );
 
         Assert.Empty(result.Stats);
-        Assert.Equal(["stats[0].tag"], problems.Select(problem => problem.Path));
+        Assert.Equal([(Code.UnknownTag, "stats[0].tag")], HeadhunterTestData.Problems(problems));
     }
 
     [Fact]
@@ -245,6 +249,9 @@ public sealed class HeadhunterConfigResolverTests
         );
 
         Assert.Equal("HH_FakeA", Assert.Single(result.Stats).BuffName);
-        Assert.Equal(["stats[1].stat"], problems.Select(problem => problem.Path));
+        Assert.Equal(
+            [(Code.DuplicateStatId, "stats[1].stat")],
+            HeadhunterTestData.Problems(problems)
+        );
     }
 }

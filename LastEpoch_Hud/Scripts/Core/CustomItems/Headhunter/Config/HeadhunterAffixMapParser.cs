@@ -20,6 +20,7 @@ internal static class HeadhunterAffixMapParser
         {
             HeadhunterConfigParser.Report(
                 problems,
+                HeadhunterConfigProblemCode.NotList,
                 HeadhunterConfigKeys.AffixMap,
                 "Must be a list."
             );
@@ -39,6 +40,7 @@ internal static class HeadhunterAffixMapParser
             {
                 HeadhunterConfigParser.Report(
                     problems,
+                    HeadhunterConfigProblemCode.DuplicateModKey,
                     path + "." + HeadhunterConfigKeys.ModKey,
                     "Duplicate mod key."
                 );
@@ -59,7 +61,12 @@ internal static class HeadhunterAffixMapParser
         entry = default;
         if (token is not JObject obj)
         {
-            HeadhunterConfigParser.Report(problems, path, "Must be an object.");
+            HeadhunterConfigParser.Report(
+                problems,
+                HeadhunterConfigProblemCode.NotObject,
+                path,
+                "Must be an object."
+            );
             return false;
         }
         if (!TryReadModKey(obj, path, problems, out int modKey))
@@ -89,6 +96,7 @@ internal static class HeadhunterAffixMapParser
         }
         HeadhunterConfigParser.Report(
             problems,
+            HeadhunterConfigProblemCode.NotWholeNumber,
             path + "." + HeadhunterConfigKeys.ModKey,
             "Must be a whole number."
         );
@@ -106,7 +114,12 @@ internal static class HeadhunterAffixMapParser
         string rowsPath = path + "." + HeadhunterConfigKeys.Rows;
         if (obj[HeadhunterConfigKeys.Rows] is not JArray array)
         {
-            HeadhunterConfigParser.Report(problems, rowsPath, "Must be a list.");
+            HeadhunterConfigParser.Report(
+                problems,
+                HeadhunterConfigProblemCode.NotList,
+                rowsPath,
+                "Must be a list."
+            );
             return false;
         }
 
@@ -120,6 +133,7 @@ internal static class HeadhunterAffixMapParser
             }
             HeadhunterConfigParser.Report(
                 problems,
+                HeadhunterConfigProblemCode.EmptyOrNotText,
                 rowsPath + "[" + index + "]",
                 "Must be a non-empty text."
             );

@@ -45,9 +45,14 @@ public static class HeadhunterConfigParser
         return true;
     }
 
-    internal static void Report(List<HeadhunterConfigProblem> problems, string path, string message)
+    internal static void Report(
+        List<HeadhunterConfigProblem> problems,
+        HeadhunterConfigProblemCode code,
+        string path,
+        string message
+    )
     {
-        problems.Add(new HeadhunterConfigProblem(path, message));
+        problems.Add(new HeadhunterConfigProblem(code, path, message));
     }
 
     private static HeadhunterConfigParseResult Result(
@@ -68,7 +73,7 @@ public static class HeadhunterConfigParser
     {
         if (string.IsNullOrWhiteSpace(json))
         {
-            Report(problems, "", "File is empty.");
+            Report(problems, HeadhunterConfigProblemCode.EmptyFile, "", "File is empty.");
             return null;
         }
         try
@@ -78,12 +83,22 @@ public static class HeadhunterConfigParser
             {
                 return root;
             }
-            Report(problems, "", "Root must be a JSON object.");
+            Report(
+                problems,
+                HeadhunterConfigProblemCode.RootNotObject,
+                "",
+                "Root must be a JSON object."
+            );
             return null;
         }
         catch (JsonReaderException ex)
         {
-            Report(problems, "", "Invalid JSON: " + ex.Message);
+            Report(
+                problems,
+                HeadhunterConfigProblemCode.InvalidJson,
+                "",
+                "Invalid JSON: " + ex.Message
+            );
             return null;
         }
     }
@@ -97,12 +112,22 @@ public static class HeadhunterConfigParser
         }
         if (!TryGetInt(token, out int version))
         {
-            Report(problems, HeadhunterConfigKeys.Version, "Must be a whole number.");
+            Report(
+                problems,
+                HeadhunterConfigProblemCode.NotWholeNumber,
+                HeadhunterConfigKeys.Version,
+                "Must be a whole number."
+            );
             return HeadhunterConfigDefaults.CurrentVersion;
         }
         if (version != HeadhunterConfigDefaults.CurrentVersion)
         {
-            Report(problems, HeadhunterConfigKeys.Version, "Unsupported version " + version + ".");
+            Report(
+                problems,
+                HeadhunterConfigProblemCode.UnsupportedVersion,
+                HeadhunterConfigKeys.Version,
+                "Unsupported version " + version + "."
+            );
         }
         return version;
     }
@@ -118,7 +143,12 @@ public static class HeadhunterConfigParser
         {
             return seconds;
         }
-        Report(problems, HeadhunterConfigKeys.DurationSeconds, "Must be a number above 0.");
+        Report(
+            problems,
+            HeadhunterConfigProblemCode.NotPositiveNumber,
+            HeadhunterConfigKeys.DurationSeconds,
+            "Must be a number above 0."
+        );
         return HeadhunterConfigDefaults.DurationSeconds;
     }
 
@@ -133,7 +163,12 @@ public static class HeadhunterConfigParser
         {
             return stacks;
         }
-        Report(problems, HeadhunterConfigKeys.MaxStacks, "Must be a whole number of at least 1.");
+        Report(
+            problems,
+            HeadhunterConfigProblemCode.NotPositiveWholeNumber,
+            HeadhunterConfigKeys.MaxStacks,
+            "Must be a whole number of at least 1."
+        );
         return HeadhunterConfigDefaults.MaxStacks;
     }
 
@@ -149,7 +184,12 @@ public static class HeadhunterConfigParser
         }
         if (token is not JObject triggers)
         {
-            Report(problems, HeadhunterConfigKeys.Triggers, "Must be an object.");
+            Report(
+                problems,
+                HeadhunterConfigProblemCode.NotObject,
+                HeadhunterConfigKeys.Triggers,
+                "Must be an object."
+            );
             return HeadhunterConfigDefaults.Triggers;
         }
         return new HeadhunterTriggers(
@@ -202,7 +242,12 @@ public static class HeadhunterConfigParser
         {
             return value;
         }
-        Report(problems, HeadhunterConfigKeys.Triggers + "." + name, "Must be true or false.");
+        Report(
+            problems,
+            HeadhunterConfigProblemCode.NotBool,
+            HeadhunterConfigKeys.Triggers + "." + name,
+            "Must be true or false."
+        );
         return fallback;
     }
 
@@ -219,7 +264,12 @@ public static class HeadhunterConfigParser
         }
         if (token is not JArray array)
         {
-            Report(problems, HeadhunterConfigKeys.Stats, "Must be a list.");
+            Report(
+                problems,
+                HeadhunterConfigProblemCode.NotList,
+                HeadhunterConfigKeys.Stats,
+                "Must be a list."
+            );
             return HeadhunterConfigDefaults.Stats;
         }
 
@@ -242,7 +292,12 @@ public static class HeadhunterConfigParser
             }
             if (!seen.Add((entry.Stat, entry.Tag)))
             {
-                Report(problems, path + "." + HeadhunterConfigKeys.Stat, "Duplicate stat.");
+                Report(
+                    problems,
+                    HeadhunterConfigProblemCode.DuplicateStat,
+                    path + "." + HeadhunterConfigKeys.Stat,
+                    "Duplicate stat."
+                );
                 continue;
             }
             stats.Add(entry);
@@ -261,18 +316,23 @@ public static class HeadhunterConfigParser
         entry = default;
         if (token is not JObject obj)
         {
-            Report(problems, path, "Must be an object.");
+            Report(problems, HeadhunterConfigProblemCode.NotObject, path, "Must be an object.");
             return false;
         }
         JToken statToken = obj[HeadhunterConfigKeys.Stat];
         if (statToken == null)
         {
-            Report(problems, path, "Missing stat name.");
+            Report(problems, HeadhunterConfigProblemCode.MissingStat, path, "Missing stat name.");
             return false;
         }
         if (statToken is not JValue { Value: string stat } || !knownStats.Contains(stat))
         {
-            Report(problems, path + "." + HeadhunterConfigKeys.Stat, "Unknown stat.");
+            Report(
+                problems,
+                HeadhunterConfigProblemCode.UnknownStat,
+                path + "." + HeadhunterConfigKeys.Stat,
+                "Unknown stat."
+            );
             return false;
         }
         if (
@@ -331,7 +391,12 @@ public static class HeadhunterConfigParser
             tag = text;
             return true;
         }
-        Report(problems, path + "." + HeadhunterConfigKeys.Tag, "Must be a non-empty text.");
+        Report(
+            problems,
+            HeadhunterConfigProblemCode.EmptyOrNotText,
+            path + "." + HeadhunterConfigKeys.Tag,
+            "Must be a non-empty text."
+        );
         return false;
     }
 
@@ -354,7 +419,12 @@ public static class HeadhunterConfigParser
         {
             return true;
         }
-        Report(problems, path + "." + name, "Must be a finite number.");
+        Report(
+            problems,
+            HeadhunterConfigProblemCode.NotFiniteNumber,
+            path + "." + name,
+            "Must be a finite number."
+        );
         return false;
     }
 
@@ -375,7 +445,12 @@ public static class HeadhunterConfigParser
         {
             return true;
         }
-        Report(problems, path + "." + HeadhunterConfigKeys.Enabled, "Must be true or false.");
+        Report(
+            problems,
+            HeadhunterConfigProblemCode.NotBool,
+            path + "." + HeadhunterConfigKeys.Enabled,
+            "Must be true or false."
+        );
         return false;
     }
 

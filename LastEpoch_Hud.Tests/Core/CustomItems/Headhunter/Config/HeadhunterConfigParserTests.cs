@@ -1,4 +1,5 @@
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
+using Code = LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.HeadhunterConfigProblemCode;
 
 namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter.Config;
 
@@ -15,6 +16,17 @@ public sealed class HeadhunterConfigParserTests
     public static TheoryData<string> UnusableTexts { get; } =
         new() { (string)null, "", "  ", "not json", "[]", "{" };
 
+    public static TheoryData<string, Code> UnusableTextProblems { get; } =
+        new()
+        {
+            { (string)null, Code.EmptyFile },
+            { "", Code.EmptyFile },
+            { "  ", Code.EmptyFile },
+            { "not json", Code.InvalidJson },
+            { "{", Code.InvalidJson },
+            { "[]", Code.RootNotObject },
+        };
+
     [Fact]
     public void Parse_ReturnsDefaults_WhenObjectEmpty()
     {
@@ -25,12 +37,12 @@ public sealed class HeadhunterConfigParserTests
     }
 
     [Theory]
-    [MemberData(nameof(UnusableTexts))]
-    public void Parse_ReturnsDefaultsWithRootProblem_WhenTextUnusable(string json)
+    [MemberData(nameof(UnusableTextProblems))]
+    public void Parse_ReturnsDefaultsWithRootProblem_WhenTextUnusable(string json, Code code)
     {
         HeadhunterConfigParseResult result = Parse(json);
 
-        Assert.Equal(new[] { "" }, Paths(result));
+        Assert.Equal(new[] { (code, "") }, Problems(result));
         Assert.Equivalent(HeadhunterConfigDefaults.Config, result.Config, strict: true);
     }
 
@@ -74,7 +86,7 @@ public sealed class HeadhunterConfigParserTests
         HeadhunterConfigParseResult result = Parse("{\"version\":" + value + "}");
 
         Assert.Equal(1, result.Config.Version);
-        Assert.Equal(new[] { "version" }, Paths(result));
+        Assert.Equal(new[] { (Code.NotWholeNumber, "version") }, Problems(result));
     }
 
     [Fact]
@@ -84,7 +96,7 @@ public sealed class HeadhunterConfigParserTests
 
         Assert.Equal(2, result.Config.Version);
         Assert.Equal(30f, result.Config.DurationSeconds);
-        Assert.Equal(new[] { "version" }, Paths(result));
+        Assert.Equal(new[] { (Code.UnsupportedVersion, "version") }, Problems(result));
     }
 
     [Theory]
@@ -114,7 +126,7 @@ public sealed class HeadhunterConfigParserTests
         HeadhunterConfigParseResult result = Parse("{\"durationSeconds\":" + value + "}");
 
         Assert.Equal(HeadhunterConfigDefaults.DurationSeconds, result.Config.DurationSeconds);
-        Assert.Equal(new[] { "durationSeconds" }, Paths(result));
+        Assert.Equal(new[] { (Code.NotPositiveNumber, "durationSeconds") }, Problems(result));
     }
 
     [Fact]
@@ -137,7 +149,7 @@ public sealed class HeadhunterConfigParserTests
         HeadhunterConfigParseResult result = Parse("{\"maxStacks\":" + value + "}");
 
         Assert.Equal(10, result.Config.MaxStacks);
-        Assert.Equal(new[] { "maxStacks" }, Paths(result));
+        Assert.Equal(new[] { (Code.NotPositiveWholeNumber, "maxStacks") }, Problems(result));
     }
 
     [Theory]
@@ -157,7 +169,7 @@ public sealed class HeadhunterConfigParserTests
         HeadhunterConfigParseResult result = Parse("{\"triggers\":true}");
 
         Assert.Equal(HeadhunterConfigDefaults.Triggers, result.Config.Triggers);
-        Assert.Equal(new[] { "triggers" }, Paths(result));
+        Assert.Equal(new[] { (Code.NotObject, "triggers") }, Problems(result));
     }
 
     [Fact]
@@ -166,7 +178,7 @@ public sealed class HeadhunterConfigParserTests
         HeadhunterConfigParseResult result = Parse("{\"triggers\":{\"rare\":1,\"boss\":false}}");
 
         Assert.Equal(new HeadhunterTriggers(true, false, true, true, true), result.Config.Triggers);
-        Assert.Equal(new[] { "triggers.rare" }, Paths(result));
+        Assert.Equal(new[] { (Code.NotBool, "triggers.rare") }, Problems(result));
     }
 
     [Fact]
@@ -193,7 +205,7 @@ public sealed class HeadhunterConfigParserTests
         HeadhunterConfigParseResult result = Parse("{\"triggers\":{\"magic\":5}}");
 
         Assert.True(result.Config.Triggers.Magic);
-        Assert.Equal(new[] { "triggers.magic" }, Paths(result));
+        Assert.Equal(new[] { (Code.NotBool, "triggers.magic") }, Problems(result));
     }
 
     [Fact]
@@ -202,7 +214,7 @@ public sealed class HeadhunterConfigParserTests
         HeadhunterConfigParseResult result = Parse("{\"stats\":{}}");
 
         Assert.Equivalent(HeadhunterConfigDefaults.Stats, result.Config.Stats, strict: true);
-        Assert.Equal(new[] { "stats" }, Paths(result));
+        Assert.Equal(new[] { (Code.NotList, "stats") }, Problems(result));
     }
 
     [Fact]
@@ -215,23 +227,39 @@ public sealed class HeadhunterConfigParserTests
     }
 
     [Theory]
-    [InlineData("1", "stats[0]")]
-    [InlineData("{\"added\":1}", "stats[0]")]
-    [InlineData("{\"stat\":5}", "stats[0].stat")]
-    [InlineData("{\"stat\":\"Nope\"}", "stats[0].stat")]
-    [InlineData("{\"stat\":\"FakeA\",\"added\":\"x\"}", "stats[0].added")]
-    [InlineData("{\"stat\":\"FakeA\",\"increased\":true}", "stats[0].increased")]
-    [InlineData("{\"stat\":\"FakeA\",\"enabled\":\"yes\"}", "stats[0].enabled")]
-    [InlineData("{\"stat\":\"FakeA\",\"added\":1e300}", "stats[0].added")]
-    [InlineData("{\"stat\":\"FakeA\",\"increased\":NaN}", "stats[0].increased")]
-    [InlineData("{\"stat\":\"FakeA\",\"added\":99999999999999999999}", "stats[0].added")]
-    [InlineData("{\"stat\":\"FakeA\",\"added\":\"x\",\"enabled\":\"yes\"}", "stats[0].added")]
-    public void Parse_Stats_SkipsBadEntryWithProblem(string entry, string path)
+    [InlineData("1", "stats[0]", Code.NotObject)]
+    [InlineData("{\"added\":1}", "stats[0]", Code.MissingStat)]
+    [InlineData("{\"stat\":5}", "stats[0].stat", Code.UnknownStat)]
+    [InlineData("{\"stat\":\"Nope\"}", "stats[0].stat", Code.UnknownStat)]
+    [InlineData("{\"stat\":\"FakeA\",\"added\":\"x\"}", "stats[0].added", Code.NotFiniteNumber)]
+    [InlineData(
+        "{\"stat\":\"FakeA\",\"increased\":true}",
+        "stats[0].increased",
+        Code.NotFiniteNumber
+    )]
+    [InlineData("{\"stat\":\"FakeA\",\"enabled\":\"yes\"}", "stats[0].enabled", Code.NotBool)]
+    [InlineData("{\"stat\":\"FakeA\",\"added\":1e300}", "stats[0].added", Code.NotFiniteNumber)]
+    [InlineData(
+        "{\"stat\":\"FakeA\",\"increased\":NaN}",
+        "stats[0].increased",
+        Code.NotFiniteNumber
+    )]
+    [InlineData(
+        "{\"stat\":\"FakeA\",\"added\":99999999999999999999}",
+        "stats[0].added",
+        Code.NotFiniteNumber
+    )]
+    [InlineData(
+        "{\"stat\":\"FakeA\",\"added\":\"x\",\"enabled\":\"yes\"}",
+        "stats[0].added",
+        Code.NotFiniteNumber
+    )]
+    public void Parse_Stats_SkipsBadEntryWithProblem(string entry, string path, Code code)
     {
         HeadhunterConfigParseResult result = ParseStats("[" + entry + "]");
 
         Assert.Empty(result.Config.Stats);
-        Assert.Equal(new[] { path }, Paths(result));
+        Assert.Equal(new[] { (code, path) }, Problems(result));
     }
 
     [Fact]
@@ -242,7 +270,7 @@ public sealed class HeadhunterConfigParserTests
         );
 
         Assert.Equal(new[] { "FakeA", "FakeB" }, result.Config.Stats.Select(entry => entry.Stat));
-        Assert.Equal(new[] { "stats[1].stat" }, Paths(result));
+        Assert.Equal(new[] { (Code.UnknownStat, "stats[1].stat") }, Problems(result));
     }
 
     [Fact]
@@ -256,7 +284,7 @@ public sealed class HeadhunterConfigParserTests
             new HeadhunterStatEntry("FakeA", 1f, 0f, true),
             Assert.Single(result.Config.Stats)
         );
-        Assert.Equal(new[] { "stats[1].stat" }, Paths(result));
+        Assert.Equal(new[] { (Code.DuplicateStat, "stats[1].stat") }, Problems(result));
     }
 
     [Fact]
@@ -270,7 +298,7 @@ public sealed class HeadhunterConfigParserTests
             new HeadhunterStatEntry("FakeA", 1f, 0f, false),
             Assert.Single(result.Config.Stats)
         );
-        Assert.Equal(new[] { "stats[1].stat" }, Paths(result));
+        Assert.Equal(new[] { (Code.DuplicateStat, "stats[1].stat") }, Problems(result));
     }
 
     [Fact]
@@ -284,7 +312,7 @@ public sealed class HeadhunterConfigParserTests
             new HeadhunterStatEntry("FakeA", 2f, 0f, true),
             Assert.Single(result.Config.Stats)
         );
-        Assert.Equal(new[] { "stats[0].added" }, Paths(result));
+        Assert.Equal(new[] { (Code.NotFiniteNumber, "stats[0].added") }, Problems(result));
     }
 
     [Fact]
@@ -316,8 +344,14 @@ public sealed class HeadhunterConfigParserTests
         );
 
         Assert.Equal(
-            new[] { "durationSeconds", "triggers.rare", "stats[0].stat", "stats[1].enabled" },
-            Paths(result)
+            new[]
+            {
+                (Code.NotPositiveNumber, "durationSeconds"),
+                (Code.NotBool, "triggers.rare"),
+                (Code.UnknownStat, "stats[0].stat"),
+                (Code.NotBool, "stats[1].enabled"),
+            },
+            Problems(result)
         );
         Assert.Equal("FakeB", Assert.Single(result.Config.Stats).Stat);
     }
@@ -377,7 +411,7 @@ public sealed class HeadhunterConfigParserTests
         );
 
         Assert.Empty(result.Config.Stats);
-        Assert.Equal(new[] { "stats[0].tag" }, Paths(result));
+        Assert.Equal(new[] { (Code.EmptyOrNotText, "stats[0].tag") }, Problems(result));
     }
 
     [Fact]
@@ -405,7 +439,7 @@ public sealed class HeadhunterConfigParserTests
             new HeadhunterStatEntry("FakeA", 1f, 0f, true, "FakeTag"),
             Assert.Single(result.Config.Stats)
         );
-        Assert.Equal(new[] { "stats[1].stat" }, Paths(result));
+        Assert.Equal(new[] { (Code.DuplicateStat, "stats[1].stat") }, Problems(result));
     }
 
     private static HeadhunterConfigParseResult Parse(string json)
@@ -418,8 +452,8 @@ public sealed class HeadhunterConfigParserTests
         return Parse("{\"stats\":" + statsJson + "}");
     }
 
-    private static string[] Paths(HeadhunterConfigParseResult result)
+    private static (Code Code, string Path)[] Problems(HeadhunterConfigParseResult result)
     {
-        return result.Problems.Select(problem => problem.Path).ToArray();
+        return HeadhunterTestData.Problems(result.Problems);
     }
 }

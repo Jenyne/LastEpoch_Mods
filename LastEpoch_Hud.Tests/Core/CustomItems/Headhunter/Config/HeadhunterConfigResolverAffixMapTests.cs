@@ -1,4 +1,5 @@
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
+using Code = LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.HeadhunterConfigProblemCode;
 
 namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter.Config;
 
@@ -32,21 +33,12 @@ public sealed class HeadhunterConfigResolverAffixMapTests
             ThreeStats()
         );
 
-        Assert.Equal(new[] { "affixMap[0].rows[0]" }, problems.Select(problem => problem.Path));
+        Assert.Equal(
+            new[] { (Code.UnknownRow, "affixMap[0].rows[0]") },
+            HeadhunterTestData.Problems(problems)
+        );
         Assert.True(result.TryGetAffixRows(100, out IReadOnlyList<int> rows));
         Assert.Equal(new[] { 0 }, rows);
-    }
-
-    [Fact]
-    public void Resolve_AffixMap_UnknownRow_MessageNamesKeyAndText()
-    {
-        var problems = new List<HeadhunterConfigProblem>();
-
-        Resolve(problems, [HeadhunterTestData.Affix(100, "Nope")], ThreeStats());
-
-        string message = Assert.Single(problems).Message;
-        Assert.Contains("100", message);
-        Assert.Contains("Nope", message);
     }
 
     [Fact]
@@ -63,7 +55,10 @@ public sealed class HeadhunterConfigResolverAffixMapTests
             ThreeStats()
         );
 
-        Assert.Equal(new[] { "affixMap[1].rows[1]" }, problems.Select(problem => problem.Path));
+        Assert.Equal(
+            new[] { (Code.UnknownRow, "affixMap[1].rows[1]") },
+            HeadhunterTestData.Problems(problems)
+        );
     }
 
     [Fact]
@@ -95,7 +90,10 @@ public sealed class HeadhunterConfigResolverAffixMapTests
             HeadhunterTestData.Entry("FakeZ")
         );
 
-        Assert.Equal(new[] { "stats[1].stat" }, problems.Select(problem => problem.Path));
+        Assert.Equal(
+            new[] { (Code.UnknownStat, "stats[1].stat") },
+            HeadhunterTestData.Problems(problems)
+        );
         Assert.True(result.TryGetAffixRows(100, out IReadOnlyList<int> rows));
         Assert.Equal(new[] { 0 }, rows);
     }

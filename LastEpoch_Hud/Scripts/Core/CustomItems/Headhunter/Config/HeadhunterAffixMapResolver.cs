@@ -50,7 +50,9 @@ internal static class HeadhunterAffixMapResolver
             }
             string path = HeadhunterConfigKeys.AffixMap + "[" + index + "].rows[" + j + "]";
             string message = "Mod " + entry.ModKey + " names no stat row: " + text;
-            problems.Add(new HeadhunterConfigProblem(path, message));
+            problems.Add(
+                new HeadhunterConfigProblem(HeadhunterConfigProblemCode.UnknownRow, path, message)
+            );
         }
         return rows.ToArray();
     }

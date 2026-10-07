@@ -1,4 +1,5 @@
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
+using Code = LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.HeadhunterConfigProblemCode;
 
 namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter.Config;
 
@@ -40,7 +41,7 @@ public sealed class HeadhunterConfigParserAffixMapTests
     {
         HeadhunterConfigParseResult result = ParseMap("5");
 
-        Assert.Equal(new[] { "affixMap" }, Paths(result));
+        Assert.Equal(new[] { (Code.NotList, "affixMap") }, Problems(result));
         Assert.Same(HeadhunterAffixDefaults.AffixMap, result.Config.AffixMap);
     }
 
@@ -49,7 +50,7 @@ public sealed class HeadhunterConfigParserAffixMapTests
     {
         HeadhunterConfigParseResult result = ParseMap("""[5,{"modKey":1,"rows":[]}]""");
 
-        Assert.Equal(new[] { "affixMap[0]" }, Paths(result));
+        Assert.Equal(new[] { (Code.NotObject, "affixMap[0]") }, Problems(result));
         Assert.Equal(1, Assert.Single(result.Config.AffixMap).ModKey);
     }
 
@@ -62,7 +63,7 @@ public sealed class HeadhunterConfigParserAffixMapTests
     {
         HeadhunterConfigParseResult result = ParseMap("[" + entry + "]");
 
-        Assert.Equal(new[] { "affixMap[0].modKey" }, Paths(result));
+        Assert.Equal(new[] { (Code.NotWholeNumber, "affixMap[0].modKey") }, Problems(result));
         Assert.Empty(result.Config.AffixMap);
     }
 
@@ -75,7 +76,7 @@ public sealed class HeadhunterConfigParserAffixMapTests
     {
         HeadhunterConfigParseResult result = ParseMap("[" + entry + "]");
 
-        Assert.Equal(new[] { "affixMap[0].rows" }, Paths(result));
+        Assert.Equal(new[] { (Code.NotList, "affixMap[0].rows") }, Problems(result));
         Assert.Empty(result.Config.AffixMap);
     }
 
@@ -89,7 +90,7 @@ public sealed class HeadhunterConfigParserAffixMapTests
             "[{\"modKey\":1,\"rows\":[\"FakeA\"," + item + ",\"FakeB\"]}]"
         );
 
-        Assert.Equal(new[] { "affixMap[0].rows[1]" }, Paths(result));
+        Assert.Equal(new[] { (Code.EmptyOrNotText, "affixMap[0].rows[1]") }, Problems(result));
         Assert.Equal(new[] { "FakeA", "FakeB" }, Assert.Single(result.Config.AffixMap).Rows);
     }
 
@@ -100,7 +101,7 @@ public sealed class HeadhunterConfigParserAffixMapTests
             """[{"modKey":1,"rows":["FakeA"]},{"modKey":1,"rows":["FakeB"]}]"""
         );
 
-        Assert.Equal(new[] { "affixMap[1].modKey" }, Paths(result));
+        Assert.Equal(new[] { (Code.DuplicateModKey, "affixMap[1].modKey") }, Problems(result));
         Assert.Equal(new[] { "FakeA" }, Assert.Single(result.Config.AffixMap).Rows);
     }
 
@@ -140,7 +141,10 @@ public sealed class HeadhunterConfigParserAffixMapTests
             """[5,{"modKey":1,"rows":[]},{"modKey":1,"rows":[]}]"""
         );
 
-        Assert.Equal(new[] { "affixMap[0]", "affixMap[2].modKey" }, Paths(result));
+        Assert.Equal(
+            new[] { (Code.NotObject, "affixMap[0]"), (Code.DuplicateModKey, "affixMap[2].modKey") },
+            Problems(result)
+        );
     }
 
     private static HeadhunterConfigParseResult Parse(string json)
@@ -153,8 +157,8 @@ public sealed class HeadhunterConfigParserAffixMapTests
         return Parse("{\"affixMap\":" + mapJson + "}");
     }
 
-    private static string[] Paths(HeadhunterConfigParseResult result)
+    private static (Code Code, string Path)[] Problems(HeadhunterConfigParseResult result)
     {
-        return result.Problems.Select(problem => problem.Path).ToArray();
+        return HeadhunterTestData.Problems(result.Problems);
     }
 }

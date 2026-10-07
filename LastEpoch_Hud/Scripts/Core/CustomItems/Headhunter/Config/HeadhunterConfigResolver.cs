@@ -53,13 +53,25 @@ public static class HeadhunterConfigResolver
 
             if (!statIds.TryGetValue(entry.Stat, out int statId))
             {
-                AddProblem(problems, i, HeadhunterConfigKeys.Stat, "Unknown stat: " + entry.Stat);
+                AddProblem(
+                    problems,
+                    HeadhunterConfigProblemCode.UnknownStat,
+                    i,
+                    HeadhunterConfigKeys.Stat,
+                    "Unknown stat: " + entry.Stat
+                );
                 continue;
             }
 
             if (!TryResolveTag(entry, tagIds, out int tags))
             {
-                AddProblem(problems, i, HeadhunterConfigKeys.Tag, "Unknown tag: " + entry.Tag);
+                AddProblem(
+                    problems,
+                    HeadhunterConfigProblemCode.UnknownTag,
+                    i,
+                    HeadhunterConfigKeys.Tag,
+                    "Unknown tag: " + entry.Tag
+                );
                 continue;
             }
 
@@ -67,6 +79,7 @@ public static class HeadhunterConfigResolver
             {
                 AddProblem(
                     problems,
+                    HeadhunterConfigProblemCode.DuplicateStatId,
                     i,
                     HeadhunterConfigKeys.Stat,
                     "Stat and tag share a game id with an earlier row: " + entry.Stat
@@ -93,13 +106,14 @@ public static class HeadhunterConfigResolver
 
     private static void AddProblem(
         ICollection<HeadhunterConfigProblem> problems,
+        HeadhunterConfigProblemCode code,
         int index,
         string field,
         string message
     )
     {
         string path = HeadhunterConfigKeys.Stats + "[" + index + "]." + field;
-        problems.Add(new HeadhunterConfigProblem(path, message));
+        problems.Add(new HeadhunterConfigProblem(code, path, message));
     }
 
     private static HeadhunterBuffStat ToBuffStat(HeadhunterStatEntry entry, int statId, int tags)

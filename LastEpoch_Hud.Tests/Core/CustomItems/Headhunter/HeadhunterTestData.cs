@@ -102,6 +102,13 @@ internal static class HeadhunterTestData
         return new HeadhunterStatEntry(stat, 0f, 0f, false);
     }
 
+    public static (HeadhunterConfigProblemCode Code, string Path)[] Problems(
+        IEnumerable<HeadhunterConfigProblem> problems
+    )
+    {
+        return problems.Select(problem => (problem.Code, problem.Path)).ToArray();
+    }
+
     public static HeadhunterResolvedConfig Resolve(HeadhunterConfig config)
     {
         return HeadhunterConfigResolver.Resolve(
