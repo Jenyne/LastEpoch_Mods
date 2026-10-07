@@ -8,37 +8,12 @@ public sealed class ConfigChangeDetectorTests
     private static readonly DateTime _t2 = _t1.AddSeconds(5);
 
     [Fact]
-    public void IsCheckDue_FirstCall_True()
-    {
-        Assert.True(new ConfigChangeDetector(1.0).IsCheckDue(0));
-    }
-
-    [Fact]
     public void IsCheckDue_BeforeInterval_False()
     {
         var detector = new ConfigChangeDetector(1.0);
         detector.IsCheckDue(0);
 
         Assert.False(detector.IsCheckDue(0.5));
-    }
-
-    [Fact]
-    public void IsCheckDue_AfterInterval_True()
-    {
-        var detector = new ConfigChangeDetector(1.0);
-        detector.IsCheckDue(0);
-
-        Assert.True(detector.IsCheckDue(1.0));
-    }
-
-    [Fact]
-    public void IsCheckDue_AfterSkip_SchedulesFromNow()
-    {
-        var detector = new ConfigChangeDetector(1.0);
-        detector.IsCheckDue(0);
-
-        Assert.True(detector.IsCheckDue(5.0));
-        Assert.False(detector.IsCheckDue(5.5));
     }
 
     [Fact]

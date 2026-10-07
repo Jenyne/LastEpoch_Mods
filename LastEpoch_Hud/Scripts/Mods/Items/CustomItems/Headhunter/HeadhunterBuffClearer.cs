@@ -18,5 +18,6 @@ internal static class HeadhunterBuffClearer
         }
 
         HeadhunterBuffSink.Apply(buffs, _clear.RemoveAll(config));
+        HeadhunterBuffBar.MarkDirty();
     }
 }

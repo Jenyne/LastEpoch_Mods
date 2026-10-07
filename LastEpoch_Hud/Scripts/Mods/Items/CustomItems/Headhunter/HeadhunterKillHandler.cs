@@ -24,6 +24,7 @@ internal static class HeadhunterKillHandler
         HeadhunterBuffSink.FillActive(buffs, HeadhunterConfigLoader.Resolved.Stats, _active);
         IReadOnlyList<BuffAction> actions = mechanic.OnKill(kill, _active);
         HeadhunterBuffSink.Apply(buffs, actions);
+        HeadhunterBuffBar.MarkDirty();
         LogKill(kill, actions);
     }
 

@@ -35,6 +35,20 @@ internal static class HeadhunterBuffSink
         }
     }
 
+    public static void FillRemaining(
+        StatBuffs buffs,
+        IReadOnlyList<HeadhunterBuffStat> stats,
+        float[] remaining
+    )
+    {
+        for (int i = 0; i < stats.Count; i++)
+        {
+            remaining[i] = TryGetLive(buffs, stats[i].BuffName, out Buff buff)
+                ? buff.remainingDuration
+                : 0f;
+        }
+    }
+
     public static void Apply(StatBuffs buffs, IReadOnlyList<BuffAction> actions)
     {
         for (int i = 0; i < actions.Count; i++)
