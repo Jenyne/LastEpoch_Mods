@@ -40,6 +40,11 @@ public sealed class RareModsMechanic : IHeadhunterMechanic
         return _actions;
     }
 
+    public void Reset()
+    {
+        _stacks.Reset();
+    }
+
     private bool Fires(KillInfo kill)
     {
         if (kill.ByMinion && !_config.Triggers.MinionKills)

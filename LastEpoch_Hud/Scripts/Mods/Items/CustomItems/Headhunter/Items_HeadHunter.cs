@@ -1,10 +1,13 @@
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Affixes;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Bar;
 using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Kills;
+using LastEpoch_Hud.Scripts.ModUI;
 using MelonLoader;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter;
 
@@ -19,6 +22,21 @@ public class Items_HeadHunter : MonoBehaviour
     private void Awake()
     {
         HeadhunterConfigLoader.Load();
+        SceneManager.add_sceneLoaded(new System.Action<Scene, LoadSceneMode>(OnSceneLoaded));
+    }
+
+    private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if (!HeadhunterRunReset.IsCharacterExit(scene.name))
+        {
+            return;
+        }
+
+        HeadhunterBuffClearer.ClearAll(HeadhunterConfigLoader.Resolved);
+        if (ModSettings.Debug.Enabled.Value)
+        {
+            Main.logger_instance?.Msg("Headhunter run state reset");
+        }
     }
 
     private void Update()

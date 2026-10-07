@@ -590,6 +590,30 @@ public sealed class RareModsMechanicTests
         Assert.Equal([0, 8], actions.Select(action => action.Tags));
     }
 
+    [Fact]
+    public void Reset_ClearsAllStacks()
+    {
+        var state = new HeadhunterStackState(3);
+        RareModsMechanic mechanic = HeadhunterTestData.Mechanic(
+            HeadhunterTestData.Resolve(
+                HeadhunterTestData.Config(HeadhunterTestData.AllTriggers, _threeStats)
+            ),
+            state
+        );
+        Fire(mechanic, Active(), 1, 2, 3);
+        Fire(mechanic, Active(0, 1, 2), 1);
+        Assert.Equal([2, 1, 1], Counts(state));
+
+        mechanic.Reset();
+
+        Assert.Equal([0, 0, 0], Counts(state));
+    }
+
+    private static int[] Counts(HeadhunterStackState state)
+    {
+        return [state.Get(0), state.Get(1), state.Get(2)];
+    }
+
     private static BuffAction[] Fire(
         RareModsMechanic mechanic,
         HashSet<int> liveRows,
