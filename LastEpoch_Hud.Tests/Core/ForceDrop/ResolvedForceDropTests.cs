@@ -20,6 +20,59 @@ public sealed class ResolvedForceDropTests
     }
 
     [Fact]
+    public void CorruptedRequest_ConsumesPotentialButKeepsEverySelectedModifier()
+    {
+        var affix = new ResolvedForceDropAffix(13, 6, 255, ForceDropSeal.None);
+        var corruption = new ResolvedForceDropAffix(1074, 6, 255, ForceDropSeal.Corruption);
+        var request = new ResolvedForceDrop(
+            21,
+            10,
+            477,
+            7,
+            100,
+            4,
+            28,
+            true,
+            new[] { 255, 255, 255 },
+            Enumerable.Repeat(255, 8),
+            new[] { affix },
+            new[] { 1131 },
+            corruption
+        );
+        Assert.Equal(0, request.ForgingPotential);
+        Assert.Equal(0, request.LegendaryPotential);
+        Assert.Equal(0, request.WeaversWill);
+        Assert.Same(affix, request.Affixes.Single());
+        Assert.Equal(1131, request.VariantIds.Single());
+        Assert.Same(corruption, request.Corruption);
+    }
+
+    [Theory]
+    [InlineData(100, 4, 0)]
+    [InlineData(0, 0, 28)]
+    public void UncorruptedRequest_PreservesPotential(int fp, int lp, int ww)
+    {
+        var request = new ResolvedForceDrop(
+            21,
+            10,
+            477,
+            7,
+            fp,
+            lp,
+            ww,
+            false,
+            new[] { 255, 255, 255 },
+            Enumerable.Repeat(255, 8),
+            Array.Empty<ResolvedForceDropAffix>(),
+            new[] { 1131 },
+            null
+        );
+        Assert.Equal(fp, request.ForgingPotential);
+        Assert.Equal(lp, request.LegendaryPotential);
+        Assert.Equal(ww, request.WeaversWill);
+    }
+
+    [Fact]
     public void OrdinaryIdol_CannotUseEquipmentTiers()
     {
         // Live catalog: Standard/Idols definitions have one native tier.

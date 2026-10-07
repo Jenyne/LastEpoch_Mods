@@ -128,6 +128,18 @@ public sealed class ForceDropPackingSnapshotTests
     }
 
     [Fact]
+    public void CorruptionAffixSurvivingWithoutItsSeal_RemainsRejected()
+    {
+        var saved = SealedAndCorrupted.ToArray();
+        saved[2] = new PackedForceDropAffix(1020, 6, 87, ForceDropSeal.None, 6);
+        // The user's 57fef5ef log kept its chosen corruption ID while losing
+        // both the FromCorruption seal and presence flag during refresh.
+        string error = Snapshot()
+            .Difference(Snapshot(affixes: saved, sockets: 0, corruption: false));
+        Assert.Contains("corruption or seal flags", error);
+    }
+
+    [Fact]
     public void NativeReordering_IsAllowedWithoutLosingSealOwnership()
     {
         Assert.Equal(

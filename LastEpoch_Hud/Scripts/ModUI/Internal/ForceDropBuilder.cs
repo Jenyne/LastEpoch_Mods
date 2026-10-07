@@ -261,6 +261,12 @@ public static class ForceDropBuilder
         forging.input.interactable = !corrupted && !forging.random;
         if (forging.mode != null)
             forging.mode.interactable = !corrupted;
+        lp.input.interactable = !corrupted && !lp.random;
+        ww.input.interactable = !corrupted && !ww.random;
+        if (lp.mode != null)
+            lp.mode.interactable = !corrupted;
+        if (ww.mode != null)
+            ww.mode.interactable = !corrupted;
         RefreshPreview();
         return true;
     }
@@ -1091,10 +1097,20 @@ public static class ForceDropBuilder
                 s.Append("\n\n")
                     .Append(
                         FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential
-                            ? L("LP") + ": " + (lp.random ? L("Random") : lp.value.ToString())
+                            ? L("LP")
+                                + ": "
+                                + (
+                                    corrupted ? "0"
+                                    : lp.random ? L("Random")
+                                    : lp.value.ToString()
+                                )
                             : L("Weaver's Will")
                                 + ": "
-                                + (ww.random ? L("Random") : ww.value.ToString())
+                                + (
+                                    corrupted ? "0"
+                                    : ww.random ? L("Random")
+                                    : ww.value.ToString()
+                                )
                     );
         }
         int variantCount = UniqueVariantAdapter.VariantCount(SelectedRageEntry());
@@ -1167,8 +1183,8 @@ public static class ForceDropBuilder
             unique ? FD.item_unique_id : 0,
             FD.item_rarity,
             equipment && !unique && !corrupted ? Sample(forging) : 0,
-            usesLP ? Sample(lp) : 0,
-            unique && !usesLP ? Sample(ww) : 0,
+            usesLP && !corrupted ? Sample(lp) : 0,
+            unique && !usesLP && !corrupted ? Sample(ww) : 0,
             corrupted,
             implicitValues,
             uniqueValues,

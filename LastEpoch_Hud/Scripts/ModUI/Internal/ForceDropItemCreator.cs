@@ -92,9 +92,9 @@ public static class ForceDropItemCreator
                 ids[i] = request.VariantIds[i];
             UniqueVariantAdapter.Apply(item, ids);
         }
-        // Eligibility/slot allocation runs on the actual uncorrupted item. Mark
-        // corruption only after its addition, so native predicates see the same
-        // starting state as a real corruption action.
+        // Eligibility/slot allocation runs on the actual uncorrupted item. The
+        // adapter marks corruption immediately after addition, BEFORE its first
+        // refresh. Finish the native corruption action before final verification.
         if (request.Corruption != null)
         {
             RequireTier(ForceDropCatalog.Find(request.Corruption.Id), request.Corruption.Tier);

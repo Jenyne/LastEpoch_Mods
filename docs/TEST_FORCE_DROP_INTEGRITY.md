@@ -12,7 +12,7 @@ This pass keeps the current Force Drop layout and changes its creation path. It 
 - Ordinary, corruption and variant definitions use a shared live catalog. Ordinary affixes use native constructor metadata rather than manual field initialization.
 - Tier ranges follow the selected definition. In the supplied catalog, ordinary idol affixes have one tier; their fields now stop at T1. The existing route cap remains T7.
 - Regular sealing uses the game's seal operation. A regular seal and a corruption seal are tracked independently. The corruption operation's regular-seal output no longer incorrectly vetoes their coexistence.
-- Corruption is marked after affix addition. Corrupted items retain zero forging potential; the old creator restored the selected FP afterward. The existing FP field stays in place and is disabled while corrupted; the preview shows 0.
+- Corruption is marked after native affix-slot allocation and before the adapter's first packing step. Corrupted requests use zero forging potential, legendary potential and Weaver's Will. Those fields keep their existing positions and selected values for later uncorrupted drops, are disabled while corrupted, and preview as 0.
 - Every completed item, including a noncorrupted drop, is decoded from its final packed ID and compared. Checks cover base/subtype/unique identity, rarity, potential, implicit and unique rolls, affix IDs/tiers/rolls/special types, and seal ownership. Base-item socket counts remain strict; unique/set/legendary items may decode sockets as zero while preserving their complete affix list. FP above 63 still uses the existing mod persistence extension; its native packed value is checked separately from the restored live value.
 - Batch status reports completed items if a later copy fails. Rejected items never reach the ground-drop call.
 - The testing script checks the Release DLL it just built, instead of an older Keyboard build.
@@ -75,9 +75,19 @@ The correction accepts zero decoded sockets for unique/set/legendary storage (ra
 
 Retest the ring with only its modifier, then with four ordinary affixes, and the nonvariant unique sword. Confirm effects and save/reload after successful drops. This corrects the demonstrated false rejection; the earlier `Unique variant changed an existing affix` report remains unresolved until reproduced with detailed signatures. The sword's older generic rejection did not provide decoded values, so its outcome still needs game testing.
 
+## Corruption packing order correction
+
+The next `57fef5ef` test reported successful noncorrupted drops, followed by a corruption failure on Unsated Rage. Affix 1074 remained in the affix list but lost `FromCorruption` and the presence flag during the adapter's refresh. The preceding pre-pack corruption check passed. Inspection found that the adapter refreshed the item before the creator marked it corrupted.
+
+The adapter now creates the native corruption slot while the item is uncorrupted, then marks it corrupted before its first refresh. It verifies that the selected seal remains present both after marking and after packing. The creator still completes the native corruption action and verifies the final decoded ID before spawning anything. The next game test must confirm this corrects the observed loss; it is not yet runtime-confirmed.
+
+Resolved corrupted requests normalize FP, LP and Weaver's Will to zero, including calls outside the HUD. This follows [the official corruption rules](https://support.lastepoch.com/hc/en-us/articles/52977667498267-Corrupted-Items). The preview and disabled controls reflect that behavior. Independent regular seals and fixed unique modifiers remain required to survive unchanged; corruption must not take over their slots.
+
+Retest the ring with its exclusive modifier, four ordinary affixes and the same corruption choice. Then add a regular sealed affix if available for the selected item, and repeat on a base item. After successful creation, verify tooltip/stats and save/reload. Preserve the complete rejection if any stage fails; corruption errors now also print the item corruption bit and changed existing-affix signatures.
+
 ## Verification completed here
 
-- 51 game-independent regression cases passed using xUnit assertions, including the exact ring runtime regression, preservation of independent seals, and rejection of missing/changed affixes despite zero sockets.
+- 55 game-independent regression cases passed using xUnit assertions, including the exact ring socket regression, preservation of independent seals, rejection of a corruption modifier losing its seal, and potential normalization without losing selected modifiers.
 - New core compiled for .NET 6.
 - Changed Force Drop HUD and adapters compile against the supplied Unity/TMP/Harmony assemblies with game context stubs.
 - Formatting and diff checks pass; the layout-building code and Harmony patch count are unchanged.

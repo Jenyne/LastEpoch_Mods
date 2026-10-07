@@ -81,9 +81,12 @@ public sealed class ResolvedForceDrop
         SubType = subType;
         UniqueId = uniqueId;
         Rarity = rarity;
-        ForgingPotential = forgingPotential;
-        LegendaryPotential = legendaryPotential;
-        WeaversWill = weaversWill;
+        // Native corruption consumes these resources. Normalize at the resolved
+        // request boundary so construction and final verification agree, even if
+        // values remain selected in a disabled HUD field.
+        ForgingPotential = corrupted ? 0 : forgingPotential;
+        LegendaryPotential = corrupted ? 0 : legendaryPotential;
+        WeaversWill = corrupted ? 0 : weaversWill;
         Corrupted = corrupted;
         ImplicitRolls = CopyRolls(implicitRolls, nameof(implicitRolls));
         UniqueRolls = CopyRolls(uniqueRolls, nameof(uniqueRolls));

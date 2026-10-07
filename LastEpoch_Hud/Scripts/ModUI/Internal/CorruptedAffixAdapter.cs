@@ -195,6 +195,11 @@ public static class CorruptedAffixAdapter
         else
             ((FieldInfo)storage).SetValue(item, affix);
         VerifyStoredCorruption(item, id, "before packing");
+        // Native eligibility/slot allocation must see an uncorrupted item, but
+        // the very first refresh must serialize a corrupted item. Otherwise the
+        // runtime removes FromCorruption while keeping the selected affix ID.
+        item.SetAsCorrupted();
+        VerifyStoredCorruption(item, id, "after marking corruption");
         item.RefreshIDAndValues();
         VerifyStoredCorruption(item, id, "after packing");
         VerifyOriginalAffixes(item, originalAffixes, id);
@@ -323,7 +328,11 @@ public static class CorruptedAffixAdapter
         for (int i = 0; i < actual.Count; i++)
             if (actual[i] != expected[i])
                 throw new InvalidOperationException(
-                    "Corruption changed an existing affix; no item was dropped"
+                    "Corruption changed an existing affix (expected=["
+                        + string.Join(",", expected)
+                        + "], actual=["
+                        + string.Join(",", actual)
+                        + "]); no item was dropped"
                 );
     }
 
@@ -368,6 +377,8 @@ public static class CorruptedAffixAdapter
                     + recognized
                     + ", flag="
                     + item.hasSealedAffixFromCorruption
+                    + ", corrupted="
+                    + item.corrupted
                     + ", rarity="
                     + item.rarity
                     + ", sockets="
