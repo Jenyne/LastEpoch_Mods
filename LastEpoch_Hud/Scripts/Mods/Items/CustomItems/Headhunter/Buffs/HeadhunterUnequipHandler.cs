@@ -10,13 +10,7 @@ internal static class HeadhunterUnequipHandler
 {
     public static void OnItemRemoved(ItemContainerEntryHandler removed)
     {
-        if (removed.IsNullOrDestroyed() || removed.entry.IsNullOrDestroyed())
-        {
-            return;
-        }
-
-        ItemData data = removed.entry.data;
-        if (data.IsNullOrDestroyed() || data.uniqueID != CustomUniqueSpecs.Headhunter.UniqueId)
+        if (!CustomItemRemoval.IsUnique(removed, CustomUniqueSpecs.Headhunter.UniqueId))
         {
             return;
         }

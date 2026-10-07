@@ -12,8 +12,6 @@ public class Items_Mjolner : MonoBehaviour
 {
     private static readonly CustomUniqueRegistrar _registrar = new(CreateDefinition());
 
-    private bool _inGame;
-
     public Items_Mjolner(System.IntPtr ptr)
         : base(ptr) { }
 
@@ -35,19 +33,7 @@ public class Items_Mjolner : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        if (!Scenes.IsGameScene())
-        {
-            _inGame = false;
-            return;
-        }
-
-        MjolnerTrigger.InitializeSocketedSkills();
-        if (!_inGame)
-        {
-            MjolnerHitEvents.Reset();
-        }
-
-        _inGame = true;
+        MjolnerHitEvents.MarkSceneLoaded();
     }
 
     private static CustomUniqueDefinition CreateDefinition()
