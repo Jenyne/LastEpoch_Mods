@@ -70,21 +70,18 @@ public static class UniqueVariantAdapter
     public static List<AffixList.Affix> Catalog(UniqueList.Entry entry)
     {
         var result = new List<AffixList.Affix>();
-        var list = AffixList.get();
-        if (!HasVariants(entry) || list.IsNullOrDestroyed() || list.AllAffixes.IsNullOrDestroyed())
+        if (!HasVariants(entry))
             return result;
         foreach (var id in entry.droppableLegendaryAffixes)
-        foreach (var definition in list.AllAffixes)
+        {
+            var definition = ForceDropCatalog.Find(id);
             if (
                 !definition.IsNullOrDestroyed()
-                && definition.affixId == id
                 && !CorruptedAffixAdapter.IsCorruption(definition)
                 && !result.Exists(a => a.affixId == id)
             )
-            {
                 result.Add(definition);
-                break;
-            }
+        }
         return result;
     }
 

@@ -12,7 +12,6 @@ public static class CorruptedAffixAdapter
     static bool checkedStorage;
     static bool flagStorage;
     static readonly List<AffixList.Affix> catalog = new List<AffixList.Affix>();
-    static bool catalogLoaded;
 
     public static bool IsSupported
     {
@@ -120,60 +119,10 @@ public static class CorruptedAffixAdapter
 
     static void LoadCatalog()
     {
-        if (catalogLoaded)
-            return;
         catalog.Clear();
-        var list = AffixList.get();
-        if (list.IsNullOrDestroyed())
-            return;
-        foreach (var a in list.singleAffixes)
-            if (!a.IsNullOrDestroyed() && IsCorruption(a))
-                catalog.Add(a);
-        foreach (var a in list.multiAffixes)
-            if (!a.IsNullOrDestroyed() && IsCorruption(a))
-                catalog.Add(a);
-        // AllAffixes includes definitions omitted by the editor's single/multi views.
-        var all = list.AllAffixes;
-        if (!all.IsNullOrDestroyed())
-            foreach (var definition in all)
-                if (
-                    !definition.IsNullOrDestroyed()
-                    && IsCorruption(definition)
-                    && !catalog.Exists(x => x.affixId == definition.affixId)
-                )
-                    catalog.Add(definition);
-        // Also support separately exposed collections.
-        foreach (string name in new[] { "specialAffixes", "corruptedAffixes" })
-        {
-            object collection = null;
-            var property = typeof(AffixList).GetProperty(name);
-            if (property != null && property.CanRead)
-                collection = property.GetValue(list);
-            var field = typeof(AffixList).GetField(name);
-            if (field != null)
-                collection = field.GetValue(list);
-            if (collection == null)
-                continue;
-            var countProperty =
-                collection.GetType().GetProperty("Count")
-                ?? collection.GetType().GetProperty("Length");
-            var indexer = collection.GetType().GetProperty("Item", new[] { typeof(int) });
-            if (countProperty == null || indexer == null)
-                continue;
-            int count = (int)countProperty.GetValue(collection);
-            if (count < 0 || count > 10000)
-                continue;
-            for (int i = 0; i < count; i++)
-                if (
-                    indexer.GetValue(collection, new object[] { i }) is AffixList.Affix definition
-                    && !definition.IsNullOrDestroyed()
-                    && IsCorruption(definition)
-                    && !catalog.Exists(x => x.affixId == definition.affixId)
-                )
-                    catalog.Add(definition);
-        }
-        // A catalog can still be loading when the menu is first opened; retry until populated.
-        catalogLoaded = catalog.Count > 0;
+        foreach (var definition in ForceDropCatalog.Definitions())
+            if (IsCorruption(definition))
+                catalog.Add(definition);
     }
 
     public static IEnumerable<AffixList.Affix> Catalog()
@@ -195,12 +144,19 @@ public static class CorruptedAffixAdapter
                 definition = a;
                 break;
             }
-        if (definition.IsNullOrDestroyed() || !FitsItem(definition, item.itemType, item.subType))
+        if (
+            definition.IsNullOrDestroyed()
+            || !FitsItem(definition, item.itemType, item.subType)
+            || tier < 0
+            || tier >= ForceDropCatalog.MaximumTier(definition)
+            || roll < 0
+            || roll > 255
+        )
             throw new InvalidOperationException("The corrupted affix cannot roll on this item");
         // Let the native constructor initialize item-type-dependent metadata.
         var affix = new ItemAffix(
             (ushort)id,
-            (byte)Math.Max(0, Math.Min(6, tier)),
+            (byte)tier,
             (byte)Math.Max(0, Math.Min(255, roll)),
             item.itemType,
             Il2Cpp.SealedAffixType.FromCorruption
@@ -222,6 +178,8 @@ public static class CorruptedAffixAdapter
                     + "); no item was dropped"
             );
         var originalAffixes = SnapshotAffixes(item);
+        bool originalRegularSeal = item.hasSealedRegularAffix;
+        bool originalPrimordialSeal = item.hasSealedPrimordialAffix;
         ushort originalUniqueId = item.uniqueID;
         byte originalLP = item.legendaryPotential;
         byte originalWW = item.weaversWill;
@@ -240,6 +198,13 @@ public static class CorruptedAffixAdapter
         item.RefreshIDAndValues();
         VerifyStoredCorruption(item, id, "after packing");
         VerifyOriginalAffixes(item, originalAffixes, id);
+        if (
+            item.hasSealedRegularAffix != originalRegularSeal
+            || item.hasSealedPrimordialAffix != originalPrimordialSeal
+        )
+            throw new InvalidOperationException(
+                "Corruption changed an existing seal flag; no item was dropped"
+            );
         if (
             item.uniqueID != originalUniqueId
             || item.legendaryPotential != originalLP
@@ -274,7 +239,7 @@ public static class CorruptedAffixAdapter
                 false,
                 100,
                 out int addedId,
-                out bool regularSealed,
+                out _,
                 false,
                 new Il2CppSystem.Nullable<ushort>(),
                 false
@@ -288,7 +253,6 @@ public static class CorruptedAffixAdapter
             || generated.IsNullOrDestroyed()
             || generated.affixId != addedId
             || !generated.IsSealedCorrupted
-            || regularSealed
         )
             throw new InvalidOperationException(
                 "The game did not create a sealed corruption slot; no item was dropped"
@@ -367,10 +331,7 @@ public static class CorruptedAffixAdapter
     {
         VerifyStoredCorruption(item, id, "final packing");
         item.TryGetSealedCorruptedAffixe(out ItemAffix saved);
-        if (
-            saved.affixTier != Math.Max(0, Math.Min(6, tier))
-            || saved.affixRoll != Math.Max(0, Math.Min(255, roll))
-        )
+        if (saved.affixTier != tier || saved.affixRoll != roll)
             throw new InvalidOperationException(
                 "Corruption tier or roll changed during packing; no item was dropped"
             );

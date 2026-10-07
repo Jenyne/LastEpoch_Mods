@@ -5,6 +5,7 @@ using System.Text;
 using HarmonyLib;
 using Il2Cpp;
 using Il2CppTMPro;
+using LastEpoch_Hud.Scripts.Core.ForceDrop;
 using UnityEngine;
 using UnityEngine.UI;
 using FD = LastEpoch_Hud.Scripts.Hud_Manager.Content.OdlForceDrop;
@@ -153,6 +154,7 @@ public static class ForceDropBuilder
         if (!IsReady)
             return false;
         RefreshNativeLocale();
+        RefreshTierLimits();
         foreach (var n in numbers)
             n.Read();
         string signature =
@@ -256,6 +258,9 @@ public static class ForceDropBuilder
             if (corruptionSelect.interactable && corruptionId < 0)
                 Caption(corruptionSelect, "Corrupted affix: None");
         }
+        forging.input.interactable = !corrupted && !forging.random;
+        if (forging.mode != null)
+            forging.mode.interactable = !corrupted;
         RefreshPreview();
         return true;
     }
@@ -748,35 +753,10 @@ public static class ForceDropBuilder
         OpenPicker("Corrupted affix");
     }
 
-    public static void ApplySelectedCorruption(ItemDataUnpacked item)
+    public static void DropSelection()
     {
-        if (!IsReady)
-            return;
-        if (UniqueVariantAdapter.VariantCount(SelectedRageEntry()) > 0)
-            UniqueVariantAdapter.Apply(item, SelectedVariantIds());
-        if (!corrupted || corruptionId < 0)
-            return;
-        CorruptedAffixAdapter.Apply(
-            item,
-            corruptionId,
-            corruptionTier.value - 1,
-            Roll(corruptionRoll)
-        );
-    }
-
-    public static void VerifySelectedCorruption(ItemDataUnpacked item)
-    {
-        if (!IsReady)
-            return;
-        if (UniqueVariantAdapter.VariantCount(SelectedRageEntry()) > 0)
-            UniqueVariantAdapter.VerifySelection(item, SelectedVariantIds());
-        if (corrupted && corruptionId >= 0)
-            CorruptedAffixAdapter.VerifySelection(
-                item,
-                corruptionId,
-                corruptionTier.value - 1,
-                Roll(corruptionRoll)
-            );
+        if (IsReady)
+            Drop();
     }
 
     static int[] SelectedVariantIds()
@@ -857,9 +837,7 @@ public static class ForceDropBuilder
         var list = AffixList.get();
         if (list.IsNullOrDestroyed())
             return;
-        foreach (var a in list.singleAffixes)
-            AddAffixChoice(a, slot);
-        foreach (var a in list.multiAffixes)
+        foreach (var a in ForceDropCatalog.Definitions())
             AddAffixChoice(a, slot);
         choices.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
         OpenPicker(
@@ -875,6 +853,7 @@ public static class ForceDropBuilder
             a.IsNullOrDestroyed()
             || CorruptedAffixAdapter.IsCorruption(a)
             || UniqueVariantAdapter.IsVariant(a)
+            || ForceDropCatalog.MaximumTier(a) == 0
             || FD.item_type < 0
             || FD.item_subtype < 0
         )
@@ -913,18 +892,29 @@ public static class ForceDropBuilder
         );
     }
 
-    static AffixList.Affix FindAffix(int id)
+    static AffixList.Affix FindAffix(int id) => ForceDropCatalog.Find(id);
+
+    static void RefreshTierLimits()
     {
-        var list = AffixList.get();
-        if (list.IsNullOrDestroyed())
-            return null;
-        foreach (var a in list.singleAffixes)
-            if (!a.IsNullOrDestroyed() && a.affixId == id)
-                return a;
-        foreach (var a in list.multiAffixes)
-            if (!a.IsNullOrDestroyed() && a.affixId == id)
-                return a;
-        return null;
+        foreach (var row in rows)
+            SetTierLimit(
+                row.tier,
+                row.id < 0 ? 7 : ForceDropCatalog.MaximumTier(FindAffix(row.id))
+            );
+        SetTierLimit(
+            corruptionTier,
+            corruptionId < 0 ? 7 : ForceDropCatalog.MaximumTier(FindAffix(corruptionId))
+        );
+    }
+
+    static void SetTierLimit(Number number, int maximum)
+    {
+        number.max = Math.Max(1, maximum);
+        if (number.value > number.max)
+        {
+            number.value = number.max;
+            number.input.SetTextWithoutNotify(number.value.ToString(CultureInfo.InvariantCulture));
+        }
     }
 
     static bool ValidSelectedItem()
@@ -1035,6 +1025,8 @@ public static class ForceDropBuilder
                 return "Affix type does not match its slot.";
             if (!CorruptedAffixAdapter.FitsItem(definition, FD.item_type, FD.item_subtype))
                 return "An affix cannot roll on the selected item. Choose it again.";
+            if (row.tier.value > ForceDropCatalog.MaximumTier(definition))
+                return "The selected tier does not exist for this affix.";
         }
         if (corrupted && corruptionId >= 0)
         {
@@ -1052,6 +1044,8 @@ public static class ForceDropBuilder
                 || !CorruptedAffixAdapter.FitsItem(definition, FD.item_type, FD.item_subtype)
             )
                 return "The corrupted affix is not valid for this item.";
+            if (corruptionTier.value > ForceDropCatalog.MaximumTier(definition))
+                return "The selected tier does not exist for this affix.";
             if (!ids.Add(corruptionId))
                 return "Corruption cannot duplicate another affix.";
         }
@@ -1078,7 +1072,11 @@ public static class ForceDropBuilder
                 s.Append("\n")
                     .Append(L("Forging potential"))
                     .Append(": ")
-                    .Append(forging.random ? L("Random") : forging.value.ToString());
+                    .Append(
+                        corrupted ? "0"
+                        : forging.random ? L("Random")
+                        : forging.value.ToString()
+                    );
             foreach (var r in rows)
                 if (r.id >= 0)
                     s.Append("\n\n")
@@ -1130,95 +1128,93 @@ public static class ForceDropBuilder
         dropButton.interactable = problem.Length == 0;
     }
 
-    static void Assign(Slider slider, int value)
-    {
-        if (slider.IsNullOrDestroyed())
-            throw new InvalidOperationException("Required drop control is missing");
-        slider.SetValueWithoutNotify(value);
-    }
-
     static int Sample(Number n) => n.random ? UnityEngine.Random.Range(n.min, n.max + 1) : n.value;
 
     static int Roll(Number n) =>
         n.random ? UnityEngine.Random.Range(0, 256) : Mathf.RoundToInt(n.value / 100f * 255f);
 
+    static ResolvedForceDrop ResolveItem()
+    {
+        bool equipment = FD.item_type < 100;
+        bool unique = FD.item_rarity >= 7;
+        var selected = new List<ResolvedForceDropAffix>();
+        if (equipment)
+            for (int slot = 0; slot < rows.Length; slot++)
+            {
+                var row = rows[slot];
+                if (row.id >= 0)
+                    selected.Add(
+                        new ResolvedForceDropAffix(
+                            row.id,
+                            row.tier.value - 1,
+                            Roll(row.roll),
+                            slot == 4 ? ForceDropSeal.Regular : ForceDropSeal.None
+                        )
+                    );
+            }
+        var implicitValues = new int[implicits.Length];
+        for (int i = 0; i < implicitValues.Length; i++)
+            implicitValues[i] = equipment ? Roll(implicits[i]) : 0;
+        var uniqueValues = new int[uniqueRolls.Length];
+        if (unique)
+            for (int i = 0; i < uniqueValues.Length; i++)
+                uniqueValues[i] = Roll(uniqueRolls[i]);
+        bool usesLP =
+            unique && FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential;
+        return new ResolvedForceDrop(
+            FD.item_type,
+            FD.item_subtype,
+            unique ? FD.item_unique_id : 0,
+            FD.item_rarity,
+            equipment && !unique && !corrupted ? Sample(forging) : 0,
+            usesLP ? Sample(lp) : 0,
+            unique && !usesLP ? Sample(ww) : 0,
+            corrupted,
+            implicitValues,
+            uniqueValues,
+            selected,
+            UniqueVariantAdapter.VariantCount(SelectedRageEntry()) > 0
+                ? SelectedVariantIds()
+                : Array.Empty<int>(),
+            corrupted && corruptionId >= 0
+                ? new ResolvedForceDropAffix(
+                    corruptionId,
+                    corruptionTier.value - 1,
+                    Roll(corruptionRoll),
+                    ForceDropSeal.Corruption
+                )
+                : null
+        );
+    }
+
     static void Drop()
     {
+        RefreshTierLimits();
         foreach (var n in numbers)
             n.Read();
-        if (Validate().Length != 0)
+        string problem = Validate();
+        if (problem.Length != 0)
+        {
+            result = problem;
             return;
+        }
+        int requested = quantity.value;
+        int dropped = 0;
         try
         {
-            for (int copy = 0; copy < quantity.value; copy++)
+            for (int copy = 0; copy < requested; copy++)
             {
-                bool equipment = FD.item_type < 100;
-                FD.implicits_roll = equipment;
-                Assign(FD.implicit_0_slider, Roll(implicits[0]));
-                Assign(FD.implicit_1_slider, Roll(implicits[1]));
-                Assign(FD.implicit_2_slider, Roll(implicits[2]));
-                FD.forgin_potencial_roll = equipment;
-                Assign(FD.forgin_potencial_slider, Sample(forging));
-                FD.affixs_roll = equipment;
-                FD.affix_0_id = equipment ? rows[0].id : -1;
-                FD.affix_1_id = equipment ? rows[1].id : -1;
-                FD.affix_2_id = equipment ? rows[2].id : -1;
-                FD.affix_3_id = equipment ? rows[3].id : -1;
-                FD.affix_4_id = FD.affix_5_id = -1;
-                Assign(FD.affix_0_tier_slider, rows[0].tier.value - 1);
-                Assign(FD.affix_1_tier_slider, rows[1].tier.value - 1);
-                Assign(FD.affix_2_tier_slider, rows[2].tier.value - 1);
-                Assign(FD.affix_3_tier_slider, rows[3].tier.value - 1);
-                Assign(FD.affix_0_value_slider, Roll(rows[0].roll));
-                Assign(FD.affix_1_value_slider, Roll(rows[1].roll));
-                Assign(FD.affix_2_value_slider, Roll(rows[2].roll));
-                Assign(FD.affix_3_value_slider, Roll(rows[3].roll));
-                foreach (
-                    var toggle in new[]
-                    {
-                        FD.affix_0_random_toggle,
-                        FD.affix_1_random_toggle,
-                        FD.affix_2_random_toggle,
-                        FD.affix_3_random_toggle,
-                    }
-                )
-                    if (!toggle.IsNullOrDestroyed())
-                        toggle.SetIsOnWithoutNotify(false);
-                FD.seal_id = equipment ? rows[4].id : -1;
-                FD.seal_roll = equipment && rows[4].id >= 0;
-                Assign(FD.seal_tier_slider, rows[4].tier.value - 1);
-                Assign(FD.seal_value_slider, Roll(rows[4].roll));
-                FD.unique_mods_roll = true;
-                var sliders = new[]
-                {
-                    FD.unique_mod_0_slider,
-                    FD.unique_mod_1_slider,
-                    FD.unique_mod_2_slider,
-                    FD.unique_mod_3_slider,
-                    FD.unique_mod_4_slider,
-                    FD.unique_mod_5_slider,
-                    FD.unique_mod_6_slider,
-                    FD.unique_mod_7_slider,
-                };
-                for (int i = 0; i < sliders.Length; i++)
-                    Assign(sliders[i], Roll(uniqueRolls[i]));
-                FD.legenday_potencial_roll = true;
-                Assign(FD.legenday_potencial_slider, Sample(lp));
-                FD.weaver_will_roll = true;
-                Assign(FD.weaver_will_slider, Sample(ww));
-                Assign(FD.forcedrop_quantity_slider, 1);
-                if (FD.corrupted_toggle.IsNullOrDestroyed() && corrupted)
-                    throw new InvalidOperationException("Corruption control is unavailable");
-                if (!FD.corrupted_toggle.IsNullOrDestroyed())
-                    FD.corrupted_toggle.SetIsOnWithoutNotify(corrupted);
-                FD.UpdateUI();
-                FD.Drop();
+                // Each copy gets one immutable request and independently resolved
+                // rolls. Construction and verification never sample them again.
+                ForceDropItemCreator.Drop(ResolveItem());
+                dropped++;
             }
-            result = "Dropped " + quantity.value + " item(s).";
+            result = "Dropped " + dropped + " item(s).";
         }
         catch (Exception ex)
         {
-            result = "Drop failed: " + ex.Message;
+            result =
+                "Dropped " + dropped + " of " + requested + " item(s). Drop failed: " + ex.Message;
             Main.logger_instance.Error(result);
         }
     }
