@@ -23,6 +23,10 @@ public static class HeadhunterConfigDefaults
         new("Movespeed", 0f, 5f, true),
         new("Health", 20f, 0f, true),
         new("Armour", 50f, 0f, true),
+        new("ManaRegen", 0f, 10f, true),
+        new("ManaEfficiency", 0f, 5f, true),
+        new("IncreasedLeechRate", 0f, 10f, true),
+        new("HealthLeech", 0.01f, 0f, true),
     };
 
     public static readonly HeadhunterConfig Config = new()
