@@ -5,7 +5,7 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Buffs;
 /// <summary>Remembers the model and factor last applied and decides the next step.</summary>
 public sealed class HeadhunterSizeTracker
 {
-    private const int NoModel = 0;
+    public const int NoModel = 0;
 
     private int _modelId = NoModel;
     private float _factor = HeadhunterSizeCurve.NormalFactor;

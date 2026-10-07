@@ -1,6 +1,7 @@
 using System;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Buffs;
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
 using LastEpoch_Hud.Scripts.ModUI;
 using UnityEngine;
 
@@ -32,7 +33,7 @@ internal static class HeadhunterModelScaler
         }
 
         _applied = null;
-        if (model.IsNullOrDestroyed() || factor == 1f)
+        if (model.IsNullOrDestroyed() || factor == HeadhunterSizeCurve.NormalFactor)
         {
             return;
         }
@@ -89,7 +90,7 @@ internal static class HeadhunterModelScaler
 
     private static bool ScaleIntact()
     {
-        if (_applied == null)
+        if (_applied is null)
         {
             return true;
         }
@@ -117,7 +118,7 @@ internal static class HeadhunterModelScaler
 
     private static int IdOf(Transform model)
     {
-        return model.IsNullOrDestroyed() ? 0 : model.GetInstanceID();
+        return model.IsNullOrDestroyed() ? HeadhunterSizeTracker.NoModel : model.GetInstanceID();
     }
 
     private static void Log(int buffs, float factor)
