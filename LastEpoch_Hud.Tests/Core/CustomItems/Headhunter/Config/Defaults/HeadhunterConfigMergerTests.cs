@@ -787,6 +787,38 @@ public sealed class HeadhunterConfigMergerTests
     }
 
     [Fact]
+    public void Merge_V11File_AddsAreaRows()
+    {
+        var file = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+        var areaRows = HeadhunterAffixDefaults
+            .VersionedRows.Where(row => row.Since == HeadhunterAffixDefaults.AreaRowsSince)
+            .ToList();
+        foreach (HeadhunterVersionedAffixRow row in areaRows)
+        {
+            JToken entry = file["affixMap"].Single(item => (int)item["modKey"] == row.ModKey);
+            entry["rows"].Single(item => (string)item == row.Row).Remove();
+        }
+        file["stats"].Single(stat => (string)stat["stat"] == "IncreasedAreaForAreaSkills").Remove();
+        file["defaultsVersion"] = 11;
+        var known = HeadhunterConfigDefaults
+            .Stats.Select(entry => entry.Stat)
+            .ToHashSet(StringComparer.Ordinal);
+
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            file.ToString(),
+            HeadhunterConfigDefaults.MergeDefaults
+        );
+
+        HeadhunterConfigParseResult parsed = HeadhunterConfigParser.Parse(result.Text, known);
+        Assert.Empty(parsed.Problems);
+        Assert.Equal(
+            HeadhunterAffixDefaults.AffixMap.Select(entry => (entry.ModKey, entry.Rows)),
+            parsed.Config.AffixMap.Select(entry => (entry.ModKey, entry.Rows))
+        );
+        Assert.Equal(areaRows.Count + 1, result.Added);
+    }
+
+    [Fact]
     public void Merge_V7File_KeepsPlayerHealthLeechValue()
     {
         var file = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));

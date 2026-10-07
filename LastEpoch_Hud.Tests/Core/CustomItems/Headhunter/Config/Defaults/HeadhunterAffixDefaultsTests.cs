@@ -1,3 +1,4 @@
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Buffs;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Defaults;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Resolve;
@@ -100,14 +101,77 @@ public sealed class HeadhunterAffixDefaultsTests
     }
 
     [Fact]
-    public void AffixRows_AllSinceRowsSince()
+    public void AffixRows_SustainRowsAtRowsSince()
     {
         Assert.Equal(8, HeadhunterAffixDefaults.RowsSince);
         Assert.True(HeadhunterConfigDefaults.DefaultsVersion >= HeadhunterAffixDefaults.RowsSince);
-        Assert.Equal(8, HeadhunterAffixDefaults.VersionedRows.Count);
+        Assert.Equal(
+            8,
+            HeadhunterAffixDefaults.VersionedRows.Count(row =>
+                row.Since == HeadhunterAffixDefaults.RowsSince
+            )
+        );
+    }
+
+    [Fact]
+    public void AffixRows_SinceIsRowsOrAreaRows()
+    {
+        Assert.Equal(10, HeadhunterAffixDefaults.VersionedRows.Count);
         Assert.All(
             HeadhunterAffixDefaults.VersionedRows,
-            row => Assert.Equal(HeadhunterAffixDefaults.RowsSince, row.Since)
+            row =>
+                Assert.Contains(
+                    row.Since,
+                    new[]
+                    {
+                        HeadhunterAffixDefaults.RowsSince,
+                        HeadhunterAffixDefaults.AreaRowsSince,
+                    }
+                )
+        );
+    }
+
+    [Fact]
+    public void AffixRows_AreaRowsAtAreaRowsSince()
+    {
+        const string stat = "IncreasedAreaForAreaSkills";
+
+        var rows = HeadhunterAffixDefaults
+            .VersionedRows.Where(row => row.Since == HeadhunterAffixDefaults.AreaRowsSince)
+            .Select(row => (row.ModKey, row.Row))
+            .ToList();
+
+        Assert.Equal(2, rows.Count);
+        Assert.Contains((324297367, stat), rows);
+        Assert.Contains((1150886571, stat), rows);
+    }
+
+    [Fact]
+    public void DefaultBuffNames_NeverHiddenAreaBuffName()
+    {
+        Dictionary<string, int> statIds = Ids(
+            HeadhunterConfigDefaults.Stats.Select(entry => entry.Stat)
+        );
+        Dictionary<string, int> tagIds = Ids(
+            HeadhunterConfigDefaults
+                .Stats.Where(entry => entry.Tag != null)
+                .Select(entry => entry.Tag)
+        );
+
+        var problems = new List<HeadhunterConfigProblem>();
+
+        HeadhunterResolvedConfig resolved = HeadhunterConfigResolver.Resolve(
+            HeadhunterConfigDefaults.Config,
+            statIds,
+            tagIds,
+            problems
+        );
+
+        Assert.Empty(problems);
+        Assert.Contains(resolved.Stats, stat => stat.BuffName == "HH_IncreasedAreaForAreaSkills");
+        Assert.DoesNotContain(
+            resolved.Stats,
+            stat => stat.BuffName == HeadhunterAreaMatch.BuffName
         );
     }
 

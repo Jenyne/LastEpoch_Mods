@@ -8,6 +8,7 @@ public static class HeadhunterAffixDefaults
 {
     public const int Since = 6;
     public const int RowsSince = 8;
+    public const int AreaRowsSince = 12;
 
     public static readonly IReadOnlyList<HeadhunterVersionedAffix> VersionedAffixes =
         new List<HeadhunterVersionedAffix>
@@ -28,9 +29,9 @@ public static class HeadhunterAffixDefaults
             Row(1986757351, "Familiar", "Health", "HealthLeech"),
             Row(1097354172, "Twinned", "Health"),
             Row(-1642806494, "Fracturing", "Health"),
-            Row(324297367, "Shrouded", "DodgeRating"),
+            Row(324297367, "Shrouded", "DodgeRating", "IncreasedAreaForAreaSkills"),
             Row(880775705, "of Shadows", "DodgeRating"),
-            Row(1150886571, "Protective", "Armour"),
+            Row(1150886571, "Protective", "Armour", "IncreasedAreaForAreaSkills"),
             Row(-1226075678, "Unrelenting", "IncreasedCooldownRecoverySpeed", "ManaEfficiency"),
             Row(1519424920, "Summoning", "Damage_Minion"),
             Row(-1782923815, "of Loathing", "CriticalChance"),
@@ -59,19 +60,21 @@ public static class HeadhunterAffixDefaults
     public static readonly IReadOnlyList<HeadhunterVersionedAffixRow> VersionedRows =
         new List<HeadhunterVersionedAffixRow>
         {
-            Extra(-727154184, "ManaRegen"),
-            Extra(1337344846, "ManaRegen"),
-            Extra(-2045434097, "Mana"),
-            Extra(-1272420556, "Mana"),
-            Extra(-1226075678, "ManaEfficiency"),
-            Extra(616463851, "HealthLeech"),
-            Extra(1986757351, "HealthLeech"),
-            Extra(1687301026, "IncreasedLeechRate"),
+            Extra(-727154184, "ManaRegen", RowsSince),
+            Extra(1337344846, "ManaRegen", RowsSince),
+            Extra(-2045434097, "Mana", RowsSince),
+            Extra(-1272420556, "Mana", RowsSince),
+            Extra(-1226075678, "ManaEfficiency", RowsSince),
+            Extra(616463851, "HealthLeech", RowsSince),
+            Extra(1986757351, "HealthLeech", RowsSince),
+            Extra(1687301026, "IncreasedLeechRate", RowsSince),
+            Extra(324297367, "IncreasedAreaForAreaSkills", AreaRowsSince),
+            Extra(1150886571, "IncreasedAreaForAreaSkills", AreaRowsSince),
         };
 
-    private static HeadhunterVersionedAffixRow Extra(int modKey, string row)
+    private static HeadhunterVersionedAffixRow Extra(int modKey, string row, int since)
     {
-        return new HeadhunterVersionedAffixRow(modKey, row, RowsSince);
+        return new HeadhunterVersionedAffixRow(modKey, row, since);
     }
 
     private static HeadhunterVersionedAffix Row(int modKey, string note, params string[] rows)

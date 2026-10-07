@@ -174,6 +174,22 @@ public sealed class HeadhunterConfigDefaultsTests
     }
 
     [Fact]
+    public void VersionedStats_Area_AddedAtAreaRowsSince()
+    {
+        HeadhunterVersionedStat row = HeadhunterConfigDefaults.VersionedStats.Single(candidate =>
+            candidate.Entry.Stat == "IncreasedAreaForAreaSkills"
+        );
+
+        Assert.Equal(
+            new HeadhunterStatEntry("IncreasedAreaForAreaSkills", 0f, 5f, true),
+            row.Entry
+        );
+        Assert.Null(row.Entry.Tag);
+        Assert.Equal(HeadhunterAffixDefaults.AreaRowsSince, row.Since);
+        Assert.Equal(HeadhunterConfigDefaults.DefaultsVersion, row.Since);
+    }
+
+    [Fact]
     public void VersionedStats_HealthLeech_DefaultHalfPercent()
     {
         HeadhunterVersionedStat row = HeadhunterConfigDefaults.VersionedStats.Single(candidate =>
