@@ -48,8 +48,8 @@ public sealed class CustomItemLocaleTests
         var filled = new Dictionary<string, (string Text, string[] Expected)>
         {
             [CustomItemLocaleKeys.HeadhunterDescription] = (
-                HeadhunterDescription.Text(texts, 7001, 7002, 7003f),
-                ["7001", "7002", "7003"]
+                HeadhunterDescription.Text(texts, 7001f),
+                ["7001"]
             ),
             [CustomItemLocaleKeys.MjolnerDescriptionProc] = (
                 MjolnerDescription.LightningProc(texts, 7004, 7005, 255f, 127.5f),

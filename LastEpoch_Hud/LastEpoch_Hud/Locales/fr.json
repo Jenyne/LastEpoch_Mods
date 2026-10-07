@@ -356,7 +356,7 @@
   "CustomItem.Headhunter.Subtype": "HH Ceinture en cuir",
   "CustomItem.Headhunter.Name": "Chasseur de têtes",
   "CustomItem.Headhunter.Lore": "L'âme d'un homme règne depuis une caverne d'os,\r\napprend et juge à travers des fenêtres plantées dans la chair.\r\nLe cœur est un morceau de viande. La tête est le siège de l'homme.\r\n- Lavianga, conseiller de Kaom",
-  "CustomItem.Headhunter.Description": "Lorsque vous ou vos invocations tuez un monstre, vous gagnez {0} à {1} modificateurs aléatoires pendant {2} secondes.",
+  "CustomItem.Headhunter.Description": "Lorsque vous ou vos invocations tuez un monstre rare ou un boss, vous gagnez ses modificateurs pendant {0} secondes. En tuer un autre les renouvelle.",
   "CustomItem.Mjolner.Name": "Mjölner",
   "CustomItem.Mjolner.Lore": "Entrez dans l'œil de la tempête et vous gagnerez son respect.",
   "CustomItem.Mjolner.DescriptionProc": "Si vous avez au moins {0} de Force et {1} d'Intelligence, {2} à {3}% de chance de déclencher un sort de foudre lors d'une attaque réussie",
