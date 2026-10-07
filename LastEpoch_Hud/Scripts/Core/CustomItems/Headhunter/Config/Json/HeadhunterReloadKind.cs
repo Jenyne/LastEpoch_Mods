@@ -4,5 +4,5 @@ namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Json;
 public enum HeadhunterReloadKind
 {
     Full,
-    LayoutOnly,
+    VisualOnly,
 }

@@ -7,16 +7,16 @@ public sealed class HeadhunterReloadClassifierTests
     private const string Base = """{"a":1,"b":{"c":2},"bar":{"perRow":3}}""";
 
     [Fact]
-    public void Classify_SameText_LayoutOnly()
+    public void Classify_SameText_VisualOnly()
     {
         Assert.Equal(
-            HeadhunterReloadKind.LayoutOnly,
+            HeadhunterReloadKind.VisualOnly,
             HeadhunterReloadClassifier.Classify(Base, Base)
         );
     }
 
     [Fact]
-    public void Classify_ReformattedOrReordered_LayoutOnly()
+    public void Classify_ReformattedOrReordered_VisualOnly()
     {
         const string next = """
             {
@@ -27,29 +27,76 @@ public sealed class HeadhunterReloadClassifierTests
             """;
 
         Assert.Equal(
-            HeadhunterReloadKind.LayoutOnly,
+            HeadhunterReloadKind.VisualOnly,
             HeadhunterReloadClassifier.Classify(Base, next)
         );
     }
 
     [Fact]
-    public void Classify_OnlyBarChanged_LayoutOnly()
+    public void Classify_OnlyBarChanged_VisualOnly()
     {
         const string next = """{"a":1,"b":{"c":2},"bar":{"perRow":7}}""";
 
         Assert.Equal(
-            HeadhunterReloadKind.LayoutOnly,
+            HeadhunterReloadKind.VisualOnly,
             HeadhunterReloadClassifier.Classify(Base, next)
+        );
+    }
+
+    [Fact]
+    public void Classify_OnlyAuraChanged_VisualOnly()
+    {
+        const string previous = """{"a":1,"b":{"c":2},"aura":{"cap":1}}""";
+        const string next = """{"a":1,"b":{"c":2},"aura":{"cap":2}}""";
+
+        Assert.Equal(
+            HeadhunterReloadKind.VisualOnly,
+            HeadhunterReloadClassifier.Classify(previous, next)
+        );
+    }
+
+    [Fact]
+    public void Classify_BarAndAuraChanged_VisualOnly()
+    {
+        const string previous = """{"a":1,"bar":{"perRow":3},"aura":{"cap":1}}""";
+        const string next = """{"a":1,"bar":{"perRow":7},"aura":{"cap":2}}""";
+
+        Assert.Equal(
+            HeadhunterReloadKind.VisualOnly,
+            HeadhunterReloadClassifier.Classify(previous, next)
+        );
+    }
+
+    [Fact]
+    public void Classify_AuraAndOtherChanged_Full()
+    {
+        const string previous = """{"a":1,"aura":{"cap":1}}""";
+        const string next = """{"a":2,"aura":{"cap":2}}""";
+
+        Assert.Equal(
+            HeadhunterReloadKind.Full,
+            HeadhunterReloadClassifier.Classify(previous, next)
         );
     }
 
     [Theory]
     [InlineData("""{"a":1,"b":{"c":2},"bar":{"perRow":3}}""", """{"a":1,"b":{"c":2}}""")]
     [InlineData("""{"a":1,"b":{"c":2}}""", """{"a":1,"b":{"c":2},"bar":{"perRow":3}}""")]
-    public void Classify_BarAddedOrRemoved_LayoutOnly(string previous, string next)
+    public void Classify_BarAddedOrRemoved_VisualOnly(string previous, string next)
     {
         Assert.Equal(
-            HeadhunterReloadKind.LayoutOnly,
+            HeadhunterReloadKind.VisualOnly,
+            HeadhunterReloadClassifier.Classify(previous, next)
+        );
+    }
+
+    [Theory]
+    [InlineData("""{"a":1,"aura":{"cap":1}}""", """{"a":1}""")]
+    [InlineData("""{"a":1}""", """{"a":1,"aura":{"cap":1}}""")]
+    public void Classify_AuraAddedOrRemoved_VisualOnly(string previous, string next)
+    {
+        Assert.Equal(
+            HeadhunterReloadKind.VisualOnly,
             HeadhunterReloadClassifier.Classify(previous, next)
         );
     }

@@ -253,4 +253,38 @@ public sealed class HeadhunterConfigWriterTests
             )
         );
     }
+
+    [Fact]
+    public void Write_RoundTrips_Aura()
+    {
+        HeadhunterConfig config = new()
+        {
+            Version = 1,
+            DurationSeconds = 10f,
+            Triggers = HeadhunterTestData.AllTriggers,
+            Stats = new List<HeadhunterStatEntry>(),
+            Aura = new HeadhunterAuraCurve(false, 0.25f, 2f),
+        };
+
+        HeadhunterConfigParseResult result = HeadhunterConfigParser.Parse(
+            HeadhunterConfigWriter.Write(config),
+            new HashSet<string>(StringComparer.Ordinal)
+        );
+
+        Assert.Empty(result.Problems);
+        Assert.Equal(config.Aura, result.Config.Aura);
+    }
+
+    [Fact]
+    public void Write_Defaults_HasAura()
+    {
+        var root = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+
+        Assert.True(
+            JToken.DeepEquals(
+                HeadhunterConfigWriter.BuildAura(HeadhunterConfigDefaults.Aura),
+                root["aura"]
+            )
+        );
+    }
 }

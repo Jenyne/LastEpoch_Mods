@@ -81,9 +81,9 @@ internal static class HeadhunterConfigLoader
 
         HeadhunterReloadKind kind = HeadhunterReloadClassifier.Classify(_appliedText, text);
         _appliedText = text;
-        if (kind == HeadhunterReloadKind.LayoutOnly)
+        if (kind == HeadhunterReloadKind.VisualOnly)
         {
-            ApplyLayoutOnly(result.Config);
+            ApplyVisualOnly(result.Config);
             return;
         }
 
@@ -99,12 +99,12 @@ internal static class HeadhunterConfigLoader
         );
     }
 
-    /// <summary>Swaps in a config whose only change is bar placement; buffs stay.</summary>
-    private static void ApplyLayoutOnly(HeadhunterConfig config)
+    /// <summary>Swaps in a config whose only change is bar placement or aura; buffs stay.</summary>
+    private static void ApplyVisualOnly(HeadhunterConfig config)
     {
         Current = config;
         HeadhunterBuffBar.MarkDirty();
-        Main.logger_instance?.Msg("Headhunter config reloaded: bar layout only");
+        Main.logger_instance?.Msg("Headhunter config reloaded: visuals only");
     }
 
     private static HeadhunterConfigParseResult Parse(string text)

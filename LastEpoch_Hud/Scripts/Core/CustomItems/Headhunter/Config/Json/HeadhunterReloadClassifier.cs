@@ -3,16 +3,16 @@ using Newtonsoft.Json.Linq;
 
 namespace LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Config.Json;
 
-/// <summary>Decides if a config edit touched only the bar layout.</summary>
+/// <summary>Decides if a config edit touched only visuals (bar layout, aura).</summary>
 public static class HeadhunterReloadClassifier
 {
     public static HeadhunterReloadKind Classify(string previousJson, string nextJson)
     {
-        if (!TryParseWithoutBar(previousJson, out JObject previous))
+        if (!TryParseWithoutVisuals(previousJson, out JObject previous))
         {
             return HeadhunterReloadKind.Full;
         }
-        if (!TryParseWithoutBar(nextJson, out JObject next))
+        if (!TryParseWithoutVisuals(nextJson, out JObject next))
         {
             return HeadhunterReloadKind.Full;
         }
@@ -21,10 +21,10 @@ public static class HeadhunterReloadClassifier
             return HeadhunterReloadKind.Full;
         }
 
-        return HeadhunterReloadKind.LayoutOnly;
+        return HeadhunterReloadKind.VisualOnly;
     }
 
-    private static bool TryParseWithoutBar(string json, out JObject root)
+    private static bool TryParseWithoutVisuals(string json, out JObject root)
     {
         root = null;
         if (string.IsNullOrWhiteSpace(json))
@@ -45,6 +45,7 @@ public static class HeadhunterReloadClassifier
         }
 
         root.Remove(HeadhunterConfigKeys.Bar);
+        root.Remove(HeadhunterConfigKeys.Aura);
         return true;
     }
 }

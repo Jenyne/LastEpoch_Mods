@@ -99,6 +99,28 @@ public sealed class HeadhunterConfigDefaultsTests
     }
 
     [Fact]
+    public void VersionedFields_Aura_AddedAtVersion11()
+    {
+        Assert.Contains(
+            HeadhunterConfigDefaults.VersionedFields,
+            field =>
+                field.Parent == ""
+                && field.Key == "aura"
+                && JToken.DeepEquals(
+                    field.Value,
+                    HeadhunterConfigWriter.BuildAura(HeadhunterConfigDefaults.Aura)
+                )
+                && field.Since == 11
+        );
+    }
+
+    [Fact]
+    public void Aura_Defaults()
+    {
+        Assert.Equal(new HeadhunterAuraCurve(true, 0.15f, 1.5f), HeadhunterConfigDefaults.Aura);
+    }
+
+    [Fact]
     public void Bar_Defaults()
     {
         Assert.Equal(new HeadhunterBarSettings(0f, 1f, 1f, 10), HeadhunterConfigDefaults.Bar);

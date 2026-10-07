@@ -20,7 +20,7 @@ internal static class HeadhunterBuffClearer
         HeadhunterAreaBuff.Remove();
         HeadhunterReach.Reset();
         HeadhunterDash.Reset();
-        HeadhunterAuraProbe.Revert();
+        HeadhunterAura.Remove();
     }
 
     private static void RemoveBuffs(HeadhunterResolvedConfig config)

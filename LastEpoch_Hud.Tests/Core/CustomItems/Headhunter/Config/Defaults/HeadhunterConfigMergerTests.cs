@@ -646,6 +646,50 @@ public sealed class HeadhunterConfigMergerTests
     }
 
     [Fact]
+    public void Merge_V10File_AddsAura()
+    {
+        var file = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+        file.Remove("aura");
+        file["defaultsVersion"] = 10;
+
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            file.ToString(),
+            HeadhunterConfigDefaults.MergeDefaults
+        );
+
+        var merged = JObject.Parse(result.Text);
+        Assert.True(
+            JToken.DeepEquals(
+                HeadhunterConfigWriter.BuildAura(HeadhunterConfigDefaults.Aura),
+                merged["aura"]
+            )
+        );
+        Assert.Equal(1, result.Added);
+        Assert.Equal(HeadhunterConfigDefaults.DefaultsVersion, (int)merged["defaultsVersion"]);
+    }
+
+    [Fact]
+    public void Merge_PlayerAura_Kept()
+    {
+        var file = JObject.Parse(HeadhunterConfigWriter.Write(HeadhunterConfigDefaults.Config));
+        file["aura"] = new JObject { ["perBuff"] = 0.4, ["cap"] = 2 };
+        file["defaultsVersion"] = 10;
+
+        HeadhunterMergeResult result = HeadhunterConfigMerger.Merge(
+            file.ToString(),
+            HeadhunterConfigDefaults.MergeDefaults
+        );
+
+        var merged = JObject.Parse(result.Text);
+        Assert.Equal(0.4f, (float)merged["aura"]["perBuff"]);
+        Assert.Equal(2, (int)merged["aura"]["cap"]);
+        Assert.Equal(0, result.Added);
+        Assert.True(
+            JToken.DeepEquals(new JObject { ["perBuff"] = 0.4, ["cap"] = 2 }, merged["aura"])
+        );
+    }
+
+    [Fact]
     public void Merge_AffixRow_AppendedToPlayerEntry()
     {
         HeadhunterMergeResult result = MergeRow(

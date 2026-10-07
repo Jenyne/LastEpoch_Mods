@@ -29,6 +29,7 @@ public static class HeadhunterConfigParser
             AffixMap = HeadhunterAffixMapParser.Read(root, problems),
             ModelSize = HeadhunterModelSizeParser.Read(root, problems),
             Bar = HeadhunterBarSettingsParser.Read(root, problems),
+            Aura = HeadhunterAuraParser.Read(root, problems),
         };
         return Result(config, problems, true);
     }
@@ -67,6 +68,17 @@ public static class HeadhunterConfigParser
         }
         value = Convert.ToSingle(number.Value, CultureInfo.InvariantCulture);
         return float.IsFinite(value);
+    }
+
+    internal static bool TryReadBool(JToken token, out bool value)
+    {
+        value = false;
+        if (token is not JValue { Value: bool flag })
+        {
+            return false;
+        }
+        value = flag;
+        return true;
     }
 
     private static HeadhunterConfigParseResult Result(
@@ -466,16 +478,5 @@ public static class HeadhunterConfigParser
             "Must be true or false."
         );
         return false;
-    }
-
-    private static bool TryReadBool(JToken token, out bool value)
-    {
-        value = false;
-        if (token is not JValue { Value: bool flag })
-        {
-            return false;
-        }
-        value = flag;
-        return true;
     }
 }

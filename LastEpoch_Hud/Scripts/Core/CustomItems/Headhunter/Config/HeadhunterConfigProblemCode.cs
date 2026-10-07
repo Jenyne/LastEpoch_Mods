@@ -23,4 +23,5 @@ public enum HeadhunterConfigProblemCode
     DuplicateModKey,
     UnknownRow,
     NotPercent,
+    NotAuraStrength,
 }

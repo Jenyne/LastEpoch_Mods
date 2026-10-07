@@ -16,4 +16,5 @@ public sealed class HeadhunterConfig
         Array.Empty<HeadhunterAffixEntry>();
     public HeadhunterSizeCurve ModelSize { get; init; } = HeadhunterConfigDefaults.ModelSize;
     public HeadhunterBarSettings Bar { get; init; } = HeadhunterConfigDefaults.Bar;
+    public HeadhunterAuraCurve Aura { get; init; } = HeadhunterConfigDefaults.Aura;
 }

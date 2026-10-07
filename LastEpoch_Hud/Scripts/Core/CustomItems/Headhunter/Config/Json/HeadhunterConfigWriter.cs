@@ -21,6 +21,7 @@ public static class HeadhunterConfigWriter
             [HeadhunterConfigKeys.AffixMap] = BuildAffixMap(config.AffixMap),
             [HeadhunterConfigKeys.ModelSize] = BuildModelSize(config.ModelSize),
             [HeadhunterConfigKeys.Bar] = BuildBar(config.Bar),
+            [HeadhunterConfigKeys.Aura] = BuildAura(config.Aura),
         };
         return root.ToString(Formatting.Indented);
     }
@@ -69,6 +70,22 @@ public static class HeadhunterConfigWriter
             [HeadhunterConfigKeys.IconSize] = bar.IconSize,
             [HeadhunterConfigKeys.PerRow] = bar.PerRow,
         };
+    }
+
+    internal static JObject BuildAura(HeadhunterAuraCurve aura)
+    {
+        return new JObject
+        {
+            [HeadhunterConfigKeys.Enabled] = aura.Enabled,
+            [HeadhunterConfigKeys.PerBuff] = ShortDouble(aura.PerBuff),
+            [HeadhunterConfigKeys.Cap] = ShortDouble(aura.Cap),
+        };
+    }
+
+    /// <summary>The double a parsed file holds for this float's text, so equal values compare equal.</summary>
+    private static double ShortDouble(float value)
+    {
+        return (double)(decimal)value;
     }
 
     private static JObject BuildTriggers(HeadhunterTriggers triggers)

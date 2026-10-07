@@ -32,7 +32,7 @@ internal static class HeadhunterBuffBar
 
         try
         {
-            Refresh(now);
+            Refresh();
         }
         catch (Exception ex)
         {
@@ -40,7 +40,7 @@ internal static class HeadhunterBuffBar
         }
     }
 
-    private static void Refresh(double now)
+    private static void Refresh()
     {
         StatBuffs buffs = HeadhunterBuffSink.PlayerBuffs();
         if (!ShouldShow(buffs))
@@ -50,7 +50,7 @@ internal static class HeadhunterBuffBar
             HeadhunterAreaBuff.Sync(0);
             HeadhunterReach.Sync(0);
             HeadhunterDash.Sync(0);
-            HeadhunterAuraProbe.Tick(now, 0);
+            HeadhunterAura.Sync(0);
             LogIfChanged(Array.Empty<HeadhunterBarEntry>());
             return;
         }
@@ -69,7 +69,7 @@ internal static class HeadhunterBuffBar
         HeadhunterAreaBuff.Sync(entries.Count);
         HeadhunterReach.Sync(entries.Count);
         HeadhunterDash.Sync(entries.Count);
-        HeadhunterAuraProbe.Tick(now, entries.Count);
+        HeadhunterAura.Sync(entries.Count);
         LogIfChanged(entries);
     }
 
