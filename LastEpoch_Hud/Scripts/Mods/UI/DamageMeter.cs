@@ -375,9 +375,16 @@ public class DamageMeter : MonoBehaviour
                 DontDestroyOnLoad(DamageMeter_obj);
                 DamageMeter_obj.active = false;
                 DamageMeter_obj.transform.SetParent(Refs_Manager.game_uibase.transform);
-                UIMouseListener mouse_listener = DamageMeter_obj.AddComponent<UIMouseListener>(); //Block mouse clicks over the meter
-                // Without this, the game treats the open meter as a panel that blocks world actions, so controller skills stop working.
-                mouse_listener.allowWorldActions = true;
+                // A screen-space canvas spans the entire screen. A listener on
+                // that root makes ground loot count as being under UI everywhere.
+                foreach (string panelName in new[] { "Panel", "SettingsPanel", "DetailsPanel" })
+                {
+                    var inputPanel = Functions.GetChild(DamageMeter_obj, panelName);
+                    if (inputPanel.IsNullOrDestroyed())
+                        continue;
+                    var listener = inputPanel.AddComponent<UIMouseListener>();
+                    listener.allowWorldActions = true;
+                }
                 if (!DamageMeter_obj.IsNullOrDestroyed())
                 {
                     GameObject images = Functions.GetChild(DamageMeter_obj, "Images");
@@ -401,6 +408,9 @@ public class DamageMeter : MonoBehaviour
                                 Off_sprite = Off_image.sprite;
                             }
                         }
+                        // Sprite source objects are templates, not visible meter
+                        // controls. Their centered Images must not intercept hover.
+                        images.SetActive(false);
                     }
                     GameObject panel = Functions.GetChild(DamageMeter_obj, "Panel");
                     if (!panel.IsNullOrDestroyed())

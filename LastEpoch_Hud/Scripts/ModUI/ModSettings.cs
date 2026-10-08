@@ -61,6 +61,15 @@ public static class ModSettings
     // CHARACTER TAB
     //
 
+    public static class MasteryTreeUnlock
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("MasteryTreeUnlock");
+        public static readonly BoolSetting Enabled = Group.Bool(
+            "Enabled",
+            label: "Unlock Other Mastery Trees"
+        );
+    }
+
     public static class InfiniteForgingPotential
     {
         // Runtime checkbox is bound by Hud_Manager after the crafting panel is ready.

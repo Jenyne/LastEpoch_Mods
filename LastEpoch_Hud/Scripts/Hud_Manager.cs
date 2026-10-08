@@ -8652,6 +8652,7 @@ public partial class Hud_Manager : MonoBehaviour
                                 "RemoveNodeRequirements",
                                 "Toggle_RemoveNodeRequirements"
                             );
+                            ModUI.MasteryTreeUnlockControls.Bind(skills_content);
 
                             SkillTree.enable_specialization_slots_toggle =
                                 Functions.Get_ToggleInPanel(

@@ -16,7 +16,8 @@ internal static class GameEnvironment
     public static string ModProjectDir => Path.Combine(RepoRoot, "LastEpoch_Hud");
 
     public static string ModDll =>
-        Path.Combine(RepoRoot, "Build", "Keyboard", "net6.0", "LastEpoch_Hud.dll");
+        Environment.GetEnvironmentVariable("LAST_EPOCH_MOD_DLL")
+        ?? Path.Combine(RepoRoot, "Build", "Keyboard", "net6.0", "LastEpoch_Hud.dll");
 
     public static void SkipWithoutGame() =>
         Assert.SkipUnless(
@@ -27,7 +28,7 @@ internal static class GameEnvironment
     public static void SkipWithoutModBuild() =>
         Assert.SkipUnless(
             File.Exists(ModDll),
-            $"No mod build at {ModDll}; build the Keyboard config first"
+            $"No mod build at {ModDll}; set LAST_EPOCH_MOD_DLL or build the Keyboard config first"
         );
 
     private static string FindRepoRoot()

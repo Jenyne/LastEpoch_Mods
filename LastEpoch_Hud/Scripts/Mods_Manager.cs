@@ -259,6 +259,7 @@ public class Mods_Manager : MonoBehaviour
 
     void Update() //This function will be removed soon (when i have time to do it ^^)
     {
+        Mods.Skills.Passives_MasteryLock.Sync();
         if (!Save_Manager.instance.IsNullOrDestroyed())
         {
             if (Save_Manager.instance.initialized)
