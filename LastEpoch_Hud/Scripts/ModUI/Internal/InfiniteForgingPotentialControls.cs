@@ -20,15 +20,15 @@ namespace LastEpoch_Hud.Scripts.ModUI
             var panelRect = panel.GetComponent<RectTransform>();
             rowRect.anchorMin = new Vector2(panelRect.anchorMin.x, 1);
             rowRect.anchorMax = new Vector2(panelRect.anchorMax.x, 1);
-            rowRect.sizeDelta = new Vector2(panelRect.sizeDelta.x, 34);
+            rowRect.sizeDelta = new Vector2(panelRect.sizeDelta.x, 68);
             rowRect.anchoredPosition = new Vector2(panelRect.anchoredPosition.x, 0);
-            row.AddComponent<LayoutElement>().preferredHeight = 34;
+            row.AddComponent<LayoutElement>().preferredHeight = 68;
             // Reuse the native prefab's checkbox geometry, sprites, font and transitions.
             var control = UnityEngine.Object.Instantiate(original, row.transform);
             control.name = "Toggle_InfiniteForgingPotential";
             var rect = control.GetComponent<RectTransform>();
             var originalRect = original.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(originalRect.anchorMin.x, 0);
+            rect.anchorMin = new Vector2(originalRect.anchorMin.x, .5f);
             rect.anchorMax = new Vector2(originalRect.anchorMax.x, 1);
             rect.offsetMin = new Vector2(originalRect.offsetMin.x, 0);
             rect.offsetMax = new Vector2(originalRect.offsetMax.x, 0);
@@ -47,7 +47,7 @@ namespace LastEpoch_Hud.Scripts.ModUI
             line.rectTransform.sizeDelta = new Vector2(0, 1);
             line.color = label.IsNullOrDestroyed() ? new Color(.9f, .73f, .4f) : label.color;
             line.raycastTarget = false;
-            var buttonObject = Node(row, "Btn_Craft_DeselectAll", .76f, .12f, .99f, .88f);
+            var buttonObject = Node(row, "Btn_Craft_DeselectAll", .76f, .56f, .99f, .94f);
             var buttonImage = buttonObject.AddComponent<Image>();
             buttonImage.color = new Color(.10f, .12f, .15f);
             var button = buttonObject.AddComponent<Button>();
@@ -70,6 +70,15 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 if (!toggle.IsNullOrDestroyed()) toggle.SetIsOnWithoutNotify(enabled);
             };
             toggle.SetIsOnWithoutNotify(ModSettings.InfiniteForgingPotential.Enabled.Value);
+
+            AddAdvancedToggle(row, original, "Toggle_AdvancedForge_T7", "Craft Affixes to T7",
+                .00f, .25f, ModSettings.AdvancedForge.AllowT7Crafting.Value);
+            AddAdvancedToggle(row, original, "Toggle_AdvancedForge_MaxRoll", "Max Crafted Roll",
+                .25f, .50f, ModSettings.AdvancedForge.AffixRoll.Enabled);
+            AddAdvancedToggle(row, original, "Toggle_AdvancedForge_Hope", "Guarantee Hope",
+                .50f, .75f, ModSettings.AdvancedForge.GuaranteedGlyphOfHope.Value);
+            AddAdvancedToggle(row, original, "Toggle_AdvancedForge_Despair", "Guarantee Despair",
+                .75f, 1.00f, ModSettings.AdvancedForge.GuaranteedGlyphOfDespair.Value);
             MelonLoader.MelonCoroutines.Start(PositionRow(viewport, row));
             Main.logger_instance?.Msg("Infinite Forging Potential checkbox bound in Items > Crafting.");
         }
@@ -82,10 +91,27 @@ namespace LastEpoch_Hud.Scripts.ModUI
             [HarmonyPostfix]
             static void Postfix(Toggle __instance)
             {
-                if (__instance.IsNullOrDestroyed() || !__instance.interactable
-                    || __instance.gameObject.name != "Toggle_InfiniteForgingPotential") return;
-                ModSettings.InfiniteForgingPotential.Enabled.Set(__instance.isOn);
-                Main.logger_instance?.Msg("Infinite Forging Potential: " + (__instance.isOn ? "enabled" : "disabled"));
+                if (__instance.IsNullOrDestroyed() || !__instance.interactable) return;
+                switch (__instance.gameObject.name)
+                {
+                    case "Toggle_InfiniteForgingPotential":
+                        ModSettings.InfiniteForgingPotential.Enabled.Set(__instance.isOn);
+                        Main.logger_instance?.Msg("Infinite Forging Potential: " + (__instance.isOn ? "enabled" : "disabled"));
+                        break;
+                    case "Toggle_AdvancedForge_T7":
+                        ModSettings.AdvancedForge.AllowT7Crafting.Set(__instance.isOn);
+                        break;
+                    case "Toggle_AdvancedForge_MaxRoll":
+                        ModSettings.AdvancedForge.AffixRoll.SetEnabled(__instance.isOn);
+                        if (__instance.isOn) ModSettings.AdvancedForge.AffixRoll.SetValue(255f);
+                        break;
+                    case "Toggle_AdvancedForge_Hope":
+                        ModSettings.AdvancedForge.GuaranteedGlyphOfHope.Set(__instance.isOn);
+                        break;
+                    case "Toggle_AdvancedForge_Despair":
+                        ModSettings.AdvancedForge.GuaranteedGlyphOfDespair.Set(__instance.isOn);
+                        break;
+                }
             }
         }
 
@@ -172,17 +198,46 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 sizes.Add(child.rect.size);
             }
             float height = contentRect.rect.height;
-            contentRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height + 38);
+            contentRect.SetSizeWithCurrentAnchors(RectTransform.Axis.Vertical, height + 72);
             for (int i = 0; i < rects.Count; i++)
             {
                 var child = rects[i];
                 child.anchorMin = child.anchorMax = new Vector2(.5f, 1);
                 child.sizeDelta = sizes[i];
                 // The old pivot's position, measured from the old content top.
-                child.anchoredPosition = new Vector2(centers[i].x, centers[i].y - height / 2 - 38);
+                child.anchoredPosition = new Vector2(centers[i].x, centers[i].y - height / 2 - 72);
             }
             var rowRect = row.GetComponent<RectTransform>();
             rowRect.anchoredPosition = new Vector2(rowRect.anchoredPosition.x, 0);
+        }
+
+        static void AddAdvancedToggle(GameObject row, GameObject template, string name, string text,
+            float left, float right, bool initial)
+        {
+            var control = UnityEngine.Object.Instantiate(template, row.transform);
+            control.name = name;
+            var rect = control.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(left, 0f);
+            rect.anchorMax = new Vector2(right, .46f);
+            rect.offsetMin = new Vector2(2, 0);
+            rect.offsetMax = new Vector2(-2, 0);
+
+            var toggle = control.GetComponent<Toggle>();
+            if (toggle.IsNullOrDestroyed()) { UnityEngine.Object.Destroy(control); return; }
+            toggle.group = null;
+            toggle.interactable = true;
+            toggle.onValueChanged.RemoveAllListeners();
+            toggle.SetIsOnWithoutNotify(initial);
+
+            var value = Prefab.Child(control, "Value");
+            if (!value.IsNullOrDestroyed()) value.SetActive(false);
+            var labelObject = Prefab.Child(control, "Label");
+            var label = labelObject.IsNullOrDestroyed() ? null : labelObject.GetComponent<Text>();
+            if (!label.IsNullOrDestroyed())
+            {
+                Prefab.ApplyLabel(label, text);
+                label.fontSize = Mathf.Max(9, label.fontSize - 1);
+            }
         }
 
         static GameObject Node(GameObject parent, string name, float left, float bottom, float right, float top)
