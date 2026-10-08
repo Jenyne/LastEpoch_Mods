@@ -64,7 +64,7 @@ $queueJson = @'
     "id": 5,
     "title": "Normal forge T6/T7 / craft options",
     "branch": "feat/advanced-forge-t7",
-    "status": "Build confirmed; locale blocker fixed, runtime checks pending",
+    "status": "Failed: crafting still stops at T5",
     "location": "Items > Crafting",
     "checks": [
       "Enable Craft Affixes to T7 plus Infinite Forging Potential. Use a normal T5 affix and upgrade T5 -> T6 -> T7. T7 must stop; no ordinary T8 crafting.",
@@ -88,7 +88,7 @@ $queueJson = @'
     "id": 7,
     "title": "Offline startup / session diagnostics",
     "branch": "test/offline-guard-diagnostics",
-    "status": "Offline selection confirmed; diagnostics spam, gameplay checks pending",
+    "status": "Confirmed working; routine diagnostics silenced",
     "location": "Launch -> offline character selection; MelonLoader/Latest.log",
     "checks": [
       "Login.Enable_AutoLoginOffline must be true. Confirm automatic offline character selection and that its online switch is hidden.",

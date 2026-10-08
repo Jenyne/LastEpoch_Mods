@@ -37,9 +37,9 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 | 2 | `feat/force-drop-illegal-mode` | Illegal Force Drop / Primordial T8 | Pending in-game validation |
 | 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Failed: mastery chain and combat hover remain blocked |
 | 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Tree preview improved in game; equipment view deferred |
-| 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Build confirmed; locale blocker fixed, runtime checks pending |
+| 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Failed: crafting still stops at T5 |
 | 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | Failed: Natural Drop Rates UI missing; behavior untested |
-| 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Offline selection confirmed; diagnostics spam, gameplay checks pending |
+| 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Confirmed working; routine diagnostics silenced |
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
 | 9 | `master` | Current main baseline | Baseline/control build |
 
@@ -172,6 +172,6 @@ Locale installation relies on the repository's successful locale tests and copie
 - Prophecy reward multiplication (`fix/prophecy-reward-trigger`) is confirmed working and persistent. Large multipliers can lag; UI relocation is deferred until the UI rework.
 - Build 3 did not unlock either non-main mastery allocation or combat ground-item hover. Both need another fix.
 - Build 4 graphical tree preview is much better in game. A similar equipment view is a lower-priority follow-up.
-- Build 5 compiled successfully but installation stopped on the missing `Force Crafted Affix Roll` locale key. The key has been added in all supplied languages. In-game crafting checks remain pending.
+- Build 5 compiled successfully but installation stopped on the missing `Force Crafted Affix Roll` locale key. The key has been added in all supplied languages. In-game test failed: the forge still refuses upgrades past T5.
 - Build 6 has no visible Natural Drop Rates section. No rate behavior or persistence is confirmed.
-- Build 7 screenshot and log confirm offline character selection. The log ends before gameplay and contains repeated service observations and 5,911 dropped diagnostic messages; observation logging needs cleanup.
+- Build 7 is confirmed working by Nyk. Routine service, scene and heartbeat diagnostics have been silenced, with one confirmation per loaded offline character when the live signals agree; observer errors and a subsequent revocation remain visible.
