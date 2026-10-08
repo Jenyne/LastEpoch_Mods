@@ -82,8 +82,8 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 format: DisplayFormat.Percent,
                 label: "Force Crafted Affix Roll"
             );
-            public static readonly BoolSetting AlwaysGlyphOfHope = Group.Bool("AlwaysGlyphOfHope");
-            public static readonly BoolSetting AlwaysGlyphOfDespair = Group.Bool("AlwaysGlyphOfDespair");
+            public static readonly BoolSetting GuaranteedGlyphOfHope = Group.Bool("GuaranteedGlyphOfHope");
+            public static readonly BoolSetting GuaranteedGlyphOfDespair = Group.Bool("GuaranteedGlyphOfDespair");
         }
 
         public static class Weaver
