@@ -35,12 +35,17 @@ public static class ForceDropItemCreator
         // refresh. Finish the native corruption action before final verification.
         if (request.Corruption != null)
         {
-            RequireTier(ForceDropCatalog.Find(request.Corruption.Id), request.Corruption.Tier);
+            RequireTier(
+                ForceDropCatalog.Find(request.Corruption.Id),
+                request.Corruption.Tier,
+                request.Mode
+            );
             CorruptedAffixAdapter.Apply(
                 item,
                 request.Corruption.Id,
                 request.Corruption.Tier,
-                request.Corruption.Roll
+                request.Corruption.Roll,
+                request.IsIllegal
             );
         }
         if (request.Corrupted)
@@ -59,6 +64,7 @@ public static class ForceDropItemCreator
             if (request.Rarity < 7 && request.ItemType < 100)
                 Items_Drop_ForginPotencial.Stamp(item, (byte)forging);
             VerifyRequest(item, request, forging);
+            IllegalItemAdapter.VerifyMembership(item);
             var expected = Snapshot(item);
             var packed = item.GetID();
             var restored = new ItemDataUnpacked(packed);
@@ -75,6 +81,7 @@ public static class ForceDropItemCreator
                         + "; no item was dropped."
                 );
             }
+            IllegalItemAdapter.VerifyMembership(restored);
             return item;
         }
         catch
@@ -93,7 +100,8 @@ public static class ForceDropItemCreator
             throw new ArgumentNullException(nameof(request));
         ValidateIdentity(request);
         var affixes = new Il2CppSystem.Collections.Generic.List<ItemAffix>();
-        ItemAffix regularSeal = null;
+        ItemAffix regularSeal = null,
+            primordialSeal = null;
         int ordinaryCount = 0;
         int prefixes = 0,
             suffixes = 0,
@@ -101,40 +109,75 @@ public static class ForceDropItemCreator
             weaverAffixes = 0;
         foreach (var selected in request.Affixes)
         {
-            var otherIds = new List<int>();
-            foreach (var other in request.Affixes)
-                if (other.Id != selected.Id)
-                    otherIds.Add(other.Id);
-            var context = new ForceDropLegalAffixes(
-                request.ItemType,
-                request.SubType,
-                request.Rarity,
-                otherIds
-            );
             var definition = ForceDropCatalog.Find(selected.Id);
             bool enchantment =
                 !definition.IsNullOrDestroyed()
                 && definition.specialAffixType == AffixList.SpecialAffixType.IdolEnchantment;
-            string reason = context.OrdinaryReason(
+            if (!request.IsIllegal)
+            {
+                var otherIds = new List<int>();
+                foreach (var other in request.Affixes)
+                    if (other.Id != selected.Id)
+                        otherIds.Add(other.Id);
+                var context = new ForceDropLegalAffixes(
+                    request.ItemType,
+                    request.SubType,
+                    request.Rarity,
+                    otherIds
+                );
+                string reason = context.OrdinaryReason(
+                    definition,
+                    selected.Seal != ForceDropSeal.None,
+                    enchantment
+                );
+                if (reason.Length > 0)
+                    throw new InvalidOperationException("Affix " + selected.Id + ": " + reason);
+            }
+            bool primordial = selected.Seal == ForceDropSeal.Primordial;
+            if (
+                primordial
+                && !ForceDropModeRules.CanSealPrimordial(
+                    request.ItemType,
+                    request.Rarity,
+                    ForceDropLegalAffixes.Family(definition),
+                    ForceDropCatalog.MaximumTier(definition, 8),
+                    request.Mode
+                )
+            )
+                throw new InvalidOperationException(
+                    "This affix cannot be Primordial sealed on this item."
+                );
+            RequireTier(
                 definition,
-                selected.Seal == ForceDropSeal.Regular,
-                enchantment
+                selected.Tier,
+                primordial ? ForceDropMode.Illegal : request.Mode
             );
-            if (reason.Length > 0)
-                throw new InvalidOperationException("Affix " + selected.Id + ": " + reason);
-            RequireTier(definition, selected.Tier);
+            // Evolution upgrades its T7 seed and assigns the separate Primordial seal.
+            int seedTier = primordial ? 6 : selected.Tier;
             // Native metadata initialization is also used by variants and corruption.
             var affix = new ItemAffix(
                 (ushort)selected.Id,
-                (byte)selected.Tier,
+                (byte)seedTier,
                 (byte)selected.Roll,
                 (byte)request.ItemType,
                 SealedAffixType.None
             );
-            VerifyAffix(affix, selected, definition, ForceDropSeal.None);
+            VerifyAffix(
+                affix,
+                new ResolvedForceDropAffix(
+                    selected.Id,
+                    seedTier,
+                    selected.Roll,
+                    ForceDropSeal.None
+                ),
+                definition,
+                ForceDropSeal.None
+            );
             affixes.Add(affix);
             if (selected.Seal == ForceDropSeal.Regular)
                 regularSeal = affix;
+            else if (primordial)
+                primordialSeal = affix;
             else
             {
                 ordinaryCount++;
@@ -149,7 +192,10 @@ public static class ForceDropItemCreator
             }
         }
         bool idol = request.ItemType >= 25 && request.ItemType <= 33;
-        if (prefixes > (idol ? 1 : 2) || suffixes > (idol ? 1 : 2) || enchantments > 2)
+        if (
+            !request.IsIllegal
+            && (prefixes > (idol ? 1 : 2) || suffixes > (idol ? 1 : 2) || enchantments > 2)
+        )
             throw new InvalidOperationException(
                 "Too many ordinary prefixes or suffixes for this item."
             );
@@ -159,7 +205,7 @@ public static class ForceDropItemCreator
             request.Rarity,
             Array.Empty<int>()
         );
-        if (itemContext.IsWeaverIdol && weaverAffixes == 0)
+        if (!request.IsIllegal && itemContext.IsWeaverIdol && weaverAffixes == 0)
             throw new InvalidOperationException(
                 "A Weaver idol requires at least one Weaver affix."
             );
@@ -192,6 +238,18 @@ public static class ForceDropItemCreator
         // by assigning a boolean on a manually populated affix list.
         if (!regularSeal.IsNullOrDestroyed())
             item.SealAffix(regularSeal);
+        if (!primordialSeal.IsNullOrDestroyed())
+        {
+            item.MakeAffixSealedPrimordialAffix(primordialSeal, true);
+            foreach (var selected in request.Affixes)
+                if (selected.Seal == ForceDropSeal.Primordial)
+                    VerifyAffix(
+                        primordialSeal,
+                        selected,
+                        ForceDropCatalog.Find(selected.Id),
+                        ForceDropSeal.Primordial
+                    );
+        }
         if (request.VariantIds.Count > 0)
         {
             var ids = new int[request.VariantIds.Count];
@@ -208,12 +266,13 @@ public static class ForceDropItemCreator
         return item;
     }
 
-    static void RequireTier(AffixList.Affix definition, int tier)
+    static void RequireTier(AffixList.Affix definition, int tier, ForceDropMode mode)
     {
         if (
             definition.IsNullOrDestroyed()
             || tier < 0
-            || tier >= ForceDropCatalog.MaximumTier(definition)
+            || tier
+                >= ForceDropModeRules.MaximumTier(ForceDropCatalog.MaximumTier(definition, 8), mode)
         )
             throw new InvalidOperationException("The selected tier does not exist for this affix.");
     }

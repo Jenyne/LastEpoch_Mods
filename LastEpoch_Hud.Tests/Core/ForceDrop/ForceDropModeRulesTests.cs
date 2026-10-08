@@ -1,0 +1,132 @@
+using LastEpoch_Hud.Scripts.Core.ForceDrop;
+
+namespace LastEpoch_Hud.Tests.Core.ForceDrop;
+
+public sealed class ForceDropModeRulesTests
+{
+    [Theory]
+    [InlineData(8, ForceDropMode.Legal, 7)]
+    [InlineData(8, ForceDropMode.Illegal, 8)]
+    [InlineData(7, ForceDropMode.Illegal, 7)]
+    [InlineData(1, ForceDropMode.Illegal, 1)]
+    [InlineData(0, ForceDropMode.Illegal, 0)]
+    public void IllegalModeCannotInventDefinitionTiers(
+        int count,
+        ForceDropMode mode,
+        int maximum
+    ) => Assert.Equal(maximum, ForceDropModeRules.MaximumTier(count, mode));
+
+    [Theory]
+    [InlineData(21, 0, ForceDropAffixFamily.Standard, 8, ForceDropMode.Legal, true)]
+    [InlineData(21, 7, ForceDropAffixFamily.Standard, 8, ForceDropMode.Legal, false)]
+    [InlineData(25, 0, ForceDropAffixFamily.Standard, 8, ForceDropMode.Legal, false)]
+    [InlineData(21, 0, ForceDropAffixFamily.Set, 8, ForceDropMode.Legal, false)]
+    [InlineData(21, 0, ForceDropAffixFamily.Standard, 7, ForceDropMode.Legal, false)]
+    [InlineData(21, 7, ForceDropAffixFamily.Standard, 8, ForceDropMode.Illegal, true)]
+    [InlineData(21, 7, ForceDropAffixFamily.Standard, 1, ForceDropMode.Illegal, false)]
+    public void PrimordialSealUsesItsOwnRoute(
+        int type,
+        int rarity,
+        ForceDropAffixFamily family,
+        int tiers,
+        ForceDropMode mode,
+        bool allowed
+    ) =>
+        Assert.Equal(
+            allowed,
+            ForceDropModeRules.CanSealPrimordial(type, rarity, family, tiers, mode)
+        );
+
+    [Fact]
+    public void SavedUnsealedT8DoesNotDependOnTheCreationToggle()
+    {
+        Assert.Equal(7, ForceDropModeRules.MaximumPersistedTier(8));
+        Assert.Equal(0, ForceDropModeRules.MaximumPersistedTier(1));
+    }
+
+    [Fact]
+    public void RegularPrimordialAndCorruptionSealsAreSeparate()
+    {
+        var request = Request(
+            ForceDropMode.Legal,
+            new[]
+            {
+                new ResolvedForceDropAffix(13, 6, 42, ForceDropSeal.Regular),
+                new ResolvedForceDropAffix(8, 7, 255, ForceDropSeal.Primordial),
+            }
+        );
+        Assert.Equal(ForceDropMode.Legal, request.Mode);
+        Assert.Equal(ForceDropSeal.Regular, request.Affixes[0].Seal);
+        Assert.Equal(ForceDropSeal.Primordial, request.Affixes[1].Seal);
+        Assert.Equal(ForceDropSeal.Corruption, request.Corruption.Seal);
+        Assert.Equal(7, request.Affixes[1].Tier);
+    }
+
+    [Theory]
+    [InlineData(ForceDropMode.Legal)]
+    [InlineData(ForceDropMode.Illegal)]
+    public void PrimordialCannotBeTwoSealsOrAT7Downgrade(ForceDropMode mode)
+    {
+        Assert.Throws<ArgumentException>(() =>
+            Request(
+                mode,
+                new[] { new ResolvedForceDropAffix(13, 6, 255, ForceDropSeal.Primordial) }
+            )
+        );
+        Assert.Throws<ArgumentException>(() =>
+            Request(
+                mode,
+                new[]
+                {
+                    new ResolvedForceDropAffix(13, 7, 255, ForceDropSeal.Primordial),
+                    new ResolvedForceDropAffix(8, 7, 255, ForceDropSeal.Primordial),
+                }
+            )
+        );
+    }
+
+    [Fact]
+    public void IllegalRequestStillRejectsDuplicateAndOutOfBoundsData()
+    {
+        Assert.Throws<ArgumentException>(() =>
+            Request(
+                ForceDropMode.Illegal,
+                new[]
+                {
+                    new ResolvedForceDropAffix(13, 7, 255, ForceDropSeal.None),
+                    new ResolvedForceDropAffix(13, 6, 255, ForceDropSeal.Regular),
+                }
+            )
+        );
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new ResolvedForceDropAffix(13, 8, 255, ForceDropSeal.None)
+        );
+        Assert.True(
+            Request(
+                ForceDropMode.Illegal,
+                new[] { new ResolvedForceDropAffix(13, 7, 255, ForceDropSeal.None) }
+            ).IsIllegal
+        );
+    }
+
+    static ResolvedForceDrop Request(
+        ForceDropMode mode,
+        IEnumerable<ResolvedForceDropAffix> affixes
+    ) =>
+        new(
+            21,
+            1,
+            0,
+            0,
+            100,
+            0,
+            0,
+            true,
+            new[] { 255, 255, 255 },
+            Array.Empty<int>(),
+            affixes,
+            Array.Empty<int>(),
+            new ResolvedForceDropAffix(1020, 6, 255, ForceDropSeal.Corruption),
+            mode
+        );
+}

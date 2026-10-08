@@ -84,10 +84,13 @@ public static class ForceDropBuilder
     static Dictionary<int, NativeItemNames.ItemChoice> nativeItems =
         new Dictionary<int, NativeItemNames.ItemChoice>();
     static bool corrupted,
+        allowIllegal,
         failed,
         metadataLogged;
     static float nextCorruptionCheck;
     static string result = "";
+    static Toggle illegalToggle;
+    static int RouteMaximum => allowIllegal ? 8 : 7;
     public static bool IsReady => !root.IsNullOrDestroyed();
 
     static readonly Dictionary<int, ForceDropLegalAffixes> legalContexts =
@@ -113,6 +116,7 @@ public static class ForceDropBuilder
             .Append(lp.value)
             .Append(':')
             .Append(ww.value);
+        key.Append(':').Append(allowIllegal);
         foreach (var row in rows)
             key.Append(':').Append(row.id).Append('/').Append(row.tier.value);
         foreach (int id in variantIds)
@@ -269,6 +273,8 @@ public static class ForceDropBuilder
         }
         if (!IsReady)
             return false;
+        if (!illegalToggle.IsNullOrDestroyed() && illegalToggle.isOn != allowIllegal)
+            ChangeMode(illegalToggle.isOn);
         RefreshNativeLocale();
         RefreshTierLimits();
         foreach (var n in numbers)
@@ -381,18 +387,21 @@ public static class ForceDropBuilder
         for (int slot = 0; slot < rows.Length; slot++)
         {
             var context = LegalContext(slot);
-            bool enchantment = context.IsHereticalIdol && (slot == 1 || slot == 3);
-            bool available = ForceDropLegalRules.SlotAllowed(
-                slot,
-                context.IsIdol,
-                context.IsUnique,
-                context.IsSet,
-                context.IsHereticalIdol
-            );
+            bool enchantment = !allowIllegal && context.IsHereticalIdol && (slot == 1 || slot == 3);
+            bool available = allowIllegal
+                ? FD.item_type < 100
+                : ForceDropLegalRules.SlotAllowed(
+                    slot,
+                    context.IsIdol,
+                    context.IsUnique,
+                    context.IsSet,
+                    context.IsHereticalIdol
+                );
             LocaleRegistry.Apply(
                 rows[slot].slotLabel,
-                enchantment ? "Enchantment " + (slot == 1 ? 1 : 2)
-                    : slot == 4 ? "Sealed"
+                allowIllegal && slot < 4 ? "Affix " + (slot + 1)
+                    : enchantment ? "Enchantment " + (slot == 1 ? 1 : 2)
+                    : slot == 4 ? (rows[slot].tier.value == 8 ? "Primordial" : "Sealed")
                     : slot < 2 ? "Prefix " + (slot + 1)
                     : "Suffix " + (slot - 1)
             );
@@ -438,7 +447,8 @@ public static class ForceDropBuilder
         pickButtons.Clear();
         pickerHeaders.Clear();
         root = Panel(FD.content_obj, "ForceDropBuilder", 0, 0, 1, 1);
-        Label(root, "Force Drop", 0.02f, 0.955f, 0.98f, 0.995f, 22);
+        Label(root, "Force Drop", 0.02f, 0.955f, 0.64f, 0.995f, 22);
+        BuildIllegalToggle();
         var left = Panel(root, "Choose item", 0.01f, 0.02f, 0.29f, 0.945f);
         var middle = Panel(root, "Customize", 0.30f, 0.02f, 0.73f, 0.945f);
         var right = Panel(root, "Preview", 0.74f, 0.02f, 0.99f, 0.945f);
@@ -860,48 +870,55 @@ public static class ForceDropBuilder
                 },
             }
         );
-        var pool = CorruptionPool();
-        if (pool == null || corruptionPoolError.Length > 0)
+        var pool = allowIllegal ? null : CorruptionPool();
+        if (!allowIllegal && (pool == null || corruptionPoolError.Length > 0))
             result = corruptionPoolError;
-        if (pool != null)
-            foreach (var a in pool.Definitions())
-            {
-                int id = a.affixId;
-                string name = NativeItemNames.AffixName(a);
-                string family =
-                    a.specialAffixType == AffixList.SpecialAffixType.Personal
-                        ? "Champion"
-                        : a.specialAffixType.ToString();
-                choices.Add(
-                    new Choice
+        var definitions =
+            allowIllegal ? ForceDropCatalog.Definitions()
+            : pool == null ? Array.Empty<AffixList.Affix>()
+            : pool.Definitions();
+        foreach (var a in definitions)
+        {
+            if (a.IsNullOrDestroyed() || ForceDropCatalog.MaximumTier(a, RouteMaximum) == 0)
+                continue;
+            int id = a.affixId;
+            if (Array.Exists(rows, row => row.id == id) || Array.IndexOf(variantIds, id) >= 0)
+                continue;
+            string name = NativeItemNames.AffixName(a);
+            bool champion = LegalContext(-1).IsChampion(a);
+            string family = champion ? "Champion" : a.specialAffixType.ToString();
+            choices.Add(
+                new Choice
+                {
+                    id = id,
+                    name =
+                        name
+                        + " · "
+                        + L(
+                            CorruptedAffixAdapter.IsCorruption(a) ? "Corruption-exclusive" : family
+                        ),
+                    aliases = NativeItemNames.AffixAliases(a) + "\n" + family,
+                    affixFamily = ForceDropLegalAffixes.Family(a),
+                    champion = champion,
+                    select = () =>
                     {
-                        id = id,
-                        name =
-                            name
-                            + " · "
-                            + L(
-                                CorruptedAffixAdapter.IsCorruption(a)
-                                    ? "Corruption-exclusive"
-                                    : family
-                            ),
-                        aliases = NativeItemNames.AffixAliases(a) + "\n" + family,
-                        affixFamily = ForceDropLegalAffixes.Family(a),
-                        champion = a.specialAffixType == AffixList.SpecialAffixType.Personal,
-                        select = () =>
-                        {
-                            corruptionId = id;
-                            corruptionName = name;
-                            corrupted = true;
-                            Caption(corruptButton, "Corrupted: Yes");
-                            Caption(corruptionSelect, name);
-                            RefreshTierLimits();
-                        },
-                    }
-                );
-            }
+                        corruptionId = id;
+                        corruptionName = name;
+                        corrupted = true;
+                        Caption(corruptButton, "Corrupted: Yes");
+                        Caption(corruptionSelect, name);
+                        RefreshTierLimits();
+                    },
+                }
+            );
+        }
         choices.Sort(CompareAffixChoices);
         Main.logger_instance.Msg(
-            "Force Drop legal corruption pool: base="
+            (
+                allowIllegal
+                    ? "Force Drop illegal corruption pool: base="
+                    : "Force Drop legal corruption pool: base="
+            )
                 + FD.item_type
                 + ", subtype="
                 + FD.item_subtype
@@ -1014,7 +1031,11 @@ public static class ForceDropBuilder
             excluded.Append(pair.Key).Append('=').Append(pair.Value).Append(';');
         choices.Sort(CompareAffixChoices);
         Main.logger_instance.Msg(
-            "Force Drop legal affix pool: base="
+            (
+                allowIllegal
+                    ? "Force Drop illegal affix pool: base="
+                    : "Force Drop legal affix pool: base="
+            )
                 + FD.item_type
                 + ", subtype="
                 + FD.item_subtype
@@ -1028,7 +1049,8 @@ public static class ForceDropBuilder
                 + excluded
         );
         OpenPicker(
-            LegalContext(slot).IsHereticalIdol && (slot == 1 || slot == 3) ? "Idol enchantment"
+            allowIllegal && slot < 4 ? "Affix " + (slot + 1)
+            : LegalContext(slot).IsHereticalIdol && (slot == 1 || slot == 3) ? "Idol enchantment"
             : slot == 4 ? "Sealed affix"
             : slot < 2 ? "Prefix"
             : "Suffix"
@@ -1039,7 +1061,8 @@ public static class ForceDropBuilder
     {
         var context = LegalContext(slot);
         if (
-            !ForceDropLegalRules.SlotAllowed(
+            !allowIllegal
+            && !ForceDropLegalRules.SlotAllowed(
                 slot,
                 context.IsIdol,
                 context.IsUnique,
@@ -1053,10 +1076,13 @@ public static class ForceDropBuilder
             slot == 4,
             context.IsHereticalIdol && (slot == 1 || slot == 3)
         );
-        if (reason.Length > 0)
+        if (!allowIllegal && reason.Length > 0)
             return reason;
+        if (a.IsNullOrDestroyed() || ForceDropCatalog.MaximumTier(a, RouteMaximum) == 0)
+            return "Definition/tier unavailable";
         if (
-            slot < 4
+            !allowIllegal
+            && slot < 4
             && !(context.IsHereticalIdol && (slot == 1 || slot == 3))
             && a.type != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX)
         )
@@ -1067,6 +1093,8 @@ public static class ForceDropBuilder
                 return "Placement or duplicate exclusion";
         if (corrupted && corruptionId == id)
             return "Placement or duplicate exclusion";
+        if (Array.IndexOf(variantIds, id) >= 0)
+            return "Already selected as a unique modifier";
         if (choices.Exists(x => x.id == id))
             return "Placement or duplicate exclusion";
         string name = NativeItemNames.AffixName(a);
@@ -1103,19 +1131,45 @@ public static class ForceDropBuilder
 
     static AffixList.Affix FindAffix(int id) => ForceDropCatalog.Find(id);
 
+    static int RowMaximum(int slot, AffixList.Affix definition)
+    {
+        if (
+            slot == 4
+            && (
+                definition.IsNullOrDestroyed()
+                    ? allowIllegal
+                        || (FD.item_type >= 0 && FD.item_type <= 24 && FD.item_rarity < 7)
+                    : ForceDropModeRules.CanSealPrimordial(
+                        FD.item_type,
+                        FD.item_rarity,
+                        ForceDropLegalAffixes.Family(definition),
+                        ForceDropCatalog.MaximumTier(definition, 8),
+                        allowIllegal ? ForceDropMode.Illegal : ForceDropMode.Legal
+                    )
+            )
+        )
+            return 8;
+        return RouteMaximum;
+    }
+
     static void RefreshTierLimits()
     {
-        foreach (var row in rows)
+        for (int slot = 0; slot < rows.Length; slot++)
         {
+            var row = rows[slot];
+            var definition = FindAffix(row.id);
+            int maximum = RowMaximum(slot, definition);
             SetTierLimit(
                 row.tier,
-                row.id < 0 ? 7 : ForceDropCatalog.MaximumTier(FindAffix(row.id))
+                row.id < 0 ? maximum : ForceDropCatalog.MaximumTier(definition, maximum)
             );
             row.selectedLabel.color = SelectedAffixColor(row.id);
         }
         corruptionSelectedLabel.color = SelectedAffixColor(corruptionId);
         if (corruptionId < 0)
-            SetTierLimit(corruptionTier, 7);
+            SetTierLimit(corruptionTier, RouteMaximum);
+        else if (allowIllegal)
+            SetTierLimit(corruptionTier, ForceDropCatalog.MaximumTier(FindAffix(corruptionId), 8));
         else
         {
             var pool = CorruptionPool();
@@ -1225,7 +1279,8 @@ public static class ForceDropBuilder
             var definition = FindAffix(row.id);
             var context = LegalContext(slot);
             if (
-                !ForceDropLegalRules.SlotAllowed(
+                !allowIllegal
+                && !ForceDropLegalRules.SlotAllowed(
                     slot,
                     context.IsIdol,
                     context.IsUnique,
@@ -1239,20 +1294,24 @@ public static class ForceDropBuilder
                 slot == 4,
                 context.IsHereticalIdol && (slot == 1 || slot == 3)
             );
-            if (reason.Length > 0)
+            if (!allowIllegal && reason.Length > 0)
                 return NativeItemNames.AffixName(row.id, row.name) + ": " + reason;
             if (
-                slot < 4
+                !allowIllegal
+                && slot < 4
                 && !(context.IsHereticalIdol && (slot == 1 || slot == 3))
                 && definition.type
                     != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX)
             )
                 return "Affix type does not match its slot.";
-            if (row.tier.value > ForceDropCatalog.MaximumTier(definition))
+            if (
+                row.tier.value
+                > ForceDropCatalog.MaximumTier(definition, RowMaximum(slot, definition))
+            )
                 return "The selected tier does not exist for this affix.";
         }
         var itemContext = LegalContext(-1);
-        if (itemContext.IsWeaverIdol)
+        if (!allowIllegal && itemContext.IsWeaverIdol)
         {
             bool hasWeaver = false;
             foreach (var row in rows)
@@ -1267,13 +1326,22 @@ public static class ForceDropBuilder
         }
         if (corrupted && corruptionId >= 0)
         {
-            var pool = CorruptionPool();
-            if (!CorruptedAffixAdapter.IsSupported || pool == null)
+            var pool = allowIllegal ? null : CorruptionPool();
+            if (!CorruptedAffixAdapter.IsSupported || (!allowIllegal && pool == null))
                 return "Corruption selection unavailable: " + corruptionPoolError;
             if (
-                !ForceDropLegalTiers.Supports(pool.TierMask(corruptionId), corruptionTier.value - 1)
+                !allowIllegal
+                && !ForceDropLegalTiers.Supports(
+                    pool.TierMask(corruptionId),
+                    corruptionTier.value - 1
+                )
             )
                 return "The chosen corruption affix or tier is not permitted by this item's native outcomes.";
+            if (
+                allowIllegal
+                && corruptionTier.value > ForceDropCatalog.MaximumTier(FindAffix(corruptionId), 8)
+            )
+                return "The selected tier does not exist for this affix.";
             if (!ids.Add(corruptionId))
                 return "Corruption cannot duplicate another affix.";
         }
@@ -1308,7 +1376,11 @@ public static class ForceDropBuilder
             foreach (var r in rows)
                 if (r.id >= 0)
                     s.Append("\n\n")
-                        .Append(r == rows[4] ? L("Sealed") + ": " : "")
+                        .Append(
+                            r == rows[4]
+                                ? L(r.tier.value == 8 ? "Primordial" : "Sealed") + ": "
+                                : ""
+                        )
                         .Append(r.name)
                         .Append("\nT")
                         .Append(r.tier.value)
@@ -1388,7 +1460,13 @@ public static class ForceDropBuilder
                             row.id,
                             row.tier.value - 1,
                             ResolvedRoll(row.roll),
-                            slot == 4 ? ForceDropSeal.Regular : ForceDropSeal.None
+                            slot == 4
+                                ? (
+                                    row.tier.value == 8
+                                        ? ForceDropSeal.Primordial
+                                        : ForceDropSeal.Regular
+                                )
+                                : ForceDropSeal.None
                         )
                     );
             }
@@ -1423,8 +1501,83 @@ public static class ForceDropBuilder
                     ResolvedRoll(corruptionRoll),
                     ForceDropSeal.Corruption
                 )
-                : null
+                : null,
+            allowIllegal ? ForceDropMode.Illegal : ForceDropMode.Legal
         );
+    }
+
+    static void ChangeMode(bool illegal)
+    {
+        allowIllegal = illegal;
+        // Selections made under one rule set must not leak into the other.
+        foreach (var row in rows)
+        {
+            row.id = -1;
+            row.name = "None";
+            Caption(row.select, "None");
+        }
+        corruptionId = -1;
+        corruptionName = "None";
+        Caption(corruptionSelect, "Corrupted affix: None");
+        legalContextKey = corruptionPoolKey = "";
+        legalContexts.Clear();
+        corruptionPool = null;
+        corruptionPoolError = result = "";
+        if (!picker.IsNullOrDestroyed())
+            picker.SetActive(false);
+        RefreshTierLimits();
+    }
+
+    static void BuildIllegalToggle()
+    {
+        var sample = Hud_Manager.hud_object.GetComponentInChildren<Toggle>(true);
+        var row = new GameObject("ForceDropIllegalMode");
+        row.AddComponent<RectTransform>();
+        row.transform.SetParent(root.transform, false);
+        Rect(row, .68f, .955f, .98f, .995f);
+        illegalToggle = row.AddComponent<Toggle>();
+        var box = new GameObject("Box");
+        box.AddComponent<RectTransform>();
+        box.transform.SetParent(row.transform, false);
+        var boxImage = box.AddComponent<Image>();
+        var rect = box.GetComponent<RectTransform>();
+        rect.anchorMin = rect.anchorMax = new Vector2(0, .5f);
+        rect.pivot = new Vector2(0, .5f);
+        rect.sizeDelta = new Vector2(18, 18);
+        boxImage.color = new Color(.58f, .45f, .20f);
+        var check = new GameObject("Check");
+        check.AddComponent<RectTransform>();
+        check.transform.SetParent(box.transform, false);
+        Rect(check, .2f, .2f, .8f, .8f);
+        var checkImage = check.AddComponent<Image>();
+        checkImage.color = gold;
+        if (!sample.IsNullOrDestroyed())
+        {
+            var sourceBox = sample.targetGraphic.IsNullOrDestroyed()
+                ? null
+                : sample.targetGraphic.GetComponent<Image>();
+            var sourceCheck = sample.graphic.IsNullOrDestroyed()
+                ? null
+                : sample.graphic.GetComponent<Image>();
+            if (!sourceBox.IsNullOrDestroyed())
+            {
+                boxImage.sprite = sourceBox.sprite;
+                boxImage.type = sourceBox.type;
+                boxImage.color = sourceBox.color;
+            }
+            if (!sourceCheck.IsNullOrDestroyed())
+            {
+                checkImage.sprite = sourceCheck.sprite;
+                checkImage.type = sourceCheck.type;
+                checkImage.color = sourceCheck.color;
+            }
+            illegalToggle.colors = sample.colors;
+            illegalToggle.transition = sample.transition;
+        }
+        illegalToggle.targetGraphic = boxImage;
+        illegalToggle.graphic = checkImage;
+        illegalToggle.SetIsOnWithoutNotify(allowIllegal);
+        Label(row, "Illegal mode", .12f, 0, 1, 1, 15);
     }
 
     static void Drop()

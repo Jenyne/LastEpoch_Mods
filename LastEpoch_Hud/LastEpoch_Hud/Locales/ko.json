@@ -393,5 +393,11 @@
   "Enchantment 2": "인챈트 2",
   "Idol enchantment": "우상 인챈트",
   "Weaver idol": "직조자 우상",
-  "A Weaver idol requires at least one Weaver affix.": "직조자 우상에는 직조자 접사가 하나 이상 필요합니다."
+  "A Weaver idol requires at least one Weaver affix.": "직조자 우상에는 직조자 접사가 하나 이상 필요합니다.",
+  "Illegal mode": "비정상 모드",
+  "Primordial": "태초 봉인",
+  "Affix 1": "옵션 1",
+  "Affix 2": "옵션 2",
+  "Affix 3": "옵션 3",
+  "Affix 4": "옵션 4"
 }

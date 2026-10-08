@@ -12,6 +12,12 @@ public enum ForceDropSeal
     Corruption,
 }
 
+public enum ForceDropMode
+{
+    Legal,
+    Illegal,
+}
+
 // Values here are already resolved, including random rolls. Never read HUD controls
 // or sample RNG while constructing or verifying this request.
 public sealed class ResolvedForceDropAffix
@@ -53,6 +59,8 @@ public sealed class ResolvedForceDrop
     public IReadOnlyList<ResolvedForceDropAffix> Affixes { get; }
     public IReadOnlyList<int> VariantIds { get; }
     public ResolvedForceDropAffix Corruption { get; }
+    public ForceDropMode Mode { get; }
+    public bool IsIllegal => Mode == ForceDropMode.Illegal;
 
     public ResolvedForceDrop(
         int itemType,
@@ -67,7 +75,8 @@ public sealed class ResolvedForceDrop
         IEnumerable<int> uniqueRolls,
         IEnumerable<ResolvedForceDropAffix> affixes,
         IEnumerable<int> variantIds,
-        ResolvedForceDropAffix corruption
+        ResolvedForceDropAffix corruption,
+        ForceDropMode mode = ForceDropMode.Legal
     )
     {
         CheckRange(itemType, byte.MaxValue, nameof(itemType));
@@ -77,6 +86,9 @@ public sealed class ResolvedForceDrop
         CheckRange(forgingPotential, byte.MaxValue, nameof(forgingPotential));
         CheckRange(legendaryPotential, byte.MaxValue, nameof(legendaryPotential));
         CheckRange(weaversWill, byte.MaxValue, nameof(weaversWill));
+        if (!Enum.IsDefined(typeof(ForceDropMode), mode))
+            throw new ArgumentOutOfRangeException(nameof(mode));
+        Mode = mode;
         ItemType = itemType;
         SubType = subType;
         UniqueId = uniqueId;
@@ -98,18 +110,25 @@ public sealed class ResolvedForceDrop
         );
         Corruption = corruption;
         var ids = new HashSet<int>();
-        int regularSeals = 0;
+        int regularSeals = 0,
+            primordialSeals = 0;
         foreach (var affix in Affixes)
         {
             if (affix == null || !ids.Add(affix.Id))
                 throw new ArgumentException("Affixes must have distinct defined IDs.");
             if (affix.Seal == ForceDropSeal.Regular)
                 regularSeals++;
+            else if (affix.Seal == ForceDropSeal.Primordial)
+            {
+                primordialSeals++;
+                if (affix.Tier != 7)
+                    throw new ArgumentException("A Primordial sealed affix must be T8.");
+            }
             else if (affix.Seal != ForceDropSeal.None)
-                throw new ArgumentException(
-                    "This creation path supports ordinary and regular sealed affixes."
-                );
+                throw new ArgumentException("Corruption must use its separate corruption slot.");
         }
+        if (primordialSeals > 1)
+            throw new ArgumentException("Only one Primordial seal can be represented.");
         if (regularSeals > 1)
             throw new ArgumentException("Only one regular seal can be represented.");
         foreach (int id in VariantIds)

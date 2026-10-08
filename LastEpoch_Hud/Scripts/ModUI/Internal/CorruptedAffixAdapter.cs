@@ -131,18 +131,26 @@ public static class CorruptedAffixAdapter
         return catalog;
     }
 
-    public static void Apply(ItemDataUnpacked item, int id, int tier, int roll)
+    public static void Apply(
+        ItemDataUnpacked item,
+        int id,
+        int tier,
+        int roll,
+        bool allowIllegal = false
+    )
     {
         if (!IsSupported)
             throw new InvalidOperationException(
                 "Chosen corrupted affixes are unsupported by this game's item wrappers"
             );
         var definition = ForceDropCatalog.Find(id);
-        var pool = new ForceDropCorruptionPool(item);
-        var legalOutcome = pool.Outcome(id, tier);
+        var pool = allowIllegal ? null : new ForceDropCorruptionPool(item);
+        var legalOutcome = pool == null ? null : pool.Outcome(id, tier);
         if (
             definition.IsNullOrDestroyed()
-            || legalOutcome.IsNullOrDestroyed()
+            || (!allowIllegal && legalOutcome.IsNullOrDestroyed())
+            || tier < 0
+            || tier >= ForceDropCatalog.MaximumTier(definition, allowIllegal ? 8 : 7)
             || roll < 0
             || roll > 255
         )
@@ -152,7 +160,7 @@ public static class CorruptedAffixAdapter
                     + " at T"
                     + (tier + 1)
                     + ": "
-                    + pool.Error
+                    + (pool == null ? "Illegal definition/tier unavailable" : pool.Error)
             );
         // Let the native constructor initialize item-type-dependent metadata.
         var affix = new ItemAffix(
@@ -184,7 +192,23 @@ public static class CorruptedAffixAdapter
         ushort originalUniqueId = item.uniqueID;
         byte originalLP = item.legendaryPotential;
         byte originalWW = item.weaversWill;
-        if (flagStorage)
+        if (allowIllegal)
+        {
+            // The native unchecked path still owns sealed storage and ordering.
+            // Do not append a corruption affix or fabricate its presence flag.
+            if (item.hasSealedAffixFromCorruption)
+                throw new InvalidOperationException("This item already has a corruption seal.");
+            var statChanges = new Il2CppSystem.Collections.Generic.List<Stats.Stat>();
+            item.AddAffixNoCostOrChecks(
+                id,
+                false,
+                tier,
+                ref statChanges,
+                new Il2CppSystem.Nullable<byte>((byte)roll),
+                true
+            );
+        }
+        else if (flagStorage)
         {
             // The native operation owns sealed-affix ordering, socket counts and
             // rarity-specific packing flags. Appending an affix manually causes

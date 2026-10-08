@@ -545,6 +545,22 @@ public sealed class ForceDropPackingSnapshotTests
         );
     }
 
+    [Fact]
+    public void IndependentPrimordialSealMustSurvivePackingAsT8()
+    {
+        var affixes = SealedAndCorrupted
+            .Append(new PackedForceDropAffix(8, 7, 125, ForceDropSeal.Primordial, 0))
+            .ToArray();
+        var expected = Snapshot(affixes: affixes, primordial: true);
+        Assert.Equal(
+            "",
+            expected.Difference(Snapshot(affixes: affixes.Reverse().ToArray(), primordial: true))
+        );
+        Assert.NotEqual("", expected.Difference(Snapshot(affixes: affixes, primordial: false)));
+        affixes[3] = new PackedForceDropAffix(8, 6, 125, ForceDropSeal.Primordial, 0);
+        Assert.NotEqual("", expected.Difference(Snapshot(affixes: affixes, primordial: true)));
+    }
+
     static ForceDropPackingSnapshot Snapshot(
         PackedForceDropAffix[] affixes = null,
         int itemType = 0,
