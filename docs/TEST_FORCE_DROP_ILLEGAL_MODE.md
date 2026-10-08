@@ -1,14 +1,14 @@
 # Force Drop Illegal Mode and Primordial sealed tiers
 
-Branch: `feat/force-drop-illegal-mode`, based on `fix/force-drop-legal-affixes` at `745dd1d5`.
+Branch: `feat/force-drop`, combining `feat/force-drop-illegal-mode` and `fix/force-drop-legal-affixes` (including the final LP correction). Previous testing branches remain available.
 
 The current Force Drop layout stays in use. Its new themed **Illegal mode** checkbox starts off. Changing mode clears ordinary/sealed/corruption selections so an illegal selection cannot leak into Legal Mode. Item identity and the exclusive unique modifier controls remain separate.
 
 ## Changes
 
-- Illegal affix pickers split Prefix and Suffix into separate columns with independent Previous/Next buttons and page counters. Either column fills the same slot that opened the picker. None stays first on every page; search applies to both columns and resets both pages. Sealed and corruption pickers also use this split without relaxing their legal eligibility when Illegal Mode is off.
+- Illegal affix pickers split Prefix and Suffix into separate independently scrolling columns (mouse wheel or drag). Either column fills the same slot that opened the picker. None stays pinned above each list; search applies to both columns and resets both scroll positions. Only visible rows are instantiated and reused. Sealed and corruption pickers also use this split without relaxing their legal eligibility when Illegal Mode is off.
 - Includes the legal branch's LP correction: ordinary affixes on a unique clear LP to zero and disable its controls; native fixed unique modifiers alone preserve LP.
-- Illegal Mode exposes all defined native affix families in the ordinary and corruption pickers, without item type, subtype, class, prefix/suffix placement or legal outcome-weight filtering. The four ordinary rows become Affix 1–4. Grouping, translated names, green Set affixes, purple corruption exclusives and None-first selection remain.
+- Illegal Mode exposes all defined native affix families in the ordinary and corruption pickers, without item type, subtype, class, prefix/suffix placement or legal outcome-weight filtering. The four ordinary rows become Affix 1–4. Grouping, translated names, green Set affixes, purple corruption exclusives and None-first selection remain. In Illegal Mode, native idol-compatible affixes (including ordinary idol, Weaver and enchantment definitions) use cyan in pickers and selected rows. Colors do not modify the native item tooltip.
 - Illegal ordinary slots can reach T8 when that definition has eight tiers. Runtime logs showed native refresh representing those T8 affixes as Primordial seals; illegal verification now accepts that specific conversion and multiple T8 Primordial affixes. Legal verification retains its single-Primordial restriction. A one-tier modifier stays T1; seven-tier definitions stay capped at T7. Saved T8 is preserved independently of the creation checkbox.
 - Illegal Mode permits extra fixed unique modifiers, such as additional distinct Unsated Rage modifiers, in ordinary/sealed/corruption slots. Only the modifier chosen in the dedicated ring control (or two dedicated glove modifiers) occupies the native fixed unique prefix. Extra modifiers remain separate and must all survive complete save-ID verification. The dedicated picker also excludes IDs already selected in other slots. Legal Mode keeps its existing fixed-pool limits.
 - Selecting T8 in the sealed row creates a **Primordial seal** through the native Evolution method, using a T7 seed and preserving the selected roll. T1–T7 in that row still create a regular seal. In Legal Mode, Primordial sealing is limited to supported Standard affixes on non-unique equipment; it is not a sealed Legendary transfer. Illegal Mode relaxes that eligibility but still requires a real eighth tier.
@@ -53,7 +53,7 @@ The script switches/updates the named branch, requires its revision to match ori
 | Unique with four ordinary affixes, sealed affix and corruption | Native packing preserves every ID/tier/roll/seal or blocks the drop with an explicit error; it must never silently replace another affix. |
 | Two Red Rings plus Omnis, each assigned a different matching Invoked Set-piece modifier | Unique names/properties remain; the three different pieces activate the full Set bonus. Repeating the same ring Set piece must not produce a third distinct member. Test with Remove Set Requirements off. |
 | Above Set items after mode off, save/reload, unequip/re-equip | Set identity/bonus and original unique name persist. Ordinary legal Set items retain native behavior. |
-| Switching modes, categories, FR → EN → KO; clear/search/page selectors | Selections clear on mode changes; native grouping/colors/None-first and locale changes remain correct. No overlap or leaked captions. |
+| Switching modes, categories, FR → EN → KO; clear/search/scroll selectors | Selections clear on mode changes; native grouping/colors/None-first and locale changes remain correct. No overlap or leaked captions. |
 | Illegal Unsated Rage: choose its dedicated Rage modifier, then different Rage modifiers in ordinary rows | Extra modifiers no longer produce the "already has a variant modifier" error. Inspect every effect, equip/unequip, turn Illegal Mode off, save/reload and restart; every selected ID/value must survive. Selecting the same modifier twice remains disallowed. |
 | Illegal Unsated Rage / Withstand the Elements: additional fixed modifiers with a sealed affix and corruption | Dedicated native modifier(s) remain at the unique prefix; extra modifiers and independent seals survive native packing or the drop is rejected with exact evidence. Repeat on a unique without a dedicated modifier pool. |
 | Legal Unsated Rage / Withstand the Elements | Dedicated native modifier paths continue working with ordinary affixes/seals/corruption. Additional fixed modifiers remain outside the legal pool. |
@@ -73,3 +73,11 @@ The container's `dotnet` CLI cannot initialize its process-information API, so c
 - [EHG Primordial Items](https://support.lastepoch.com/hc/en-us/articles/46361924471067-Primordial-Items): one Primordial item equipped at a time across the Unique and Exalted routes.
 - [EHG Runes and Glyphs](https://support.lastepoch.com/hc/en-us/articles/46361877750043-Runes-and-Glyphs): Rune of Evolution upgrades T7 into a separate T8 sealed affix.
 - [EHG Primal Hunt announcement](https://forum.lastepoch.com/t/primal-hunt-coming-to-last-epoch-august-21st/78569): Primordial sealing does not consume the regular sealed slot; Idol modifiers and sealed Legendary transfers are excluded.
+
+## Combined branch UI checks (awaiting in-game confirmation)
+
+- Wheel/drag each column independently, including the last entries; select from either side and confirm the opened slot changes.
+- Search while scrolled to the bottom: both lists reset to the top; None remains pinned, including zero-result searches. Clear search and reopen another slot.
+- Illegal Mode: ordinary idol-only, Weaver and enchantment affixes appear cyan in choices and selected rows; ordinary equipment affixes remain gold, Set green and corruption purple unless also idol-compatible. Legal Mode retains its original colors.
+- Check clipping, readable row heights and scrolling at different menu sizes; close/reopen the menu and change scenes to check pooled row rebuilding.
+- Repeat legal LP clearing and unique variant-only LP retention on this combined build. Prior in-game confirmation applies to `5b8199f6`, not these new UI changes.

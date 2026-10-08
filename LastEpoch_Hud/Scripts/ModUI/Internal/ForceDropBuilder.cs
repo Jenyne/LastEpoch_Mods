@@ -18,6 +18,7 @@ public static class ForceDropBuilder
     static readonly Color gold = new Color(0.96f, 0.81f, 0.48f);
     static readonly Color setGreen = new Color(.42f, .90f, .44f);
     static readonly Color corruptionPurple = new Color(.80f, .56f, 1f);
+    static readonly Color idolCyan = new Color(.25f, .90f, 1f);
     static readonly Color dark = new Color(0.10f, 0.12f, 0.15f);
     static readonly Dictionary<int, Action> clicks = new Dictionary<int, Action>();
     static GameObject root,
@@ -32,12 +33,14 @@ public static class ForceDropBuilder
     static bool categoryPicker,
         rarityPicker,
         splitAffixPicker;
-    const int AffixesPerColumnPage = 9;
-    static readonly int[] columnPages = new int[2];
+    const float AffixRowHeight = 40f;
+    static readonly ScrollRect[] columnScrolls = new ScrollRect[2];
+    static readonly Button[] columnClear = new Button[2];
+    static readonly List<Button>[] columnButtons = { new List<Button>(), new List<Button>() };
+    static readonly int[] columnStarts = { -1, -1 };
+    static readonly int[] columnEnds = { -1, -1 };
     static readonly List<Choice>[] columnChoices = { new List<Choice>(), new List<Choice>() };
     static readonly Text[] columnTitles = new Text[2];
-    static readonly Button[] columnPrevious = new Button[2],
-        columnNext = new Button[2];
     static readonly List<Choice> visiblePicks = new List<Choice>();
     static readonly List<Text> pickerHeaders = new List<Text>();
     static readonly string[] groups = { "Weapons", "Armour", "Accessories", "Idols", "Other" };
@@ -219,8 +222,15 @@ public static class ForceDropBuilder
         : family == ForceDropAffixFamily.Corrupted ? corruptionPurple
         : gold;
 
+    static Color ChoiceColor(Choice choice) =>
+        allowIllegal && choice.id >= 0 && ForceDropLegalAffixes.IsIdolAffix(FindAffix(choice.id))
+            ? idolCyan
+            : AffixColor(choice.affixFamily);
+
     static Color SelectedAffixColor(int id) =>
-        id < 0 ? gold : AffixColor(ForceDropLegalAffixes.Family(FindAffix(id)));
+        id < 0 ? gold
+        : allowIllegal && ForceDropLegalAffixes.IsIdolAffix(FindAffix(id)) ? idolCyan
+        : AffixColor(ForceDropLegalAffixes.Family(FindAffix(id)));
 
     sealed class Number
     {
@@ -300,9 +310,12 @@ public static class ForceDropBuilder
         {
             lastPickerSearch = pickerSearch.text;
             pickerPage = 0;
-            Array.Clear(columnPages, 0, columnPages.Length);
+            ResetAffixScrolls();
             RefreshPicker();
         }
+        if (picker.activeSelf && splitAffixPicker)
+            for (int column = 0; column < 2; column++)
+                RefreshAffixScrollRows(column);
         Caption(typeButton, SelectedCategoryName("Choose category"));
         Caption(
             rarityButton,
@@ -450,6 +463,8 @@ public static class ForceDropBuilder
         itemButtons.Clear();
         pickButtons.Clear();
         pickerHeaders.Clear();
+        foreach (var buttons in columnButtons)
+            buttons.Clear();
         root = Panel(FD.content_obj, "ForceDropBuilder", 0, 0, 1, 1);
         Label(root, "Force Drop", 0.02f, 0.955f, 0.64f, 0.995f, 22);
         BuildIllegalToggle();
@@ -1728,36 +1743,32 @@ public static class ForceDropBuilder
                 .795f,
                 15
             );
-            columnPrevious[column] = Button(
-                picker,
-                "Previous",
-                left,
-                .03f,
-                left + .22f,
-                .085f,
-                () =>
-                {
-                    columnPages[column] = Math.Max(0, columnPages[column] - 1);
-                    RefreshPicker();
-                }
-            );
-            columnNext[column] = Button(
-                picker,
-                "Next",
-                left + .24f,
-                .03f,
-                left + .46f,
-                .085f,
-                () =>
-                {
-                    if (
-                        (columnPages[column] + 1) * AffixesPerColumnPage
-                        < columnChoices[column].Count
-                    )
-                        columnPages[column]++;
-                    RefreshPicker();
-                }
-            );
+            columnClear[column] = Button(picker, "None", left, .68f, left + .46f, .735f, () => { });
+            var viewport = Panel(picker, "Affix scroll viewport", left, .10f, left + .435f, .67f);
+            viewport.AddComponent<RectMask2D>();
+            var content = new GameObject("Affix scroll content");
+            var contentRect = content.AddComponent<RectTransform>();
+            content.transform.SetParent(viewport.transform, false);
+            contentRect.anchorMin = new Vector2(0, 1);
+            contentRect.anchorMax = new Vector2(1, 1);
+            contentRect.pivot = new Vector2(.5f, 1);
+            contentRect.sizeDelta = Vector2.zero;
+            var scroll = viewport.AddComponent<ScrollRect>();
+            scroll.viewport = viewport.GetComponent<RectTransform>();
+            scroll.content = contentRect;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = AffixRowHeight;
+            var track = Panel(picker, "Affix scrollbar", left + .44f, .10f, left + .46f, .67f);
+            var handle = Panel(track, "Handle", 0, 0, 1, 1);
+            handle.GetComponent<Image>().color = gold;
+            var scrollbar = track.AddComponent<Scrollbar>();
+            scrollbar.handleRect = handle.GetComponent<RectTransform>();
+            scrollbar.targetGraphic = handle.GetComponent<Image>();
+            scrollbar.direction = Scrollbar.Direction.BottomToTop;
+            scroll.verticalScrollbar = scrollbar;
+            columnScrolls[column] = scroll;
         }
         for (int i = 0; i < groups.Length; i++)
             pickerHeaders.Add(
@@ -1774,7 +1785,7 @@ public static class ForceDropBuilder
         pickerSearch.SetTextWithoutNotify("");
         lastPickerSearch = "";
         pickerPage = 0;
-        Array.Clear(columnPages, 0, columnPages.Length);
+        ResetAffixScrolls();
         picker.SetActive(true);
         picker.transform.SetAsLastSibling();
         RefreshPicker();
@@ -1920,8 +1931,9 @@ public static class ForceDropBuilder
         for (int column = 0; column < 2; column++)
         {
             columnTitles[column].gameObject.SetActive(splitAffixPicker);
-            columnPrevious[column].gameObject.SetActive(splitAffixPicker);
-            columnNext[column].gameObject.SetActive(splitAffixPicker);
+            columnClear[column].gameObject.SetActive(splitAffixPicker);
+            columnScrolls[column].gameObject.SetActive(splitAffixPicker);
+            columnScrolls[column].verticalScrollbar.gameObject.SetActive(splitAffixPicker);
         }
         foreach (var header in pickerHeaders)
             header.gameObject.SetActive(categoryPicker);
@@ -2006,9 +2018,7 @@ public static class ForceDropBuilder
                     .739f - row * .058f
                 );
                 Caption(button, filtered[index].name);
-                button.GetComponentInChildren<Text>(true).color = AffixColor(
-                    filtered[index].affixFamily
-                );
+                button.GetComponentInChildren<Text>(true).color = ChoiceColor(filtered[index]);
                 button.gameObject.SetActive(true);
                 visiblePicks.Add(filtered[index]);
             }
@@ -2028,44 +2038,76 @@ public static class ForceDropBuilder
 
         for (int column = 0; column < 2; column++)
         {
-            var list = columnChoices[column];
-            int pageCount = Math.Max(
-                1,
-                (list.Count + AffixesPerColumnPage - 1) / AffixesPerColumnPage
-            );
-            columnPages[column] = Math.Min(columnPages[column], pageCount - 1);
             columnTitles[column].text =
-                L(column == 0 ? "Prefix" : "Suffix")
-                + " · "
-                + (columnPages[column] + 1)
-                + "/"
-                + pageCount;
-            columnPrevious[column].interactable = columnPages[column] > 0;
-            columnNext[column].interactable = columnPages[column] + 1 < pageCount;
-            float left = column == 0 ? .03f : .51f;
-            int row = 0;
+                L(column == 0 ? "Prefix" : "Suffix") + " · " + columnChoices[column].Count;
+            columnClear[column].gameObject.SetActive(clear != null);
             if (clear != null)
-                Show(clear, row++);
-            int start = columnPages[column] * AffixesPerColumnPage;
-            for (int i = start; i < Math.Min(list.Count, start + AffixesPerColumnPage); i++)
-                Show(list[i], row++);
+                clicks[columnClear[column].GetInstanceID()] = () =>
+                {
+                    clear.select();
+                    picker.SetActive(false);
+                };
+            columnStarts[column] = columnEnds[column] = -1;
+            RefreshAffixScrollRows(column);
+        }
+    }
 
-            void Show(Choice choice, int index)
+    static void ResetAffixScrolls()
+    {
+        for (int column = 0; column < 2; column++)
+        {
+            var scroll = columnScrolls[column];
+            if (scroll.IsNullOrDestroyed())
+                continue;
+            scroll.StopMovement();
+            scroll.content.anchoredPosition = Vector2.zero;
+            columnStarts[column] = columnEnds[column] = -1;
+        }
+    }
+
+    // Pool only visible rows rather than building thousands of native UI objects.
+    // ScrollRect owns wheel/drag input and smooth movement in each independent column.
+    static void RefreshAffixScrollRows(int column)
+    {
+        var scroll = columnScrolls[column];
+        var list = columnChoices[column];
+        float height = Math.Max(1f, scroll.viewport.rect.height);
+        scroll.content.sizeDelta = new Vector2(0, Math.Max(height, list.Count * AffixRowHeight));
+        int start = Math.Min(
+            Math.Max(0, (int)(scroll.content.anchoredPosition.y / AffixRowHeight)),
+            Math.Max(0, list.Count - 1)
+        );
+        int end = Math.Min(list.Count, start + (int)Math.Ceiling(height / AffixRowHeight) + 1);
+        if (start == columnStarts[column] && end == columnEnds[column])
+            return;
+        columnStarts[column] = start;
+        columnEnds[column] = end;
+        var buttons = columnButtons[column];
+        while (buttons.Count < end - start)
+            buttons.Add(Button(scroll.content.gameObject, "", 0, 0, 1, 1, () => { }));
+        for (int slot = 0; slot < buttons.Count; slot++)
+        {
+            var button = buttons[slot];
+            bool visible = slot < end - start;
+            button.gameObject.SetActive(visible);
+            if (!visible)
+                continue;
+            int index = start + slot;
+            var choice = list[index];
+            var rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 1);
+            rect.anchorMax = new Vector2(1, 1);
+            rect.pivot = new Vector2(.5f, 1);
+            rect.offsetMin = new Vector2(0, -(index + 1) * AffixRowHeight + 4);
+            rect.offsetMax = new Vector2(0, -index * AffixRowHeight);
+            Caption(button, choice.name);
+            button.GetComponentInChildren<Text>(true).color = ChoiceColor(choice);
+            clicks[button.GetInstanceID()] = () =>
             {
-                var button = pickButtons[visiblePicks.Count];
-                Rect(
-                    button.gameObject,
-                    left,
-                    .69f - index * .058f,
-                    left + .46f,
-                    .739f - index * .058f
-                );
-                Caption(button, choice.name);
-                button.GetComponentInChildren<Text>(true).color = AffixColor(choice.affixFamily);
-                button.gameObject.SetActive(true);
                 // Both columns retain the original action for the opened slot.
-                visiblePicks.Add(choice);
-            }
+                choice.select();
+                picker.SetActive(false);
+            };
         }
     }
 

@@ -1,7 +1,7 @@
 param([string]$GamePath = "D:\SteamLibrary\steamapps\common\Last Epoch")
 
 $ErrorActionPreference = "Stop"
-$branch = "fix/force-drop-legal-affixes"
+$branch = "feat/force-drop"
 $repoPath = Split-Path -Parent $PSScriptRoot
 Push-Location $repoPath
 try {

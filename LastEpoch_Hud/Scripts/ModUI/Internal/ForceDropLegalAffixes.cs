@@ -186,6 +186,28 @@ public sealed class ForceDropLegalAffixes
             : ForceDropAffixFamily.Unknown;
     }
 
+    public static bool IsIdolAffix(AffixList.Affix definition)
+    {
+        if (definition.IsNullOrDestroyed())
+            return false;
+        if (
+            definition.specialAffixType == AffixList.SpecialAffixType.IdolWeaver
+            || definition.specialAffixType == AffixList.SpecialAffixType.IdolEnchantment
+        )
+            return true;
+        var list = ItemList.get();
+        if (list.IsNullOrDestroyed() || definition.canRollOn.IsNullOrDestroyed())
+            return false;
+        foreach (var type in list.EquippableItems)
+            if (
+                type.baseTypeID >= 25
+                && type.baseTypeID <= 33
+                && definition.canRollOn.Contains(type.type)
+            )
+                return true;
+        return false;
+    }
+
     public bool Fits(AffixList.Affix definition, bool transfer)
     {
         if (
