@@ -166,7 +166,9 @@ namespace LastEpoch_Hud.Scripts.ModUI
             var toggles = viewport.GetComponentsInChildren<Toggle>(true);
             foreach (var toggle in toggles)
             {
-                if (toggle.IsNullOrDestroyed() || toggle.gameObject.name == "Toggle_InfiniteForgingPotential") continue;
+                if (toggle.IsNullOrDestroyed()
+                    || toggle.gameObject.name == "Toggle_InfiniteForgingPotential"
+                    || toggle.gameObject.name.StartsWith("Toggle_AdvancedForge_")) continue;
                 toggle.SetIsOnWithoutNotify(false);
             }
         }
