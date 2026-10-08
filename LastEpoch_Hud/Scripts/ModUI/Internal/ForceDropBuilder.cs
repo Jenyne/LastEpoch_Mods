@@ -36,7 +36,8 @@ public static class ForceDropBuilder
     static readonly int[] columnPages = new int[2];
     static readonly List<Choice>[] columnChoices = { new List<Choice>(), new List<Choice>() };
     static readonly Text[] columnTitles = new Text[2];
-    static readonly Button[] columnPrevious = new Button[2], columnNext = new Button[2];
+    static readonly Button[] columnPrevious = new Button[2],
+        columnNext = new Button[2];
     static readonly List<Choice> visiblePicks = new List<Choice>();
     static readonly List<Text> pickerHeaders = new List<Text>();
     static readonly string[] groups = { "Weapons", "Armour", "Accessories", "Idols", "Other" };
@@ -861,7 +862,11 @@ public static class ForceDropBuilder
         foreach (var definition in UniqueVariantAdapter.Catalog(SelectedRageEntry()))
         {
             int id = definition.affixId;
-            if (variantIds[1 - slot] == id)
+            if (
+                variantIds[1 - slot] == id
+                || Array.Exists(rows, row => row.id == id)
+                || (corrupted && corruptionId == id)
+            )
                 continue;
             string name = NativeItemNames.AffixName(definition);
             choices.Add(
@@ -1085,10 +1090,11 @@ public static class ForceDropBuilder
         );
         OpenPicker(
             allowIllegal && slot < 4 ? "Affix " + (slot + 1)
-            : LegalContext(slot).IsHereticalIdol && (slot == 1 || slot == 3) ? "Idol enchantment"
-            : slot == 4 ? "Sealed affix"
-            : slot < 2 ? "Prefix"
-            : "Suffix",
+                : LegalContext(slot).IsHereticalIdol && (slot == 1 || slot == 3)
+                    ? "Idol enchantment"
+                : slot == 4 ? "Sealed affix"
+                : slot < 2 ? "Prefix"
+                : "Suffix",
             allowIllegal || slot == 4
         );
     }
@@ -1522,8 +1528,11 @@ public static class ForceDropBuilder
             unique ? FD.item_unique_id : 0,
             FD.item_rarity,
             equipment && !unique && !corrupted ? ResolvedNumber(forging) : 0,
-            usesLP && !corrupted && !ForceDropPotentialRules.CreatesLegendary(FD.item_rarity, selected.Count)
-                ? ResolvedNumber(lp) : 0,
+            usesLP
+            && !corrupted
+            && !ForceDropPotentialRules.CreatesLegendary(FD.item_rarity, selected.Count)
+                ? ResolvedNumber(lp)
+                : 0,
             unique && !usesLP && !corrupted ? ResolvedNumber(ww) : 0,
             corrupted,
             implicitValues,
@@ -1710,21 +1719,45 @@ public static class ForceDropBuilder
         {
             int column = i;
             float left = column == 0 ? .03f : .51f;
-            columnTitles[column] = Label(picker, column == 0 ? "Prefix" : "Suffix",
-                left, .74f, left + .46f, .795f, 15);
-            columnPrevious[column] = Button(picker, "Previous",
-                left, .03f, left + .22f, .085f, () =>
+            columnTitles[column] = Label(
+                picker,
+                column == 0 ? "Prefix" : "Suffix",
+                left,
+                .74f,
+                left + .46f,
+                .795f,
+                15
+            );
+            columnPrevious[column] = Button(
+                picker,
+                "Previous",
+                left,
+                .03f,
+                left + .22f,
+                .085f,
+                () =>
                 {
                     columnPages[column] = Math.Max(0, columnPages[column] - 1);
                     RefreshPicker();
-                });
-            columnNext[column] = Button(picker, "Next",
-                left + .24f, .03f, left + .46f, .085f, () =>
+                }
+            );
+            columnNext[column] = Button(
+                picker,
+                "Next",
+                left + .24f,
+                .03f,
+                left + .46f,
+                .085f,
+                () =>
                 {
-                    if ((columnPages[column] + 1) * AffixesPerColumnPage < columnChoices[column].Count)
+                    if (
+                        (columnPages[column] + 1) * AffixesPerColumnPage
+                        < columnChoices[column].Count
+                    )
                         columnPages[column]++;
                     RefreshPicker();
-                });
+                }
+            );
         }
         for (int i = 0; i < groups.Length; i++)
             pickerHeaders.Add(
@@ -1996,10 +2029,17 @@ public static class ForceDropBuilder
         for (int column = 0; column < 2; column++)
         {
             var list = columnChoices[column];
-            int pageCount = Math.Max(1, (list.Count + AffixesPerColumnPage - 1) / AffixesPerColumnPage);
+            int pageCount = Math.Max(
+                1,
+                (list.Count + AffixesPerColumnPage - 1) / AffixesPerColumnPage
+            );
             columnPages[column] = Math.Min(columnPages[column], pageCount - 1);
-            columnTitles[column].text = L(column == 0 ? "Prefix" : "Suffix")
-                + " · " + (columnPages[column] + 1) + "/" + pageCount;
+            columnTitles[column].text =
+                L(column == 0 ? "Prefix" : "Suffix")
+                + " · "
+                + (columnPages[column] + 1)
+                + "/"
+                + pageCount;
             columnPrevious[column].interactable = columnPages[column] > 0;
             columnNext[column].interactable = columnPages[column] + 1 < pageCount;
             float left = column == 0 ? .03f : .51f;
@@ -2013,8 +2053,13 @@ public static class ForceDropBuilder
             void Show(Choice choice, int index)
             {
                 var button = pickButtons[visiblePicks.Count];
-                Rect(button.gameObject, left, .69f - index * .058f,
-                    left + .46f, .739f - index * .058f);
+                Rect(
+                    button.gameObject,
+                    left,
+                    .69f - index * .058f,
+                    left + .46f,
+                    .739f - index * .058f
+                );
                 Caption(button, choice.name);
                 button.GetComponentInChildren<Text>(true).color = AffixColor(choice.affixFamily);
                 button.gameObject.SetActive(true);

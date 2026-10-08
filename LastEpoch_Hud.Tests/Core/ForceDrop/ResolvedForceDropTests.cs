@@ -14,11 +14,23 @@ public sealed class ResolvedForceDropTests
     [InlineData(4, 4)]
     public void UniqueWithTransferredAffixes_ConsumesAllLegendaryPotential(int lp, int count)
     {
-        var affixes = Enumerable.Range(1, count)
+        var affixes = Enumerable
+            .Range(1, count)
             .Select(id => new ResolvedForceDropAffix(id, 6, 255, ForceDropSeal.None));
         var request = new ResolvedForceDrop(
-            21, 10, 477, 7, 0, lp, 0, false,
-            new[] { 255, 255, 255 }, new int[8], affixes, new[] { 1131 }, null
+            21,
+            10,
+            477,
+            7,
+            0,
+            lp,
+            0,
+            false,
+            new[] { 255, 255, 255 },
+            new int[8],
+            affixes,
+            new[] { 1131 },
+            null
         );
         Assert.Equal(0, request.LegendaryPotential);
         Assert.Equal(count, request.Affixes.Count);

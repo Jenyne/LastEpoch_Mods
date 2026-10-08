@@ -45,7 +45,8 @@ public static class ForceDropItemCreator
                 request.Corruption.Id,
                 request.Corruption.Tier,
                 request.Corruption.Roll,
-                request.IsIllegal
+                request.IsIllegal,
+                request.VariantIds
             );
         }
         if (request.Corrupted)
@@ -55,7 +56,7 @@ public static class ForceDropItemCreator
         }
         int forging = request.Corrupted || request.Rarity >= 7 ? 0 : request.ForgingPotential;
         item.forgingPotential = (byte)Math.Min(63, forging);
-        UniqueVariantAdapter.PrepareForPacking(item);
+        UniqueVariantAdapter.PrepareForPacking(item, request.VariantIds, request.IsIllegal);
         item.RefreshIDAndValues();
         try
         {
@@ -68,7 +69,7 @@ public static class ForceDropItemCreator
             var expected = Snapshot(item);
             var packed = item.GetID();
             var restored = new ItemDataUnpacked(packed);
-            string error = expected.Difference(Snapshot(restored));
+            string error = expected.Difference(Snapshot(restored), request.IsIllegal);
             if (error.Length != 0)
             {
                 var bytes = new List<byte>();
@@ -171,7 +172,8 @@ public static class ForceDropItemCreator
                     ForceDropSeal.None
                 ),
                 definition,
-                ForceDropSeal.None
+                ForceDropSeal.None,
+                request.IsIllegal && seedTier == 7
             );
             affixes.Add(affix);
             if (selected.Seal == ForceDropSeal.Regular)
@@ -255,7 +257,7 @@ public static class ForceDropItemCreator
             var ids = new int[request.VariantIds.Count];
             for (int i = 0; i < ids.Length; i++)
                 ids[i] = request.VariantIds[i];
-            UniqueVariantAdapter.Apply(item, ids);
+            UniqueVariantAdapter.Apply(item, request.IsIllegal, ids);
         }
         // Native level-dependent corruption checks must see the real item level.
         foreach (var selected in request.Affixes)
@@ -345,7 +347,8 @@ public static class ForceDropItemCreator
         ItemAffix affix,
         ResolvedForceDropAffix selected,
         AffixList.Affix definition,
-        ForceDropSeal seal
+        ForceDropSeal seal,
+        bool allowNativeT8Seal = false
     )
     {
         if (
@@ -355,10 +358,49 @@ public static class ForceDropItemCreator
             || affix.affixRoll != selected.Roll
             || affix.affixType != definition.type
             || affix.specialAffixType != definition.specialAffixType
-            || Seal(affix) != seal
+            || (
+                Seal(affix) != seal
+                && !(
+                    allowNativeT8Seal
+                    && seal == ForceDropSeal.None
+                    && selected.Tier == 7
+                    && Seal(affix) == ForceDropSeal.Primordial
+                )
+            )
         )
             throw new InvalidOperationException(
-                "Affix " + selected.Id + " changed during construction or packing."
+                "Affix "
+                    + selected.Id
+                    + " changed during construction or packing"
+                    + " (expected="
+                    + selected.Id
+                    + ":"
+                    + selected.Tier
+                    + ":"
+                    + selected.Roll
+                    + ":"
+                    + seal
+                    + ":"
+                    + definition.specialAffixType
+                    + ":"
+                    + definition.type
+                    + ", actual="
+                    + (
+                        affix.IsNullOrDestroyed()
+                            ? "missing"
+                            : affix.affixId
+                                + ":"
+                                + affix.affixTier
+                                + ":"
+                                + affix.affixRoll
+                                + ":"
+                                + affix.sealedAffixType
+                                + ":"
+                                + affix.specialAffixType
+                                + ":"
+                                + affix.affixType
+                    )
+                    + ")."
             );
     }
 
@@ -388,7 +430,12 @@ public static class ForceDropItemCreator
             foreach (var affix in item.affixes)
                 if (!affix.IsNullOrDestroyed() && affix.affixId == selected.Id)
                     saved = affix;
-            VerifyAffix(saved, selected, ForceDropCatalog.Find(selected.Id), selected.Seal);
+            VerifyAffix(
+                saved,
+                selected,
+                ForceDropCatalog.Find(selected.Id),
+                ForceDropModeRules.PersistedSeal(selected.Tier, selected.Seal, request.Mode)
+            );
         }
         if (request.Corruption != null)
             CorruptedAffixAdapter.VerifySelection(
@@ -402,7 +449,7 @@ public static class ForceDropItemCreator
             var ids = new int[request.VariantIds.Count];
             for (int i = 0; i < ids.Length; i++)
                 ids[i] = request.VariantIds[i];
-            UniqueVariantAdapter.VerifySelection(item, ids);
+            UniqueVariantAdapter.VerifySelection(item, request.IsIllegal, ids);
         }
         for (int i = 0; i < request.ImplicitRolls.Count; i++)
             if (item.implicitRolls[i] != request.ImplicitRolls[i])

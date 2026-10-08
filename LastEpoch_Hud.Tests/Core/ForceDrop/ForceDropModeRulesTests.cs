@@ -4,15 +4,40 @@ namespace LastEpoch_Hud.Tests.Core.ForceDrop;
 
 public sealed class ForceDropModeRulesTests
 {
+    [Theory]
+    [InlineData(7, ForceDropSeal.None, ForceDropMode.Illegal, ForceDropSeal.Primordial)]
+    [InlineData(6, ForceDropSeal.None, ForceDropMode.Illegal, ForceDropSeal.None)]
+    [InlineData(7, ForceDropSeal.None, ForceDropMode.Legal, ForceDropSeal.None)]
+    [InlineData(7, ForceDropSeal.Corruption, ForceDropMode.Illegal, ForceDropSeal.Corruption)]
+    [InlineData(7, ForceDropSeal.Regular, ForceDropMode.Illegal, ForceDropSeal.Regular)]
+    public void OnlyIllegalOrdinaryT8UsesTheObservedNativePrimordialRepresentation(
+        int tier,
+        ForceDropSeal seal,
+        ForceDropMode mode,
+        ForceDropSeal expected
+    ) => Assert.Equal(expected, ForceDropModeRules.PersistedSeal(tier, seal, mode));
+
     [Fact]
     public void IllegalRequest_CarriesT8InEveryOrdinarySealedAndCorruptionSlot()
     {
-        var selected = Enumerable.Range(1, 4)
+        var selected = Enumerable
+            .Range(1, 4)
             .Select(id => new ResolvedForceDropAffix(id, 7, 255, ForceDropSeal.None))
             .Append(new ResolvedForceDropAffix(5, 7, 255, ForceDropSeal.Primordial));
         var request = new ResolvedForceDrop(
-            21, 1, 0, 0, 0, 0, 0, true, new int[3], Array.Empty<int>(), selected,
-            Array.Empty<int>(), new ResolvedForceDropAffix(6, 7, 255, ForceDropSeal.Corruption),
+            21,
+            1,
+            0,
+            0,
+            0,
+            0,
+            0,
+            true,
+            new int[3],
+            Array.Empty<int>(),
+            selected,
+            Array.Empty<int>(),
+            new ResolvedForceDropAffix(6, 7, 255, ForceDropSeal.Corruption),
             ForceDropMode.Illegal
         );
         Assert.Equal(5, request.Affixes.Count);

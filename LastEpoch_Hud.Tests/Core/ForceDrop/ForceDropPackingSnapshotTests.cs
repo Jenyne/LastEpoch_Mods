@@ -4,6 +4,99 @@ namespace LastEpoch_Hud.Tests.Core.ForceDrop;
 
 public sealed class ForceDropPackingSnapshotTests
 {
+    [Fact]
+    public void FourNativePrimordialT8AffixesRequireIllegalModeAndExactRoundTrip()
+    {
+        int[] ids = { 32, 371, 391, 468 };
+        int[] rolls = { 229, 124, 17, 233 };
+        var affixes = ids.Select(
+                (id, i) => new PackedForceDropAffix(id, 7, rolls[i], ForceDropSeal.Primordial, 0)
+            )
+            .ToArray();
+        var live = Snapshot(
+            affixes: affixes,
+            regular: false,
+            primordial: true,
+            corrupted: false,
+            corruption: false,
+            lp: 0
+        );
+        var decoded = Snapshot(
+            affixes: affixes.Reverse().ToArray(),
+            regular: false,
+            primordial: true,
+            corrupted: false,
+            corruption: false,
+            lp: 0,
+            sockets: 0
+        );
+        Assert.Contains("Primordial seal", live.Difference(decoded));
+        Assert.Equal("", live.Difference(decoded, allowIllegalT8: true));
+        Assert.NotEqual(
+            "",
+            live.Difference(
+                Snapshot(
+                    affixes: affixes,
+                    regular: false,
+                    primordial: false,
+                    corrupted: false,
+                    corruption: false,
+                    lp: 0
+                ),
+                true
+            )
+        );
+        foreach (var change in new[] { "missing", "tier", "roll", "seal", "special" })
+        {
+            var changed = affixes.ToArray();
+            changed[0] = new PackedForceDropAffix(
+                32,
+                change == "tier" ? 6 : 7,
+                change == "roll" ? 228 : 229,
+                change == "seal" ? ForceDropSeal.None : ForceDropSeal.Primordial,
+                change == "special" ? 7 : 0
+            );
+            if (change == "missing")
+                changed = changed.Skip(1).ToArray();
+            Assert.NotEqual(
+                "",
+                live.Difference(
+                    Snapshot(
+                        affixes: changed,
+                        regular: false,
+                        primordial: true,
+                        corrupted: false,
+                        corruption: false,
+                        lp: 0
+                    ),
+                    true
+                )
+            );
+        }
+    }
+
+    [Fact]
+    public void ExtraFixedModifiersMustAllSurvivePackingWithoutBecomingTheCorruptionSeal()
+    {
+        var affixes = new[]
+        {
+            new PackedForceDropAffix(1131, 0, 255, ForceDropSeal.None, 7),
+            new PackedForceDropAffix(1137, 0, 255, ForceDropSeal.None, 7),
+            new PackedForceDropAffix(1138, 0, 128, ForceDropSeal.Regular, 7),
+            new PackedForceDropAffix(1016, 6, 255, ForceDropSeal.Corruption, 6),
+        };
+        var live = Snapshot(affixes: affixes, lp: 0);
+        Assert.Equal("", live.Difference(Snapshot(affixes: affixes, lp: 0, sockets: 0), true));
+        Assert.NotEqual(
+            "",
+            live.Difference(Snapshot(affixes: affixes.Skip(1).ToArray(), lp: 0, sockets: 0), true)
+        );
+        var swapped = affixes.ToArray();
+        swapped[0] = new PackedForceDropAffix(1131, 0, 255, ForceDropSeal.Corruption, 7);
+        swapped[3] = new PackedForceDropAffix(1016, 6, 255, ForceDropSeal.None, 6);
+        Assert.Contains("seal ownership", live.Difference(Snapshot(affixes: swapped, lp: 0), true));
+    }
+
     static readonly PackedForceDropAffix[] SealedAndCorrupted =
     {
         new(419, 4, 101, ForceDropSeal.Regular, 0),

@@ -5,6 +5,17 @@ namespace LastEpoch_Hud.Tests.Core.ForceDrop;
 public sealed class ForceDropPackingOrderTests
 {
     [Fact]
+    public void AdditionalRageModifiersDoNotExpandTheDedicatedUniquePrefix()
+    {
+        // Only 1131 was chosen in the dedicated modifier picker. The other
+        // fixed modifiers belong to illegal ordinary/sealed/corruption slots.
+        int[] ids = { 1138, 1137, 1016, 1131, 13 };
+        var order = ForceDropPackingOrder.UniquePrefixIndices(ids, new[] { 1131 });
+        Assert.Equal(new[] { 1131, 1138, 1137, 1016, 13 }, order.Select(i => ids[i]));
+        Assert.Equal(ids.Length, order.Count);
+    }
+
+    [Fact]
     public void RingVariant_PrecedesCorruptionInPacking()
     {
         // Runtime failure: corruption 1016 preceded fixed modifier 1131, and

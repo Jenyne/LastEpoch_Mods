@@ -4,6 +4,14 @@ namespace LastEpoch_Hud.Scripts.Core.ForceDrop;
 // three-bit packed tier range. Creation mode belongs to the immutable request.
 public static class ForceDropModeRules
 {
+    // Native refresh represents T8 as Primordial even when selected in an
+    // ordinary illegal slot. Only that observed transition is permitted;
+    // corruption and regular seals keep their own ownership.
+    public static ForceDropSeal PersistedSeal(int tier, ForceDropSeal seal, ForceDropMode mode) =>
+        mode == ForceDropMode.Illegal && tier == 7 && seal == ForceDropSeal.None
+            ? ForceDropSeal.Primordial
+            : seal;
+
     public static int MaximumTier(int definitionTierCount, ForceDropMode mode) =>
         ForceDropTierRules.MaximumDisplayTier(
             definitionTierCount,

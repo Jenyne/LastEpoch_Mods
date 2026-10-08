@@ -89,7 +89,7 @@ public sealed class ForceDropPackingSnapshot
         Affixes = Array.AsReadOnly(affixes.ToArray());
     }
 
-    public string IntegrityError(bool decoded = false)
+    public string IntegrityError(bool decoded = false, bool allowIllegalT8 = false)
     {
         if (Affixes.Any(a => a == null))
             return "Missing affix data";
@@ -128,7 +128,13 @@ public sealed class ForceDropPackingSnapshot
             return "Affix data is outside the packed range";
         if (Affixes.Count(a => a.Seal == ForceDropSeal.Regular) != (RegularSeal ? 1 : 0))
             return "Regular seal flag does not match its affix";
-        if (Affixes.Count(a => a.Seal == ForceDropSeal.Primordial) != (PrimordialSeal ? 1 : 0))
+        int primordialCount = Affixes.Count(a => a.Seal == ForceDropSeal.Primordial);
+        if (
+            allowIllegalT8
+                ? PrimordialSeal != (primordialCount > 0)
+                    || Affixes.Any(a => a.Seal == ForceDropSeal.Primordial && a.Tier != 7)
+                : primordialCount != (PrimordialSeal ? 1 : 0)
+        )
             return "Primordial seal flag does not match its affix";
         if (Affixes.Count(a => a.Seal == ForceDropSeal.Corruption) != (CorruptionSeal ? 1 : 0))
             return "Corruption seal flag does not match its affix";
@@ -137,9 +143,9 @@ public sealed class ForceDropPackingSnapshot
         return "";
     }
 
-    public string Difference(ForceDropPackingSnapshot actual)
+    public string Difference(ForceDropPackingSnapshot actual, bool allowIllegalT8 = false)
     {
-        string error = Compare(actual);
+        string error = Compare(actual, allowIllegalT8);
         if (error.Length == 0)
             return "";
         return error
@@ -189,14 +195,14 @@ public sealed class ForceDropPackingSnapshot
             + "]";
     }
 
-    string Compare(ForceDropPackingSnapshot actual)
+    string Compare(ForceDropPackingSnapshot actual, bool allowIllegalT8)
     {
-        string error = IntegrityError();
+        string error = IntegrityError(allowIllegalT8: allowIllegalT8);
         if (error.Length != 0)
             return "Before packing: " + error;
         if (actual == null)
             return "Missing decoded item";
-        error = actual.IntegrityError(decoded: true);
+        error = actual.IntegrityError(decoded: true, allowIllegalT8: allowIllegalT8);
         if (error.Length != 0)
             return "After packing: " + error;
         if (ItemType != actual.ItemType || SubType != actual.SubType || UniqueId != actual.UniqueId)

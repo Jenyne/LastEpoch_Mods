@@ -106,8 +106,10 @@ public sealed class ResolvedForceDrop
         );
         // Transferred affixes finish the Legendary upgrade. Native fixed unique
         // modifiers belong to VariantIds and do not consume LP on their own.
-        LegendaryPotential = corrupted || ForceDropPotentialRules.CreatesLegendary(rarity, Affixes.Count)
-            ? 0 : legendaryPotential;
+        LegendaryPotential =
+            corrupted || ForceDropPotentialRules.CreatesLegendary(rarity, Affixes.Count)
+                ? 0
+                : legendaryPotential;
         VariantIds = Array.AsReadOnly(
             (variantIds ?? throw new ArgumentNullException(nameof(variantIds))).ToArray()
         );
