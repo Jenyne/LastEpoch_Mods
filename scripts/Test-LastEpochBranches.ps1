@@ -164,7 +164,9 @@ function Invoke-Checked([string]$Command, [string[]]$Arguments, [string]$LogPath
         # Windows PowerShell treats native stderr as ErrorRecords; capture it
         # without terminating before the native exit code can be inspected.
         $ErrorActionPreference = 'Continue'
-        & $Command @Arguments 2>&1 | Tee-Object -FilePath $LogPath -Append | Out-Host
+        & $Command @Arguments 2>&1 |
+            ForEach-Object { $_.ToString() } |
+            Tee-Object -FilePath $LogPath -Append | Out-Host
         $code = $LASTEXITCODE
     } finally { $ErrorActionPreference = $previousPreference }
     if ($code -ne 0) { throw "$Command failed (exit $code). See $LogPath" }
@@ -273,7 +275,12 @@ function Install-QueuedBuild($Entry) {
             $files = @(@{ source = $modDll; destination = (Join-Path $GamePath 'Mods\LastEpoch_Hud.dll') })
             foreach ($language in @('en', 'fr', 'ko', 'zh')) {
                 $source = Join-Path $RepoPath "LastEpoch_Hud\LastEpoch_Hud\Locales\$language.json"
-                Get-Content -LiteralPath $source -Raw | ConvertFrom-Json | Out-Null
+                # Repository locale tests already parse these files with the
+                # game's case-sensitive key semantics. PowerShell 5.1's JSON
+                # parser rejects valid keys that differ only in capitalization.
+                if (!(Test-Path -LiteralPath $source -PathType Leaf)) {
+                    throw "Missing tested locale file: $source"
+                }
                 $files += @{ source = $source; destination = (Join-Path $GamePath "Mods\LastEpoch_Hud\Locales\$language.json") }
             }
             # Back up every destination before touching the installed files.
