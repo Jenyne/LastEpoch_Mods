@@ -15,10 +15,10 @@ $queueJson = @'
     "id": 1,
     "title": "Legal Force Drop / affix coverage",
     "branch": "feat/force-drop",
-    "status": "Pending final coverage/persistence checks",
+    "status": "Limited coverage passed; final LP and combined-build regression pending",
     "location": "Items > Force Drop",
     "checks": [
-      "Keep Illegal mode off. Check None first, grouped families, green Set affixes and purple corruption exclusives.",
+      "Keep Illegal mode off. Check None first, grouped families, green Set affixes and purple corruption exclusives. Ordinary affixes on a unique must clear/disable LP; removing them re-enables LP, while dedicated variant selectors alone preserve it.",
       "Test ordinary equipment with Set + Champion + two suffixes, then sealed + corruption; verify item identity, set effects and save/reload.",
       "Test Unsated Rage, Withstand the Elements and idols. One-tier affixes should clamp rather than fail. Report missing choices with item type and affix name."
     ]
@@ -52,7 +52,7 @@ $queueJson = @'
     "id": 4,
     "title": "Maxroll graphical passives / skills preview",
     "branch": "feat/maxroll-tree-preview",
-    "status": "Tree preview improved in game; equipment view deferred",
+    "status": "Graphical trees and item retrieval/preview confirmed; equipment view deferred",
     "location": "Items > Force Drop > Maxroll Build Preview",
     "checks": [
       "Load https://maxroll.gg/last-epoch/planner/2ai4s0qh#1; inspect named passive/mastery and skill trees, connections and allocated ranks.",

@@ -33,10 +33,10 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 
 | # | Branch | Main checks | Status |
 |---|---|---|---|
-| 1 | `fix/force-drop-legal-affixes` | Legal Force Drop / affix coverage | Pending final coverage/persistence checks |
-| 2 | `feat/force-drop-illegal-mode` | Illegal Force Drop / Primordial T8 | Pending in-game validation |
+| 1 | `feat/force-drop` | Legal Force Drop / affix coverage | Limited coverage passed; final LP and combined-build regression pending |
+| 2 | `feat/force-drop` | Illegal Force Drop / Primordial T8 | T8/extra Rage persistence confirmed on 5b8199f6; new scroll/cyan UI awaits testing |
 | 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Failed: mastery chain and combat hover remain blocked |
-| 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Tree preview improved in game; equipment view deferred |
+| 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Graphical trees and item retrieval/preview confirmed; equipment view deferred |
 | 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Failed: crafting still stops at T5 |
 | 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | Failed: Natural Drop Rates UI missing; behavior untested |
 | 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Confirmed working, including quieter logging |
@@ -46,25 +46,25 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 ## 1. Legal Force Drop / affix coverage
 
 **Where:** Items > Force Drop
-**Branch:** `fix/force-drop-legal-affixes`
+**Branch:** `feat/force-drop`
 
-- Keep Illegal mode off. Check None first, grouped families, green Set affixes and purple corruption exclusives.
+- Keep Illegal mode off. Check None first, grouped families, green Set affixes and purple corruption exclusives. Verify ordinary affixes on a unique clear/disable LP; removing them re-enables LP, and dedicated variant selectors alone retain LP.
 - Test ordinary equipment with Set + Champion + two suffixes, then sealed + corruption; verify item identity, set effects and save/reload.
 - Test Unsated Rage, Withstand the Elements and idols. One-tier affixes should clamp rather than fail. Report missing choices with item type and affix name.
 
-[Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/fix/force-drop-legal-affixes/docs/TEST_FORCE_DROP_LEGAL_AFFIXES.md)
+[Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/force-drop/docs/TEST_FORCE_DROP_LEGAL_AFFIXES.md)
 
 ## 2. Illegal Force Drop / Primordial T8
 
 **Where:** Items > Force Drop > Illegal mode
-**Branch:** `feat/force-drop-illegal-mode`
+**Branch:** `feat/force-drop`
 
-- Check mode switching clears selections. Prefix/Suffix columns page independently; either side edits the opened slot, None remains first and search resets both pages.
+- Check mode switching clears selections. Prefix/Suffix columns scroll independently with wheel/drag and scrollbar handles; either side edits the opened slot, None remains pinned above each list and search resets both scroll positions. Check cyan idol affixes in choices and selected rows.
 - Test T8 in all four ordinary rows, the Primordial sealed row and corruption using real eight-tier definitions. Retest legal T8 Primordial with Illegal mode off; one-tier definitions stay T1.
 - Test a unique with Set membership: unique name remains, correct set piece counting and actual set bonus. Check Unsated Rage/Withstand special modifiers.
 - Test four affixes + sealed + corruption, then equip/stats and save/reload. Record rejected combinations exactly.
 
-[Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/force-drop-illegal-mode/docs/TEST_FORCE_DROP_ILLEGAL_MODE.md)
+[Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/force-drop/docs/TEST_FORCE_DROP_ILLEGAL_MODE.md)
 
 ## 3. Mastery chains / combat ground-item hover
 
@@ -153,9 +153,9 @@ Advanced Forge and independent drop rates still require compilation/runtime conf
 
 Offline diagnostics includes the latest auto-offline startup and online-switch UI changes, so a separate startup-only test is not required in this queue. It is an observer build, not an implemented comprehensive runtime permission guard.
 
-Legal Force Drop includes the earlier integrity/unique-modifier work. Illegal Mode builds on Legal Force Drop. Use these latest branches instead of the older corruption-pool, Withstand-only or integrity-only test builds.
+Legal and Illegal Force Drop now share `feat/force-drop` at `4585e880`. Both menu entries install the same combined DLL, with different checks. The earlier legal/illegal branches remain historical checkpoints. Keep the current Force Drop UI; a full UI redesign is deferred.
 
-Prophecy rewards remain paused after crash isolation: the current `feat/prophecy-reward-multiplier` backend has no native reward hooks and leaves vanilla reward counts. It is not queued as a functioning multiplier.
+Prophecy reward multiplication is confirmed working and persistent on `fix/prophecy-reward-trigger` at `cb638c70`. The old `feat/prophecy-reward-multiplier` branch is a crash-isolation checkpoint, not the working build. Prophecy currently has no numbered runner entry; track it in [DEV_TODO.md](DEV_TODO.md). Large multipliers can lag; UI relocation is deferred.
 
 Idol rerolling and the earlier Maxroll item preview were confirmed in game. Item preview regression is included in the graphical preview selection; idol rerolling has its own optional regression entry. Other completed main-branch fixes can be compared with selection 9.
 
@@ -169,17 +169,20 @@ Locale installation relies on the repository's successful locale tests and copie
 
 ## Latest test reports — 2026-10-08
 
-- Prophecy reward multiplication (`fix/prophecy-reward-trigger`) is confirmed working and persistent. Large multipliers can lag; UI relocation is deferred until the UI rework.
-- Build 3 did not unlock either non-main mastery allocation or combat ground-item hover. Both need another fix.
-- Build 4 graphical tree preview is much better in game. A similar equipment view is a lower-priority follow-up.
-- Build 5 compiled successfully but installation stopped on the missing `Force Crafted Affix Roll` locale key. The key has been added in all supplied languages. In-game test failed: the forge still refuses upgrades past T5.
-- Build 6 has no visible Natural Drop Rates section. No rate behavior or persistence is confirmed.
-- Build 7, including the quieter logging, is confirmed working by Nyk. One confirmation per loaded offline character is retained when the live signals agree; observer errors and a subsequent revocation remain visible.
+Current development priorities and remaining work are tracked in [DEV_TODO.md](DEV_TODO.md).
 
-### Legal Force Drop LP follow-up
+- Force Drop legal and illegal histories are consolidated in `feat/force-drop`, commit `4585e880`. Entries 1 and 2 both install this branch.
+- On `5b8199f6`, screenshots showed four ordinary T8 affixes, seals/corruption, retained item identity and additional distinct Rage modifiers. Nyk confirmed persistence. Individual gameplay effects and broader legal-mode regression remain open.
+- The combined build adds cyan idol affixes in Illegal Mode and independently scrolling Prefix/Suffix columns with pinned None and scrollbar handles. These new UI changes await in-game confirmation; earlier persistence confirmation does not certify this build.
+- Legal Force Drop had limited successful coverage tests. The LP correction is included in the combined branch but still needs a final regression: transferred ordinary affixes consume/disable LP; clearing them re-enables LP; dedicated ring/glove modifiers alone preserve it.
+- Build 3 failed: secondary mastery remains locked and combat ground-item hover remains blocked. Comparison without the mod confirmed a mod-related issue.
+- Build 4 graphical trees are much better; item retrieval/preview is confirmed. Equipment presentation improvements are deferred.
+- Build 5 failed at runtime: normal crafting still stops at T5. The missing `Force Crafted Affix Roll` locale key is fixed; it was not the runtime ceiling fix.
+- Build 6 has no visible Natural Drop Rates sliders. Rate behavior and persistence remain unconfirmed.
+- Build 7 is confirmed working with repeated logging removed and a single confirmation retained. This is an observer/diagnostics build, not a comprehensive runtime permission guard.
+- Build 8 idol rerolling is confirmed working. Restart/locale checks remain optional regressions.
+- Prophecy `fix/prophecy-reward-trigger` at `cb638c70` is confirmed working and persistent. Large multipliers can lag; UI relocation is deferred.
 
-Build 1 now clears and disables LP when ordinary transferred affixes are selected for a unique. Maximum/Random cannot restore LP on a Legendary. Clearing all ordinary affixes re-enables LP; the native ring/glove modifier selectors alone preserve LP. Retest creation and save/reload on `fix/force-drop-legal-affixes`.
+### Validation boundary
 
-### Illegal affix picker follow-up
-
-Build 2 includes the LP fix from build 1 and a split Prefix/Suffix picker. Both columns select into the opened slot, with independent paging and None pinned first. Existing definition-backed T8 support covers every ordinary row, Primordial sealing and corruption; full T8 combinations still need native creation and save/reload checks.
+The initial scroll/cyan implementation compiled against the recovered native references, passed 1,162 tests with zero skipped and passed formatting. After the workspace reset, the same changes were reconstructed and published with new commit IDs; formatting was rechecked across 408 C# files. Native references were no longer available to rerun that build. No unit-test or formatting result is treated as in-game confirmation.
