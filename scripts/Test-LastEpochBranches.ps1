@@ -88,7 +88,7 @@ $queueJson = @'
     "id": 7,
     "title": "Offline startup / session diagnostics",
     "branch": "test/offline-guard-diagnostics",
-    "status": "Confirmed working; routine diagnostics silenced",
+    "status": "Confirmed working, including quieter logging",
     "location": "Launch -> offline character selection; MelonLoader/Latest.log",
     "checks": [
       "Login.Enable_AutoLoginOffline must be true. Confirm automatic offline character selection and that its online switch is hidden.",

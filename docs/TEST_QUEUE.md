@@ -39,7 +39,7 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 | 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Tree preview improved in game; equipment view deferred |
 | 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Failed: crafting still stops at T5 |
 | 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | Failed: Natural Drop Rates UI missing; behavior untested |
-| 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Confirmed working; routine diagnostics silenced |
+| 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Confirmed working, including quieter logging |
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
 | 9 | `master` | Current main baseline | Baseline/control build |
 
@@ -174,4 +174,8 @@ Locale installation relies on the repository's successful locale tests and copie
 - Build 4 graphical tree preview is much better in game. A similar equipment view is a lower-priority follow-up.
 - Build 5 compiled successfully but installation stopped on the missing `Force Crafted Affix Roll` locale key. The key has been added in all supplied languages. In-game test failed: the forge still refuses upgrades past T5.
 - Build 6 has no visible Natural Drop Rates section. No rate behavior or persistence is confirmed.
-- Build 7 is confirmed working by Nyk. Routine service, scene and heartbeat diagnostics have been silenced, with one confirmation per loaded offline character when the live signals agree; observer errors and a subsequent revocation remain visible.
+- Build 7, including the quieter logging, is confirmed working by Nyk. One confirmation per loaded offline character is retained when the live signals agree; observer errors and a subsequent revocation remain visible.
+
+### Legal Force Drop LP follow-up
+
+Build 1 now clears and disables LP when ordinary transferred affixes are selected for a unique. Maximum/Random cannot restore LP on a Legendary. Clearing all ordinary affixes re-enables LP; the native ring/glove modifier selectors alone preserve LP. Retest creation and save/reload on `fix/force-drop-legal-affixes`.
