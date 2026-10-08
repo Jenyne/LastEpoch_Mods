@@ -61,6 +61,18 @@ public static class ModSettings
     // CHARACTER TAB
     //
 
+    public static class ProphecyRewards
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("ProphecyRewards");
+        public static readonly FloatSetting Multiplier = Group.Float(
+            "Multiplier",
+            defaultValue: 1,
+            min: 1,
+            max: 10,
+            format: DisplayFormat.Raw
+        );
+    }
+
     public static class InfiniteForgingPotential
     {
         // Runtime checkbox is bound by Hud_Manager after the crafting panel is ready.
@@ -90,7 +102,8 @@ public static class ModSettings
         public static readonly SettingsGroup Group = new SettingsGroup("Cheats")
             .Content("Character_Content")
             .Viewport("Character_Cheats", "Character_Cheats_Content")
-            .Prefix("Character_Cheats_");
+            .Prefix("Character_Cheats_")
+            .OnBind((content, viewport) => ProphecyRewardControls.Bind(content, viewport));
 
         public static readonly BoolSetting TwoHandeWithShield = Group.Bool(
             "TwoHandeWithShield",
