@@ -59,8 +59,8 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 **Where:** Items > Force Drop > Illegal mode
 **Branch:** `feat/force-drop-illegal-mode`
 
-- Check mode switching clears selections. Illegal pools expose other item/class/family choices; one-tier definitions still stay T1.
-- Test T8 ordinary affixes with real eight-tier definitions, and T8 in the sealed row as a Primordial seal. Retest legal T8 Primordial with Illegal mode off.
+- Check mode switching clears selections. Prefix/Suffix columns page independently; either side edits the opened slot, None remains first and search resets both pages.
+- Test T8 in all four ordinary rows, the Primordial sealed row and corruption using real eight-tier definitions. Retest legal T8 Primordial with Illegal mode off; one-tier definitions stay T1.
 - Test a unique with Set membership: unique name remains, correct set piece counting and actual set bonus. Check Unsated Rage/Withstand special modifiers.
 - Test four affixes + sealed + corruption, then equip/stats and save/reload. Record rejected combinations exactly.
 
@@ -179,3 +179,7 @@ Locale installation relies on the repository's successful locale tests and copie
 ### Legal Force Drop LP follow-up
 
 Build 1 now clears and disables LP when ordinary transferred affixes are selected for a unique. Maximum/Random cannot restore LP on a Legendary. Clearing all ordinary affixes re-enables LP; the native ring/glove modifier selectors alone preserve LP. Retest creation and save/reload on `fix/force-drop-legal-affixes`.
+
+### Illegal affix picker follow-up
+
+Build 2 includes the LP fix from build 1 and a split Prefix/Suffix picker. Both columns select into the opened slot, with independent paging and None pinned first. Existing definition-backed T8 support covers every ordinary row, Primordial sealing and corruption; full T8 combinations still need native creation and save/reload checks.

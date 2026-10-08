@@ -30,8 +30,8 @@ $queueJson = @'
     "status": "Pending in-game validation",
     "location": "Items > Force Drop > Illegal mode",
     "checks": [
-      "Check mode switching clears selections. Illegal pools expose other item/class/family choices; one-tier definitions still stay T1.",
-      "Test T8 ordinary affixes with real eight-tier definitions, and T8 in the sealed row as a Primordial seal. Retest legal T8 Primordial with Illegal mode off.",
+      "Check mode switching clears selections. Illegal picker has Prefix/Suffix columns with independent pages; either side edits the opened slot. None stays first. Search resets both pages.",
+      "Test T8 in all four ordinary rows, the Primordial sealed row and corruption using real eight-tier definitions. Retest legal T8 Primordial with Illegal mode off; one-tier definitions stay T1.",
       "Test a unique with Set membership: unique name remains, correct set piece counting and actual set bonus. Check Unsated Rage/Withstand special modifiers.",
       "Test four affixes + sealed + corruption, then equip/stats and save/reload. Record rejected combinations exactly."
     ]
