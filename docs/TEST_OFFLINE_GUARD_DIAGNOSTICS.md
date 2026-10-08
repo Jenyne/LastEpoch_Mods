@@ -34,8 +34,7 @@ Add `-BuildOnly` to build without installation. No profiling setting is required
 1. Launch normally and confirm automatic offline character selection. Confirm the
    previous startup branch's online switch hiding still works.
 2. Enter an existing offline character. Wait a few seconds after it becomes playable.
-3. Change zones, enter an echo, finish it, and return. Play for at least 30 seconds so
-   the log records a heartbeat. Use your normal enabled features as usual.
+3. Change zones, enter an echo, finish it, and return. Play for at least 30 seconds to check stability. Use your normal enabled features as usual.
 4. Return to character selection and load a different offline character. Return again
    and reload the first character. This checks that character correlation starts fresh.
 5. If convenient, create and enter a new offline character. Also try canceling a load
@@ -48,40 +47,20 @@ mutation guard; do not use an online character to test the observers.
 
 ## Reading the log
 
-All additional lines begin with `[OfflineGuard]`. Startup logs identify the build.
-Character names, character IDs, user identities, save paths, inventory contents,
-and native pointers are not included by these observers.
+Offline startup is confirmed by `[Offline] Offline character selection reached.`
+The observer emits `[OfflineGuard] Offline session signals confirmed (observation only).`
+once per loaded character when the independent live signals agree. It does not imply
+that mutation protection has been installed.
 
-| Field or message | Meaning |
-| --- | --- |
-| `epoch` | Observation generation. A new offline play request or session exit advances it. Multiple exit events may advance it more than once. |
-| `Unknown` | No offline character play request has been captured. |
-| `Loading` | A request was captured, but independent live evidence is missing or unavailable. `reason` identifies the first missing condition. |
-| `OfflineCandidate` | Offline service/file store, later matching character initialization, actual InGame state, live offline network group, local actor/tracker, loaded character identity and offline marker agree; online mode and established online session both report false. |
-| `Revoked` | An online request/state, conflicting loaded character marker, or session exit invalidated the observation. Changing flags back does not recover it; a fresh offline StartPlay is required. |
-| `unknown` | A source has not been captured or its getter was unavailable. It is never treated as a positive signal. |
-| `authenticated` | Supplemental startup information. Authentication alone is not treated as online gameplay. |
-| `requestMatch` | Current character data matches the offline request by native object identity or a nonempty character ID. The IDs themselves are not logged. |
-| Save counters | Number of save requests observed during this process, not successful async completions. They do not affect classification. |
+Normal service initialization, scene changes, loading snapshots, save requests and
+periodic heartbeats are silent. A first observer exception and revocation of a
+previously confirmed observation remain visible. Temporary evidence loss while
+changing zones does not repeat the confirmation. Returning to character selection
+and loading a character creates a fresh observation generation.
 
-Scene load/unload notifications are logged without clearing the character epoch.
-Temporary actor/network unavailability during a zone load can move a candidate back
-to Loading; it can recover within the same epoch if the live evidence returns. A
-transition to Login/CharacterSelect or InGame exit clears character correlation.
-
-The async `StartPlay` prefix logs a request, never completion. The synchronous
-`CharacterDataTracker.InitializeCharacter` postfix supplies a later correlation
-signal, and a twice-per-second sample checks the current player from `PlayerFinder`
-rather than the mod's cached actor. The precise ordering and sufficiency of these
-signals still require in-game verification. If a signal is absent, the useful result
-is its missing-condition log; no mutation protection depends on this classifier yet.
-
-Snapshots are logged when evidence/classification changes, with a 30-second heartbeat.
-Save calls are counted rather than logged individually. Hooks enqueue bounded messages;
-logging and live polling occur on the main update thread. Observer errors are counted
-and their exception types reported without potentially private exception messages.
-No scene-wide object searches, event subscriptions, async awaits, or game service calls
-that initiate operations are added.
+Character names, IDs, native pointers, inventories and save paths are not logged by
+the observer. The observation state machine, native hooks and twice-per-second live
+sampling remain active; this change only reduces their console output.
 
 ## Revert
 

@@ -31,19 +31,16 @@ public class Main : MelonLoader.MelonMod
                 BuildInfo.Time
             )
         );
-        Scripts.Mods.Diagnostics.OfflineGuardDiagnostics.Initialize();
     }
 
     public override void OnSceneWasLoaded(int buildIndex, string sceneName)
     {
         Scenes.SceneName = SceneManager.GetActiveScene().name;
-        Scripts.Mods.Diagnostics.OfflineGuardDiagnostics.SceneEvent("loaded", sceneName);
     }
 
     public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
     {
         Scenes.SceneName = SceneManager.GetActiveScene().name;
-        Scripts.Mods.Diagnostics.OfflineGuardDiagnostics.SceneEvent("unloaded", sceneName);
     }
 
     public override void OnLateUpdate()

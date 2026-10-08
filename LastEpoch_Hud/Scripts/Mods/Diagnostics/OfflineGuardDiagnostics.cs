@@ -25,15 +25,11 @@ public static class OfflineGuardDiagnostics
     private static NetworkServiceGroup offlineNetwork;
     private static bool offlineNetworkInitialized;
     private static float nextSample;
-    private static float nextHeartbeat;
-    private static string lastSnapshot;
-    private static int droppedMessages;
+    private static int confirmedEpoch = -1;
+    private static bool revocationReported;
     private static int probeErrors;
     private static int offlineSaveRequests;
     private static int saveOfflineDataRequests;
-
-    public static void Initialize() =>
-        Safe(() => Log("Enabled; observation only, mutation protection is not installed."));
 
     // Hooks may run outside the Unity update thread. Log through the bounded queue on Tick.
     private static void Safe(Action action)
@@ -57,8 +53,6 @@ public static class OfflineGuardDiagnostics
     {
         if (messages.Count < 128)
             messages.Enqueue(message);
-        else
-            droppedMessages++;
     }
 
     private static T? Read<T>(Func<T> getter)
@@ -74,21 +68,13 @@ public static class OfflineGuardDiagnostics
         }
     }
 
-    private static string Flag(bool? value) =>
-        value.HasValue ? (value.Value ? "true" : "false") : "unknown";
-
-    public static void SceneEvent(string kind, string name) =>
-        Safe(() =>
-            Log("Scene " + kind + ": " + name + "; scene changes alone do not revoke an epoch.")
-        );
-
     public static void Tick()
     {
         float now = Time.realtimeSinceStartup;
         if (now >= nextSample)
         {
             nextSample = now + 0.5f;
-            Safe(() => Sample(now));
+            Safe(Sample);
         }
 
         string[] pending;
@@ -101,13 +87,11 @@ public static class OfflineGuardDiagnostics
             Main.logger_instance?.Msg("[OfflineGuard] " + message);
     }
 
-    private static void Sample(float now)
+    private static void Sample()
     {
         bool? online = Read(() => GameplayEnvironment.IsOnlinePlay);
         bool? established =
             onlineAccess == null ? null : Read(() => onlineAccess.IsOnlineSessionEstablished);
-        bool? authenticated =
-            onlineAccess == null ? null : Read(() => onlineAccess.IsAuthenticated);
         var state = Read(() => ClientStateManager.CurrentClientAppStateType);
         bool? inGame = state.HasValue ? state.Value == ClientAppStateType.InGame : null;
         bool? networkReady =
@@ -169,53 +153,20 @@ public static class OfflineGuardDiagnostics
                 characterOffline
             )
         );
-        string snapshot =
-            "epoch="
-            + observation.Epoch
-            + " state="
-            + observation.State
-            + " reason=\""
-            + observation.Reason
-            + "\""
-            + " app="
-            + (state.HasValue ? state.Value.ToString() : "unknown")
-            + " onlinePlay="
-            + Flag(online)
-            + " onlineSession="
-            + Flag(established)
-            + " authenticated="
-            + Flag(authenticated)
-            + " offlineNetwork="
-            + Flag(networkReady)
-            + " localActor="
-            + actorMatches
-            + " requestMatch="
-            + observation.MatchesRequestedCharacter(pointer, id)
-            + " characterOffline="
-            + Flag(characterOffline);
-        if (snapshot != lastSnapshot)
+        // Confirm once per character load. Zone-loading evidence can fluctuate without
+        // producing repeated confirmations or verbose snapshots.
+        if (observation.State == OfflineGuardObservationState.OfflineCandidate
+            && confirmedEpoch != observation.Epoch)
         {
-            Log(snapshot);
-            lastSnapshot = snapshot;
+            confirmedEpoch = observation.Epoch;
+            revocationReported = false;
+            Log("Offline session signals confirmed (observation only).");
         }
-        if (now >= nextHeartbeat)
+        else if (observation.State == OfflineGuardObservationState.Revoked
+            && confirmedEpoch == observation.Epoch && !revocationReported)
         {
-            nextHeartbeat = now + 30f;
-            Log(
-                "Heartbeat epoch="
-                    + observation.Epoch
-                    + " state="
-                    + observation.State
-                    + " offlineSaveRequests="
-                    + Volatile.Read(ref offlineSaveRequests)
-                    + " saveOfflineDataRequests="
-                    + Volatile.Read(ref saveOfflineDataRequests)
-                    + " observerErrors="
-                    + probeErrors
-                    + " droppedMessages="
-                    + droppedMessages
-                    + "; save counters indicate requests, not async completion."
-            );
+            revocationReported = true;
+            Log("Offline session observation revoked: " + observation.Reason + ".");
         }
     }
 
@@ -231,11 +182,6 @@ public static class OfflineGuardDiagnostics
                     __0?.Id,
                     __instance._dataStore != null
                 );
-                Log(
-                    "OfflineCharacterService.StartPlay requested; epoch="
-                        + observation.Epoch
-                        + "; async completion not assumed."
-                );
             });
     }
 
@@ -247,7 +193,6 @@ public static class OfflineGuardDiagnostics
             Safe(() =>
             {
                 observation.Revoke("Online character StartPlay requested");
-                Log("Online character StartPlay requested; diagnostic epoch revoked.");
             });
     }
 
@@ -260,13 +205,7 @@ public static class OfflineGuardDiagnostics
             {
                 var data = __instance.charData;
                 long pointer = data == null ? 0 : data.Pointer.ToInt64();
-                bool matches = observation.MatchesRequestedCharacter(pointer, data?.Id);
                 observation.CharacterInitialized(pointer, data?.Id);
-                Log(
-                    "CharacterDataTracker.InitializeCharacter returned; requestMatch="
-                        + matches
-                        + "."
-                );
             });
     }
 
@@ -279,7 +218,6 @@ public static class OfflineGuardDiagnostics
             {
                 offlineNetwork = __instance;
                 offlineNetworkInitialized = false;
-                Log("InitializeClientOffline requested.");
             });
 
         [HarmonyPostfix]
@@ -288,9 +226,6 @@ public static class OfflineGuardDiagnostics
             {
                 if (offlineNetwork != null && offlineNetwork.Pointer == __instance.Pointer)
                     offlineNetworkInitialized = true;
-                Log(
-                    "InitializeClientOffline returned; readiness will be sampled from the live group."
-                );
             });
     }
 
@@ -303,7 +238,6 @@ public static class OfflineGuardDiagnostics
             {
                 offlineNetworkInitialized = false;
                 observation.Revoke("InitializeClient requested");
-                Log("InitializeClient requested; diagnostic epoch revoked.");
             });
     }
 
@@ -321,7 +255,6 @@ public static class OfflineGuardDiagnostics
                     offlineNetwork = null;
                     offlineNetworkInitialized = false;
                 }
-                Log("Network Shutdown requested; trackedOfflineGroup=" + tracked + ".");
             });
     }
 
@@ -333,9 +266,6 @@ public static class OfflineGuardDiagnostics
             Safe(() =>
             {
                 onlineAccess = __instance;
-                Log(
-                    "Online access service observed; authentication alone is not an online-play veto."
-                );
             });
     }
 
@@ -348,7 +278,6 @@ public static class OfflineGuardDiagnostics
             {
                 onlineAccess = __instance;
                 observation.Revoke("Online session establishment requested");
-                Log("Online session establishment requested; diagnostic epoch revoked.");
             });
     }
 
@@ -361,7 +290,6 @@ public static class OfflineGuardDiagnostics
             {
                 if (__0)
                     observation.Revoke("Online gameplay mode requested");
-                Log("Gameplay mode write requested: online=" + __0 + ".");
             });
     }
 
@@ -374,7 +302,6 @@ public static class OfflineGuardDiagnostics
             {
                 if (__0 == ClientAppStateType.Login || __0 == ClientAppStateType.CharacterSelect)
                     observation.EndSession("Client transition requested to " + __0);
-                Log("Client transition requested to " + __0 + "; current state will be sampled.");
             });
     }
 
@@ -386,7 +313,6 @@ public static class OfflineGuardDiagnostics
             Safe(() =>
             {
                 observation.EndSession("InGame exit requested");
-                Log("InGame exit requested; character correlation cleared.");
             });
     }
 
