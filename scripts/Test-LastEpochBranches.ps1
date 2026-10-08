@@ -40,7 +40,7 @@ $queueJson = @'
     "id": 3,
     "title": "Mastery chains / combat ground-item hover",
     "branch": "fix/mastery-lock-ground-tooltips",
-    "status": "Pending in-game validation",
+    "status": "Failed: mastery chain and combat hover remain blocked",
     "location": "Skills > Unlock Other Mastery Trees",
     "checks": [
       "Leave Remove Node Requirements off. Enable Unlock Other Mastery Trees; allocate beyond the chain in both other mastery trees.",
@@ -52,7 +52,7 @@ $queueJson = @'
     "id": 4,
     "title": "Maxroll graphical passives / skills preview",
     "branch": "feat/maxroll-tree-preview",
-    "status": "Graphical UI pending; earlier item preview confirmed",
+    "status": "Tree preview improved in game; equipment view deferred",
     "location": "Items > Force Drop > Maxroll Build Preview",
     "checks": [
       "Load https://maxroll.gg/last-epoch/planner/2ai4s0qh#1; inspect named passive/mastery and skill trees, connections and allocated ranks.",
@@ -64,7 +64,7 @@ $queueJson = @'
     "id": 5,
     "title": "Normal forge T6/T7 / craft options",
     "branch": "feat/advanced-forge-t7",
-    "status": "Compile/runtime confirmation pending on your game version",
+    "status": "Build confirmed; locale blocker fixed, runtime checks pending",
     "location": "Items > Crafting",
     "checks": [
       "Enable Craft Affixes to T7 plus Infinite Forging Potential. Use a normal T5 affix and upgrade T5 -> T6 -> T7. T7 must stop; no ordinary T8 crafting.",
@@ -76,7 +76,7 @@ $queueJson = @'
     "id": 6,
     "title": "Separate natural drop rate controls",
     "branch": "feat/independent-drop-rates",
-    "status": "Compile/runtime/distribution validation pending",
+    "status": "Failed: Natural Drop Rates UI missing; behavior untested",
     "location": "Items > Drop > Natural Drop Rates",
     "checks": [
       "Check separate Unique, Set, Exalted Affix and T7 Affix rows; 100% is normal, 1000% is 10x, not a guaranteed final chance.",
@@ -88,7 +88,7 @@ $queueJson = @'
     "id": 7,
     "title": "Offline startup / session diagnostics",
     "branch": "test/offline-guard-diagnostics",
-    "status": "Startup confirmed; online-switch change and session observations pending",
+    "status": "Offline selection confirmed; diagnostics spam, gameplay checks pending",
     "location": "Launch -> offline character selection; MelonLoader/Latest.log",
     "checks": [
       "Login.Enable_AutoLoginOffline must be true. Confirm automatic offline character selection and that its online switch is hidden.",

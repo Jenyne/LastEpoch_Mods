@@ -35,11 +35,11 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 |---|---|---|---|
 | 1 | `fix/force-drop-legal-affixes` | Legal Force Drop / affix coverage | Pending final coverage/persistence checks |
 | 2 | `feat/force-drop-illegal-mode` | Illegal Force Drop / Primordial T8 | Pending in-game validation |
-| 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Pending in-game validation |
-| 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Graphical UI pending; earlier item preview confirmed |
-| 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Compile/runtime confirmation pending on your game version |
-| 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | Compile/runtime/distribution validation pending |
-| 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Startup confirmed; online-switch change and session observations pending |
+| 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Failed: mastery chain and combat hover remain blocked |
+| 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Tree preview improved in game; equipment view deferred |
+| 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Build confirmed; locale blocker fixed, runtime checks pending |
+| 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | Failed: Natural Drop Rates UI missing; behavior untested |
+| 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Offline selection confirmed; diagnostics spam, gameplay checks pending |
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
 | 9 | `master` | Current main baseline | Baseline/control build |
 
@@ -166,3 +166,12 @@ PowerShell 7.4 parsing and mocked end-to-end checks passed for both modern and l
 The queue parser now assigns `ConvertFrom-Json` directly instead of wrapping its pipeline in `@()`. Windows PowerShell 5.1 returns a JSON array as one pipeline object; the old wrapper nested it, displaying `System.Object[]` and rejecting all numbers. Menu entries and every numbered selection were checked with both normal PowerShell 7 output and simulated PowerShell 5.1 array output. After fetching this fix, copy the updated script into TEMP again before reopening the menu.
 
 Locale installation relies on the repository's successful locale tests and copies the JSON bytes unchanged. It does not reparse the files with PowerShell's case-insensitive object parser, which rejects the existing `Forging Potential` / `Forging potential` keys. Native command output is converted to plain text before display/logging so successful Git status messages on stderr no longer look like PowerShell failures. Nonzero native exit codes still stop the runner.
+
+## Latest test reports — 2026-10-08
+
+- Prophecy reward multiplication (`fix/prophecy-reward-trigger`) is confirmed working and persistent. Large multipliers can lag; UI relocation is deferred until the UI rework.
+- Build 3 did not unlock either non-main mastery allocation or combat ground-item hover. Both need another fix.
+- Build 4 graphical tree preview is much better in game. A similar equipment view is a lower-priority follow-up.
+- Build 5 compiled successfully but installation stopped on the missing `Force Crafted Affix Roll` locale key. The key has been added in all supplied languages. In-game crafting checks remain pending.
+- Build 6 has no visible Natural Drop Rates section. No rate behavior or persistence is confirmed.
+- Build 7 screenshot and log confirm offline character selection. The log ends before gameplay and contains repeated service observations and 5,911 dropped diagnostic messages; observation logging needs cleanup.
