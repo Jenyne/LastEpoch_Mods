@@ -68,6 +68,24 @@ namespace LastEpoch_Hud.Scripts.ModUI
             public static readonly BoolSetting Enabled = Group.Bool("Enabled");
         }
 
+        public static class AdvancedForge
+        {
+            // Runtime controls are injected beside Infinite Forging Potential in Items > Crafting.
+            public static readonly SettingsGroup Group = new SettingsGroup("AdvancedForge");
+            public static readonly BoolSetting AllowT7Crafting = Group.Bool("AllowT7Crafting");
+            public static readonly FloatSetting AffixRoll = Group.Float(
+                "AffixRoll",
+                defaultValue: 255f,
+                defaultEnabled: false,
+                min: 0f,
+                max: 255f,
+                format: DisplayFormat.Percent,
+                label: "Force Crafted Affix Roll"
+            );
+            public static readonly BoolSetting AlwaysGlyphOfHope = Group.Bool("AlwaysGlyphOfHope");
+            public static readonly BoolSetting AlwaysGlyphOfDespair = Group.Bool("AlwaysGlyphOfDespair");
+        }
+
         public static class Weaver
         {
             public static readonly SettingsGroup Group = new SettingsGroup("Weaver")
