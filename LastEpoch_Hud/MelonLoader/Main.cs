@@ -31,16 +31,19 @@ public class Main : MelonLoader.MelonMod
                 BuildInfo.Time
             )
         );
+        Scripts.Mods.Diagnostics.OfflineGuardDiagnostics.Initialize();
     }
 
     public override void OnSceneWasLoaded(int buildIndex, string sceneName)
     {
         Scenes.SceneName = SceneManager.GetActiveScene().name;
+        Scripts.Mods.Diagnostics.OfflineGuardDiagnostics.SceneEvent("loaded", sceneName);
     }
 
     public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
     {
         Scenes.SceneName = SceneManager.GetActiveScene().name;
+        Scripts.Mods.Diagnostics.OfflineGuardDiagnostics.SceneEvent("unloaded", sceneName);
     }
 
     public override void OnLateUpdate()
@@ -51,6 +54,7 @@ public class Main : MelonLoader.MelonMod
         }
         Scripts.Mods.Login.Login_AutoLoginOffline.Tick();
         Scripts.Mods.Login.Login_OfflineCharacterSelect.Tick();
+        Scripts.Mods.Diagnostics.OfflineGuardDiagnostics.Tick();
     }
 
     public override void OnApplicationQuit()
