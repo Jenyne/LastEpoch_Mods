@@ -85,7 +85,6 @@ public sealed class ResolvedForceDrop
         // request boundary so construction and final verification agree, even if
         // values remain selected in a disabled HUD field.
         ForgingPotential = corrupted ? 0 : forgingPotential;
-        LegendaryPotential = corrupted ? 0 : legendaryPotential;
         WeaversWill = corrupted ? 0 : weaversWill;
         Corrupted = corrupted;
         ImplicitRolls = CopyRolls(implicitRolls, nameof(implicitRolls));
@@ -93,6 +92,10 @@ public sealed class ResolvedForceDrop
         Affixes = Array.AsReadOnly(
             (affixes ?? throw new ArgumentNullException(nameof(affixes))).ToArray()
         );
+        // Transferred affixes finish the Legendary upgrade. Native fixed unique
+        // modifiers belong to VariantIds and do not consume LP on their own.
+        LegendaryPotential = corrupted || ForceDropPotentialRules.CreatesLegendary(rarity, Affixes.Count)
+            ? 0 : legendaryPotential;
         VariantIds = Array.AsReadOnly(
             (variantIds ?? throw new ArgumentNullException(nameof(variantIds))).ToArray()
         );
@@ -137,6 +140,12 @@ public sealed class ResolvedForceDrop
         if (value < 0 || value > maximum)
             throw new ArgumentOutOfRangeException(name);
     }
+}
+
+public static class ForceDropPotentialRules
+{
+    public static bool CreatesLegendary(int rarity, int selectedAffixCount) =>
+        rarity >= 7 && selectedAffixCount > 0;
 }
 
 public static class ForceDropTierRules

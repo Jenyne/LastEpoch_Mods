@@ -372,12 +372,7 @@ public static class ForceDropBuilder
         forging.input.interactable = !corrupted && !forging.random;
         if (forging.mode != null)
             forging.mode.interactable = !corrupted;
-        lp.input.interactable = !corrupted && !lp.random;
-        ww.input.interactable = !corrupted && !ww.random;
-        if (lp.mode != null)
-            lp.mode.interactable = !corrupted;
-        if (ww.mode != null)
-            ww.mode.interactable = !corrupted;
+        RefreshPotentialControls();
         for (int slot = 0; slot < rows.Length; slot++)
         {
             var context = LegalContext(slot);
@@ -693,6 +688,37 @@ public static class ForceDropBuilder
                 Caption(n.mode, n.random ? "Random" : "Fixed");
                 n.input.interactable = !n.random;
             }
+        RefreshPotentialControls();
+    }
+
+    static bool CreatesLegendary()
+    {
+        int selected = 0;
+        foreach (var row in rows)
+            if (row != null && row.id >= 0)
+                selected++;
+        return ForceDropPotentialRules.CreatesLegendary(FD.item_rarity, selected);
+    }
+
+    static void RefreshPotentialControls()
+    {
+        if (lp == null || ww == null)
+            return;
+        bool legendary = CreatesLegendary();
+        if (legendary)
+        {
+            lp.value = 0;
+            lp.random = false;
+            lp.input.SetTextWithoutNotify("0");
+            if (lp.mode != null)
+                Caption(lp.mode, "Fixed");
+        }
+        lp.input.interactable = !corrupted && !legendary && !lp.random;
+        if (lp.mode != null)
+            lp.mode.interactable = !corrupted && !legendary;
+        ww.input.interactable = !corrupted && !ww.random;
+        if (ww.mode != null)
+            ww.mode.interactable = !corrupted;
     }
 
     static void Reset()
@@ -1322,7 +1348,7 @@ public static class ForceDropBuilder
                             ? L("LP")
                                 + ": "
                                 + (
-                                    corrupted ? "0"
+                                    corrupted || CreatesLegendary() ? "0"
                                     : lp.random ? L("Random")
                                     : lp.value.ToString()
                                 )
@@ -1407,7 +1433,8 @@ public static class ForceDropBuilder
             unique ? FD.item_unique_id : 0,
             FD.item_rarity,
             equipment && !unique && !corrupted ? ResolvedNumber(forging) : 0,
-            usesLP && !corrupted ? ResolvedNumber(lp) : 0,
+            usesLP && !corrupted && !ForceDropPotentialRules.CreatesLegendary(FD.item_rarity, selected.Count)
+                ? ResolvedNumber(lp) : 0,
             unique && !usesLP && !corrupted ? ResolvedNumber(ww) : 0,
             corrupted,
             implicitValues,
@@ -1432,6 +1459,7 @@ public static class ForceDropBuilder
         RefreshTierLimits();
         foreach (var n in numbers)
             n.Read();
+        RefreshPotentialControls();
         string problem = Validate();
         if (problem.Length != 0)
         {

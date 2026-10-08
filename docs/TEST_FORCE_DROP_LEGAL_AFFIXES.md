@@ -6,6 +6,7 @@ This branch contains the integrity fixes from `fix/force-drop-integrity`, includ
 
 ## Changes to test
 
+- Selecting an ordinary affix for a unique clears LP to zero and disables its input and Fixed/Random button. Maximum/Random presets cannot restore LP while the affix remains selected. Clear every ordinary affix to re-enable LP; fixed native unique modifiers alone do not disable it. Creation requests also enforce zero LP on the resulting Legendary item.
 - Normal affix selectors use the complete deduplicated native catalog and shared eligibility rules. Their log lines include choice counts and exclusion counts by reason.
 - Unique equipment uses a matching normal/exalted donor's equipment type and original class restrictions, rather than requiring affixes to roll on the unique-only subtype. All selected transferred affixes must coexist on one donor subtype. Selecting a Mage modifier must not enable an incompatible Rogue modifier.
 - Set shards use their referenced Set piece's equipment type and native class metadata. A matching base can show the Set affix without having the Set unique's exact subtype. Only one Set affix is allowed. Reforged Set affixes are excluded from Legendary transfers.
@@ -33,6 +34,8 @@ The script updates this branch, builds Release, runs the full suite against the 
 | --- | --- |
 | Ordinary helmet/body/relic with an original class requirement | Correct class-compatible ordinary affixes; restriction cheats must not change the legal pool. |
 | Generic unique helmet/body/relic | Applicable class-specific transferred affixes are visible; incompatible classes cannot be combined. Choose the class modifier first, then inspect the second prefix. |
+| Unique with LP 4; select one through four ordinary affixes | LP immediately becomes zero; its value and Fixed/Random button are disabled. Maximum/Random leave it disabled. Drop a Legendary with all selected affixes, zero LP and the original unique identity; check save/reload. |
+| Clear every ordinary affix, then select only an Unsated Rage or Withstand native modifier | LP becomes editable again and can be set to 4. Native fixed modifiers alone preserve selected LP; check creation and save/reload. |
 | Base ring, staff and body armor; inspect Set choices | Matching Set piece's affix is available; wrong equipment type is absent. A second Set affix is excluded. Check actual Set bonus/name and save/reload after dropping. |
 | Unique ring/body armor; inspect normal and corruption choices | No normal Set transfer; the corruption row follows that item's native outcomes rather than borrowing the base-item outcome list. |
 | Base gloves/boots/belt | Compatible Experimental choices; after selecting one, a second is excluded in both ordinary and corruption rows. |
