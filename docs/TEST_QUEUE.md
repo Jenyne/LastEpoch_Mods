@@ -162,3 +162,5 @@ Idol rerolling and the earlier Maxroll item preview were confirmed in game. Item
 ## Runner validation
 
 PowerShell 7.4 parsing and mocked end-to-end checks passed for both modern and legacy test paths, build failure, test failure, fetch failure, partial locale copy rollback, a running game and a dirty checkout. These validate installer control flow; they do not certify the feature branches in game. The runner uses PowerShell 5.1-compatible syntax; Windows PowerShell and actual Windows build/install execution still require local use.
+
+The queue parser now assigns `ConvertFrom-Json` directly instead of wrapping its pipeline in `@()`. Windows PowerShell 5.1 returns a JSON array as one pipeline object; the old wrapper nested it, displaying `System.Object[]` and rejecting all numbers. Menu entries and every numbered selection were checked with both normal PowerShell 7 output and simulated PowerShell 5.1 array output. After fetching this fix, copy the updated script into TEMP again before reopening the menu.

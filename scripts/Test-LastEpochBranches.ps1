@@ -9,7 +9,7 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version 2.0
-$queue = @(@'
+$queueJson = @'
 [
   {
     "id": 1,
@@ -120,7 +120,10 @@ $queue = @(@'
     ]
   }
 ]
-'@ | ConvertFrom-Json)
+'@
+# Windows PowerShell 5.1 emits the JSON array as a single pipeline object.
+# Assign it directly: wrapping that pipeline in @() produces a nested array.
+$queue = ConvertFrom-Json -InputObject $queueJson
 $archiveRoot = Join-Path $GamePath 'UserData\LastEpoch_Hud\TestQueue'
 $stateFile = Join-Path $archiveRoot 'installed-test.json'
 
