@@ -14,7 +14,7 @@ $queueJson = @'
   {
     "id": 1,
     "title": "Legal Force Drop / affix coverage",
-    "branch": "fix/force-drop-legal-affixes",
+    "branch": "feat/force-drop",
     "status": "Pending final coverage/persistence checks",
     "location": "Items > Force Drop",
     "checks": [
@@ -26,11 +26,11 @@ $queueJson = @'
   {
     "id": 2,
     "title": "Illegal Force Drop / Primordial T8",
-    "branch": "feat/force-drop-illegal-mode",
-    "status": "Pending in-game validation",
+    "branch": "feat/force-drop",
+    "status": "T8/extra Rage persistence confirmed on 5b8199f6; new scroll/cyan UI awaits testing",
     "location": "Items > Force Drop > Illegal mode",
     "checks": [
-      "Check mode switching clears selections. Illegal picker has Prefix/Suffix columns with independent pages; either side edits the opened slot. None stays first. Search resets both pages.",
+      "Check mode switching clears selections. Illegal picker has independently scrolling Prefix/Suffix columns and scrollbar handles; either side edits the opened slot. None stays pinned. Search resets both scroll positions. Check cyan idol affixes in choices and selected rows.",
       "Test T8 in all four ordinary rows, the Primordial sealed row and corruption using real eight-tier definitions. Retest legal T8 Primordial with Illegal mode off; one-tier definitions stay T1.",
       "Test a unique with Set membership: unique name remains, correct set piece counting and actual set bonus. Check Unsated Rage/Withstand special modifiers.",
       "Test four affixes + sealed + corruption, then equip/stats and save/reload. Record rejected combinations exactly."
