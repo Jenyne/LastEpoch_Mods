@@ -60,8 +60,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         }
 
         static bool PreserveFp() =>
-            ModSettings.InfiniteForgingPotential.Enabled.Value
-            || ModSettings.AdvancedForge.GuaranteedGlyphOfHope.Value;
+            ModSettings.InfiniteForgingPotential.Enabled.Value;
 
         static void ApplyForcedRoll(ItemAffix affix)
         {
