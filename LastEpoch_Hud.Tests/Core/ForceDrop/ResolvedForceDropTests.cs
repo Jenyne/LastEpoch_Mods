@@ -5,6 +5,27 @@ namespace LastEpoch_Hud.Tests.Core.ForceDrop;
 public sealed class ResolvedForceDropTests
 {
     [Theory]
+    [InlineData(1, 1)]
+    [InlineData(2, 1)]
+    [InlineData(3, 1)]
+    [InlineData(4, 1)]
+    [InlineData(4, 2)]
+    [InlineData(4, 3)]
+    [InlineData(4, 4)]
+    public void UniqueWithTransferredAffixes_ConsumesAllLegendaryPotential(int lp, int count)
+    {
+        var affixes = Enumerable.Range(1, count)
+            .Select(id => new ResolvedForceDropAffix(id, 6, 255, ForceDropSeal.None));
+        var request = new ResolvedForceDrop(
+            21, 10, 477, 7, 0, lp, 0, false,
+            new[] { 255, 255, 255 }, new int[8], affixes, new[] { 1131 }, null
+        );
+        Assert.Equal(0, request.LegendaryPotential);
+        Assert.Equal(count, request.Affixes.Count);
+        Assert.Equal(1131, request.VariantIds.Single());
+    }
+
+    [Theory]
     [InlineData(1, 7, 1)]
     [InlineData(8, 7, 7)]
     [InlineData(8, 8, 8)]

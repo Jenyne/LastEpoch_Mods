@@ -4,6 +4,23 @@ namespace LastEpoch_Hud.Tests.Core.ForceDrop;
 
 public sealed class ForceDropModeRulesTests
 {
+    [Fact]
+    public void IllegalRequest_CarriesT8InEveryOrdinarySealedAndCorruptionSlot()
+    {
+        var selected = Enumerable.Range(1, 4)
+            .Select(id => new ResolvedForceDropAffix(id, 7, 255, ForceDropSeal.None))
+            .Append(new ResolvedForceDropAffix(5, 7, 255, ForceDropSeal.Primordial));
+        var request = new ResolvedForceDrop(
+            21, 1, 0, 0, 0, 0, 0, true, new int[3], Array.Empty<int>(), selected,
+            Array.Empty<int>(), new ResolvedForceDropAffix(6, 7, 255, ForceDropSeal.Corruption),
+            ForceDropMode.Illegal
+        );
+        Assert.Equal(5, request.Affixes.Count);
+        Assert.All(request.Affixes, affix => Assert.Equal(7, affix.Tier));
+        Assert.Equal(7, request.Corruption.Tier);
+        Assert.True(request.IsIllegal);
+    }
+
     [Theory]
     [InlineData(8, ForceDropMode.Legal, 7)]
     [InlineData(8, ForceDropMode.Illegal, 8)]

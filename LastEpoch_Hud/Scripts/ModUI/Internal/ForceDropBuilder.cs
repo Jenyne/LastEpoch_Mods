@@ -30,7 +30,13 @@ public static class ForceDropBuilder
         search,
         pickerSearch;
     static bool categoryPicker,
-        rarityPicker;
+        rarityPicker,
+        splitAffixPicker;
+    const int AffixesPerColumnPage = 9;
+    static readonly int[] columnPages = new int[2];
+    static readonly List<Choice>[] columnChoices = { new List<Choice>(), new List<Choice>() };
+    static readonly Text[] columnTitles = new Text[2];
+    static readonly Button[] columnPrevious = new Button[2], columnNext = new Button[2];
     static readonly List<Choice> visiblePicks = new List<Choice>();
     static readonly List<Text> pickerHeaders = new List<Text>();
     static readonly string[] groups = { "Weapons", "Armour", "Accessories", "Idols", "Other" };
@@ -176,6 +182,7 @@ public static class ForceDropBuilder
         public Action select;
         public ForceDropAffixFamily affixFamily;
         public bool champion;
+        public bool suffix;
     }
 
     // Sort by native family, never translated labels. None remains the first
@@ -292,6 +299,7 @@ public static class ForceDropBuilder
         {
             lastPickerSearch = pickerSearch.text;
             pickerPage = 0;
+            Array.Clear(columnPages, 0, columnPages.Length);
             RefreshPicker();
         }
         Caption(typeButton, SelectedCategoryName("Choose category"));
@@ -378,12 +386,7 @@ public static class ForceDropBuilder
         forging.input.interactable = !corrupted && !forging.random;
         if (forging.mode != null)
             forging.mode.interactable = !corrupted;
-        lp.input.interactable = !corrupted && !lp.random;
-        ww.input.interactable = !corrupted && !ww.random;
-        if (lp.mode != null)
-            lp.mode.interactable = !corrupted;
-        if (ww.mode != null)
-            ww.mode.interactable = !corrupted;
+        RefreshPotentialControls();
         for (int slot = 0; slot < rows.Length; slot++)
         {
             var context = LegalContext(slot);
@@ -703,6 +706,37 @@ public static class ForceDropBuilder
                 Caption(n.mode, n.random ? "Random" : "Fixed");
                 n.input.interactable = !n.random;
             }
+        RefreshPotentialControls();
+    }
+
+    static bool CreatesLegendary()
+    {
+        int selected = 0;
+        foreach (var row in rows)
+            if (row != null && row.id >= 0)
+                selected++;
+        return ForceDropPotentialRules.CreatesLegendary(FD.item_rarity, selected);
+    }
+
+    static void RefreshPotentialControls()
+    {
+        if (lp == null || ww == null)
+            return;
+        bool legendary = CreatesLegendary();
+        if (legendary)
+        {
+            lp.value = 0;
+            lp.random = false;
+            lp.input.SetTextWithoutNotify("0");
+            if (lp.mode != null)
+                Caption(lp.mode, "Fixed");
+        }
+        lp.input.interactable = !corrupted && !legendary && !lp.random;
+        if (lp.mode != null)
+            lp.mode.interactable = !corrupted && !legendary;
+        ww.input.interactable = !corrupted && !ww.random;
+        if (ww.mode != null)
+            ww.mode.interactable = !corrupted;
     }
 
     static void Reset()
@@ -900,6 +934,7 @@ public static class ForceDropBuilder
                     aliases = NativeItemNames.AffixAliases(a) + "\n" + family,
                     affixFamily = ForceDropLegalAffixes.Family(a),
                     champion = champion,
+                    suffix = a.type == AffixList.AffixType.SUFFIX,
                     select = () =>
                     {
                         corruptionId = id;
@@ -929,7 +964,7 @@ public static class ForceDropBuilder
                 + ", status="
                 + corruptionPoolError
         );
-        OpenPicker("Corrupted affix");
+        OpenPicker("Corrupted affix", true);
     }
 
     public static void DropSelection()
@@ -1053,7 +1088,8 @@ public static class ForceDropBuilder
             : LegalContext(slot).IsHereticalIdol && (slot == 1 || slot == 3) ? "Idol enchantment"
             : slot == 4 ? "Sealed affix"
             : slot < 2 ? "Prefix"
-            : "Suffix"
+            : "Suffix",
+            allowIllegal || slot == 4
         );
     }
 
@@ -1118,6 +1154,7 @@ public static class ForceDropBuilder
                 aliases = NativeItemNames.AffixAliases(a) + "\n" + a.specialAffixType,
                 affixFamily = ForceDropLegalAffixes.Family(a),
                 champion = context.IsChampion(a),
+                suffix = a.type == AffixList.AffixType.SUFFIX,
                 select = () =>
                 {
                     rows[slot].id = id;
@@ -1394,7 +1431,7 @@ public static class ForceDropBuilder
                             ? L("LP")
                                 + ": "
                                 + (
-                                    corrupted ? "0"
+                                    corrupted || CreatesLegendary() ? "0"
                                     : lp.random ? L("Random")
                                     : lp.value.ToString()
                                 )
@@ -1485,7 +1522,8 @@ public static class ForceDropBuilder
             unique ? FD.item_unique_id : 0,
             FD.item_rarity,
             equipment && !unique && !corrupted ? ResolvedNumber(forging) : 0,
-            usesLP && !corrupted ? ResolvedNumber(lp) : 0,
+            usesLP && !corrupted && !ForceDropPotentialRules.CreatesLegendary(FD.item_rarity, selected.Count)
+                ? ResolvedNumber(lp) : 0,
             unique && !usesLP && !corrupted ? ResolvedNumber(ww) : 0,
             corrupted,
             implicitValues,
@@ -1585,6 +1623,7 @@ public static class ForceDropBuilder
         RefreshTierLimits();
         foreach (var n in numbers)
             n.Read();
+        RefreshPotentialControls();
         string problem = Validate();
         if (problem.Length != 0)
         {
@@ -1667,6 +1706,26 @@ public static class ForceDropBuilder
                 RefreshPicker();
             }
         );
+        for (int i = 0; i < 2; i++)
+        {
+            int column = i;
+            float left = column == 0 ? .03f : .51f;
+            columnTitles[column] = Label(picker, column == 0 ? "Prefix" : "Suffix",
+                left, .74f, left + .46f, .795f, 15);
+            columnPrevious[column] = Button(picker, "Previous",
+                left, .03f, left + .22f, .085f, () =>
+                {
+                    columnPages[column] = Math.Max(0, columnPages[column] - 1);
+                    RefreshPicker();
+                });
+            columnNext[column] = Button(picker, "Next",
+                left + .24f, .03f, left + .46f, .085f, () =>
+                {
+                    if ((columnPages[column] + 1) * AffixesPerColumnPage < columnChoices[column].Count)
+                        columnPages[column]++;
+                    RefreshPicker();
+                });
+        }
         for (int i = 0; i < groups.Length; i++)
             pickerHeaders.Add(
                 Label(picker, groups[i], .03f + i * .19f, .74f, .21f + i * .19f, .795f, 15)
@@ -1674,13 +1733,15 @@ public static class ForceDropBuilder
         picker.SetActive(false);
     }
 
-    static void OpenPicker(string title)
+    static void OpenPicker(string title, bool splitAffixes = false)
     {
         categoryPicker = rarityPicker = false;
+        splitAffixPicker = splitAffixes;
         LocaleRegistry.Apply(pickerTitle, title);
         pickerSearch.SetTextWithoutNotify("");
         lastPickerSearch = "";
         pickerPage = 0;
+        Array.Clear(columnPages, 0, columnPages.Length);
         picker.SetActive(true);
         picker.transform.SetAsLastSibling();
         RefreshPicker();
@@ -1821,8 +1882,14 @@ public static class ForceDropBuilder
                 || NativeItemNames.Matches(pickerSearch.text, choice.name, choice.aliases)
             )
                 filtered.Add(choice);
-        pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker);
-        pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker);
+        pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker && !splitAffixPicker);
+        pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker && !splitAffixPicker);
+        for (int column = 0; column < 2; column++)
+        {
+            columnTitles[column].gameObject.SetActive(splitAffixPicker);
+            columnPrevious[column].gameObject.SetActive(splitAffixPicker);
+            columnNext[column].gameObject.SetActive(splitAffixPicker);
+        }
         foreach (var header in pickerHeaders)
             header.gameObject.SetActive(categoryPicker);
         if (categoryPicker)
@@ -1849,6 +1916,11 @@ public static class ForceDropBuilder
             }
         foreach (var button in pickButtons)
             button.gameObject.SetActive(false);
+        if (splitAffixPicker)
+        {
+            RefreshAffixColumns();
+            return;
+        }
         if (categoryPicker)
         {
             int rowCount = 15;
@@ -1906,6 +1978,48 @@ public static class ForceDropBuilder
                 );
                 button.gameObject.SetActive(true);
                 visiblePicks.Add(filtered[index]);
+            }
+        }
+    }
+
+    static void RefreshAffixColumns()
+    {
+        foreach (var column in columnChoices)
+            column.Clear();
+        Choice clear = null;
+        foreach (var choice in filtered)
+            if (choice.id < 0)
+                clear = choice;
+            else
+                columnChoices[choice.suffix ? 1 : 0].Add(choice);
+
+        for (int column = 0; column < 2; column++)
+        {
+            var list = columnChoices[column];
+            int pageCount = Math.Max(1, (list.Count + AffixesPerColumnPage - 1) / AffixesPerColumnPage);
+            columnPages[column] = Math.Min(columnPages[column], pageCount - 1);
+            columnTitles[column].text = L(column == 0 ? "Prefix" : "Suffix")
+                + " · " + (columnPages[column] + 1) + "/" + pageCount;
+            columnPrevious[column].interactable = columnPages[column] > 0;
+            columnNext[column].interactable = columnPages[column] + 1 < pageCount;
+            float left = column == 0 ? .03f : .51f;
+            int row = 0;
+            if (clear != null)
+                Show(clear, row++);
+            int start = columnPages[column] * AffixesPerColumnPage;
+            for (int i = start; i < Math.Min(list.Count, start + AffixesPerColumnPage); i++)
+                Show(list[i], row++);
+
+            void Show(Choice choice, int index)
+            {
+                var button = pickButtons[visiblePicks.Count];
+                Rect(button.gameObject, left, .69f - index * .058f,
+                    left + .46f, .739f - index * .058f);
+                Caption(button, choice.name);
+                button.GetComponentInChildren<Text>(true).color = AffixColor(choice.affixFamily);
+                button.gameObject.SetActive(true);
+                // Both columns retain the original action for the opened slot.
+                visiblePicks.Add(choice);
             }
         }
     }
