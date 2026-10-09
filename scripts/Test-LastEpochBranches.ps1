@@ -81,14 +81,14 @@ $queueJson = @'
   },
   {
     "id": 7,
-    "title": "Offline startup / session diagnostics",
+    "title": "Offline startup — observer removed for isolation",
     "branch": "test/offline-guard-diagnostics",
-    "status": "Done for now; confirmed working, deeper investigation deferred",
+    "status": "Character-load crash reopened; startup-only candidate 951f4e01 awaits retest",
     "location": "Launch -> offline character selection; MelonLoader/Latest.log",
     "checks": [
       "Login.Enable_AutoLoginOffline must be true. Confirm automatic offline character selection and that its online switch is hidden.",
       "Load an offline character, change zones, run an echo and remain playable for 30+ seconds. Switch characters and reload the first.",
-      "Exit normally and capture the complete log with [Offline] and [OfflineGuard] lines. This observes session signals; it does not yet enforce the proposed runtime guard."
+      "Confirm build 951f4e01, load the same character that worked on selection 9, fight and switch characters. Keep Latest.log and Player.log. The session observer is removed; no [OfflineGuard] lines are expected."
     ]
   },
   {
