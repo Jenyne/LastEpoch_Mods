@@ -92,6 +92,8 @@ public static class ForceDropBuilder
         public int group;
         public string name;
         public string aliases;
+        // -1 for non-affix choices; five-bit class compatibility mask for affixes.
+        public int classMask = -1;
         public Action select;
     }
 
@@ -903,6 +905,7 @@ public static class ForceDropBuilder
                 id = id,
                 name = name,
                 aliases = NativeItemNames.AffixAliases(a),
+                classMask = AffixClassMask(a),
                 select = () =>
                 {
                     rows[slot].id = id;
@@ -911,6 +914,66 @@ public static class ForceDropBuilder
                 },
             }
         );
+    }
+
+    // Compute class compatibility using the game's own CanRollOn rules, not
+    // translated affix names. This does not relax the normal FitsItem check.
+    static readonly string[] affixClasses =
+    {
+        "Acolyte", "Mage", "Primalist", "Rogue", "Sentinel"
+    };
+
+    static int AffixClassMask(AffixList.Affix affix)
+    {
+        int mask = 0;
+        for (int i = 0; i < affixClasses.Length; i++)
+        {
+            if (!Enum.TryParse(affixClasses[i], true, out ItemList.ClassRequirement requirement))
+                continue;
+            try
+            {
+                if (affix.CanRollOn(FD.item_type, FD.item_subtype, requirement))
+                    mask |= 1 << i;
+            }
+            catch (Exception) { }
+        }
+        return mask;
+    }
+
+    static bool MatchesAffixSearch(Choice choice, string query)
+    {
+        if (choice.classMask < 0)
+            return NativeItemNames.Matches(query, choice.name, choice.aliases);
+        var terms = new List<string>();
+        int includeMask = 0, excludeMask = 0;
+        foreach (string word in (query ?? "").Split(new[] { ' ', '\\t' }, StringSplitOptions.RemoveEmptyEntries))
+        {
+            string token = word.ToLowerInvariant();
+            if (token == "class:all")
+                continue;
+            bool exclude = token.StartsWith("-", StringComparison.Ordinal);
+            string classToken = exclude ? token.Substring(1) : token;
+            if (classToken.StartsWith("class:", StringComparison.Ordinal))
+                classToken = classToken.Substring(6);
+            int classIndex = Array.FindIndex(affixClasses, c =>
+                string.Equals(c, classToken, StringComparison.OrdinalIgnoreCase));
+            if (classIndex >= 0)
+            {
+                if (exclude)
+                    excludeMask |= 1 << classIndex;
+                else
+                    includeMask |= 1 << classIndex;
+            }
+            else
+                terms.Add(word);
+        }
+        // An affix compatible with all five classes is generic.
+        bool generic = choice.classMask == 31;
+        if (includeMask != 0 && !generic && (choice.classMask & includeMask) == 0)
+            return false;
+        if (!generic && (choice.classMask & excludeMask) != 0)
+            return false;
+        return NativeItemNames.Matches(string.Join(" ", terms.ToArray()), choice.name, choice.aliases);
     }
 
     static AffixList.Affix FindAffix(int id)
@@ -1427,8 +1490,10 @@ public static class ForceDropBuilder
         filtered.Clear();
         visiblePicks.Clear();
         foreach (var choice in choices)
-            if (NativeItemNames.Matches(pickerSearch.text, choice.name, choice.aliases))
+            if (MatchesAffixSearch(choice, pickerSearch.text))
                 filtered.Add(choice);
+        if (!categoryPicker && !rarityPicker)
+            Caption(pickerTitle, (rows != null ? "Select affix" : "Select") + " (" + filtered.Count + ")");
         pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker);
         pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker);
         foreach (var header in pickerHeaders)
