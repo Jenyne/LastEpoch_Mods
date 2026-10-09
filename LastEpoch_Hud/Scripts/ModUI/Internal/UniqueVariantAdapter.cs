@@ -1,10 +1,12 @@
 using System;
 using System.Collections.Generic;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.ForceDrop;
 
 namespace LastEpoch_Hud.Scripts.ModUI;
 
-// Variant ids come exclusively from the selected unique's native fixed pool.
+// Dedicated variant ids come from the native fixed pool. Illegal extras use
+// ordinary slots and must not be mistaken for that serialized unique prefix.
 public static class UniqueVariantAdapter
 {
     public static bool IsUnsated(UniqueList.Entry entry)
@@ -19,18 +21,28 @@ public static class UniqueVariantAdapter
 
     public static int VariantCount(UniqueList.Entry entry)
     {
-        if (IsUnsated(entry))
-            return 1;
         if (
-            !entry.IsNullOrDestroyed()
-            && string.Equals(
-                (entry.name ?? "").Replace(" ", "").Replace("_", ""),
-                "WithstandtheElements",
-                StringComparison.OrdinalIgnoreCase
-            )
+            entry.IsNullOrDestroyed()
+            || !entry.dropsSpecificLegendaryAffixes
+            || entry.droppableLegendaryAffixes.IsNullOrDestroyed()
+            || entry.droppableLegendaryAffixes.Count == 0
         )
-            return 2;
-        return 0;
+            return 0;
+        // Fixed FakeUniqueMod pools use the same native representation. Exulis
+        // instead has tiered Corrupted modifiers and needs its own selection
+        // route; do not misrepresent those as fixed T1 unique modifiers.
+        foreach (int id in entry.droppableLegendaryAffixes)
+        {
+            var definition = ForceDropCatalog.Find(id);
+            if (
+                definition.IsNullOrDestroyed()
+                || definition.specialAffixType != AffixList.SpecialAffixType.FakeUniqueMod
+            )
+                return 0;
+        }
+        return entry.droppableLegendaryAffixCount >= 1 && entry.droppableLegendaryAffixCount <= 2
+            ? entry.droppableLegendaryAffixCount
+            : 0;
     }
 
     public static bool HasVariants(UniqueList.Entry entry)
@@ -50,45 +62,31 @@ public static class UniqueVariantAdapter
 
     public static bool IsVariant(AffixList.Affix definition)
     {
-        if (definition.IsNullOrDestroyed())
-            return false;
-        if (definition.specialAffixType == AffixList.SpecialAffixType.FakeUniqueMod)
-            return true;
-        var uniques = UniqueList.instance;
-        if (uniques.IsNullOrDestroyed())
-            return false;
-        foreach (var entry in uniques.uniques)
-            if (
-                VariantCount(entry) > 0
-                && !entry.droppableLegendaryAffixes.IsNullOrDestroyed()
-                && entry.droppableLegendaryAffixes.Contains(definition.affixId)
-            )
-                return true;
-        return false;
+        return !definition.IsNullOrDestroyed()
+            && definition.specialAffixType == AffixList.SpecialAffixType.FakeUniqueMod;
     }
 
     public static List<AffixList.Affix> Catalog(UniqueList.Entry entry)
     {
         var result = new List<AffixList.Affix>();
-        var list = AffixList.get();
-        if (!HasVariants(entry) || list.IsNullOrDestroyed() || list.AllAffixes.IsNullOrDestroyed())
+        if (!HasVariants(entry))
             return result;
         foreach (var id in entry.droppableLegendaryAffixes)
-        foreach (var definition in list.AllAffixes)
+        {
+            var definition = ForceDropCatalog.Find(id);
             if (
                 !definition.IsNullOrDestroyed()
-                && definition.affixId == id
                 && !CorruptedAffixAdapter.IsCorruption(definition)
                 && !result.Exists(a => a.affixId == id)
             )
-            {
                 result.Add(definition);
-                break;
-            }
+        }
         return result;
     }
 
-    public static void Apply(ItemDataUnpacked item, params int[] ids)
+    public static void Apply(ItemDataUnpacked item, params int[] ids) => Apply(item, false, ids);
+
+    public static void Apply(ItemDataUnpacked item, bool allowAdditionalVariants, params int[] ids)
     {
         var entry = UniqueList.getUnique(item.uniqueID);
         var catalog = Catalog(entry);
@@ -127,11 +125,17 @@ public static class UniqueVariantAdapter
             if (existing.IsNullOrDestroyed())
                 throw new InvalidOperationException("Invalid existing affix; no item was dropped");
             if (
-                existing.specialAffixType == AffixList.SpecialAffixType.FakeUniqueMod
-                || entry.droppableLegendaryAffixes.Contains(existing.affixId)
+                selected.Contains(existing.affixId)
+                || (
+                    !allowAdditionalVariants
+                    && (
+                        existing.specialAffixType == AffixList.SpecialAffixType.FakeUniqueMod
+                        || entry.droppableLegendaryAffixes.Contains(existing.affixId)
+                    )
+                )
             )
                 throw new InvalidOperationException("The item already has a variant modifier");
-            original.Add(Signature(existing));
+            original.Add(Signature(existing, allowAdditionalVariants));
         }
         original.Sort(StringComparer.Ordinal);
         byte rarity = item.rarity,
@@ -143,32 +147,115 @@ public static class UniqueVariantAdapter
         foreach (var affix in additions)
             item.affixes.Add(affix);
         item.sockets = (byte)item.affixes.Count;
+        PrepareForPacking(item, ids, allowAdditionalVariants);
         item.RefreshIDAndValues();
-        VerifySelection(item, ids);
+        VerifySelection(item, allowAdditionalVariants, ids);
         var remaining = new List<string>();
         foreach (var saved in item.affixes)
             if (!selected.Contains(saved.affixId))
-                remaining.Add(Signature(saved));
+                remaining.Add(Signature(saved, allowAdditionalVariants));
         remaining.Sort(StringComparer.Ordinal);
         if (
             item.rarity != rarity
             || item.legendaryPotential != potential
             || item.weaversWill != weaversWill
             || item.uniqueID != uniqueId
-            || item.sockets != item.affixes.Count
             || remaining.Count != original.Count
         )
             throw new InvalidOperationException(
-                "Unique variant storage verification failed; no item was dropped"
+                "Unique variant storage verification failed (unique="
+                    + item.uniqueID
+                    + ", rarity="
+                    + rarity
+                    + "->"
+                    + item.rarity
+                    + ", lp="
+                    + potential
+                    + "->"
+                    + item.legendaryPotential
+                    + ", ww="
+                    + weaversWill
+                    + "->"
+                    + item.weaversWill
+                    + ", sockets="
+                    + item.sockets
+                    + ", affixes="
+                    + item.affixes.Count
+                    + ", expectedOrdinary=["
+                    + string.Join(",", original)
+                    + "], actualOrdinary=["
+                    + string.Join(",", remaining)
+                    + "]); no item was dropped"
             );
         for (int i = 0; i < original.Count; i++)
             if (original[i] != remaining[i])
                 throw new InvalidOperationException(
-                    "Unique variant changed an existing affix; no item was dropped"
+                    "Unique variant changed an existing affix (unique="
+                        + item.uniqueID
+                        + ", expectedOrdinary=["
+                        + string.Join(",", original)
+                        + "], actualOrdinary=["
+                        + string.Join(",", remaining)
+                        + "]); no item was dropped"
                 );
     }
 
-    static string Signature(ItemAffix affix)
+    public static void PrepareForPacking(
+        ItemDataUnpacked item,
+        IReadOnlyList<int> dedicatedIds = null,
+        bool allowAdditionalVariants = false
+    )
+    {
+        var entry = UniqueList.getUnique(item.uniqueID);
+        if (!HasVariants(entry))
+            return;
+        var ids = new List<int>();
+        var variants = new List<int>();
+        var dedicated = dedicatedIds == null ? null : new HashSet<int>(dedicatedIds);
+        if (
+            allowAdditionalVariants && (dedicated == null || dedicated.Count != VariantCount(entry))
+        )
+            throw new InvalidOperationException(
+                "Choose every exclusive unique modifier before packing."
+            );
+        foreach (var affix in item.affixes)
+        {
+            if (affix.IsNullOrDestroyed())
+                throw new InvalidOperationException("Missing affix before unique packing.");
+            ids.Add(affix.affixId);
+            bool belongsToPool = entry.droppableLegendaryAffixes.Contains(affix.affixId);
+            if (
+                affix.specialAffixType == AffixList.SpecialAffixType.FakeUniqueMod
+                && !belongsToPool
+                && !allowAdditionalVariants
+            )
+                throw new InvalidOperationException("The unique has an unrelated fixed modifier.");
+            if (allowAdditionalVariants ? dedicated.Contains(affix.affixId) : belongsToPool)
+            {
+                if (!belongsToPool)
+                    throw new InvalidOperationException(
+                        "Dedicated modifier is outside the unique's native pool."
+                    );
+                variants.Add(affix.affixId);
+            }
+        }
+        if (variants.Count != VariantCount(entry))
+            throw new InvalidOperationException(
+                "A fixed unique modifier is missing before packing."
+            );
+        var order = ForceDropPackingOrder.UniquePrefixIndices(ids, variants);
+        bool changed = false;
+        for (int i = 0; i < order.Count; i++)
+            changed |= order[i] != i;
+        if (!changed)
+            return;
+        var ordered = new Il2CppSystem.Collections.Generic.List<ItemAffix>();
+        foreach (int index in order)
+            ordered.Add(item.affixes[index]);
+        item.affixes = ordered;
+    }
+
+    static string Signature(ItemAffix affix, bool allowIllegalT8 = false)
     {
         return affix.affixId
             + ":"
@@ -176,12 +263,27 @@ public static class UniqueVariantAdapter
             + ":"
             + affix.affixRoll
             + ":"
-            + affix.sealedAffixType
+            + (
+                allowIllegalT8
+                && affix.affixTier == 7
+                && affix.sealedAffixType == SealedAffixType.None
+                    ? SealedAffixType.Primordial
+                    : affix.sealedAffixType
+            )
             + ":"
-            + affix.specialAffixType;
+            + affix.specialAffixType
+            + ":"
+            + affix.affixType;
     }
 
-    public static void VerifySelection(ItemDataUnpacked item, params int[] ids)
+    public static void VerifySelection(ItemDataUnpacked item, params int[] ids) =>
+        VerifySelection(item, false, ids);
+
+    public static void VerifySelection(
+        ItemDataUnpacked item,
+        bool allowAdditionalVariants,
+        params int[] ids
+    )
     {
         var entry = UniqueList.getUnique(item.uniqueID);
         var catalog = Catalog(entry);
@@ -193,8 +295,10 @@ public static class UniqueVariantAdapter
         if (expected.Count != ids.Length)
             throw new InvalidOperationException("Duplicate unique variants; no item was dropped");
         int variantCount = 0;
+        int index = -1;
         foreach (var saved in item.affixes)
         {
+            index++;
             if (saved.IsNullOrDestroyed())
                 throw new InvalidOperationException("Invalid packed affix; no item was dropped");
             if (
@@ -202,9 +306,21 @@ public static class UniqueVariantAdapter
                 && !entry.droppableLegendaryAffixes.Contains(saved.affixId)
             )
                 continue;
+            // Only the native fixed-count prefix belongs to the dedicated
+            // variant selection. Illegal extras are verified independently
+            // against the request and then the complete decoded item ID.
+            if (allowAdditionalVariants && !expected.Contains(saved.affixId))
+            {
+                if (index < ids.Length)
+                    throw new InvalidOperationException(
+                        "An extra modifier displaced the unique prefix."
+                    );
+                continue;
+            }
             var definition = catalog.Find(a => a.affixId == saved.affixId);
             if (
-                !expected.Remove(saved.affixId)
+                (allowAdditionalVariants && index >= ids.Length)
+                || !expected.Remove(saved.affixId)
                 || definition.IsNullOrDestroyed()
                 || saved.specialAffixType != definition.specialAffixType
                 || saved.sealedAffixType != SealedAffixType.None

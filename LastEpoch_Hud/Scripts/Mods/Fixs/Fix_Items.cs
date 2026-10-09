@@ -84,10 +84,22 @@ public class Fix_Items
                         remove_affix = true;
                         need_fix = true;
                     }
-                    if (affix.affixTier > 6)
+                    var definition = ModUI.ForceDropCatalog.Find(affix.affixId);
+                    // Saved T8 does not depend on the creation toggle. While
+                    // definitions load, preserve the packed tier instead of
+                    // destructively downgrading a possibly valid item.
+                    int maximum =
+                        definition.IsNullOrDestroyed() || definition.tiers.IsNullOrDestroyed()
+                            ? 7
+                            : Core.ForceDrop.ForceDropModeRules.MaximumPersistedTier(
+                                definition.tiers.Count
+                            );
+                    if (maximum >= 0 && affix.affixTier > maximum)
                     {
-                        Main.logger_instance.Error("Fix : Affix > 7");
-                        affix.affixTier = 6;
+                        Main.logger_instance.Error(
+                            "Fix : Affix tier exceeds available definition data"
+                        );
+                        affix.affixTier = (byte)maximum;
                         need_fix = true;
                     }
                     index++;
@@ -131,10 +143,19 @@ public class Fix_Items
                         remove_affix = true;
                         need_fix = true;
                     }
-                    if (affix.affixTier > 6)
+                    var definition = ModUI.ForceDropCatalog.Find(affix.affixId);
+                    int maximum =
+                        definition.IsNullOrDestroyed() || definition.tiers.IsNullOrDestroyed()
+                            ? 7
+                            : Core.ForceDrop.ForceDropModeRules.MaximumPersistedTier(
+                                definition.tiers.Count
+                            );
+                    if (maximum >= 0 && affix.affixTier > maximum)
                     {
-                        Main.logger_instance.Error("Fix : Affix > 7");
-                        affix.affixTier = 6;
+                        Main.logger_instance.Error(
+                            "Fix : Affix tier exceeds available definition data"
+                        );
+                        affix.affixTier = (byte)maximum;
                         need_fix = true;
                     }
                     index++;

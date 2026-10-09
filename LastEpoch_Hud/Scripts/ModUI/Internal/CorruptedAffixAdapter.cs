@@ -12,7 +12,6 @@ public static class CorruptedAffixAdapter
     static bool checkedStorage;
     static bool flagStorage;
     static readonly List<AffixList.Affix> catalog = new List<AffixList.Affix>();
-    static bool catalogLoaded;
 
     public static bool IsSupported
     {
@@ -120,60 +119,10 @@ public static class CorruptedAffixAdapter
 
     static void LoadCatalog()
     {
-        if (catalogLoaded)
-            return;
         catalog.Clear();
-        var list = AffixList.get();
-        if (list.IsNullOrDestroyed())
-            return;
-        foreach (var a in list.singleAffixes)
-            if (!a.IsNullOrDestroyed() && IsCorruption(a))
-                catalog.Add(a);
-        foreach (var a in list.multiAffixes)
-            if (!a.IsNullOrDestroyed() && IsCorruption(a))
-                catalog.Add(a);
-        // AllAffixes includes definitions omitted by the editor's single/multi views.
-        var all = list.AllAffixes;
-        if (!all.IsNullOrDestroyed())
-            foreach (var definition in all)
-                if (
-                    !definition.IsNullOrDestroyed()
-                    && IsCorruption(definition)
-                    && !catalog.Exists(x => x.affixId == definition.affixId)
-                )
-                    catalog.Add(definition);
-        // Also support separately exposed collections.
-        foreach (string name in new[] { "specialAffixes", "corruptedAffixes" })
-        {
-            object collection = null;
-            var property = typeof(AffixList).GetProperty(name);
-            if (property != null && property.CanRead)
-                collection = property.GetValue(list);
-            var field = typeof(AffixList).GetField(name);
-            if (field != null)
-                collection = field.GetValue(list);
-            if (collection == null)
-                continue;
-            var countProperty =
-                collection.GetType().GetProperty("Count")
-                ?? collection.GetType().GetProperty("Length");
-            var indexer = collection.GetType().GetProperty("Item", new[] { typeof(int) });
-            if (countProperty == null || indexer == null)
-                continue;
-            int count = (int)countProperty.GetValue(collection);
-            if (count < 0 || count > 10000)
-                continue;
-            for (int i = 0; i < count; i++)
-                if (
-                    indexer.GetValue(collection, new object[] { i }) is AffixList.Affix definition
-                    && !definition.IsNullOrDestroyed()
-                    && IsCorruption(definition)
-                    && !catalog.Exists(x => x.affixId == definition.affixId)
-                )
-                    catalog.Add(definition);
-        }
-        // A catalog can still be loading when the menu is first opened; retry until populated.
-        catalogLoaded = catalog.Count > 0;
+        foreach (var definition in ForceDropCatalog.Definitions())
+            if (!definition.IsNullOrDestroyed())
+                catalog.Add(definition);
     }
 
     public static IEnumerable<AffixList.Affix> Catalog()
@@ -182,25 +131,42 @@ public static class CorruptedAffixAdapter
         return catalog;
     }
 
-    public static void Apply(ItemDataUnpacked item, int id, int tier, int roll)
+    public static void Apply(
+        ItemDataUnpacked item,
+        int id,
+        int tier,
+        int roll,
+        bool allowIllegal = false,
+        IReadOnlyList<int> dedicatedVariantIds = null
+    )
     {
         if (!IsSupported)
             throw new InvalidOperationException(
                 "Chosen corrupted affixes are unsupported by this game's item wrappers"
             );
-        AffixList.Affix definition = null;
-        foreach (var a in catalog)
-            if (a.affixId == id)
-            {
-                definition = a;
-                break;
-            }
-        if (definition.IsNullOrDestroyed() || !FitsItem(definition, item.itemType, item.subType))
-            throw new InvalidOperationException("The corrupted affix cannot roll on this item");
+        var definition = ForceDropCatalog.Find(id);
+        var pool = allowIllegal ? null : new ForceDropCorruptionPool(item);
+        var legalOutcome = pool == null ? null : pool.Outcome(id, tier);
+        if (
+            definition.IsNullOrDestroyed()
+            || (!allowIllegal && legalOutcome.IsNullOrDestroyed())
+            || tier < 0
+            || tier >= ForceDropCatalog.MaximumTier(definition, allowIllegal ? 8 : 7)
+            || roll < 0
+            || roll > 255
+        )
+            throw new InvalidOperationException(
+                "No legal corruption outcome for affix "
+                    + id
+                    + " at T"
+                    + (tier + 1)
+                    + ": "
+                    + (pool == null ? "Illegal definition/tier unavailable" : pool.Error)
+            );
         // Let the native constructor initialize item-type-dependent metadata.
         var affix = new ItemAffix(
             (ushort)id,
-            (byte)Math.Max(0, Math.Min(6, tier)),
+            (byte)tier,
             (byte)Math.Max(0, Math.Min(255, roll)),
             item.itemType,
             Il2Cpp.SealedAffixType.FromCorruption
@@ -208,7 +174,7 @@ public static class CorruptedAffixAdapter
         if (
             affix.affixId != id
             || !affix.IsSealedCorrupted
-            || affix.specialAffixType != AffixList.SpecialAffixType.Corrupted
+            || affix.specialAffixType != definition.specialAffixType
         )
             throw new InvalidOperationException(
                 "Corruption constructor rejected affix "
@@ -221,25 +187,63 @@ public static class CorruptedAffixAdapter
                     + affix.specialAffixType
                     + "); no item was dropped"
             );
-        var originalAffixes = SnapshotAffixes(item);
+        var originalAffixes = SnapshotAffixes(item, allowIllegal);
+        bool originalRegularSeal = item.hasSealedRegularAffix;
+        bool originalPrimordialSeal = item.hasSealedPrimordialAffix;
+        if (allowIllegal)
+            foreach (var existing in item.affixes)
+                if (existing.affixTier == 7 && existing.sealedAffixType == SealedAffixType.None)
+                    originalPrimordialSeal = true;
         ushort originalUniqueId = item.uniqueID;
         byte originalLP = item.legendaryPotential;
         byte originalWW = item.weaversWill;
-        if (flagStorage)
+        if (allowIllegal)
+        {
+            // The native unchecked path still owns sealed storage and ordering.
+            // Do not append a corruption affix or fabricate its presence flag.
+            if (item.hasSealedAffixFromCorruption)
+                throw new InvalidOperationException("This item already has a corruption seal.");
+            var statChanges = new Il2CppSystem.Collections.Generic.List<Stats.Stat>();
+            item.AddAffixNoCostOrChecks(
+                id,
+                false,
+                tier,
+                ref statChanges,
+                new Il2CppSystem.Nullable<byte>((byte)roll),
+                true
+            );
+        }
+        else if (flagStorage)
         {
             // The native operation owns sealed-affix ordering, socket counts and
             // rarity-specific packing flags. Appending an affix manually causes
             // the unpacker to put the corruption seal on an ordinary affix.
-            AddUsingNativeCorruptionSlot(item, affix);
+            AddUsingNativeCorruptionSlot(item, affix, definition, legalOutcome);
         }
         else if (storage is PropertyInfo property)
             property.SetValue(item, affix);
         else
             ((FieldInfo)storage).SetValue(item, affix);
         VerifyStoredCorruption(item, id, "before packing");
+        // The native insertion orders ordinary item seals. A fixed unique
+        // modifier must still precede that sequence in unique serialization;
+        // otherwise unpacking assigns the corruption seal to the ring variant.
+        UniqueVariantAdapter.PrepareForPacking(item, dedicatedVariantIds, allowIllegal);
+        // Native eligibility/slot allocation must see an uncorrupted item, but
+        // the very first refresh must serialize a corrupted item. Otherwise the
+        // runtime removes FromCorruption while keeping the selected affix ID.
+        item.SetAsCorrupted();
+        VerifyStoredCorruption(item, id, "after marking corruption");
         item.RefreshIDAndValues();
         VerifyStoredCorruption(item, id, "after packing");
-        VerifyOriginalAffixes(item, originalAffixes, id);
+        VerifyOriginalAffixes(item, originalAffixes, id, allowIllegal);
+        if (
+            item.hasSealedRegularAffix != originalRegularSeal
+            || item.hasSealedPrimordialAffix != originalPrimordialSeal
+        )
+            throw new InvalidOperationException(
+                "Corruption changed an existing seal flag; no item was dropped"
+            );
         if (
             item.uniqueID != originalUniqueId
             || item.legendaryPotential != originalLP
@@ -251,18 +255,25 @@ public static class CorruptedAffixAdapter
         VerifySelection(item, id, tier, roll);
     }
 
-    static void AddUsingNativeCorruptionSlot(ItemDataUnpacked item, ItemAffix selected)
+    static void AddUsingNativeCorruptionSlot(
+        ItemDataUnpacked item,
+        ItemAffix selected,
+        AffixList.Affix definition,
+        WeightedCorruptionOutcome legalOutcome
+    )
     {
         if (item.hasSealedAffixFromCorruption)
             throw new InvalidOperationException(
                 "This item already has a corrupted affix; no item was dropped"
             );
+        var weights = new float[7];
+        weights[selected.affixTier] = 1;
         var outcome = new WeightedCorruptionOutcome
         {
-            corruptionOutcome = CorruptionOutcome.AddsCorruptedAffix,
+            corruptionOutcome = legalOutcome.corruptionOutcome,
             replacesAffix = false,
             tierWeights = new Il2CppInterop.Runtime.InteropTypes.Arrays.Il2CppStructArray<float>(
-                new float[] { 1, 1, 1, 1, 1, 1, 1 }
+                weights
             ),
         };
         // Do not use a forced unique-id match: that parameter filters unique
@@ -270,12 +281,12 @@ public static class CorruptedAffixAdapter
         if (
             !item.AddRandomSpecialAffix(
                 outcome,
-                AffixList.SpecialAffixType.Corrupted,
+                definition.specialAffixType,
                 false,
                 100,
                 out int addedId,
-                out bool regularSealed,
-                false,
+                out _,
+                legalOutcome.corruptionOutcome.ToString() == "AddChampionAffix",
                 new Il2CppSystem.Nullable<ushort>(),
                 false
             )
@@ -288,7 +299,6 @@ public static class CorruptedAffixAdapter
             || generated.IsNullOrDestroyed()
             || generated.affixId != addedId
             || !generated.IsSealedCorrupted
-            || regularSealed
         )
             throw new InvalidOperationException(
                 "The game did not create a sealed corruption slot; no item was dropped"
@@ -310,20 +320,20 @@ public static class CorruptedAffixAdapter
         item.affixes[index] = selected;
     }
 
-    static List<string> SnapshotAffixes(ItemDataUnpacked item)
+    static List<string> SnapshotAffixes(ItemDataUnpacked item, bool allowIllegalT8 = false)
     {
         var result = new List<string>();
         foreach (var affix in item.affixes)
         {
             if (affix.IsNullOrDestroyed())
                 throw new InvalidOperationException("Invalid existing affix; no item was dropped");
-            result.Add(AffixSignature(affix));
+            result.Add(AffixSignature(affix, allowIllegalT8));
         }
         result.Sort(StringComparer.Ordinal);
         return result;
     }
 
-    static string AffixSignature(ItemAffix affix)
+    static string AffixSignature(ItemAffix affix, bool allowIllegalT8 = false)
     {
         return affix.affixId
             + ":"
@@ -331,7 +341,13 @@ public static class CorruptedAffixAdapter
             + ":"
             + affix.affixRoll
             + ":"
-            + affix.sealedAffixType
+            + (
+                allowIllegalT8
+                && affix.affixTier == 7
+                && affix.sealedAffixType == SealedAffixType.None
+                    ? SealedAffixType.Primordial
+                    : affix.sealedAffixType
+            )
             + ":"
             + affix.specialAffixType;
     }
@@ -339,7 +355,8 @@ public static class CorruptedAffixAdapter
     static void VerifyOriginalAffixes(
         ItemDataUnpacked item,
         List<string> expected,
-        int corruptionId
+        int corruptionId,
+        bool allowIllegalT8 = false
     )
     {
         var actual = new List<string>();
@@ -349,7 +366,7 @@ public static class CorruptedAffixAdapter
                 throw new InvalidOperationException("Invalid packed affix; no item was dropped");
             if (affix.affixId == corruptionId && affix.IsSealedCorrupted)
                 continue;
-            actual.Add(AffixSignature(affix));
+            actual.Add(AffixSignature(affix, allowIllegalT8));
         }
         actual.Sort(StringComparer.Ordinal);
         if (actual.Count != expected.Count)
@@ -359,7 +376,11 @@ public static class CorruptedAffixAdapter
         for (int i = 0; i < actual.Count; i++)
             if (actual[i] != expected[i])
                 throw new InvalidOperationException(
-                    "Corruption changed an existing affix; no item was dropped"
+                    "Corruption changed an existing affix (expected=["
+                        + string.Join(",", expected)
+                        + "], actual=["
+                        + string.Join(",", actual)
+                        + "]); no item was dropped"
                 );
     }
 
@@ -367,10 +388,7 @@ public static class CorruptedAffixAdapter
     {
         VerifyStoredCorruption(item, id, "final packing");
         item.TryGetSealedCorruptedAffixe(out ItemAffix saved);
-        if (
-            saved.affixTier != Math.Max(0, Math.Min(6, tier))
-            || saved.affixRoll != Math.Max(0, Math.Min(255, roll))
-        )
+        if (saved.affixTier != tier || saved.affixRoll != roll)
             throw new InvalidOperationException(
                 "Corruption tier or roll changed during packing; no item was dropped"
             );
@@ -385,7 +403,7 @@ public static class CorruptedAffixAdapter
             || saved.IsNullOrDestroyed()
             || saved.affixId != id
             || !saved.IsSealedCorrupted
-            || saved.specialAffixType != AffixList.SpecialAffixType.Corrupted
+            || saved.specialAffixType != ForceDropCatalog.Find(id)?.specialAffixType
         )
         {
             string entries = "";
@@ -394,6 +412,10 @@ public static class CorruptedAffixAdapter
                     ? " null"
                     : " "
                         + entry.affixId
+                        + ":"
+                        + entry.affixTier
+                        + ":"
+                        + entry.affixRoll
                         + ":"
                         + entry.sealedAffixType
                         + ":"
@@ -407,6 +429,8 @@ public static class CorruptedAffixAdapter
                     + recognized
                     + ", flag="
                     + item.hasSealedAffixFromCorruption
+                    + ", corrupted="
+                    + item.corrupted
                     + ", rarity="
                     + item.rarity
                     + ", sockets="

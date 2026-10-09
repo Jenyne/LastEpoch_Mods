@@ -24,7 +24,10 @@ public static class HudTheme
         public readonly Color Text,
             TextMuted,
             Handle,
-            Disabled;
+            Disabled,
+            ForceDropSetText,
+            ForceDropCorruptionText,
+            ForceDropIdolText;
 
         public Palette(
             Color backdrop,
@@ -40,7 +43,10 @@ public static class HudTheme
             Color text,
             Color textMuted,
             Color handle,
-            Color disabled
+            Color disabled,
+            Color forceDropSetText,
+            Color forceDropCorruptionText,
+            Color forceDropIdolText
         )
         {
             Backdrop = backdrop;
@@ -57,6 +63,9 @@ public static class HudTheme
             TextMuted = textMuted;
             Handle = handle;
             Disabled = disabled;
+            ForceDropSetText = forceDropSetText;
+            ForceDropCorruptionText = forceDropCorruptionText;
+            ForceDropIdolText = forceDropIdolText;
         }
     }
 
@@ -102,7 +111,10 @@ public static class HudTheme
         Rgba(250, 250, 250, 255),
         Rgba(250, 250, 250, 184),
         Color.white,
-        Rgba(85, 83, 80, 160)
+        Rgba(85, 83, 80, 160),
+        new Color(.42f, .90f, .44f),
+        new Color(.80f, .56f, 1f),
+        new Color(.25f, .90f, 1f)
     );
 
     private static readonly Palette LightPalette = new(
@@ -119,7 +131,10 @@ public static class HudTheme
         Rgba(24, 24, 27, 255),
         Rgba(63, 63, 70, 210),
         Rgba(55, 55, 60, 255),
-        Rgba(145, 145, 150, 170)
+        Rgba(145, 145, 150, 170),
+        new Color(.12f, .50f, .16f),
+        new Color(.47f, .22f, .68f),
+        new Color(.04f, .45f, .58f)
     );
 
     private static readonly Dictionary<int, LegacyFontMetrics> LegacyFontSizes = new();
@@ -158,6 +173,9 @@ public static class HudTheme
     public static Color InputBackground => Current.Surface;
     public static Color ItemSelection => Current.Selection;
     public static Color ControlDisabled => Current.Disabled;
+    public static Color ForceDropSetText => Current.ForceDropSetText;
+    public static Color ForceDropCorruptionText => Current.ForceDropCorruptionText;
+    public static Color ForceDropIdolText => Current.ForceDropIdolText;
 
     public static readonly Vector2 WindowAnchorMin = new(0.08f, 0.08f);
     public static readonly Vector2 WindowAnchorMax = new(0.92f, 0.92f);
@@ -362,6 +380,12 @@ public static class HudTheme
             return to.Handle;
         if (Same(value, from.Disabled))
             return to.Disabled;
+        if (Same(value, from.ForceDropSetText))
+            return to.ForceDropSetText;
+        if (Same(value, from.ForceDropCorruptionText))
+            return to.ForceDropCorruptionText;
+        if (Same(value, from.ForceDropIdolText))
+            return to.ForceDropIdolText;
         return value;
     }
 
