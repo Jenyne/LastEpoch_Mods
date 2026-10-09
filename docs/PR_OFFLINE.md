@@ -7,4 +7,4 @@ The mod must always run offline. This change automatically selects Play Offline 
 
 Startup waits for the landing UI to be ready and dispatches once per visit. The game retains responsibility for loading local characters and changing scenes. The gameplay/session observer was removed after character-entry crashes; this change does not reintroduce it or change HUD layout.
 
-Validation: 1,005 core tests passed, six native-SDK checks skipped; CSharpier passed. The observer-free predecessor passed the user’s no-crash retest with two character entries. The unconditional revision still requires a native build and an in-game check with old false/missing configuration, followed by combat and echo regression testing.
+Validation: 1,005 core tests passed, six native-SDK checks skipped; CSharpier passed. The observer-free predecessor passed the user’s no-crash retest with two character entries. User reports a further successful in-game run: entered one character, backed out and entered another with no crash. No log or commit identifier accompanied this report. Old false/missing configuration and combat/echo regression checks remain outstanding.

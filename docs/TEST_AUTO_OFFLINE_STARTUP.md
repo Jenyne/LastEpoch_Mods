@@ -53,3 +53,5 @@ The user's first in-game run (build `2ec2b0bb`, LE 1.5.12) confirmed automatic o
 ## Mandatory-offline revision
 
 The configuration bypass and Login settings group have been removed. The observer-free predecessor `951f4e01` passed the user’s no-crash retest with two character entries. This revision still needs a native build and the acceptance checks above, especially old false/missing configuration. No gameplay observer has been reintroduced.
+
+The user subsequently reported another successful character-switch run: entered one character, backed out and entered a second without a crash. No log or commit identifier was supplied for that run. Legacy false/missing configuration and combat/echo endurance remain unconfirmed.
