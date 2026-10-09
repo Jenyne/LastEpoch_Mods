@@ -7,4 +7,4 @@ Keep the mod offline-only by hiding online controls and blocking online requests
 
 Players click the normal Play Offline button. Automatic selection and the startup readiness gate have been removed after the gate failed to receive its completion notification and blocked manual selection. The offline click handler is unpatched, leaving loading and transitions to the game. The gameplay/session observer remains removed, and this change does not edit HUD layout.
 
-Validation: CSharpier passed; 999 core checks passed and six native-SDK checks were skipped; native build and in-game confirmation remain pending for this manual-selection revision. Retest mouse/controller Play Offline, two character entries and combat/echoes on the standalone build and Sync’s HUD build.
+Validation: the user confirmed manual offline selection works on `fd79f606`. CSharpier passed; 999 core checks passed and six native-SDK checks were skipped. Controller input, combat/echo endurance and integration with Sync’s HUD build still need separate confirmation.

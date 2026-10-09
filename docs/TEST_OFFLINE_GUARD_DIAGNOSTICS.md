@@ -4,7 +4,7 @@ Branch: `test/offline-guard-diagnostics`; test queue selection 7.
 
 Automatic offline selection and the startup readiness listener/gate are removed. The previous candidate `9b888a1b` never observed the completed Login notification and blocked manual clicks. Play Offline now uses the unpatched game handler. Online landing and character-selection actions remain hidden/blocked unconditionally, with no configuration opt-out. Online play requires uninstalling the mod.
 
-The gameplay/session observer remains removed. Earlier observer-free builds passed character-entry testing, but this manual-selection revision still needs native testing.
+The gameplay/session observer remains removed. Earlier observer-free builds passed character-entry testing. The user confirmed manual offline selection works on `fd79f606`; controller input, combat/echo endurance and Sync HUD integration remain separate checks.
 
 ## Test
 
