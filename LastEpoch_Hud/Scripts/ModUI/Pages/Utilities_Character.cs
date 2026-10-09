@@ -55,6 +55,21 @@ internal static class Utilities_Character
     private static void BuildCheats()
     {
         var card = page.AddCard("Cheats", "Cheats");
+        // Preserve native lens/double-reward behavior; only the transient item count changes.
+        page.AddToggleSlider(
+            card,
+            "ProphecyRewardMultiplier",
+            "Prophecy Reward Multiplier",
+            "x",
+            1f,
+            10f,
+            true,
+            () => ModSettings.ProphecyRewards.Multiplier.Enabled,
+            enabled => ModSettings.ProphecyRewards.Multiplier.SetEnabled(enabled),
+            () => ModSettings.ProphecyRewards.Multiplier.Value,
+            value => ModSettings.ProphecyRewards.Multiplier.SetValue(value)
+        );
+
         page.AddToggle(
             card,
             "GodMode",

@@ -405,5 +405,17 @@
   "Item unavailable. Search again or choose an item manually.": "物品不可用。请重新搜索或手动选择物品。",
   "Force Crafted Affix Roll": "强制打造词缀数值",
   "Already has a sealed affix": "已有封印词缀",
-  "Guaranteed Despair cannot seal a second affix.": "必定绝望无法封印第二个词缀。"
+  "Guaranteed Despair cannot seal a second affix.": "必定绝望无法封印第二个词缀。",
+  "Spawn 1,000,000 Gold": "生成 1,000,000 金币",
+  "Session Gains": "本次收益",
+  "Show counter HUD": "显示计数面板",
+  "Pause": "暂停",
+  "Paused": "已暂停",
+  "Session": "本次游戏",
+  "XP": "经验",
+  "Favour": "恩惠",
+  "Memory Amber": "记忆琥珀",
+  "Hold Alt and drag the counter to move it.": "按住Alt并拖动计数器以移动。",
+  "Reset counter position": "重置计数器位置",
+  "Prophecy Reward Multiplier": "预言奖励倍率"
 }

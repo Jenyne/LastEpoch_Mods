@@ -231,6 +231,11 @@ public class Mods_Manager : MonoBehaviour
         damage_meter_obj.AddComponent<Mods.UI.DamageMeter>();
         Mods_Objects.Add(damage_meter_obj);
 
+        // A standalone worker keeps session statistics active even while the HUD is hidden.
+        var sessionCounter = new GameObject { name = "Mod_SessionGainCounters" };
+        sessionCounter.AddComponent<Mods.UI.SessionCounterRuntime>();
+        Mods_Objects.Add(sessionCounter);
+
         teleport_to_scene_obj = Object.Instantiate(
             new GameObject { name = "Mod_Teleport_To_Scene" },
             Vector3.zero,

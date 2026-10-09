@@ -405,5 +405,17 @@
   "Item unavailable. Search again or choose an item manually.": "아이템을 사용할 수 없습니다. 다시 검색하거나 직접 선택하세요.",
   "Force Crafted Affix Roll": "제작 접사 수치 고정",
   "Already has a sealed affix": "이미 봉인된 접사가 있습니다",
-  "Guaranteed Despair cannot seal a second affix.": "확정 절망으로 두 번째 접사를 봉인할 수 없습니다."
+  "Guaranteed Despair cannot seal a second affix.": "확정 절망으로 두 번째 접사를 봉인할 수 없습니다.",
+  "Spawn 1,000,000 Gold": "금화 1,000,000 생성",
+  "Session Gains": "세션 획득량",
+  "Show counter HUD": "계수기 HUD 표시",
+  "Pause": "일시 정지",
+  "Paused": "일시 정지됨",
+  "Session": "세션",
+  "XP": "경험치",
+  "Favour": "호의",
+  "Memory Amber": "기억의 호박",
+  "Hold Alt and drag the counter to move it.": "Alt를 누른 채 카운터를 드래그하여 이동하세요.",
+  "Reset counter position": "카운터 위치 초기화",
+  "Prophecy Reward Multiplier": "예언 보상 배수"
 }

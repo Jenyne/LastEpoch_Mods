@@ -120,6 +120,25 @@ public static class ModSettings
         );
     }
 
+    // Saved independently of legacy HUD prefabs; modern page bindings live in Pages/.
+    public static class SessionStats
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("SessionStats");
+        public static readonly BoolSetting ShowOverlay = Group.Bool("ShowOverlay", true);
+    }
+
+    public static class ProphecyRewards
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("ProphecyRewards");
+        public static readonly FloatSetting Multiplier = Group.Float(
+            "Multiplier",
+            defaultValue: 1,
+            min: 1,
+            max: 10,
+            format: DisplayFormat.Raw
+        );
+    }
+
     public static class SafeTeleport
     {
         // UI is built in Scenes Misc; keep the same save group and keys.

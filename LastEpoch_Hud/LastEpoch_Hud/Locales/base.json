@@ -394,5 +394,17 @@
   "Item unavailable. Search again or choose an item manually.": "Item unavailable. Search again or choose an item manually.",
   "Force Crafted Affix Roll": "",
   "Already has a sealed affix": "Already has a sealed affix",
-  "Guaranteed Despair cannot seal a second affix.": "Guaranteed Despair cannot seal a second affix."
+  "Guaranteed Despair cannot seal a second affix.": "Guaranteed Despair cannot seal a second affix.",
+  "Spawn 1,000,000 Gold": "",
+  "Session Gains": "",
+  "Show counter HUD": "",
+  "Pause": "",
+  "Paused": "",
+  "Session": "",
+  "XP": "",
+  "Favour": "",
+  "Memory Amber": "",
+  "Hold Alt and drag the counter to move it.": "Hold Alt and drag the counter to move it.",
+  "Reset counter position": "Reset counter position",
+  "Prophecy Reward Multiplier": ""
 }

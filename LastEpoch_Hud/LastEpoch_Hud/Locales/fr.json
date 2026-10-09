@@ -394,5 +394,17 @@
   "Item unavailable. Search again or choose an item manually.": "Objet indisponible. Relancez la recherche ou choisissez un objet manuellement.",
   "Force Crafted Affix Roll": "Forcer la valeur de l’affixe fabriqué",
   "Already has a sealed affix": "Possède déjà un affixe scellé",
-  "Guaranteed Despair cannot seal a second affix.": "Désespoir garanti ne peut pas sceller un deuxième affixe."
+  "Guaranteed Despair cannot seal a second affix.": "Désespoir garanti ne peut pas sceller un deuxième affixe.",
+  "Spawn 1,000,000 Gold": "Faire apparaître 1 000 000 d’or",
+  "Session Gains": "Gains de la session",
+  "Show counter HUD": "Afficher les compteurs",
+  "Pause": "Pause des compteurs",
+  "Paused": "En pause",
+  "Session": "Session de jeu",
+  "XP": "EXP",
+  "Favour": "Faveur",
+  "Memory Amber": "Ambre de mémoire",
+  "Hold Alt and drag the counter to move it.": "Maintenez Alt et faites glisser le compteur pour le déplacer.",
+  "Reset counter position": "Réinitialiser la position du compteur",
+  "Prophecy Reward Multiplier": "Multiplicateur de récompenses de prophétie"
 }

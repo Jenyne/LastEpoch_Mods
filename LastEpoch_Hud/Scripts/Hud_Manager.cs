@@ -4860,7 +4860,8 @@ public partial class Hud_Manager : MonoBehaviour
                             added_favor = max_added_favor;
                         }
 
-                        selected_faction.GainFavor(added_favor, false);
+                        using (Mods.UI.SessionGainCounters.SuppressManualGrants())
+                            selected_faction.GainFavor(added_favor, false);
                         selected_faction.SaveAndSync(false);
                     }
                     else
@@ -4897,7 +4898,8 @@ public partial class Hud_Manager : MonoBehaviour
                             added_favor = max_added_favor;
                         }
 
-                        selected_faction.Favor = added_favor;
+                        using (Mods.UI.SessionGainCounters.SuppressManualGrants())
+                            selected_faction.Favor = added_favor;
                         selected_faction.SaveAndSync(false);
                     }
                     else
