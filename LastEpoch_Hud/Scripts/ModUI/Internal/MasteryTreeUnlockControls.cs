@@ -26,9 +26,10 @@ internal static class MasteryTreeUnlockControls
             return;
         }
         toggle.gameObject.name = "Toggle_UnlockOtherMasteryTrees";
+        // Own the clone's event, including any serialized callbacks on the donor.
+        toggle.onValueChanged = new Toggle.ToggleEvent();
         toggle.group = null;
         toggle.interactable = true;
-        toggle.onValueChanged.RemoveAllListeners();
         var labelObject = Prefab.Child(toggle.gameObject, "Label");
         if (!labelObject.IsNullOrDestroyed())
             Prefab.ApplyLabel(labelObject.GetComponent<Text>(), "Unlock Other Mastery Trees");
@@ -37,7 +38,8 @@ internal static class MasteryTreeUnlockControls
         {
             if (!toggle.IsNullOrDestroyed())
                 toggle.SetIsOnWithoutNotify(enabled);
-            Mods.Skills.Passives_MasteryLock.Sync();
+            // Mods_Manager.Update applies the setting outside native click dispatch.
+            Main.logger_instance?.Msg("[MasteryTrace] Toggle requested: enabled=" + enabled);
         };
         LayoutRebuilder.MarkLayoutForRebuild(viewport.GetComponent<RectTransform>());
     }

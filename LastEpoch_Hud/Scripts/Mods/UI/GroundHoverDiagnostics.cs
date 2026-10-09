@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Text;
 using Il2Cpp;
 using UnityEngine;
@@ -41,6 +42,21 @@ internal static class GroundHoverDiagnostics
                     + hits.Count
                     + "; meterVisible="
                     + meter
+                    + "; hudVisible="
+                    + (
+                        !Hud_Manager.hud_object.IsNullOrDestroyed()
+                        && Hud_Manager.hud_object.activeInHierarchy
+                    )
+                    + "; selected="
+                    + (
+                        events.currentSelectedGameObject.IsNullOrDestroyed()
+                            ? "none"
+                            : Path(events.currentSelectedGameObject.transform)
+                    )
+                    + "; mouseButtons="
+                    + Input.GetMouseButton(0)
+                    + "/"
+                    + Input.GetMouseButton(1)
             );
             for (int i = 0; i < Math.Min(5, hits.Count); i++)
             {
@@ -53,6 +69,12 @@ internal static class GroundHoverDiagnostics
                         + i
                         + "]="
                         + Path(hit.transform)
+                        + "; raycaster="
+                        + (
+                            hits[i].module.IsNullOrDestroyed()
+                                ? "none"
+                                : hits[i].module.GetType().Name
+                        )
                         + "; listener="
                         + (listener.IsNullOrDestroyed() ? "none" : Path(listener.transform))
                         + "; allowWorldActions="
@@ -63,17 +85,45 @@ internal static class GroundHoverDiagnostics
                         )
                 );
             }
-            int count = 0;
-            foreach (var listener in UnityEngine.Object.FindObjectsOfType<UIMouseListener>())
+            int active = 0,
+                blockers = 0;
+            var ownedListeners = new List<UIMouseListener>();
+            var blockingListeners = new List<UIMouseListener>();
+            // Include hidden owned listeners; native buff/loot listeners must not
+            // exhaust the sample before actual blockers or mod panels are examined.
+            foreach (var listener in UnityEngine.Object.FindObjectsOfType<UIMouseListener>(true))
             {
-                if (listener.IsNullOrDestroyed() || !listener.isActiveAndEnabled)
+                if (listener.IsNullOrDestroyed())
                     continue;
-                if (count++ >= 8)
-                    break;
+                bool enabled = listener.isActiveAndEnabled;
+                bool blocks = enabled && !listener.allowWorldActions;
+                if (enabled)
+                    active++;
+                if (blocks)
+                    blockers++;
+                bool owned =
+                    Under(listener.transform, Hud_Manager.hud_object)
+                    || Under(listener.transform, DamageMeter.DamageMeter_obj);
+                if (owned)
+                    ownedListeners.Add(listener);
+                else if (blocks)
+                    blockingListeners.Add(listener);
+            }
+            ownedListeners.AddRange(blockingListeners);
+            for (int i = 0; i < Math.Min(12, ownedListeners.Count); i++)
+            {
+                var listener = ownedListeners[i];
+                bool owned =
+                    Under(listener.transform, Hud_Manager.hud_object)
+                    || Under(listener.transform, DamageMeter.DamageMeter_obj);
                 var rect = listener.GetComponent<RectTransform>();
                 Main.logger_instance?.Msg(
-                    "[HoverTrace] activeListener="
+                    "[HoverTrace] candidateListener="
                         + Path(listener.transform)
+                        + "; owned="
+                        + owned
+                        + "; enabled="
+                        + listener.isActiveAndEnabled
                         + "; rect="
                         + (
                             rect.IsNullOrDestroyed()
@@ -84,6 +134,9 @@ internal static class GroundHoverDiagnostics
                         + listener.allowWorldActions
                 );
             }
+            Main.logger_instance?.Msg(
+                "[HoverTrace] listener totals: active=" + active + "; blocking=" + blockers
+            );
         }
         catch (Exception ex)
         {
@@ -92,6 +145,9 @@ internal static class GroundHoverDiagnostics
             );
         }
     }
+
+    private static bool Under(Transform node, GameObject root) =>
+        !root.IsNullOrDestroyed() && node.IsChildOf(root.transform);
 
     private static string Path(Transform node)
     {

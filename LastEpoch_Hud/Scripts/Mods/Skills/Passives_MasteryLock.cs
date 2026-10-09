@@ -25,6 +25,8 @@ internal static class Passives_MasteryLock
 
     public static void Sync()
     {
+        if (!ModSettings.MasteryTreeUnlock.Enabled.Value && !limit.Active)
+            return;
         try
         {
             bool wasActive = limit.Active;
@@ -36,6 +38,11 @@ internal static class Passives_MasteryLock
             );
             if (current != target)
             {
+                Trace(
+                    Refs_Manager.player_treedata,
+                    "cap-request:" + current + ":" + target,
+                    "Native cap requested: " + current + "->" + target
+                );
                 GlobalTreeData.maximumUnchosenMasteryLevel = target;
                 Trace(
                     Refs_Manager.player_treedata,
@@ -79,7 +86,9 @@ internal static class Passives_MasteryLock
                 && !TreeUIManager.characterTree.IsNullOrDestroyed()
             )
             {
-                TreeUIManager.updatePassiveTreeUIWithData();
+                // Native tree opening/page changes rebuild the display themselves.
+                // Calling the rebuild from a checkbox or its own display hook can
+                // enter an inactive or partially constructed native tree UI.
                 UpdateLines();
             }
         }
@@ -101,7 +110,9 @@ internal static class Passives_MasteryLock
         )
         {
             if (
-                panel.masteryIndex <= 0
+                panel.IsNullOrDestroyed()
+                || !panel.gameObject.activeInHierarchy
+                || panel.masteryIndex <= 0
                 || panel.masteryIndex == chosen
                 || panel.masteryLockLines == null
             )
