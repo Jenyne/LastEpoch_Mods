@@ -48,6 +48,9 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 yield return null;
                 Canvas.ForceUpdateCanvases();
                 Build(viewport);
+                yield return null;
+                Canvas.ForceUpdateCanvases();
+                ReportLayout(viewport);
             }
             finally
             {
@@ -75,7 +78,15 @@ namespace LastEpoch_Hud.Scripts.ModUI
             layout.minHeight = height;
             layout.preferredHeight = height;
             layout.flexibleHeight = 0;
-            if (viewport.GetComponent<VerticalLayoutGroup>().IsNullOrDestroyed())
+            // The shipped Drop layout has childControlHeight=false: it uses the
+            // child's RectTransform height, ignoring LayoutElement.preferredHeight.
+            // Set the actual height for both managed and manually positioned lists.
+            rect.anchorMin = new Vector2(0, 1);
+            rect.anchorMax = new Vector2(1, 1);
+            rect.pivot = new Vector2(.5f, 1);
+            rect.sizeDelta = new Vector2(0, height);
+            var verticalLayout = viewport.GetComponent<VerticalLayoutGroup>();
+            if (verticalLayout.IsNullOrDestroyed() || !verticalLayout.isActiveAndEnabled)
             {
                 // Measure only after the inactive menu has a live layout. Preserve
                 // legacy anchored rows while increasing the scroll content height.
@@ -163,8 +174,28 @@ namespace LastEpoch_Hud.Scripts.ModUI
                 .17f
             );
             LayoutRebuilder.MarkLayoutForRebuild(viewport.GetComponent<RectTransform>());
+        }
+
+        static void ReportLayout(GameObject viewport)
+        {
+            if (viewport.IsNullOrDestroyed())
+                return;
+            var section = Prefab.Child(viewport, "NaturalDropRates");
+            if (section.IsNullOrDestroyed())
+                return;
+            var rect = section.GetComponent<RectTransform>();
+            if (rect.rect.height <= 0 || rect.rect.width <= 0)
+            {
+                Main.logger_instance?.Warning(
+                    "[DropRates] Controls created but layout has no area: " + rect.rect.size
+                );
+                return;
+            }
             Main.logger_instance?.Msg(
-                "[DropRates] Four Natural Drop Rates controls bound in Items > Drop."
+                "[DropRates] Four Natural Drop Rates controls bound in Items > Drop. Section="
+                    + rect.rect.size
+                    + "; content="
+                    + viewport.GetComponent<RectTransform>().rect.size
             );
         }
 
