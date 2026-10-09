@@ -33,11 +33,11 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 
 | # | Branch | Main checks | Status |
 |---|---|---|---|
-| 1 | `feat/force-drop` | Force Drop / legal + illegal / global item search | Single combined branch; global search/scrolling/cyan and LP regressions await testing |
+| 1 | `feat/force-drop` | Force Drop / legal + illegal / global item search | User confirmed working 2026-10-09; leave unchanged until updated HUD |
 | 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Checkbox no longer crashes (user-confirmed); allocation blocked; hover on hold |
 | 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Graphical trees and item retrieval/preview confirmed; equipment view deferred |
 | 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Done — user confirmed 2026-10-09 |
-| 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | UI recovery added; native build and runtime confirmation pending |
+| 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | Zero-height layout fixed at e1b3f857; rebuild and confirm visible controls |
 | 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Done for now; confirmed working, deeper investigation deferred |
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
 | 9 | `master` | Current main baseline | Baseline/control build |
@@ -107,7 +107,9 @@ Latest source: `7575671e`. With Guarantee Despair enabled and a real Despair gly
 ## 6. Separate natural drop rate controls
 
 **Where:** Items > Drop > Natural Drop Rates
-**Branch:** `feat/independent-drop-rates`
+**Branch:** `feat/independent-drop-rates` (layout fix `e1b3f857`)
+
+Previous build `75e23254` loaded and reported binding success but displayed no controls. The legacy layout ignores preferred child heights; the section now has an explicit 288-unit height. Rebuild selection 6 and scroll below Weaver Will. Keep the `[DropRates]` line with section/content dimensions.
 
 - Check separate Unique, Set, Exalted Affix and T7 Affix rows; 100% is normal, 1000% is 10x, not a guaranteed final chance.
 - Test each alone over enough ordinary drops: all off/100%, then 1000%, then 50%/0%. Exclude forced/guaranteed rewards from comparisons.
