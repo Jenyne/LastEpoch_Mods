@@ -391,5 +391,8 @@
   "Affix 4": "Affix 4",
   "Search all items": "Search all items",
   "No matching items": "No matching items",
-  "Item unavailable. Search again or choose an item manually.": "Item unavailable. Search again or choose an item manually."
+  "Item unavailable. Search again or choose an item manually.": "Item unavailable. Search again or choose an item manually.",
+  "Force Crafted Affix Roll": "Force Crafted Affix Roll",
+  "Already has a sealed affix": "Already has a sealed affix",
+  "Guaranteed Despair cannot seal a second affix.": "Guaranteed Despair cannot seal a second affix."
 }

@@ -402,5 +402,8 @@
   "Affix 4": "词缀 4",
   "Search all items": "搜索所有物品",
   "No matching items": "没有匹配的物品",
-  "Item unavailable. Search again or choose an item manually.": "物品不可用。请重新搜索或手动选择物品。"
+  "Item unavailable. Search again or choose an item manually.": "物品不可用。请重新搜索或手动选择物品。",
+  "Force Crafted Affix Roll": "强制打造词缀数值",
+  "Already has a sealed affix": "已有封印词缀",
+  "Guaranteed Despair cannot seal a second affix.": "必定绝望无法封印第二个词缀。"
 }
