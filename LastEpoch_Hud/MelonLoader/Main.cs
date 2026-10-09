@@ -24,6 +24,7 @@ public class Main : MelonLoader.MelonMod
     public override void OnInitializeMelon()
     {
         logger_instance = LoggerInstance;
+        Scripts.Mods.Login.Login_ClientStartup.Initialize();
         LoggerInstance.Msg(
             Scripts.Core.Diagnostics.BuildStamp.Format(
                 BuildInfo.Commit,
@@ -55,6 +56,7 @@ public class Main : MelonLoader.MelonMod
 
     public override void OnApplicationQuit()
     {
+        Scripts.Mods.Login.Login_ClientStartup.Stop();
         Caching.ClearCache();
     }
 }

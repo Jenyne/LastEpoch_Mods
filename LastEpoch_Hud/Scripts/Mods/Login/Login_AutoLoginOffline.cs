@@ -16,16 +16,20 @@ public class Login_AutoLoginOffline
     private static float transitionStarted;
     private static bool watchingTransition;
     private static bool reportedWait;
+    private static bool reportedBlockedClick;
+    private static bool dispatchingAutomatic;
 
     public static void Tick()
     {
         try
         {
+            Login_ClientStartup.Tick();
             if (watchingTransition)
             {
                 if (Scenes.IsCharacterSelection() && !GameplayEnvironment.IsOnlinePlay)
                 {
                     watchingTransition = false;
+                    Login_ClientStartup.Stop();
                     Main.logger_instance?.Msg("[Offline] Offline character selection reached.");
                 }
                 else if (Time.realtimeSinceStartup - transitionStarted >= 30f)
@@ -55,7 +59,9 @@ public class Login_AutoLoginOffline
             var controller = panel.loginController;
             var offlineButton = panel.playOfflineButton;
             bool ready =
-                controller != null
+                Login_ClientStartup.Ready
+                && !watchingTransition
+                && controller != null
                 && controller.FSM != null
                 && controller.FSM.CurrentState == LoginController.LoginUIState.LandingZone
                 && !panel._transitioningToSteamRequired
@@ -78,7 +84,15 @@ public class Login_AutoLoginOffline
                 );
                 // Let EHG perform its async transition and load local characters.
                 // Do not force a mode flag or jump scenes ourselves.
-                panel.OnPlayOfflineClicked();
+                dispatchingAutomatic = true;
+                try
+                {
+                    panel.OnPlayOfflineClicked();
+                }
+                finally
+                {
+                    dispatchingAutomatic = false;
+                }
             }
             else if (
                 !attempt.Attempted
@@ -89,7 +103,9 @@ public class Login_AutoLoginOffline
                 reportedWait = true;
                 Main.logger_instance?.Warning(
                     "[Offline] Still waiting for the landing screen to be ready. "
-                        + "Play Offline remains available for manual selection."
+                        + "Client state: "
+                        + Login_ClientStartup.State
+                        + ". Offline selection waits for startup completion."
                 );
             }
         }
@@ -99,7 +115,9 @@ public class Login_AutoLoginOffline
             landingPanel = null;
             watchingTransition = false;
             Main.logger_instance?.Warning(
-                "[Offline] Auto-selection stopped: " + ex.Message + ". Use Play Offline manually."
+                "[Offline] Auto-selection stopped: "
+                    + ex.Message
+                    + ". Offline selection still requires startup completion."
             );
         }
     }
@@ -111,10 +129,12 @@ public class Login_AutoLoginOffline
         static void Postfix(LandingZonePanel __instance)
         {
             // Schedule only: the surrounding OnEnable has not finished yet.
+            Login_ClientStartup.Initialize();
             landingPanel = __instance;
             attempt.BeginVisit();
             visitStarted = Time.realtimeSinceStartup;
             reportedWait = false;
+            reportedBlockedClick = false;
         }
     }
 
@@ -136,11 +156,28 @@ public class Login_AutoLoginOffline
     public class OfflineClicked
     {
         [HarmonyPrefix]
-        static void Prefix()
+        static bool Prefix()
         {
+            if (
+                !Login_ClientStartup.Ready
+                || watchingTransition
+                || (attempt.Attempted && !dispatchingAutomatic)
+            )
+            {
+                if (!reportedBlockedClick)
+                {
+                    reportedBlockedClick = true;
+                    Main.logger_instance?.Msg(
+                        "[Offline] Deferred offline click until client startup is ready; state="
+                            + Login_ClientStartup.State
+                    );
+                }
+                return false;
+            }
             attempt.MarkAttempted();
             watchingTransition = true;
             transitionStarted = Time.realtimeSinceStartup;
+            return true;
         }
     }
 

@@ -55,3 +55,22 @@ The user's first in-game run (build `2ec2b0bb`, LE 1.5.12) confirmed automatic o
 The configuration bypass and Login settings group have been removed. The observer-free predecessor `951f4e01` passed the user’s no-crash retest with two character entries. This revision still needs a native build and the acceptance checks above, especially old false/missing configuration. No gameplay observer has been reintroduced.
 
 The user subsequently reported another successful character-switch run: entered one character, backed out and entered a second without a crash. No log or commit identifier was supplied for that run. Legacy false/missing configuration and combat/echo endurance remain unconfirmed.
+
+## Client startup transition race — Sync retest
+
+Sync's full Player log (2026-10-09 15:38 UTC session) records `Cannot transition to CharacterSelect while transition to SystemLoading is in progress` at 15:39:01.411. Login's scene had loaded at 15:38:59.429, but the character-selection scene finished loading at 15:39:04.596 and the client completed entry into Login at 15:39:04.682. Landing UI readiness alone was premature.
+
+This revision additionally waits for the exact completed-state notification `ClientStateManager: Application state changed to Login.`. It receives that signal via Unity's main-thread log callback, registered during mod initialization, rather than polling native client/session objects or guessing an asynchronous-state member. The notification text is observed in both Sync's failing log and the user's successful log. The callback detaches on CharacterSelect/InGame and reattaches for a new landing visit. The existing two-frame/250 ms landing-settle rule still applies after client readiness.
+
+Manual offline clicks are also rejected before client readiness, and duplicate requests are blocked while the first is pending. Automatic selection proceeds when startup is ready. Online requests remain unconditionally blocked.
+
+This implementation depends on the current game's exact completion notification. A missing/changed notification keeps offline requests deferred and logs the unconfirmed client state; there is no timed bypass. A direct typed state API can replace this adapter once the current native API is verified. Current game assemblies are not available here, so a native build and in-game test are required.
+
+Retest on Sync's HUD build and on the ordinary offline candidate:
+
+1. Launch normally, including a slower/cold launch. Expect `[Offline] Client startup reached Login; waiting for landing readiness.` before automatic offline dispatch, then confirmed offline character selection. Check no SystemLoading transition exception in Player.log.
+2. Click Play Offline early or repeatedly/use a controller. Early clicks should defer; one transition should follow readiness, without a second request.
+3. Enter a character, return, enter another, then test combat and an echo. Online actions stay blocked with old false/missing config.
+4. Return to the landing screen if available, and confirm a fresh ready transition without duplicate listeners. Retain both Latest.log and Player.log from the same run and the build identifier.
+
+Regression coverage replays the observed slow startup ordering and checks that panel/scene-load messages cannot permit dispatch, that missing/unknown states remain blocked, and that a fresh listener requires a new completed-state signal.
