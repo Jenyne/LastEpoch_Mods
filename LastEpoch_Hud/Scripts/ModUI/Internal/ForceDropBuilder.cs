@@ -90,8 +90,9 @@ public static class ForceDropBuilder
         ww;
     static readonly Number[] implicits = new Number[3],
         uniqueRolls = new Number[8];
-    static int itemPage,
-        pickerPage;
+    static int pickerPage;
+    static ScrollRect itemScroll;
+    static int itemScrollStart = -1;
     static string lastSearch = "",
         lastPickerSearch = "",
         lastItems = "";
@@ -319,9 +320,10 @@ public static class ForceDropBuilder
         {
             lastSearch = search.text;
             lastItems = signature;
-            itemPage = 0;
+            ResetItemScroll();
             RefreshItems();
         }
+        RefreshItemScrollRows();
         if (picker.activeSelf && lastPickerSearch != pickerSearch.text)
         {
             lastPickerSearch = pickerSearch.text;
@@ -507,49 +509,36 @@ public static class ForceDropBuilder
             .76f,
             () => CatalogPicker(FD.rarity_dropdown, FD.SelectRarity, true)
         );
+        var itemViewport = Panel(left, "Item scroll viewport", .03f, .16f, .925f, .695f);
+        itemViewport.AddComponent<RectMask2D>();
+        var itemContent = new GameObject("Item scroll content");
+        var itemContentRect = itemContent.AddComponent<RectTransform>();
+        itemContent.transform.SetParent(itemViewport.transform, false);
+        itemContentRect.anchorMin = new Vector2(0, 1);
+        itemContentRect.anchorMax = new Vector2(1, 1);
+        itemContentRect.pivot = new Vector2(.5f, 1);
+        itemContentRect.sizeDelta = Vector2.zero;
+        itemScroll = itemViewport.AddComponent<ScrollRect>();
+        itemScroll.viewport = itemViewport.GetComponent<RectTransform>();
+        itemScroll.content = itemContentRect;
+        itemScroll.horizontal = false;
+        itemScroll.vertical = true;
+        itemScroll.movementType = ScrollRect.MovementType.Clamped;
+        itemScroll.scrollSensitivity = AffixRowHeight;
+        var itemTrack = Panel(left, "Item scrollbar", .94f, .16f, .97f, .695f);
+        var itemHandle = Panel(itemTrack, "Handle", 0, 0, 1, 1);
+        itemHandle.GetComponent<Image>().color = gold;
+        var itemScrollbar = itemTrack.AddComponent<Scrollbar>();
+        itemScrollbar.handleRect = itemHandle.GetComponent<RectTransform>();
+        itemScrollbar.targetGraphic = itemHandle.GetComponent<Image>();
+        itemScrollbar.direction = Scrollbar.Direction.BottomToTop;
+        itemScroll.verticalScrollbar = itemScrollbar;
         for (int i = 0; i < 12; i++)
         {
             int slot = i;
-            itemButtons.Add(
-                Button(
-                    left,
-                    "",
-                    .03f,
-                    .65f - i * .045f,
-                    .97f,
-                    .69f - i * .045f,
-                    () => ChooseItem(slot)
-                )
-            );
+            itemButtons.Add(Button(itemContent, "", 0, 0, 1, 1, () => ChooseItem(slot)));
         }
         itemSearchStatus = Label(left, "", .03f, .10f, .97f, .15f, 12);
-        Button(
-            left,
-            "Previous",
-            .03f,
-            .035f,
-            .48f,
-            .09f,
-            () =>
-            {
-                itemPage = Math.Max(0, itemPage - 1);
-                RefreshItems();
-            }
-        );
-        Button(
-            left,
-            "Next",
-            .52f,
-            .035f,
-            .97f,
-            .09f,
-            () =>
-            {
-                if ((itemPage + 1) * 12 < VisibleItemCount)
-                    itemPage++;
-                RefreshItems();
-            }
-        );
         Label(middle, "Customize", .03f, .955f, .55f, .99f, 18);
         Button(middle, "Random", .03f, .905f, .245f, .948f, () => Preset(true));
         Button(middle, "Maximum", .27f, .905f, .485f, .948f, () => Preset(false));
@@ -825,6 +814,35 @@ public static class ForceDropBuilder
                 itemIndexes.Add(i);
         itemSearchStatus.text =
             SearchAllItems && VisibleItemCount == 0 ? L("No matching items") : "";
+        itemScrollStart = -1;
+        RefreshItemScrollRows();
+    }
+
+    static void ResetItemScroll()
+    {
+        if (itemScroll.IsNullOrDestroyed())
+            return;
+        itemScroll.StopMovement();
+        itemScroll.content.anchoredPosition = Vector2.zero;
+        itemScrollStart = -1;
+    }
+
+    static void RefreshItemScrollRows()
+    {
+        if (itemScroll.IsNullOrDestroyed())
+            return;
+        float height = Math.Max(1f, itemScroll.viewport.rect.height);
+        itemScroll.content.sizeDelta = new Vector2(
+            0,
+            Math.Max(height, VisibleItemCount * AffixRowHeight)
+        );
+        int start = Math.Min(
+            Math.Max(0, (int)(itemScroll.content.anchoredPosition.y / AffixRowHeight)),
+            Math.Max(0, VisibleItemCount - 1)
+        );
+        if (start == itemScrollStart)
+            return;
+        itemScrollStart = start;
         var identity = new ForceDropItemIdentity(
             FD.item_type,
             FD.item_subtype,
@@ -833,8 +851,17 @@ public static class ForceDropBuilder
         );
         for (int slot = 0; slot < itemButtons.Count; slot++)
         {
-            int index = itemPage * 12 + slot;
+            int index = itemScrollStart + slot;
             itemButtons[slot].gameObject.SetActive(index < VisibleItemCount);
+            if (index < VisibleItemCount)
+            {
+                var rect = itemButtons[slot].GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0, 1);
+                rect.anchorMax = new Vector2(1, 1);
+                rect.pivot = new Vector2(.5f, 1);
+                rect.offsetMin = new Vector2(0, -(index + 1) * AffixRowHeight + 4);
+                rect.offsetMax = new Vector2(0, -index * AffixRowHeight);
+            }
             if (index < VisibleItemCount)
             {
                 var match = SearchAllItems ? itemMatches[index] : null;
@@ -870,7 +897,7 @@ public static class ForceDropBuilder
 
     static void ChooseItem(int slot)
     {
-        int i = itemPage * 12 + slot;
+        int i = itemScrollStart + slot;
         if (i >= VisibleItemCount)
             return;
         bool selected = true;
@@ -1900,7 +1927,7 @@ public static class ForceDropBuilder
         allItems = null;
         lastItems = "";
         lastSearch = "";
-        itemPage = 0;
+        ResetItemScroll();
         // Picker actions keep stable ids; reopen to rebuild its translated labels.
         if (!picker.IsNullOrDestroyed())
             picker.SetActive(false);
