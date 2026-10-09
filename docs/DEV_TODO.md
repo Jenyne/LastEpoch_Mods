@@ -22,11 +22,11 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 - **Force Drop:** functionality confirmed; port its current logic and controls into the updated HUD when available.
 - **Prophecy multiplier:** functionality confirmed; UI relocation deferred until the redesign.
 - **Maxroll (#4):** graphical trees and item retrieval/preview confirmed; equipment presentation remains deferred. HUD arrival does not by itself complete it.
-- **Full HUD redesign:** recovered runtime source reviewed, but integration remains pending; do not mark the redesign done.
+- **Full HUD redesign:** original source now available at `Syncingoutt/LastEpoch_Mods:feat/hud-ui-rework` (`a69b62b3`); integration remains pending. See [merge review](HUD_REWORK_MERGE_CHANGELOG.md).
 
 ### In progress / testing or fixes required
 
-- **#7 offline startup:** `951f4e01` passed the user's no-crash retest. Two character entries and normal shutdown are logged. Observer removal resolves the reproduced entry failure in this run; exact observer hook remains unidentified. Combat/echo endurance is not shown by these logs.
+- **#7 offline startup:** mandatory-offline revision `ebbbfd94` is pushed and awaiting native/in-game regression testing; the old configuration opt-out is removed. Its observer-free predecessor `951f4e01` passed the user's no-crash retest. Two character entries and normal shutdown are logged. Observer removal resolves the reproduced entry failure in this run; exact observer hook remains unidentified. Combat/echo endurance is not shown by these logs.
 
 - **#6 Drop rates:** build `e1b3f857` loaded. Section/content dimensions are `(699.07, 288.00)` / `(699.07, 1000.00)`, confirming the zero-height issue is corrected. User reports a combat crash. Last MelonLoader line at 08:13:05 is the first normal-spawn override (`set=6x`, others `1x`). Neither supplied log contains a fatal crash stack. Isolate the rate hook before marking safe; visible controls, synchronization, persistence and independent drop behavior still need confirmation.
 - **#3 mastery-chain unlock:** checkbox no longer crashes, but allocation past the chain remains blocked; targeted bypass needed.
@@ -43,7 +43,7 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 | 4 | Maxroll preview — `feat/maxroll-tree-preview` | Graphical trees improved; item retrieval/preview confirmed. | Equipment presentation improvements deferred. Keep existing preview functionality in regression checks. |
 | 5 | Advanced Forge — `feat/advanced-forge-t7` (`7575671e`) | **Done — user confirmed #5 is good on 2026-10-09.** Includes the crafting options and existing-seal guard for Guaranteed Despair. | No active work. Retain selection 5 for optional regression; reopen only for a new reported issue. |
 | 6 | Drop rates — `feat/independent-drop-rates` (`e1b3f857`) | Native build loaded; post-layout dimensions confirm a 288-unit section. User reports combat crash; last log line is the first normal-spawn override with Set at 6×. Fatal cause not captured. | Isolate combat/drop hook with rates disabled versus enabled before further effectiveness testing. Confirm visible controls, slider/input synchronization, persistence and independent behavior. |
-| 7 | Offline startup — `test/offline-guard-diagnostics` (`951f4e01`) | User confirms no crash after observer removal. Logs show auto-offline selection, hidden online switch, successful Acolyte/Rogue entries and normal shutdown. | Retain startup-only implementation for the upstream PR; observer investigation deferred. No combat/echo endurance result recorded. |
+| 7 | Offline startup — `test/offline-guard-diagnostics` (`ebbbfd94`) | User confirms no crash after observer removal. Logs show auto-offline selection, hidden online switch, successful Acolyte/Rogue entries and normal shutdown. | Mandatory-offline revision pushed: no UI/config opt-out. Test old false/missing config, character entry, combat and echoes. Observer investigation deferred. |
 | 8 | Idol rerolling — `feat/idol-reroll-misc` | Confirmed working. | Optional restart/locale regression; no immediate fix. |
 | — | Prophecy — `fix/prophecy-reward-trigger` (`cb638c70`) | Confirmed working and persistent. | Large multipliers can lag. UI relocation deferred until redesign. Old multiplier branch is an isolation checkpoint. |
 | 9 | `master` baseline | Control build. | Use for comparisons; topic-branch confirmation does not mean integration into main or upstream. |
@@ -60,7 +60,7 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 ## Backlog and deferred work
 
 - Cosmetics/skill effects: investigation requested for missing menu choices, effects that will not apply and effects resetting. No confirmed diagnosis or fix is recorded in this tracker; inspect the current fork before proposing changes. Use a separate topic branch.
-- Full HUD UI redesign: runtime source recovered from the uploaded test DLL for review, including navigation, cards, themes and font scaling. The bundle matches ours; no new public Syncingoutt branch/PR exists. Recovery is not integrated or an original source project. Keep our newer Force Drop logic when porting; full rollout remains deferred.
+- Full HUD UI redesign: original branch `Syncingoutt/LastEpoch_Mods:feat/hud-ui-rework` is published at `a69b62b3`. Review complete; integration is pending. New typed pages hide the legacy controls, so clean Git merges still require UI ports. Keep our newer Force Drop logic. See [merge changelog](HUD_REWORK_MERGE_CHANGELOG.md).
 - Maxroll equipment presentation: deferred.
 - Prophecy UI relocation: deferred.
 - Broader travel coverage: static-area restoration is now the #11 test candidate. Generated echo/arena destinations remain excluded, as in the old picker. Map widgets without a `UIWaypoint` parent need an adapter; universal map-node coverage is not established. With Travel Anywhere off, favourites still require unlocked waypoints.
@@ -84,3 +84,5 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 - Branch cleanup: `feat/force-drop-illegal-mode` at `5b8199f6` is fully merged into `feat/force-drop` and retired from the active queue. Remote-ref deletion is deferred at the user's request; leave this branch untouched and ignore it going forward.
 
 - QoL branch cleanup: `feat/gold-favourites-session-stats` is fully merged into `feat/travel-anywhere` and retired from the active queue. Leave its remote ref as a historical reference; future QoL/travel changes go on the combined branch.
+
+- Mandatory-offline revision `ebbbfd94`: removed saved Login toggle and conditional online blocks; helper no longer requires setting a flag. 1,005 core tests passed and six SDK checks skipped; CSharpier passed. Native build and in-game regression remain pending. Upstream PR blurb: [PR_OFFLINE.md](https://github.com/Jenyne/LastEpoch_Mods/blob/test/offline-guard-diagnostics/docs/PR_OFFLINE.md).
