@@ -10,6 +10,7 @@ internal static class CharacterActionControls
 {
     public static void Bind(GameObject cheats, GameObject data)
     {
+        Mods.Character.Character_Gold.BuildButton(Character.Cheats.add_runes_button);
         Group(
             cheats,
             "CurrencyActions",
@@ -21,6 +22,7 @@ internal static class CharacterActionControls
                 Character.Cheats.add_shards_button,
                 Character.Cheats.add_ancient_bones_button,
                 Mods.Character.Character_MemoryAmber.AddButton,
+                Mods.Character.Character_Gold.SpawnButton,
                 Character.Data.soul_add_button,
             }
         );

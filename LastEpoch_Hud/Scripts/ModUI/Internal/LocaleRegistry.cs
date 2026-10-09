@@ -29,6 +29,10 @@ internal static class LocaleRegistry
         "Choose a regular affix for {0}.",
         "Dropped {0} item(s).",
         "Drop failed: {0}",
+        "Saved {0}.",
+        "Removed {0}.",
+        "Travelling to {0}.",
+        "You are already in {0}.",
     };
 
     public static string Translate(string english)

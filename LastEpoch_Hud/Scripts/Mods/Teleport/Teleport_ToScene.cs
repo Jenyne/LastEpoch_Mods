@@ -28,6 +28,32 @@ public class Teleport_ToScene : MonoBehaviour
         instance.Begin(scene_name);
     }
 
+    public static bool CanTravelToUnlockedWaypoint(string scene_name)
+    {
+        try
+        {
+            return Scenes.IsGameScene()
+                && !string.IsNullOrEmpty(scene_name)
+                && !Refs_Manager.player_actor.IsNullOrDestroyed()
+                && !Refs_Manager.player_data.IsNullOrDestroyed()
+                && !Refs_Manager.player_data.UnlockedWaypointScenes.IsNullOrDestroyed()
+                && Refs_Manager.player_data.UnlockedWaypointScenes.Contains(scene_name)
+                && TryGetGate(scene_name, out _);
+        }
+        catch (System.Exception ex)
+        {
+            ErrorLog.Report(ex, "Favourite waypoint validation");
+            return false;
+        }
+    }
+
+    public static bool StartTpToUnlockedWaypoint(string scene_name)
+    {
+        if (instance.IsNullOrDestroyed() || !CanTravelToUnlockedWaypoint(scene_name))
+            return false;
+        return instance.Begin(scene_name, true);
+    }
+
     static bool TryGetGate(string scene_name, out byte gate)
     {
         gate = 0;
@@ -57,20 +83,21 @@ public class Teleport_ToScene : MonoBehaviour
         return found;
     }
 
-    void Begin(string scene_name)
+    bool Begin(string scene_name, bool requireUnlocked = false)
     {
         if (
             (string.IsNullOrEmpty(scene_name)) || (SceneManager.GetActiveScene().name == scene_name)
         )
         {
-            return;
+            return false;
         }
         byte gate = 0;
         TryGetGate(scene_name, out gate);
         try
         {
             if (
-                (!Refs_Manager.player_data.IsNullOrDestroyed())
+                !requireUnlocked
+                && (!Refs_Manager.player_data.IsNullOrDestroyed())
                 && (!Refs_Manager.player_data.UnlockedWaypointScenes.IsNullOrDestroyed())
                 && (!Refs_Manager.player_data.UnlockedWaypointScenes.Contains(scene_name))
             )
@@ -88,7 +115,7 @@ public class Teleport_ToScene : MonoBehaviour
             if (!Il2CppLE.Networking.PlayerStore.IsLocalUserIdentityValid())
             {
                 Main.logger_instance?.Error("Teleport player is missing");
-                return;
+                return false;
             }
             Il2Cpp.BaseTransitionService travel = Il2CppLE
                 .Services
@@ -97,7 +124,7 @@ public class Teleport_ToScene : MonoBehaviour
             if (travel == null)
             {
                 Main.logger_instance?.Error("Teleport service is missing");
-                return;
+                return false;
             }
             Main.logger_instance?.Msg("Teleport -> " + scene_name);
             travel.Waypoint(
@@ -106,10 +133,12 @@ public class Teleport_ToScene : MonoBehaviour
                 scene_name,
                 gate
             );
+            return true;
         }
         catch (System.Exception ex)
         {
             Main.logger_instance?.Error("Teleport failed: " + ex.Message);
+            return false;
         }
     }
 }

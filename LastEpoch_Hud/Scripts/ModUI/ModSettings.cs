@@ -98,6 +98,12 @@ public static class ModSettings
         );
     }
 
+    public static class SessionStats
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("SessionStats");
+        public static readonly BoolSetting ShowOverlay = Group.Bool("ShowOverlay", true);
+    }
+
     public static class SafeTeleport
     {
         // UI is built in Scenes Misc; keep the same save group and keys.

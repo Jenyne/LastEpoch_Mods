@@ -259,6 +259,7 @@ public class Mods_Manager : MonoBehaviour
 
     void Update() //This function will be removed soon (when i have time to do it ^^)
     {
+        Mods.UI.SessionGainCounters.Tick();
         if (!Save_Manager.instance.IsNullOrDestroyed())
         {
             if (Save_Manager.instance.initialized)
@@ -270,6 +271,11 @@ public class Mods_Manager : MonoBehaviour
                 }
             }
         }
+    }
+
+    void OnGUI()
+    {
+        Mods.UI.SessionGainCounters.Draw();
     }
 
     void Enable() //This function will be removed soon (when i have time to do it ^^)

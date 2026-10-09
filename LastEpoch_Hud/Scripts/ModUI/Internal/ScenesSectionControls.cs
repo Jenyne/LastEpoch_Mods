@@ -45,7 +45,7 @@ internal static class ScenesSectionControls
         var miscContent = Prefab.Child(miscViewport, "Content");
         if (miscContent.IsNullOrDestroyed())
             miscContent = Node(miscViewport, "Content");
-        Place(miscContent, 0, 88);
+        ConfigureMiscScroll(misc, miscViewport, miscContent);
         var miscTitle = Prefab.Child(center, "MiscTitle");
         if (miscTitle.IsNullOrDestroyed())
         {
@@ -72,7 +72,7 @@ internal static class ScenesSectionControls
         // Keep the native full-height frame, with compact sections at the top.
         const float header = 32;
         const float dungeonHeight = 108;
-        const float miscHeight = 104;
+        const float miscHeight = 178;
         const float minimapHeight = 52;
         const float gap = 8;
         var centerRect = center.GetComponent<RectTransform>();
@@ -109,14 +109,59 @@ internal static class ScenesSectionControls
         if (!safe.IsNullOrDestroyed())
         {
             safe.transform.SetParent(miscContent.transform, false);
-            Place(safe, 0, miscHeight);
+            Place(safe, 0, 88);
+            QualityOfLifeControls.Height(safe, 88);
             ModSettings.SafeTeleport.Group.ResolveAndBind(content);
         }
         else
             SafeTeleportControls.Bind(content, miscContent);
+        var miscStyle = minimap.GetComponentInChildren<Text>(true);
+        SessionStatsControls.Bind(miscContent, miscStyle);
+        FavouriteTeleportControls.Bind(miscContent, miscStyle);
         MelonLoader.MelonCoroutines.Start(
             MatchNativeRows(center, dungeons, minimap, miscContent, dungeonTitle)
         );
+    }
+
+    static void ConfigureMiscScroll(GameObject panel, GameObject viewport, GameObject content)
+    {
+        if (viewport.GetComponent<RectMask2D>().IsNullOrDestroyed())
+            viewport.AddComponent<RectMask2D>();
+        // The graphic provides a wheel target only inside the bounded Misc panel.
+        var surface = viewport.GetComponent<Image>();
+        if (surface.IsNullOrDestroyed())
+            surface = viewport.AddComponent<Image>();
+        surface.color = Color.clear;
+        surface.raycastTarget = true;
+        var rect = content.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0, 1);
+        rect.anchorMax = Vector2.one;
+        rect.pivot = new Vector2(.5f, 1);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(0, 88);
+        var layout = content.GetComponent<VerticalLayoutGroup>();
+        if (layout.IsNullOrDestroyed())
+            layout = content.AddComponent<VerticalLayoutGroup>();
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+        layout.spacing = 8;
+        var fit = content.GetComponent<ContentSizeFitter>();
+        if (fit.IsNullOrDestroyed())
+            fit = content.AddComponent<ContentSizeFitter>();
+        fit.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        fit.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        var scroll = panel.GetComponent<ScrollRect>();
+        if (scroll.IsNullOrDestroyed())
+            scroll = panel.AddComponent<ScrollRect>();
+        scroll.viewport = viewport.GetComponent<RectTransform>();
+        scroll.content = rect;
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 30;
+        scroll.verticalNormalizedPosition = 1;
     }
 
     static System.Collections.IEnumerator MatchNativeRows(

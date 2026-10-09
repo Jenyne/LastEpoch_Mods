@@ -133,7 +133,8 @@ internal static class Character_MemoryAmber
             }
             // Memory Amber is Weaver Favor. Update native currency/events without
             // multiplying this grant or awarding faction reputation.
-            faction.GainFavor(amount, true, true);
+            using (Mods.UI.SessionGainCounters.SuppressManualGrants())
+                faction.GainFavor(amount, true, true);
             faction.SaveAndSync(false);
             Main.logger_instance?.Msg("Memory Amber: added " + amount + ".");
         }
