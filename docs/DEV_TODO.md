@@ -4,6 +4,34 @@ Updated 2026-10-09 (UTC). Repository: `Jenyne/LastEpoch_Mods`; upstream: `Syncin
 
 Keep changes on separate topic branches. Force Drop legal and illegal work is now one topic: `feat/force-drop`. Preserve the current Force Drop layout until the planned full UI redesign. Runtime confirmation and compilation/unit-test results are separate evidence.
 
+## Status overview — 2026-10-09
+
+### Done / confirmed
+
+- **#1 Force Drop:** combined legal/illegal branch, search, scrolling and cyan affixes; user says it works great. Leave unchanged until the updated HUD.
+- **#5 Advanced Forge:** user confirmed done; includes Guaranteed Despair's existing-seal guard.
+- **#7 Offline diagnostics:** done for now; further investigation deferred.
+- **#8 Idol rerolls:** confirmed working.
+- **Prophecy rewards:** multiplier works and persists; very large values can lag.
+- **#3 Remove Node Requirements:** works and persists. This does not complete mastery-chain unlocking.
+- **#11 map-menu Travel Anywhere:** confirmed on the earlier tested build. Non-waypoint right-click remains an accepted limitation.
+- **Branch consolidation:** Force Drop #1/#2 and QoL #10/#11 histories merged; use selections 1 and 11.
+
+### Working features waiting on HUD integration / presentation
+
+- **Force Drop:** functionality confirmed; port its current logic and controls into the updated HUD when available.
+- **Prophecy multiplier:** functionality confirmed; UI relocation deferred until the redesign.
+- **Maxroll (#4):** graphical trees and item retrieval/preview confirmed; equipment presentation remains deferred. HUD arrival does not by itself complete it.
+- **Full HUD redesign:** recovered runtime source reviewed, but integration remains pending; do not mark the redesign done.
+
+### In progress / testing or fixes required
+
+- **#6 Drop rates:** build `e1b3f857` loaded. Section/content dimensions are `(699.07, 288.00)` / `(699.07, 1000.00)`, confirming the zero-height issue is corrected. User reports a combat crash. Last MelonLoader line at 08:13:05 is the first normal-spawn override (`set=6x`, others `1x`). Neither supplied log contains a fatal crash stack. Isolate the rate hook before marking safe; visible controls, synchronization, persistence and independent drop behavior still need confirmation.
+- **#3 mastery-chain unlock:** checkbox no longer crashes, but allocation past the chain remains blocked; targeted bypass needed.
+- **#11 combined QoL/travel:** key teleports/recovery, fixed gold, movable counter, natural favour/amber counting and persistence still require confirmation on the merged candidate.
+- **Cosmetics / skill effects:** missing choices, failed application and resetting remain undiagnosed.
+- **Hover tooltips:** on hold at the user's request.
+
 ## Active work and current statuses
 
 | Queue | Topic / branch | Current status | Remaining work |
@@ -12,7 +40,7 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 | 3 | Mastery / ground tooltips — `fix/mastery-lock-ground-tooltips` (`764ea599`) | Remove Node Requirements works/persists. Two 7a91 runs stop at the native 22→45 cap-write boundary. Latest candidate removes all global-cap writes; 999 tests passed, six SDK checks skipped. User confirms clicking the checkbox no longer crashes; allocation is still not functional and needs a targeted bypass. Hover is on hold. | Native-build and test checkbox closed/open, off/on, page changes and restart. Keep `[MasteryTrace]` state/click/spend lines and `[MasteryApi]` signatures for targeting the allocation check. Check actual point spending and mastery/innate preservation. See [follow-up](REVIEW_3_5_6.md). |
 | 4 | Maxroll preview — `feat/maxroll-tree-preview` | Graphical trees improved; item retrieval/preview confirmed. | Equipment presentation improvements deferred. Keep existing preview functionality in regression checks. |
 | 5 | Advanced Forge — `feat/advanced-forge-t7` (`7575671e`) | **Done — user confirmed #5 is good on 2026-10-09.** Includes the crafting options and existing-seal guard for Guaranteed Despair. | No active work. Retain selection 5 for optional regression; reopen only for a new reported issue. |
-| 6 | Drop rates — `feat/independent-drop-rates` (`e1b3f857`) | Native build `75e23254` loaded and binding completed, but controls were invisible. Fixed the zero-height section caused by the legacy layout ignoring preferred height. 45 core tests passed; three native checks skipped. | Rebuild selection 6; scroll below Weaver Will and confirm four rows, slider/input synchronization and restart. Retain section/content dimensions from `[DropRates]`. Rate behavior remains unconfirmed. |
+| 6 | Drop rates — `feat/independent-drop-rates` (`e1b3f857`) | Native build loaded; post-layout dimensions confirm a 288-unit section. User reports combat crash; last log line is the first normal-spawn override with Set at 6×. Fatal cause not captured. | Isolate combat/drop hook with rates disabled versus enabled before further effectiveness testing. Confirm visible controls, slider/input synchronization, persistence and independent behavior. |
 | 7 | Offline diagnostics — `test/offline-guard-diagnostics` | Done for now: confirmed working; spam removed, one confirmation retained. | Deferred at the user's request. No further #7 changes in this pass. |
 | 8 | Idol rerolling — `feat/idol-reroll-misc` | Confirmed working. | Optional restart/locale regression; no immediate fix. |
 | — | Prophecy — `fix/prophecy-reward-trigger` (`cb638c70`) | Confirmed working and persistent. | Large multipliers can lag. UI relocation deferred until redesign. Old multiplier branch is an isolation checkpoint. |
@@ -22,8 +50,8 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 
 ## Next development order
 
-1. Rebuild combined selection #11. Selection #10 is retired and fully merged here. Map-menu travel is user-confirmed; retest key teleports with the full picker removed and failed-load busy state fixed, then the gold/counter/favour additions.
-2. Native-build and runtime-check the Drop Rates UI recovery (#6).
+1. Investigate #6 combat crash first: compare rates disabled/enabled on the same build, then isolate the drop hook if needed. The latest logs show corrected layout dimensions but do not identify the fatal cause.
+2. Retest combined selection #11 key teleports/recovery, gold and counters. Selection #10 is fully merged and retired.
 3. Test #3 with the global-cap write removed, then collect allocation-check signatures and real spend results. Remove Node Requirements is working/persistent. Hover is on hold; no hover work or test requested in this pass.
 4. Force Drop (#1) is user-confirmed working. Leave it unchanged until the updated HUD arrives.
 
@@ -43,13 +71,13 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 - Runner: `chore/test-queue-runner`. Selection 1 is the combined Force Drop build; selection 11 is the combined QoL/travel build. Selections 2 and 10 are retired; other IDs remain unchanged.
 - Close the game before switching builds. Each selection replaces the installed DLL; it does not combine every pending feature branch.
 - Follow [TEST_QUEUE.md](TEST_QUEUE.md) for the runner and per-feature checks. Force Drop's detailed checklist lives on its feature branch in `docs/TEST_FORCE_DROP_ILLEGAL_MODE.md`.
-- Latest published Force Drop source: `2c04bdd0`. Global item-search matching/identity tests and the existing core/source suite passed: 1,164 passed, six SDK-dependent skips. Formatting and diff checks passed. Current native build, search/scrolling/cyan and combined-build regressions remain pending.
+- Latest published Force Drop source: `2c04bdd0`. User confirmed selection #1 works great on 2026-10-09; retain existing functionality until HUD integration. Earlier core/source checks passed (1,164 passed, six SDK skips); this is separate from the user confirmation.
 
 - QoL source `638504c0` is fully merged into combined travel `f53998db`; selection 10 is retired. Key teleport resolution on `2466cc0a` is confirmed by the supplied log, but travel was blocked by a failed full-picker load. Gold, movable counter and favour regression checks remain open. See the [QoL checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/travel-anywhere/docs/TEST_GOLD_FAVOURITES_SESSION_STATS.md).
 - Combined travel source: `f53998db`. User reports map-menu travel works on `2466cc0a`; its log confirms the native build loaded. The picker attempted `EoT -> WE502`, returned no load and kept the busy guard set. The picker is removed; verified rejected loads release the guard immediately, while real asynchronous cleanup remains protected. Five new core tests cover this distinction. This follow-up’s native build and recovery/key-teleport checks remain pending. See the [travel checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/travel-anywhere/docs/TEST_TRAVEL_ANYWHERE.md).
 - Keep failed runtime issues open even when compilation or unit tests pass. Record the tested commit, screenshots/logs and persistence results separately.
 
-- LP report clarification: the screenshot had Corrupted: Yes, which independently removes LP with all affixes None. No LP rule change was made. Test Corrupted: No with all ordinary affixes cleared, then toggle back; unlock confirmation remains pending.
+- LP report clarification: Corrupted: Yes independently removes LP with all affixes None. No LP rule change was made. User later confirmed #1 overall working; no separate detailed LP retest result was supplied.
 
 - Branch cleanup: `feat/force-drop-illegal-mode` at `5b8199f6` is fully merged into `feat/force-drop` and retired from the active queue. Remote-ref deletion is deferred at the user's request; leave this branch untouched and ignore it going forward.
 

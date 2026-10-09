@@ -37,7 +37,7 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 | 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Checkbox no longer crashes (user-confirmed); allocation blocked; hover on hold |
 | 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Graphical trees and item retrieval/preview confirmed; equipment view deferred |
 | 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Done — user confirmed 2026-10-09 |
-| 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | Zero-height layout fixed at e1b3f857; rebuild and confirm visible controls |
+| 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | e1b3f857 loaded; nonzero section height logged; combat crash reported, investigation required |
 | 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Done for now; confirmed working, deeper investigation deferred |
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
 | 9 | `master` | Current main baseline | Baseline/control build |
@@ -110,6 +110,8 @@ Latest source: `7575671e`. With Guarantee Despair enabled and a real Despair gly
 **Branch:** `feat/independent-drop-rates` (layout fix `e1b3f857`)
 
 Previous build `75e23254` loaded and reported binding success but displayed no controls. The legacy layout ignores preferred child heights; the section now has an explicit 288-unit height. Rebuild selection 6 and scroll below Weaver Will. Keep the `[DropRates]` line with section/content dimensions.
+
+Latest test: `Latest(9).log` / `Player(10).log`, build `e1b3f857`. Section height is 288 and content height is 1000. User reports combat crash; final MelonLoader line is the first normal-spawn override with Set at 6×. No fatal stack is captured. Prioritize comparison with all four modifiers disabled versus enabled on the same build; retain both logs. Do not mark rates complete from the layout fix.
 
 - Check separate Unique, Set, Exalted Affix and T7 Affix rows; 100% is normal, 1000% is 10x, not a guaranteed final chance.
 - Test each alone over enough ordinary drops: all off/100%, then 1000%, then 50%/0%. Exclude forced/guaranteed rewards from comparisons.
