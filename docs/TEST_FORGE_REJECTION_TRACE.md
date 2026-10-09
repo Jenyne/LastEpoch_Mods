@@ -15,3 +15,9 @@ Awaiting native compilation and in-game confirmation:
 The custom high-tier Forge transaction still bypasses native Forge. Shard/glyph consumption, Chaos/Envy/unguaranteed Despair semantics and definition-backed tier limits remain unresolved. This follow-up is a targeted gate repair and diagnostic build, not a completed crafting fix.
 
 Validation: the test sources and shared Core code compiled directly with Roslyn against the .NET 8 reference pack and the project's xUnit/Cecil dependencies. 51 tests passed, including six native-label classification cases; three native patch checks skipped because game assemblies are absent. CSharpier and whitespace checks passed on the edited implementation. This does not compile the game-dependent mod or prove the craft transaction in game.
+
+## Guaranteed Despair: existing seal guard
+
+With Guarantee Despair enabled and a real Despair glyph slotted, an item with any native sealed affix (including explicit Primordial/corruption flags) is rejected. The capability check reports the existing seal, the upgrade-button override does not reopen it, and Forge rechecks before either native/custom execution. The global setting stays enabled so switching to an unsealed item can use it normally. The execution guard applies independently of the T7 toggle; it does not alter another glyph or the option-off native path.
+
+Test a regular sealed affix and any supported Primordial/corruption seal. Try another unsealed affix with Despair slotted; verify no second seal, item/tier/roll/FP and material counts unchanged. Repeat immediately after a successful first seal, through item swaps, and with T7 crafting on/off. Switch to an unsealed item and verify the first guaranteed seal remains available. Use another glyph on the sealed item and turn Guarantee Despair off to verify normal native eligibility remains in control. Native runtime confirmation is pending.

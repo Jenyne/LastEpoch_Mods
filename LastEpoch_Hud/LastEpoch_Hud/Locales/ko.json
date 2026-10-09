@@ -339,5 +339,7 @@
   "Reset Difficulty": "난이도 초기화",
   "Max Out Blessings": "축복 수치 최대화",
   "Infinite": "무제한",
-  "Force Crafted Affix Roll": "제작 접사 수치 고정"
+  "Force Crafted Affix Roll": "제작 접사 수치 고정",
+  "Already has a sealed affix": "이미 봉인된 접사가 있습니다",
+  "Guaranteed Despair cannot seal a second affix.": "확정 절망으로 두 번째 접사를 봉인할 수 없습니다."
 }

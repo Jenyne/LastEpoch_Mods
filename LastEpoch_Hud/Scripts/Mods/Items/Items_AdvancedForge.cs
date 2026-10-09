@@ -139,6 +139,24 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             return supportItem.subType;
         }
 
+        static bool BlockedGuaranteedDespair(CraftingSlotManager manager)
+        {
+            if (
+                !Ready()
+                || !ModSettings.AdvancedForge.GuaranteedGlyphOfDespair.Value
+                || item.IsNullOrDestroyed()
+                || SupportGlyphSubtype(manager) != 3
+            )
+                return false;
+            foreach (ItemAffix affix in item.affixes)
+                if (
+                    !affix.IsNullOrDestroyed()
+                    && (affix.IsSealed || affix.IsSealedPrimordial || affix.IsSealedCorrupted)
+                )
+                    return true;
+            return false;
+        }
+
         static bool PreserveFp() => ModSettings.InfiniteForgingPotential.Enabled.Value;
 
         static void ApplyForcedRoll(ItemAffix affix)
@@ -194,7 +212,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                     : null;
             }
 
-            [HarmonyPostfix]
+            [HarmonyPostfix, HarmonyPriority(Priority.Last)]
             static void Postfix(
                 CraftingManager __instance,
                 ref bool __result,
@@ -205,6 +223,15 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             )
             {
                 Trace(__instance, __result, __0, __1, __2, __3);
+                if (BlockedGuaranteedDespair(craftingSlotManager))
+                {
+                    __result = false;
+                    __0 = LocaleRegistry.Translate("Already has a sealed affix");
+                    __3 = LocaleRegistry.Translate(
+                        "Guaranteed Despair cannot seal a second affix."
+                    );
+                    return;
+                }
                 if (!T7Enabled() || item.IsNullOrDestroyed() || IsIdol(item))
                     return;
                 // Match the exact native key's output during this call, rather than
@@ -249,6 +276,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             [HarmonyPrefix]
             static void Prefix(int __0, ref bool __1)
             {
+                if (BlockedGuaranteedDespair(craftingSlotManager))
+                {
+                    __1 = false;
+                    return;
+                }
                 if (!T7Enabled() || item.IsNullOrDestroyed() || IsIdol(item) || __0 < 0)
                     return;
                 int tier = GetTier(item, __0);
@@ -267,6 +299,10 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             [HarmonyPrefix, HarmonyPriority(Priority.First)]
             static bool Prefix(CraftingSlotManager __instance)
             {
+                // Recheck at execution: a stale enabled button must never allow
+                // another seal or consume resources on this rejected craft.
+                if (BlockedGuaranteedDespair(__instance))
+                    return false;
                 if (!T7Enabled() || item.IsNullOrDestroyed() || IsIdol(item))
                     return true;
 
