@@ -1497,7 +1497,7 @@ public static class ForceDropBuilder
             if (MatchesAffixSearch(choice, pickerSearch.text))
                 filtered.Add(choice);
         if (!categoryPicker && !rarityPicker)
-            Caption(pickerTitle, currentPickerTitle + " (" + filtered.Count + ")");
+            pickerTitle.text = currentPickerTitle + " (" + filtered.Count + ")";
         pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker);
         pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker);
         foreach (var header in pickerHeaders)
