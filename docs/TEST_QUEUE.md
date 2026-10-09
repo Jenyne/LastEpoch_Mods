@@ -33,7 +33,7 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 
 | # | Branch | Main checks | Status |
 |---|---|---|---|
-| 1 | `feat/force-drop` | Legal Force Drop / affix coverage | Limited coverage passed; final LP and combined-build regression pending |
+| 1 | `feat/force-drop` | Legal Force Drop / affix coverage | Limited coverage passed; legal scrolling, LP and combined-build regression pending |
 | 2 | `feat/force-drop` | Illegal Force Drop / Primordial T8 | T8/extra Rage persistence confirmed on 5b8199f6; new scroll/cyan UI awaits testing |
 | 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Open: allocation and F9 hover traces added; runtime pending |
 | 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Graphical trees and item retrieval/preview confirmed; equipment view deferred |
@@ -50,7 +50,8 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 **Where:** Items > Force Drop
 **Branch:** `feat/force-drop`
 
-- Keep Illegal mode off. Check None first, grouped families, green Set affixes and purple corruption exclusives. Verify ordinary affixes on a unique clear/disable LP; removing them re-enables LP, and dedicated variant selectors alone retain LP.
+- Keep Illegal mode off. Test full-width scrolling in legal prefix/suffix slots and split scrolling in enchantment/sealed/corruption pools. Check wheel/drag/handles, last entries, layout transitions, pinned None and search reset. Legal eligibility, grouped families and green Set/purple corruption colors stay intact.
+- With Corrupted: No and every ordinary affix None, LP and Fixed/Random should be editable; dedicated variant selectors alone preserve LP. Adding ordinary affixes clears/disables LP; clearing them unlocks it. Corrupted: Yes independently removes LP even with every affix None. Test turning corruption off to confirm unlock; the screenshot alone did not establish a broken affix check.
 - Test ordinary equipment with Set + Champion + two suffixes, then sealed + corruption; verify item identity, set effects and save/reload.
 - Test Unsated Rage, Withstand the Elements and idols. One-tier affixes should clamp rather than fail. Report missing choices with item type and affix name.
 
@@ -195,7 +196,7 @@ Advanced Forge and independent drop rates still require compilation/runtime conf
 
 Offline diagnostics includes the latest auto-offline startup and online-switch UI changes, so a separate startup-only test is not required in this queue. It is an observer build, not an implemented comprehensive runtime permission guard.
 
-Legal and Illegal Force Drop now share `feat/force-drop` at `4585e880`. Both menu entries install the same combined DLL, with different checks. The earlier legal/illegal branches remain historical checkpoints. Keep the current Force Drop UI; a full UI redesign is deferred.
+Legal and Illegal Force Drop now share `feat/force-drop` at `6155a1dc`. Both menu entries install the same combined DLL, with different checks. The earlier legal/illegal branches remain historical checkpoints. Keep the current Force Drop UI; a full UI redesign is deferred.
 
 Prophecy reward multiplication is confirmed working and persistent on `fix/prophecy-reward-trigger` at `cb638c70`. The old `feat/prophecy-reward-multiplier` branch is a crash-isolation checkpoint, not the working build. Prophecy currently has no numbered runner entry; track it in [DEV_TODO.md](DEV_TODO.md). Large multipliers can lag; UI relocation is deferred.
 
@@ -213,9 +214,9 @@ Locale installation relies on the repository's successful locale tests and copie
 
 Current development priorities and remaining work are tracked in [DEV_TODO.md](DEV_TODO.md).
 
-- Force Drop legal and illegal histories are consolidated in `feat/force-drop`, commit `4585e880`. Entries 1 and 2 both install this branch.
+- Force Drop legal and illegal histories are consolidated in `feat/force-drop`, commit `6155a1dc`. Entries 1 and 2 both install this branch.
 - On `5b8199f6`, screenshots showed four ordinary T8 affixes, seals/corruption, retained item identity and additional distinct Rage modifiers. Nyk confirmed persistence. Individual gameplay effects and broader legal-mode regression remain open.
-- The combined build adds cyan idol affixes in Illegal Mode and independently scrolling Prefix/Suffix columns with pinned None and scrollbar handles. These new UI changes await in-game confirmation; earlier persistence confirmation does not certify this build.
+- The combined build adds cyan idol affixes in Illegal Mode, independent Prefix/Suffix scrolling and full-width legal prefix/suffix scrolling, with pinned None and scrollbar handles. These new UI changes await in-game confirmation; earlier persistence confirmation does not certify this build.
 - Legal Force Drop had limited successful coverage tests. The LP correction is included in the combined branch but still needs a final regression: transferred ordinary affixes consume/disable LP; clearing them re-enables LP; dedicated ring/glove modifiers alone preserve it.
 - Build 3 failed: secondary mastery remains locked and combat ground-item hover remains blocked. Comparison without the mod confirmed a mod-related issue.
 - Build 4 graphical trees are much better; item retrieval/preview is confirmed. Equipment presentation improvements are deferred.

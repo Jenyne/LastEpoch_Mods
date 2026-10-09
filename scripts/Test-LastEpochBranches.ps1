@@ -15,10 +15,11 @@ $queueJson = @'
     "id": 1,
     "title": "Legal Force Drop / affix coverage",
     "branch": "feat/force-drop",
-    "status": "Limited coverage passed; final LP and combined-build regression pending",
+    "status": "Limited coverage passed; legal scrolling, LP and combined-build regression pending",
     "location": "Items > Force Drop",
     "checks": [
-      "Keep Illegal mode off. Check None first, grouped families, green Set affixes and purple corruption exclusives. Ordinary affixes on a unique must clear/disable LP; removing them re-enables LP, while dedicated variant selectors alone preserve it.",
+      "Keep Illegal mode off. Prefix-only/suffix-only slots use full-width scrolling; enchantment/sealed/corruption pools use independent Prefix/Suffix lists. Check wheel/drag/handles, last entries, layout transitions, pinned None and search reset; legal restrictions and green Set/purple corruption colors stay intact.",
+      "With Corrupted: No and every ordinary affix None, LP and Fixed/Random must be editable; dedicated unique modifiers alone preserve LP. Adding ordinary affixes clears/disables LP; clearing them unlocks it. Corrupted: Yes independently locks LP at zero even with every affix None. Turn corruption off and confirm unlock; this report is not yet confirmed.",
       "Test ordinary equipment with Set + Champion + two suffixes, then sealed + corruption; verify item identity, set effects and save/reload.",
       "Test Unsated Rage, Withstand the Elements and idols. One-tier affixes should clamp rather than fail. Report missing choices with item type and affix name."
     ]
