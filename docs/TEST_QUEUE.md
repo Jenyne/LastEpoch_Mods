@@ -237,3 +237,9 @@ Menu/right-click follow-up: `feat/travel-anywhere` at `5744c5b7` temporarily ena
 QoL follow-up: `638504c0` adds key teleport buttons and Alt-drag position persistence. The reported missing favour count is addressed using the fresh local faction tracker plus balance/event reconciliation, including paused/manual baselines. Source checks: 1,029 passed, six native SDK checks skipped. Travel `2466cc0a` includes these changes and the CS1061 fix (1,069 passed, six skips). All new native behaviour remains pending.
 
 Combined-build update (2026-10-09): `f53998db` merges both topic histories, removes the full scene picker and corrects the rejected-load busy state. Selection 10 is retired; its remote branch is retained as a reference. The preceding QoL/travel build notes are historical. Map-menu travel and destination resolution on `2466cc0a` are user/log-confirmed; new recovery/key travel checks remain pending.
+
+## Dungeon preset correction — selection 11 (`811f6bed`)
+
+The later `f53998db` test loads Dun1Q10/Dun2Q10 via generic waypoint travel and enters the dungeon handler, then the user gets stuck. Earlier mapping resolution was not proof of successful travel. The current candidate targets the campaign approaches instead: Ruined Coast, Shrouded Ridge (Surface fallback), Felled Wood. Old saved lobby favourites redirect to the corresponding approach; other Dun+digit scenes are blocked. Temporary Travel Anywhere pins do not qualify as native waypoints.
+
+Rebuild selection 11, open the world map and Refresh key teleports. Verify campaign targets in `[KeyTeleports]`, test all three buttons and movement/camera after loading, then test saved lobby favourites, locked/missing waypoint rejection, the three hub buttons and restart persistence. Use each dungeon’s normal entrance/key/tier flow. Native and in-game confirmation remain pending; 1,103 core tests passed, six SDK checks skipped, formatting passed.

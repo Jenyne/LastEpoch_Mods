@@ -49,3 +49,5 @@ Build against the user's current native assemblies after conflict resolution. Ru
 Regress Force Drop search/category autofill, legal/illegal affixes, cyan styling and LP; both independent idol options; forge Despair with an already-sealed item; Prophecy rewards; key travel after rejected loads; the million-gold action; and counter dragging, zone continuity and natural favour/amber accounting. Check Maxroll popup visibility and input focus over the new window.
 
 For mandatory offline, test the old false flag and missing Login section, controller online actions, two character entries, combat and echoes. The successful observer-free predecessor retest is evidence for that predecessor, not proof of this new revision or the integrated HUD.
+
+Follow-up source for combined travel/QoL: `811f6bed` replaces unsafe dungeon-lobby presets with campaign approaches and redirects/blocks legacy dungeon favourites. Carry this correction into the HUD port; `f53998db` remains the head used for the original dry-merge comparison. New native/in-game confirmation is pending.

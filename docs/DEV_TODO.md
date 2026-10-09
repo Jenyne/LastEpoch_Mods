@@ -30,7 +30,7 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 
 - **#6 Drop rates:** build `e1b3f857` loaded. Section/content dimensions are `(699.07, 288.00)` / `(699.07, 1000.00)`, confirming the zero-height issue is corrected. User reports a combat crash. Last MelonLoader line at 08:13:05 is the first normal-spawn override (`set=6x`, others `1x`). Neither supplied log contains a fatal crash stack. Isolate the rate hook before marking safe; visible controls, synchronization, persistence and independent drop behavior still need confirmation.
 - **#3 mastery-chain unlock:** checkbox no longer crashes, but allocation past the chain remains blocked; targeted bypass needed.
-- **#11 combined QoL/travel:** key teleports/recovery, fixed gold, movable counter, natural favour/amber counting and persistence still require confirmation on the merged candidate.
+- **#11 combined QoL/travel:** dungeon-preset hang reproduced on `f53998db`; `811f6bed` targets campaign approaches and redirects/blocks old dungeon favourites. Native retest pending. Fixed gold, movable counter, natural favour/amber counting and persistence still require confirmation.
 - **Cosmetics / skill effects:** missing choices, failed application and resetting remain undiagnosed.
 - **Hover tooltips:** on hold at the user's request.
 
@@ -48,7 +48,7 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 | — | Prophecy — `fix/prophecy-reward-trigger` (`cb638c70`) | Confirmed working and persistent. | Large multipliers can lag. UI relocation deferred until redesign. Old multiplier branch is an isolation checkpoint. |
 | 9 | `master` baseline | Control build. | Use for comparisons; topic-branch confirmation does not mean integration into main or upstream. |
 | 10 (retired) | QoL — `feat/gold-favourites-session-stats` (`638504c0`) | Fully merged into selection 11, including branch history. | Use selection 11. Old branch retained as a historical reference. |
-| 11 | Combined QoL / Travel Anywhere — `feat/travel-anywhere` (`f53998db`) | User confirmed map travel on `2466cc0a`; log confirms the native build loaded and all six key destination IDs resolved. Full picker removed at user request. Its rejected-load busy state is corrected; ordinary waypoint favourites use the native route. QoL history merged; 1,074 core tests passed, six SDK checks skipped. | Rebuild/retest key teleports after failed travel, gold, movable counter and natural favour. Detailed load/recovery and map regressions remain pending. Non-waypoint right-click is accepted as a known limitation for now. |
+| 11 | Combined QoL / Travel Anywhere — `feat/travel-anywhere` (`811f6bed`) | User confirmed map travel on `2466cc0a`; log confirms the native build loaded and all six key destination IDs resolved. Full picker removed at user request. Its rejected-load busy state is corrected; ordinary waypoint favourites use the native route. QoL history merged; 1,074 core tests passed, six SDK checks skipped. | Rebuild/retest key teleports after failed travel, gold, movable counter and natural favour. Detailed load/recovery and map regressions remain pending. Non-waypoint right-click is accepted as a known limitation for now. |
 
 ## Next development order
 
@@ -88,3 +88,5 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 - Mandatory-offline revision `ebbbfd94`: removed saved Login toggle and conditional online blocks; helper no longer requires setting a flag. 1,005 core tests passed and six SDK checks skipped; CSharpier passed. Native build and in-game regression remain pending. Upstream PR blurb: [PR_OFFLINE.md](https://github.com/Jenyne/LastEpoch_Mods/blob/test/offline-guard-diagnostics/docs/PR_OFFLINE.md).
 
 - Follow-up user retest after the mandatory-offline change: entered one character, backed out and entered another successfully. No crash reported. Reported runtime outcome recorded separately from exact commit/log evidence; old false/missing config and combat/echo endurance remain unconfirmed. Subsequent offline commit `d9b85f74` updates documentation only; runtime source remains `ebbbfd94`.
+
+- Dungeon teleport follow-up: supplied Latest/Player logs identify build `f53998db`, successful Observatory placement then Dun2Q10 load/dungeon handler; previous Player run similarly loads Dun1Q10. User reports being stuck and needing Alt+F4. Exact native stall cause is unproven. `811f6bed` avoids those generic dungeon transitions, resolves campaign approach waypoints and uses original map flags to exclude temporary Travel Anywhere adapters. 1,103 core tests passed; six SDK checks skipped; CSharpier passed. Native build/runtime retest pending.
