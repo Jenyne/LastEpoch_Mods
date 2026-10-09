@@ -38,7 +38,7 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 | 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Graphical trees and item retrieval/preview confirmed; equipment view deferred |
 | 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Done — user confirmed 2026-10-09 |
 | 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | e1b3f857 loaded; nonzero section height logged; combat crash reported, investigation required |
-| 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Reopened after character-load crash; observer removed at 951f4e01, retest pending |
+| 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | 951f4e01 user-confirmed no crash; two character entries and normal shutdown logged |
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
 | 9 | `master` | Current main baseline | Baseline/control build |
 | 11 | `feat/travel-anywhere` | Combined gold, key teleports, counters and map travel | Map travel confirmed; picker removed / busy guard fix pending retest |
@@ -128,7 +128,7 @@ Done for now at the user's request. The following checklist is retained for opti
 
 - Login.Enable_AutoLoginOffline must be true. Confirm automatic offline character selection and that its online switch is hidden.
 - Load an offline character, change zones, run an echo and remain playable for 30+ seconds. Switch characters and reload the first.
-- Confirm build `951f4e01`. Load the same character that succeeded on selection 9, fight, switch characters and exit normally. Keep complete Latest.log and Player.log. Session observer and native hooks are removed; no `[OfflineGuard]` lines are expected. Hold upstream submission until retest succeeds.
+- Confirm build `951f4e01`. Load the same character that succeeded on selection 9, fight, switch characters and exit normally. Keep complete Latest.log and Player.log. Session observer and native hooks are removed; no `[OfflineGuard]` lines are expected. The user retest passed: two character entries and normal shutdown; combat/echo endurance is not recorded.
 
 [Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/test/offline-guard-diagnostics/docs/TEST_OFFLINE_GUARD_DIAGNOSTICS.md)
 

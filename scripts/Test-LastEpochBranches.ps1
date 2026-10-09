@@ -83,7 +83,7 @@ $queueJson = @'
     "id": 7,
     "title": "Offline startup — observer removed for isolation",
     "branch": "test/offline-guard-diagnostics",
-    "status": "Character-load crash reopened; startup-only candidate 951f4e01 awaits retest",
+    "status": "951f4e01 user-confirmed no crash; character entries and normal shutdown logged",
     "location": "Launch -> offline character selection; MelonLoader/Latest.log",
     "checks": [
       "Login.Enable_AutoLoginOffline must be true. Confirm automatic offline character selection and that its online switch is hidden.",
