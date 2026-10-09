@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 using HarmonyLib;
 using Il2Cpp;
-using LastEpoch_Hud.Scripts.Core;
 using LastEpoch_Hud.Scripts.ModUI;
 using UnityEngine;
 
@@ -9,7 +8,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills;
 
 internal static class Passives_MasteryLock
 {
-    private static readonly MasteryLimitOverride limit = new();
+    private static bool active;
+    private static bool inspectedAllocationApi;
     private static readonly Dictionary<int, (GameObject Line, bool Active)> hiddenLines = new();
     private static bool refreshing;
     private static bool reportedError;
@@ -25,33 +25,25 @@ internal static class Passives_MasteryLock
 
     public static void Sync()
     {
-        if (!ModSettings.MasteryTreeUnlock.Enabled.Value && !limit.Active)
+        if (!ModSettings.MasteryTreeUnlock.Enabled.Value && !active)
             return;
         try
         {
-            bool wasActive = limit.Active;
-            byte current = GlobalTreeData.maximumUnchosenMasteryLevel;
-            byte target = limit.Sync(
-                current,
-                GlobalTreeData.masteryClassMaximumMasteryLevel,
-                Enabled
+            bool enabled = Enabled;
+            if (active == enabled)
+                return;
+            active = enabled;
+            // The two 7a91 runs stop at the generated native cap setter. Do not
+            // write this global field, including during disable/cleanup.
+            Trace(
+                Refs_Manager.player_treedata,
+                "state:" + enabled,
+                "Visual unlock active=" + enabled + "; global cap unchanged",
+                true
             );
-            if (current != target)
-            {
-                Trace(
-                    Refs_Manager.player_treedata,
-                    "cap-request:" + current + ":" + target,
-                    "Native cap requested: " + current + "->" + target
-                );
-                GlobalTreeData.maximumUnchosenMasteryLevel = target;
-                Trace(
-                    Refs_Manager.player_treedata,
-                    "cap:" + current + ":" + target,
-                    "Native cap write: " + current + "->" + target
-                );
-            }
-            if (wasActive != limit.Active || current != target)
-                Refresh();
+            if (enabled)
+                InspectAllocationApi();
+            Refresh();
         }
         catch (System.Exception exception)
         {
@@ -129,12 +121,67 @@ internal static class Passives_MasteryLock
         }
     }
 
+    private static void InspectAllocationApi()
+    {
+        if (inspectedAllocationApi)
+            return;
+        inspectedAllocationApi = true;
+        try
+        {
+            // Managed wrapper metadata only: no invocation, native mutation or
+            // speculative patches to unknown allocation/check signatures.
+            int remaining = 64;
+            foreach (
+                var type in new[]
+                {
+                    typeof(LocalTreeData),
+                    typeof(GlobalTreeData),
+                    typeof(SkillTreeNode),
+                }
+            )
+            {
+                foreach (
+                    var method in type.GetMethods(
+                        System.Reflection.BindingFlags.Public
+                            | System.Reflection.BindingFlags.NonPublic
+                            | System.Reflection.BindingFlags.Instance
+                            | System.Reflection.BindingFlags.Static
+                            | System.Reflection.BindingFlags.DeclaredOnly
+                    )
+                )
+                {
+                    string name = method.Name.ToLowerInvariant();
+                    if (
+                        !name.Contains("mastery")
+                        && !name.Contains("passive")
+                        && !name.Contains("allocat")
+                        && !name.Contains("requirement")
+                        && !name.Contains("locked")
+                        && !name.Contains("canspend")
+                    )
+                        continue;
+                    if (remaining-- == 0)
+                        return;
+                    Main.logger_instance?.Msg("[MasteryApi] " + type.Name + "." + method);
+                }
+            }
+        }
+        catch (System.Exception exception)
+        {
+            Main.logger_instance?.Warning(
+                "[MasteryApi] Metadata unavailable: " + exception.Message
+            );
+        }
+    }
+
     // Observe the actual click and spend paths; never fabricate an allocation result.
-    private static void Trace(LocalTreeData tree, string key, string details)
+    private static void Trace(LocalTreeData tree, string key, string details, bool force = false)
     {
         try
         {
-            if (!ModSettings.MasteryTreeUnlock.Enabled.Value || tree.IsNullOrDestroyed())
+            if (
+                (!force && !ModSettings.MasteryTreeUnlock.Enabled.Value) || tree.IsNullOrDestroyed()
+            )
                 return;
             long pointer = tree.Pointer.ToInt64();
             if (pointer != tracedTree)

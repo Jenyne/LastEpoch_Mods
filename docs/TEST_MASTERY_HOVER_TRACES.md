@@ -1,10 +1,10 @@
 # Mastery allocation and hover evidence
 
-Branch: `fix/mastery-lock-ground-tooltips`. This follow-up adds observation only; neither reported failure is marked fixed.
+Branch: `fix/mastery-lock-ground-tooltips`. The latest follow-up removes the native global-cap write; crash prevention and allocation remain unconfirmed. Hover investigation is on hold.
 
 ## Mastery
 
-Enable Unlock Other Mastery Trees with Remove Node Requirements off. Open another mastery and try a beyond-chain node with adequate points and prerequisites. Keep `[MasteryTrace]` lines. A click with no native-spend line means rejection occurs before `tryToSpendPassivePoint`; a native rejection identifies the allocation path. The trace records before/after points and both cap values and is limited to 12 unique records per tree instance.
+Enable Unlock Other Mastery Trees with Remove Node Requirements off. Open another mastery and try a beyond-chain node with adequate points and prerequisites. Keep `[MasteryTrace]` toggle/visual-state/click/spend lines and the once-per-run `[MasteryApi]` method inventory. The global cap is unchanged; this candidate isolates the write boundary and does not yet replace the native allocation gate. A click with no native-spend line means rejection occurs before `tryToSpendPassivePoint`; a native rejection identifies the allocation path. The trace records before/after points and both cap values and is limited to 12 unique records per tree instance.
 
 ## Ground items
 
@@ -12,4 +12,4 @@ Hover the same dropped item and press F9 once while idle, then while fighting or
 
 Native compilation and actual in-game tracing still need the installed game's SDK.
 
-Validation: shared Core and test sources compiled directly with Roslyn; 1,007 tests passed and six game-dependent checks skipped because native assemblies are absent. All three edited implementation files passed CSharpier and whitespace checks. The new game-dependent trace hooks themselves still require native compilation and runtime verification.
+Validation: shared Core and test sources compiled directly with Roslyn; 999 tests passed and six game-dependent checks skipped because native assemblies are absent. The edited mastery implementation file passed CSharpier and whitespace checks. The new game-dependent trace hooks themselves still require native compilation and runtime verification.

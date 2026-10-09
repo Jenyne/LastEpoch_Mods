@@ -5,13 +5,15 @@ This branch is independent of the pending Illegal Mode build.
 
 ## Latest report and follow-up
 
-The user reports repeated crashes on clicking Unlock Other Mastery Trees, and still cannot allocate beyond the chain. Remove Node Requirements works and persists; that patch is unchanged. The supplied Player logs show character-preview/scene errors but do not contain a mastery-toggle stack. They do not establish the crash's exact native cause.
+Two distinct MelonLoader runs on `7a91a7c1` stop after `[MasteryTrace] Native cap requested: 22->45`, before the completed-write trace. `Latest(6).log` duplicates the 00:24 archive. This narrows the failure to the global-cap write boundary but does not provide a fatal native stack proving its exact cause.
 
-This candidate gives the cloned checkbox its own event, defers application to Mods_Manager.Update, and removes the forced `updatePassiveTreeUIWithData` call from setting/display synchronization. Native opening/page changes rebuild the UI; chain adjustments only touch active mastery panels. The feature-off path does not read native cap fields unless an owned override needs restoration. `[MasteryTrace]` logs the toggle request and requested/completed cap writes around the risky boundary. These changes remove an unsafe refresh path; crash prevention and actual beyond-chain allocation remain unconfirmed.
+This candidate removes all writes to `GlobalTreeData.maximumUnchosenMasteryLevel`, including restoration on disable, and removes the obsolete cap-ownership helper/tests. Toggle synchronization only updates chain visuals; the native global cap stays unchanged. The cloned checkbox keeps its own event and the forced native tree rebuild remains removed. A bounded, once-per-process `[MasteryApi]` inventory records managed wrapper method signatures from LocalTreeData, GlobalTreeData and SkillTreeNode without invoking them. It provides evidence for a later targeted allocation-check patch rather than guessing signatures or temporarily changing the character's chosen mastery.
 
-The F9 text log contains four snapshots with the damage meter hidden. Hits are native item-label graphics and world colliders; visible item-label listeners allow world actions. No meter intercept is shown. The earlier listener sample filled its first eight entries with buffs/loot labels, so it could omit blockers or mod-owned listeners. F9 now records raycaster types, HUD visibility, selected object and mouse buttons, scans hidden as well as active listeners, prioritizes mod-owned listeners, and reports active/blocking totals. It does not change native hover or input behavior. The legacy UI-over-pointer label includes any EventSystem pointer hit, including physics raycasters; it is not proof of a UI blocker.
+**This is a crash-isolation candidate, not a completed allocation bypass.** Without replacing the cap gate, spending beyond the chain may still be rejected. Remove Node Requirements is user-confirmed working and persistent and is unchanged. Existing chosen mastery, native prerequisites, point costs and rank limits are unchanged.
 
-Formatting/diff checks pass; 1,007 core/source tests pass with six SDK-dependent skips. Current native compilation and gameplay confirmation still require the guarded Windows build.
+**Hover is on hold at the user's request.** No hover implementation changes are included in this follow-up. Existing F9 diagnostics remain available, but these new logs contain no HoverTrace snapshots.
+
+Formatting/diff checks pass; 999 core/source tests pass with six SDK-dependent skips. The count is lower because eight obsolete cap-ownership test cases were removed. These checks do not compile or exercise the native mastery UI. Current native compilation and gameplay confirmation require the guarded Windows build.
 
 Close the game, fetch and select the branch, then run:
 
@@ -28,10 +30,11 @@ game assemblies, backs up the installed DLL, and installs only after success.
    **Remove Node Requirements** disabled so this test exercises normal prerequisites.
 2. In **Skills**, enable **Unlock Other Mastery Trees**, below Remove Node Requirements.
    First test with the passive-tree panel closed, then with it open. Keep the
-   `[MasteryTrace] Toggle requested`, cap request and cap write lines in the
+   `[MasteryTrace] Toggle requested`, `Visual unlock active` and `[MasteryApi]` lines in the
    MelonLoader log. Close/reopen or change the tree page for its native display refresh.
 3. Open each of the two other mastery trees. The mastery chains should disappear.
-   Spend enough points to unlock nodes beyond the former chain, and allocate one.
+   Try a node beyond the former chain with adequate points and prerequisites.
+   Allocation may still fail in this crash-isolation candidate; keep click/spend traces.
 4. Check normal requirements: unconnected nodes and nodes without enough earlier
    mastery points should remain unavailable; point costs and node rank limits still apply.
 5. Confirm the character's selected mastery and its innate bonus have not changed.
@@ -43,7 +46,7 @@ game assemblies, backs up the installed DLL, and installs only after success.
    check the game's respec behavior separately.
 9. Switch between English, French, Korean and Chinese; the new checkbox should update.
 
-## Ground-item tooltips during combat
+## Ground-item tooltips during combat (on hold)
 
 1. With the mod menu closed, hover dropped items during combat, including while
    summons attack. Check both the name label and actual item tooltip.
