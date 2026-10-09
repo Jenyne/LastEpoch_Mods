@@ -1241,10 +1241,7 @@ public static class ForceDropBuilder
         return "";
     }
 
-    static readonly string[] affixClasses =
-    {
-        "Acolyte", "Mage", "Primalist", "Rogue", "Sentinel"
-    };
+    static readonly string[] affixClasses = { "Acolyte", "Mage", "Primalist", "Rogue", "Sentinel" };
 
     // Probe native compatibility for each class; never infer it from translated names.
     static int AffixClassMask(AffixList.Affix affix)
@@ -1272,9 +1269,14 @@ public static class ForceDropBuilder
         if (choice.classMask < 0)
             return NativeItemNames.Matches(query, choice.name, choice.aliases);
         var terms = new List<string>();
-        int includeMask = 0, excludeMask = 0;
-        foreach (string word in (query ?? "").Split(
-            new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries))
+        int includeMask = 0,
+            excludeMask = 0;
+        foreach (
+            string word in (query ?? "").Split(
+                new[] { ' ', '\t' },
+                StringSplitOptions.RemoveEmptyEntries
+            )
+        )
         {
             string token = word.ToLowerInvariant();
             if (token == "class:all")
@@ -1283,8 +1285,10 @@ public static class ForceDropBuilder
             string cls = exclude ? token.Substring(1) : token;
             if (cls.StartsWith("class:", StringComparison.Ordinal))
                 cls = cls.Substring(6);
-            int index = Array.FindIndex(affixClasses, name =>
-                string.Equals(name, cls, StringComparison.OrdinalIgnoreCase));
+            int index = Array.FindIndex(
+                affixClasses,
+                name => string.Equals(name, cls, StringComparison.OrdinalIgnoreCase)
+            );
             if (index >= 0)
             {
                 if (exclude)
@@ -1301,7 +1305,10 @@ public static class ForceDropBuilder
         if (!generic && (choice.classMask & excludeMask) != 0)
             return false;
         return NativeItemNames.Matches(
-            string.Join(" ", terms.ToArray()), choice.name, choice.aliases);
+            string.Join(" ", terms.ToArray()),
+            choice.name,
+            choice.aliases
+        );
     }
 
     static AffixList.Affix FindAffix(int id) => ForceDropCatalog.Find(id);
@@ -2040,9 +2047,7 @@ public static class ForceDropBuilder
         filtered.Clear();
         visiblePicks.Clear();
         foreach (var choice in choices)
-            if (
-                MatchesPickerSearch(choice, pickerSearch.text)
-            )
+            if (MatchesPickerSearch(choice, pickerSearch.text))
                 filtered.Add(choice);
         pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker && !scrollAffixPicker);
         pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker && !scrollAffixPicker);
