@@ -394,5 +394,15 @@
   "Saved {0}.": "",
   "Removed {0}.": "",
   "Travelling to {0}.": "",
-  "You are already in {0}.": ""
+  "You are already in {0}.": "",
+  "Choose a key teleport, or save up to 8 extra favourites.": "Choose a key teleport, or save up to 8 extra favourites.",
+  "Refresh key teleports": "Refresh key teleports",
+  "Destination unavailable. Open the world map, then refresh key teleports.": "Destination unavailable. Open the world map, then refresh key teleports.",
+  "Hold Alt and drag the counter to move it.": "Hold Alt and drag the counter to move it.",
+  "Reset counter position": "Reset counter position",
+  "Temporal Sanctum": "Temporal Sanctum",
+  "Lightless Arbor": "Lightless Arbor",
+  "Soulfire Bastion": "Soulfire Bastion",
+  "The Bazaar": "The Bazaar",
+  "The Observatory": "The Observatory"
 }

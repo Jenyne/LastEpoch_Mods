@@ -18,7 +18,7 @@ internal static class SessionStatsControls
             || !Prefab.Child(content, "SessionStats").IsNullOrDestroyed()
         )
             return;
-        var section = QualityOfLifeControls.Section(content, "SessionStats", 146);
+        var section = QualityOfLifeControls.Section(content, "SessionStats", 200);
         QualityOfLifeControls.Label(section, "Title", sample, "Session Gains", 0, 24);
         totals = QualityOfLifeControls.Label(section, "Totals", sample, "", 24, 76);
         totals.fontSize = 12;
@@ -51,7 +51,7 @@ internal static class SessionStatsControls
                 106,
                 () =>
                 {
-                    SessionGainCounters.Session.Paused = !SessionGainCounters.Session.Paused;
+                    SessionGainCounters.SetPaused(!SessionGainCounters.Session.Paused);
                     Refresh();
                 }
             )
@@ -66,9 +66,27 @@ internal static class SessionStatsControls
             106,
             () =>
             {
-                SessionGainCounters.Session.Reset();
+                SessionGainCounters.Reset();
                 Refresh();
             }
+        );
+        QualityOfLifeControls.Label(
+            section,
+            "MoveHint",
+            sample,
+            "Hold Alt and drag the counter to move it.",
+            134,
+            28
+        );
+        QualityOfLifeControls.Button(
+            section,
+            "ResetPosition",
+            sample,
+            "Reset counter position",
+            .03f,
+            .97f,
+            166,
+            SessionGainCounters.ResetPosition
         );
         Refresh();
     }

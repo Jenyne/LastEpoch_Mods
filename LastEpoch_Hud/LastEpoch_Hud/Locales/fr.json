@@ -394,5 +394,15 @@
   "Saved {0}.": "{0} enregistré.",
   "Removed {0}.": "{0} retiré.",
   "Travelling to {0}.": "Téléportation vers {0}.",
-  "You are already in {0}.": "Vous êtes déjà à {0}."
+  "You are already in {0}.": "Vous êtes déjà à {0}.",
+  "Choose a key teleport, or save up to 8 extra favourites.": "Choisissez une destination clé ou enregistrez jusqu’à 8 favoris supplémentaires.",
+  "Refresh key teleports": "Actualiser les destinations clés",
+  "Destination unavailable. Open the world map, then refresh key teleports.": "Destination indisponible. Ouvrez la carte du monde, puis actualisez les destinations clés.",
+  "Hold Alt and drag the counter to move it.": "Maintenez Alt et faites glisser le compteur pour le déplacer.",
+  "Reset counter position": "Réinitialiser la position du compteur",
+  "Temporal Sanctum": "Sanctuaire temporel",
+  "Lightless Arbor": "Arbre sans lumière",
+  "Soulfire Bastion": "Bastion du feu d’âme",
+  "The Bazaar": "Le Bazar",
+  "The Observatory": "L’Observatoire"
 }

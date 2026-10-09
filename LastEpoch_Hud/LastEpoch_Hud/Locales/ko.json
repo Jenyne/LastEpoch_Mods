@@ -405,5 +405,15 @@
   "Saved {0}.": "{0} 저장됨.",
   "Removed {0}.": "{0} 삭제됨.",
   "Travelling to {0}.": "{0}(으)로 순간이동 중.",
-  "You are already in {0}.": "이미 {0}에 있습니다."
+  "You are already in {0}.": "이미 {0}에 있습니다.",
+  "Choose a key teleport, or save up to 8 extra favourites.": "주요 목적지를 선택하거나 추가 즐겨찾기를 최대 8개 저장하세요.",
+  "Refresh key teleports": "주요 목적지 새로 고침",
+  "Destination unavailable. Open the world map, then refresh key teleports.": "목적지를 사용할 수 없습니다. 세계 지도를 연 뒤 주요 목적지를 새로 고치세요.",
+  "Hold Alt and drag the counter to move it.": "Alt를 누른 채 카운터를 드래그하여 이동하세요.",
+  "Reset counter position": "카운터 위치 초기화",
+  "Temporal Sanctum": "시간의 성소",
+  "Lightless Arbor": "빛 없는 숲",
+  "Soulfire Bastion": "영혼불꽃 요새",
+  "The Bazaar": "시장",
+  "The Observatory": "관측소"
 }

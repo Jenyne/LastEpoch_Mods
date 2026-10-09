@@ -405,5 +405,15 @@
   "Saved {0}.": "已收藏 {0}。",
   "Removed {0}.": "已移除 {0}。",
   "Travelling to {0}.": "正在前往 {0}。",
-  "You are already in {0}.": "您已位于 {0}。"
+  "You are already in {0}.": "您已位于 {0}。",
+  "Choose a key teleport, or save up to 8 extra favourites.": "选择主要传送地点，或保存最多8个额外收藏。",
+  "Refresh key teleports": "刷新主要传送地点",
+  "Destination unavailable. Open the world map, then refresh key teleports.": "目的地不可用。打开世界地图，然后刷新主要传送地点。",
+  "Hold Alt and drag the counter to move it.": "按住Alt并拖动计数器以移动。",
+  "Reset counter position": "重置计数器位置",
+  "Temporal Sanctum": "时空圣殿",
+  "Lightless Arbor": "无光之林",
+  "Soulfire Bastion": "魂火堡垒",
+  "The Bazaar": "集市",
+  "The Observatory": "观测站"
 }
