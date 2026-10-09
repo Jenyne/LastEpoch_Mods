@@ -43,7 +43,7 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
 | 9 | `master` | Current main baseline | Baseline/control build |
 | 10 | `feat/gold-favourites-session-stats` | Fixed gold, favourite waypoints, XP/Favour/Amber counters | Implemented; native build and gameplay pending |
-| 11 | `feat/travel-anywhere` | Static non-waypoint areas, scene picker, map nodes and favourites | Restoration candidate; current-game build and gameplay pending |
+| 11 | `feat/travel-anywhere` | Non-waypoint map menus, right-click, scene picker and favourites | Restoration candidate; current-game build and gameplay pending |
 
 ## 1. Legal Force Drop / affix coverage
 
@@ -162,15 +162,15 @@ Done for now at the user's request. The following checklist is retained for opti
 
 Core/locale tests: 1,024 passed, six SDK-dependent checks skipped. Native mod compilation, patch targets and all gameplay behaviours remain unconfirmed. Selection 11 is the separate Travel Anywhere restoration candidate, based on this QoL build.
 
-## 11. Travel Anywhere / non-waypoint areas
+## 11. Travel Anywhere / map menus and right-click
 
 **Where:** Scenes > Misc > Travel Anywhere; world map
-**Branch:** `feat/travel-anywhere` (`43ea2bc8`), based on QoL `87e5d8c4`
+**Branch:** `feat/travel-anywhere` (`5744c5b7`), based on QoL `87e5d8c4`
 
 - Leave the option off first and check ordinary waypoints, favourites and Safe Teleport. Enable it, select a campaign area without a waypoint and travel. Confirm usable spawn, movement/pathfinding, camera, enemies, loot, exits and NPCs.
-- Left-click non-waypoint, locked and unlocked map nodes. Verify one Load/Complete pair, correct nonzero gates, same-area rejection, every era and popups blocking clicks. This path requires a `UIWaypoint` parent; universal map-widget coverage is not confirmed.
-- Double-click, click another node while loading and disable mid-flight. Failed loads or placement must retain the source and clean up before another request. Keep `[TravelAnywhere]` lines and check recovery position/camera/navigation.
-- Save and travel to a non-waypoint favourite while enabled; disable and confirm it is blocked. Check restart, EN > FR > KO > ZH > EN and unchanged saved waypoint unlocks.
+- Left-click non-waypoint, locked and unlocked map nodes to open the normal area menu. Check its waypoint/Travel controls are usable while enabled, then travel using the menu. Right-click each node for direct travel. Verify one Load/Complete pair, nonzero gates, same-area rejection, every era and popups blocking direct clicks. This requires a `UIWaypoint` parent; universal map-widget coverage is not confirmed.
+- Double-click, click another node while loading and disable mid-flight or with an area menu already open. A stale temporary Travel action must be blocked; reopen the menu for normal availability. Check map flags return on close/off, Unlock All Waypoints on/off and reused era widgets. Failed placement must retain the source and clean up before another request. Keep `[TravelAnywhere]` lines and check recovery position/camera/navigation.
+- Save and travel to a non-waypoint favourite while enabled; disable and confirm it is blocked. Check restart, EN > FR > KO > ZH > EN and unchanged saved waypoint unlocks. The temporary waypoint only changes map controls; it does not create a physical waypoint in the world.
 - Repeat trips, including leaving an echo/arena for a static area. Watch for duplicate actors/managers, broken portals, quests or memory growth. Generated echo/arena destinations remain excluded.
 - This build includes selection 10's gold, favourites and session counters. Retest fixed gold and counter continuity across zones.
 
@@ -236,3 +236,5 @@ Active work is #3, #5 and #6. #7 is done for now and deferred. See [current sour
 Published follow-up source: #3 `6e835e85`, #5 `b59281d6`, #6 `75e23254`. Fetch the runner branch and copy the updated script to TEMP again to get the new statuses and checklists.
 
 Travel Anywhere source was published on `feat/travel-anywhere` at `43ea2bc8`. Selection 11 includes QoL selection 10 and restores static-area picker/map travel as a default-off test candidate. Current SDK and gameplay validation are still pending; this is not confirmation of every map node or generated instance.
+
+Menu/right-click follow-up: `feat/travel-anywhere` at `5744c5b7` temporarily enables eligible map waypoint flags, keeps normal left-click menus and adds guarded right-click travel. Formatting and the existing 1,064 core/locale checks passed (six SDK-dependent skipped). Native menu appearance/actions and restoration still need in-game testing; the pure tests do not cover these new native UI paths.

@@ -136,15 +136,15 @@ $queueJson = @'
   },
   {
     "id": 11,
-    "title": "Travel Anywhere / non-waypoint areas",
+    "title": "Travel Anywhere / map menus and right-click",
     "branch": "feat/travel-anywhere",
     "status": "Restoration candidate; current-game build and gameplay pending",
     "location": "Scenes > Misc > Travel Anywhere; world map",
     "checks": [
       "With the option off, check ordinary waypoints, favourites and Safe Teleport. Enable Travel Anywhere, select a non-waypoint campaign area and travel; check spawn, movement, camera, enemies, loot, exits and NPCs.",
-      "Left-click non-waypoint, locked and unlocked map nodes. Check one Load/Complete pair, same-area rejection, nonzero gates, every era and a popup blocking clicks. Nodes without a UIWaypoint component are not yet covered.",
-      "Double-click, choose another area while loading and switch the option off mid-load. Failed loads or placement must retain the original area and finish cleanup before new travel. Keep [TravelAnywhere] lines.",
-      "Save and use a non-waypoint favourite while enabled, then disable and confirm it is blocked. Check restart/locale persistence and that saved waypoint unlocks are unchanged.",
+      "Left-click non-waypoint, locked and unlocked map nodes to open the normal area menu; its Travel action should be usable while enabled. Right-click each node for direct travel. Check one Load/Complete pair, nonzero gates, every era and popups blocking direct clicks.",
+      "Double-click and switch the option off while loading or with an area menu open. A stale temporary Travel action must be blocked; reopen the menu for normal availability. Check original map flags return on close/off, Unlock All Waypoints on/off and reused era widgets. Failed placement must retain the source and finish cleanup. Keep [TravelAnywhere] lines.",
+      "Save/use a non-waypoint favourite while enabled, then disable and confirm it is blocked. Check restart/locales and unchanged saved waypoint unlocks. The temporary waypoint is a map control, not a new world object; widgets without a UIWaypoint component still need an adapter.",
       "Repeat trips and test leaving an echo/arena for a static area. Check duplicate actors, portals, quests and memory growth. This includes selection 10: retest fixed gold and session-counter zone continuity. See docs/TEST_TRAVEL_ANYWHERE.md."
     ]
   }
