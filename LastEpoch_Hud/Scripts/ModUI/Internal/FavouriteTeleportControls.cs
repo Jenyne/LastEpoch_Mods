@@ -9,6 +9,8 @@ internal static class FavouriteTeleportControls
 {
     static GameObject section;
     static Text status;
+    static Text saveCaption;
+    static bool? lastPolicy;
     static readonly GameObject[] rows = new GameObject[FavouriteDestinations.Capacity];
     static readonly Text[] captions = new Text[FavouriteDestinations.Capacity];
 
@@ -22,20 +24,24 @@ internal static class FavouriteTeleportControls
             return;
         section = QualityOfLifeControls.Section(content, "FavouriteTeleports", 100);
         QualityOfLifeControls.Label(section, "Title", sample, "Favourite Teleports", 0, 24);
-        QualityOfLifeControls.Button(
-            section,
-            "SaveCurrent",
-            sample,
-            "Favourite current waypoint",
-            .03f,
-            .97f,
-            26,
-            () =>
-            {
-                FavouriteTeleports.SaveCurrent();
-                Refresh();
-            }
-        );
+        saveCaption = QualityOfLifeControls
+            .Button(
+                section,
+                "SaveCurrent",
+                sample,
+                "Favourite current waypoint",
+                .03f,
+                .97f,
+                26,
+                () =>
+                {
+                    FavouriteTeleports.SaveCurrent();
+                    Refresh();
+                }
+            )
+            .GetComponentInChildren<Text>(true);
+        lastPolicy = null;
+        RefreshPolicy();
         for (int i = 0; i < rows.Length; i++)
         {
             int index = i;
@@ -76,6 +82,20 @@ internal static class FavouriteTeleportControls
         }
         status = QualityOfLifeControls.Label(section, "Status", sample, "", 54, 40);
         Refresh();
+    }
+
+    public static void RefreshPolicy()
+    {
+        if (saveCaption.IsNullOrDestroyed())
+            return;
+        bool anywhere = ModSettings.TravelAnywhere.Enabled.Value;
+        if (lastPolicy == anywhere)
+            return;
+        lastPolicy = anywhere;
+        LocaleRegistry.Apply(
+            saveCaption,
+            anywhere ? "Favourite current area" : "Favourite current waypoint"
+        );
     }
 
     static void Refresh()

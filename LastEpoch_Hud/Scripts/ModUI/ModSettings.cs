@@ -104,6 +104,12 @@ public static class ModSettings
         public static readonly BoolSetting ShowOverlay = Group.Bool("ShowOverlay", true);
     }
 
+    public static class TravelAnywhere
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("TravelAnywhere");
+        public static readonly BoolSetting Enabled = Group.Bool("Enabled");
+    }
+
     public static class SafeTeleport
     {
         // UI is built in Scenes Misc; keep the same save group and keys.

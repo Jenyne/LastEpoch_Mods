@@ -118,6 +118,7 @@ internal static class ScenesSectionControls
         var miscStyle = minimap.GetComponentInChildren<Text>(true);
         SessionStatsControls.Bind(miscContent, miscStyle);
         FavouriteTeleportControls.Bind(miscContent, miscStyle);
+        TravelAnywhereControls.Bind(content, miscContent, miscStyle);
         MelonLoader.MelonCoroutines.Start(
             MatchNativeRows(center, dungeons, minimap, miscContent, dungeonTitle)
         );

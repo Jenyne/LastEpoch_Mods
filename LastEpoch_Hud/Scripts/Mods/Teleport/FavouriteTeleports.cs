@@ -52,9 +52,18 @@ internal static class FavouriteTeleports
     {
         Load();
         string scene = LastEpoch_Hud.Scenes.SceneName;
-        if (!Teleport_ToScene.CanTravelToUnlockedWaypoint(scene))
+        bool anywhere = ModUI.ModSettings.TravelAnywhere.Enabled.Value;
+        if (anywhere)
+            TravelDestinations.Refresh();
+        if (
+            anywhere
+                ? TravelDestinations.Find(scene) == null
+                : !Teleport_ToScene.CanTravelToUnlockedWaypoint(scene)
+        )
         {
-            Status = "Visit an unlocked waypoint area. Open the world map once if needed.";
+            Status = anywhere
+                ? "This area is not available for direct travel."
+                : "Visit an unlocked waypoint area. Open the world map once if needed.";
             return;
         }
         Change(
@@ -95,6 +104,12 @@ internal static class FavouriteTeleports
 
     public static void Travel(string scene)
     {
+        if (ModUI.ModSettings.TravelAnywhere.Enabled.Value)
+        {
+            TravelAnywhere.StartTravel(scene);
+            Status = TravelAnywhere.Status;
+            return;
+        }
         if (!Teleport_ToScene.CanTravelToUnlockedWaypoint(scene))
         {
             Status =

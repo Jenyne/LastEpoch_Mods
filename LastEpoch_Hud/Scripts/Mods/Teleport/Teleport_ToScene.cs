@@ -85,6 +85,11 @@ public class Teleport_ToScene : MonoBehaviour
 
     bool Begin(string scene_name, bool requireUnlocked = false)
     {
+        if (TravelAnywhere.Busy)
+        {
+            Main.logger_instance?.Warning("Teleport blocked while Travel Anywhere finishes.");
+            return false;
+        }
         if (
             (string.IsNullOrEmpty(scene_name)) || (SceneManager.GetActiveScene().name == scene_name)
         )
