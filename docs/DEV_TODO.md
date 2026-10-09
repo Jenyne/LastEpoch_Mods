@@ -18,10 +18,11 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 | — | Prophecy — `fix/prophecy-reward-trigger` (`cb638c70`) | Confirmed working and persistent. | Large multipliers can lag. UI relocation deferred until redesign. Old multiplier branch is an isolation checkpoint. |
 | 9 | `master` baseline | Control build. | Use for comparisons; topic-branch confirmation does not mean integration into main or upstream. |
 | 10 | Gold / favourite teleports / session counters — `feat/gold-favourites-session-stats` (`87e5d8c4`) | Implemented and published together. 1,024 tests passed; six SDK-dependent checks skipped. | Native build and runtime pending. Check fixed gold with auto-pickup on/off, saved waypoint travel/character locks, and XP/Favour/Amber rates, pause/reset, level-ups and zone continuity. |
+| 11 | Travel Anywhere — `feat/travel-anywhere` (`43ea2bc8`) | Historical additive route restored as a test candidate, based on QoL `87e5d8c4`. 1,064 tests passed; six SDK-dependent checks skipped. | Compile on the current SDK and test the default-off scene picker, static non-waypoint map nodes, spawn gates, recovery/cleanup, non-waypoint favourites and parent QoL regression. All gameplay remains unconfirmed. |
 
 ## Next development order
 
-1. Test the three requested QoL additions together with selection #10. Character > Currencies has the gold button; Scenes > Misc scrolls to session controls and favourite teleports.
+1. Test Travel Anywhere with selection #11; it includes the three QoL additions from #10. Enable it under Scenes > Misc, then test the picker and static non-waypoint map nodes. Selection #10 remains the original QoL-only comparison build. Native build and gameplay are pending for both.
 2. Native-build and runtime-check the Drop Rates UI recovery (#6).
 3. Use the new rejection traces to target the T5 crafting ceiling and complete the craft transaction (#5).
 4. Use allocation and F9 hover evidence to resolve both runtime failures (#3).
@@ -33,7 +34,7 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 - Full Force Drop UI redesign: deferred; only the requested scrolling and color changes are in the current combined branch.
 - Maxroll equipment presentation: deferred.
 - Prophecy UI relocation: deferred.
-- General map-node travel: requested follow-up. Upstream `65b8e77` (2026-10-04) hid the old scene picker and replaced additive scene loading/player placement with the waypoint transition service. Restore a scene selector separately; inspect native map gates and non-waypoint entry before promising travel to every node. The new favourites currently require unlocked waypoints.
+- Broader travel coverage: static-area restoration is now the #11 test candidate. Generated echo/arena destinations remain excluded, as in the old picker. Map widgets without a `UIWaypoint` parent need an adapter; universal map-node coverage is not established. With Travel Anywhere off, favourites still require unlocked waypoints.
 - Guaranteed mechanic spawns (Moroditas/Omen etc.): highest-priority backlog investigation; a universal 100% spawn hook has not been established.
 - Dedicated boss/lizard/champion spawn controls and general boss-drop distribution: investigation pending. Existing density/drop controls do not confirm these features.
 - #7 is done for now; any deeper offline investigation is deferred. No offline-diagnostics patches changed in this pass.
@@ -45,4 +46,5 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 - Follow [TEST_QUEUE.md](TEST_QUEUE.md) for the runner and per-feature checks. Force Drop's detailed checklist lives on its feature branch in `docs/TEST_FORCE_DROP_ILLEGAL_MODE.md`.
 - Latest published Force Drop source: `4585e880`. Initial scroll/cyan implementation compiled and passed 1,162 tests (zero skipped); after workspace recovery, formatting passed across 408 C# files. In-game scroll/cyan and combined-build regressions remain pending.
 - QoL source: `87e5d8c4`, based on `master` `92fb33de`. All 18 changed C# files passed CSharpier; 25 new core test cases cover counters and favourite persistence. The native SDK is unavailable here, so compilation/Harmony/UI/gameplay checks remain open. See the [QoL checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/gold-favourites-session-stats/docs/TEST_GOLD_FAVOURITES_SESSION_STATS.md).
+- Travel source: `43ea2bc8`, based on QoL `87e5d8c4`. Historical source and the old compiled release were inspected; the old DLL was never executed. Forty new core cases cover destination exclusions, generated-area sources and transition ordering/recovery; 13 changed C# files passed CSharpier. Current SDK signatures, Harmony targets, UI/map behaviour and native recovery remain pending. See the [travel checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/travel-anywhere/docs/TEST_TRAVEL_ANYWHERE.md).
 - Keep failed runtime issues open even when compilation or unit tests pass. Record the tested commit, screenshots/logs and persistence results separately.

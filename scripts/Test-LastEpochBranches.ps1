@@ -133,6 +133,20 @@ $queueJson = @'
       "Reset counters and farm for 60 active seconds. Compare XP/Favour/Memory Amber totals and rates with actual gains, including level-ups, multipliers/caps, spending and manual mod grants. Test pause/resume/reset, loading/zone continuity and character reset.",
       "Scroll Misc to all controls, retest Safe Teleport, hide/show the counter HUD and restart. Check loot hover/casting beneath the overlay and EN > FR > KO > ZH > EN captions. See docs/TEST_GOLD_FAVOURITES_SESSION_STATS.md."
     ]
+  },
+  {
+    "id": 11,
+    "title": "Travel Anywhere / non-waypoint areas",
+    "branch": "feat/travel-anywhere",
+    "status": "Restoration candidate; current-game build and gameplay pending",
+    "location": "Scenes > Misc > Travel Anywhere; world map",
+    "checks": [
+      "With the option off, check ordinary waypoints, favourites and Safe Teleport. Enable Travel Anywhere, select a non-waypoint campaign area and travel; check spawn, movement, camera, enemies, loot, exits and NPCs.",
+      "Left-click non-waypoint, locked and unlocked map nodes. Check one Load/Complete pair, same-area rejection, nonzero gates, every era and a popup blocking clicks. Nodes without a UIWaypoint component are not yet covered.",
+      "Double-click, choose another area while loading and switch the option off mid-load. Failed loads or placement must retain the original area and finish cleanup before new travel. Keep [TravelAnywhere] lines.",
+      "Save and use a non-waypoint favourite while enabled, then disable and confirm it is blocked. Check restart/locale persistence and that saved waypoint unlocks are unchanged.",
+      "Repeat trips and test leaving an echo/arena for a static area. Check duplicate actors, portals, quests and memory growth. This includes selection 10: retest fixed gold and session-counter zone continuity. See docs/TEST_TRAVEL_ANYWHERE.md."
+    ]
   }
 ]
 '@

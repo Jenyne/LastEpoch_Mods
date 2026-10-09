@@ -43,6 +43,7 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
 | 9 | `master` | Current main baseline | Baseline/control build |
 | 10 | `feat/gold-favourites-session-stats` | Fixed gold, favourite waypoints, XP/Favour/Amber counters | Implemented; native build and gameplay pending |
+| 11 | `feat/travel-anywhere` | Static non-waypoint areas, scene picker, map nodes and favourites | Restoration candidate; current-game build and gameplay pending |
 
 ## 1. Legal Force Drop / affix coverage
 
@@ -159,7 +160,23 @@ Done for now at the user's request. The following checklist is retained for opti
 
 [Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/gold-favourites-session-stats/docs/TEST_GOLD_FAVOURITES_SESSION_STATS.md)
 
-Core/locale tests: 1,024 passed, six SDK-dependent checks skipped. Native mod compilation, patch targets and all gameplay behaviours remain unconfirmed. General map-node travel is a separate follow-up.
+Core/locale tests: 1,024 passed, six SDK-dependent checks skipped. Native mod compilation, patch targets and all gameplay behaviours remain unconfirmed. Selection 11 is the separate Travel Anywhere restoration candidate, based on this QoL build.
+
+## 11. Travel Anywhere / non-waypoint areas
+
+**Where:** Scenes > Misc > Travel Anywhere; world map
+**Branch:** `feat/travel-anywhere` (`43ea2bc8`), based on QoL `87e5d8c4`
+
+- Leave the option off first and check ordinary waypoints, favourites and Safe Teleport. Enable it, select a campaign area without a waypoint and travel. Confirm usable spawn, movement/pathfinding, camera, enemies, loot, exits and NPCs.
+- Left-click non-waypoint, locked and unlocked map nodes. Verify one Load/Complete pair, correct nonzero gates, same-area rejection, every era and popups blocking clicks. This path requires a `UIWaypoint` parent; universal map-widget coverage is not confirmed.
+- Double-click, click another node while loading and disable mid-flight. Failed loads or placement must retain the source and clean up before another request. Keep `[TravelAnywhere]` lines and check recovery position/camera/navigation.
+- Save and travel to a non-waypoint favourite while enabled; disable and confirm it is blocked. Check restart, EN > FR > KO > ZH > EN and unchanged saved waypoint unlocks.
+- Repeat trips, including leaving an echo/arena for a static area. Watch for duplicate actors/managers, broken portals, quests or memory growth. Generated echo/arena destinations remain excluded.
+- This build includes selection 10's gold, favourites and session counters. Retest fixed gold and counter continuity across zones.
+
+[Full branch checklist and historical findings](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/travel-anywhere/docs/TEST_TRAVEL_ANYWHERE.md)
+
+Core/locale checks: 1,064 passed, six SDK-dependent checks skipped; formatting passed. Current SDK compilation, Harmony targets and all gameplay remain unconfirmed. Refresh the runner branch and copy the script to TEMP again to see entry 11.
 
 ## What the runner does
 
@@ -217,3 +234,5 @@ The initial scroll/cyan implementation compiled against the recovered native ref
 Active work is #3, #5 and #6. #7 is done for now and deferred. See [current source changes and test order](REVIEW_3_5_6.md). The previous failed runtime reports remain the latest in-game evidence; follow-up source changes are awaiting installed-SDK compilation and runtime checks.
 
 Published follow-up source: #3 `6e835e85`, #5 `b59281d6`, #6 `75e23254`. Fetch the runner branch and copy the updated script to TEMP again to get the new statuses and checklists.
+
+Travel Anywhere source was published on `feat/travel-anywhere` at `43ea2bc8`. Selection 11 includes QoL selection 10 and restores static-area picker/map travel as a default-off test candidate. Current SDK and gameplay validation are still pending; this is not confirmation of every map node or generated instance.
