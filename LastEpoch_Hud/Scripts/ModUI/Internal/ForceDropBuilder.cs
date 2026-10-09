@@ -485,9 +485,10 @@ public static class ForceDropBuilder
             buttons.Clear();
         root = Panel(FD.content_obj, "ForceDropBuilder", 0, 0, 1, 1);
         Label(root, "Force Drop", 0.02f, 0.955f, 0.64f, 0.995f, 22);
-        var left = Panel(root, "Choose item", 0.01f, 0.02f, 0.29f, 0.945f);
-        var middle = Panel(root, "Customize", 0.30f, 0.02f, 0.73f, 0.945f);
-        var right = Panel(root, "Preview", 0.74f, 0.02f, 0.99f, 0.945f);
+        // Reserve a footer beneath the panels so panel outlines do not cross status text.
+        var left = Panel(root, "Choose item", 0.01f, 0.06f, 0.29f, 0.945f);
+        var middle = Panel(root, "Customize", 0.30f, 0.06f, 0.73f, 0.945f);
+        var right = Panel(root, "Preview", 0.74f, 0.06f, 0.99f, 0.945f);
         Label(left, "Choose item", .03f, .95f, .97f, .99f, 18);
         Label(left, "Search all items", .03f, .90f, .97f, .94f);
         search = Input(left, "Item search", .03f, .84f, .97f, .89f, "", false);
@@ -703,7 +704,7 @@ public static class ForceDropBuilder
         quantity = Numeric(right, "Quantity", .20f, 1, 99, 1, false, false);
         dropButton = Button(right, "Drop Item", .04f, .105f, .96f, .18f, Drop);
         Button(right, "Reset", .04f, .03f, .96f, .09f, Reset);
-        status = Label(root, "", .30f, .00f, .99f, .025f, 12);
+        status = Label(root, "", .30f, .01f, .99f, .045f, 12);
         BuildPicker();
         // Hide only after the entire replacement view has been built successfully.
         foreach (var child in Functions.GetAllChild(FD.content_obj))
