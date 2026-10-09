@@ -1729,9 +1729,7 @@ public static class ForceDropBuilder
         Caption(illegalModeButton, allowIllegal ? "Illegal: On" : "Illegal: Off");
         var background = illegalModeButton.GetComponent<Image>();
         if (!background.IsNullOrDestroyed())
-            background.color = allowIllegal
-                ? new Color(.42f, .27f, .12f, 1f)
-                : dark;
+            background.color = allowIllegal ? new Color(.42f, .27f, .12f, 1f) : dark;
     }
 
     static void Drop()
