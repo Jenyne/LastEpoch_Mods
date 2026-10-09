@@ -13,6 +13,8 @@ internal static class Passives_MasteryLock
     private static readonly Dictionary<int, (GameObject Line, bool Active)> hiddenLines = new();
     private static bool refreshing;
     private static bool reportedError;
+    private static readonly HashSet<string> traces = new();
+    private static long tracedTree;
 
     internal static bool Enabled =>
         ModSettings.MasteryTreeUnlock.Enabled.Value
@@ -33,7 +35,14 @@ internal static class Passives_MasteryLock
                 Enabled
             );
             if (current != target)
+            {
                 GlobalTreeData.maximumUnchosenMasteryLevel = target;
+                Trace(
+                    Refs_Manager.player_treedata,
+                    "cap:" + current + ":" + target,
+                    "Native cap write: " + current + "->" + target
+                );
+            }
             if (wasActive != limit.Active || current != target)
                 Refresh();
         }
@@ -107,6 +116,90 @@ internal static class Passives_MasteryLock
                 line.SetActive(false);
             }
         }
+    }
+
+    // Observe the actual click and spend paths; never fabricate an allocation result.
+    private static void Trace(LocalTreeData tree, string key, string details)
+    {
+        try
+        {
+            if (!ModSettings.MasteryTreeUnlock.Enabled.Value || tree.IsNullOrDestroyed())
+                return;
+            long pointer = tree.Pointer.ToInt64();
+            if (pointer != tracedTree)
+            {
+                tracedTree = pointer;
+                traces.Clear();
+            }
+            if (traces.Count < 12 && traces.Add(key))
+                Main.logger_instance?.Msg(
+                    "[MasteryTrace] "
+                        + details
+                        + "; chosen="
+                        + tree.chosenMastery
+                        + "; unchosenCap="
+                        + GlobalTreeData.maximumUnchosenMasteryLevel
+                        + "; fullCap="
+                        + GlobalTreeData.masteryClassMaximumMasteryLevel
+                );
+        }
+        catch (System.Exception)
+        { /* Diagnostics must not interrupt allocation. */
+        }
+    }
+
+    [HarmonyPatch(typeof(SkillTreeNode), "Clicked", new System.Type[] { })]
+    private static class AllocationClickTrace
+    {
+        [HarmonyPrefix]
+        private static void Prefix(SkillTreeNode __instance, out int __state)
+        {
+            __state = -1;
+            try
+            {
+                if (ModSettings.MasteryTreeUnlock.Enabled.Value && !__instance.IsNullOrDestroyed())
+                    __state = __instance.pointsAllocated;
+            }
+            catch (System.Exception) { }
+        }
+
+        [HarmonyPostfix]
+        private static void Postfix(SkillTreeNode __instance, int __state)
+        {
+            try
+            {
+                if (__state < 0 || __instance.IsNullOrDestroyed() || !__instance.inPassiveTree())
+                    return;
+                Trace(
+                    Refs_Manager.player_treedata,
+                    "click:" + __instance.GetInstanceID() + ":" + __state,
+                    "Passive click: mastery="
+                        + __instance.mastery
+                        + "; points="
+                        + __state
+                        + "->"
+                        + __instance.pointsAllocated
+                );
+            }
+            catch (System.Exception) { }
+        }
+    }
+
+    [HarmonyPatch(typeof(LocalTreeData), "tryToSpendPassivePoint")]
+    private static class AllocationResultTrace
+    {
+        [HarmonyPostfix]
+        private static void Postfix(
+            LocalTreeData __instance,
+            bool __result,
+            CharacterClass __0,
+            byte __1
+        ) =>
+            Trace(
+                __instance,
+                "spend:" + __0 + ":" + __1 + ":" + __result,
+                "Native passive spend: class=" + __0 + "; node=" + __1 + "; accepted=" + __result
+            );
     }
 
     // Only the visual method receives a different mastery argument. The saved
