@@ -427,5 +427,15 @@
   "Travel failed; restoring the original area...": "순간이동 실패. 원래 지역으로 복귀 중...",
   "Original area retained; waiting for destination cleanup.": "원래 지역을 유지했습니다. 목적지 정리를 기다리는 중입니다.",
   "Travel failed; original area retained. See the mod log.": "순간이동 실패. 원래 지역을 유지했습니다. 모드 로그를 확인하세요.",
-  "Recovery paused because the local player changed. See the mod log.": "로컬 캐릭터가 바뀌어 복구를 중지했습니다. 모드 로그를 확인하세요."
+  "Recovery paused because the local player changed. See the mod log.": "로컬 캐릭터가 바뀌어 복구를 중지했습니다. 모드 로그를 확인하세요.",
+  "Choose a key teleport, or save up to 8 extra favourites.": "주요 목적지를 선택하거나 추가 즐겨찾기를 최대 8개 저장하세요.",
+  "Refresh key teleports": "주요 목적지 새로 고침",
+  "Destination unavailable. Open the world map, then refresh key teleports.": "목적지를 사용할 수 없습니다. 세계 지도를 연 뒤 주요 목적지를 새로 고치세요.",
+  "Hold Alt and drag the counter to move it.": "Alt를 누른 채 카운터를 드래그하여 이동하세요.",
+  "Reset counter position": "카운터 위치 초기화",
+  "Temporal Sanctum": "시간의 성소",
+  "Lightless Arbor": "빛 없는 숲",
+  "Soulfire Bastion": "영혼불꽃 요새",
+  "The Bazaar": "시장",
+  "The Observatory": "관측소"
 }

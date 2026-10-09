@@ -16,7 +16,7 @@ internal static class FavouriteTeleports
     static FavouriteDestinations destinations = new();
     static bool loaded;
     public static string Status { get; private set; } =
-        "Save the current unlocked waypoint. Up to 8 favourites.";
+        "Choose a key teleport, or save up to 8 extra favourites.";
     public static System.Collections.Generic.IReadOnlyList<string> Scenes
     {
         get
@@ -102,6 +102,8 @@ internal static class FavouriteTeleports
         }
     }
 
+    public static void SetStatus(string text) => Status = text;
+
     public static void Travel(string scene)
     {
         if (ModUI.ModSettings.TravelAnywhere.Enabled.Value)
@@ -110,6 +112,11 @@ internal static class FavouriteTeleports
             Status = TravelAnywhere.Status;
             return;
         }
+        TravelWaypoint(scene);
+    }
+
+    public static void TravelWaypoint(string scene)
+    {
         if (!Teleport_ToScene.CanTravelToUnlockedWaypoint(scene))
         {
             Status =

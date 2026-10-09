@@ -427,5 +427,15 @@
   "Travel failed; restoring the original area...": "传送失败；正在恢复原区域…",
   "Original area retained; waiting for destination cleanup.": "原区域已保留；正在等待目的地清理。",
   "Travel failed; original area retained. See the mod log.": "传送失败；原区域已保留。请查看模组日志。",
-  "Recovery paused because the local player changed. See the mod log.": "本地角色已改变，恢复已暂停。请查看模组日志。"
+  "Recovery paused because the local player changed. See the mod log.": "本地角色已改变，恢复已暂停。请查看模组日志。",
+  "Choose a key teleport, or save up to 8 extra favourites.": "选择主要传送地点，或保存最多8个额外收藏。",
+  "Refresh key teleports": "刷新主要传送地点",
+  "Destination unavailable. Open the world map, then refresh key teleports.": "目的地不可用。打开世界地图，然后刷新主要传送地点。",
+  "Hold Alt and drag the counter to move it.": "按住Alt并拖动计数器以移动。",
+  "Reset counter position": "重置计数器位置",
+  "Temporal Sanctum": "时空圣殿",
+  "Lightless Arbor": "无光之林",
+  "Soulfire Bastion": "魂火堡垒",
+  "The Bazaar": "集市",
+  "The Observatory": "观测站"
 }

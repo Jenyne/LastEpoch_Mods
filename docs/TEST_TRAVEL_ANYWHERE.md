@@ -1,6 +1,6 @@
 # Travel Anywhere restoration
 
-Branch: `feat/travel-anywhere`. Parent: `feat/gold-favourites-session-stats` at `87e5d8c4`. This test build includes the gold button, favourites and session counters from that parent. The original QoL branch remains unchanged.
+Branch: `feat/travel-anywhere`. Parent: `feat/gold-favourites-session-stats` at `87e5d8c4`. This test build includes the gold button, favourites and session counters from that parent. It also includes the key teleport list, movable overlay and live favour reconciliation from QoL follow-up `638504c0`. Key teleport presets use ordinary unlocked waypoints; custom saved non-waypoint favourites retain the Travel Anywhere route.
 
 ## What the old version actually did
 
@@ -62,14 +62,14 @@ Use test-menu selection **11** after refreshing `chore/test-queue-runner`. The r
 7. **Favourites:** save a non-waypoint area, leave, return using its favourite, remove/re-add and restart. With Travel Anywhere disabled, the non-waypoint favourite must be blocked. Verify no new entries were added to `UnlockedWaypointScenes`.
 8. **Long session:** repeat several trips, including a town, combat area and End of Time; also test leaving an echo/arena for a static area. Watch for duplicate players/managers, missing enemies, broken portals, frame-time/memory growth and quest state problems. Return to character selection and load another character.
 9. **Persistence/locales:** restart with the option enabled and disabled; check EN > FR > KO > ZH > EN controls, native location names, status labels and selected area identity.
-10. **Parent features:** retest fixed gold, session-counter zone continuity/reset, both kinds of favourites and Safe Teleport. Other pending Force Drop/crafting/drop-rate branches are separate builds.
+10. **Parent features:** retest fixed gold, all key teleport buttons (including dungeon entrances), Alt-dragged/saved/clamped counter position, natural favour gains, manual grant exclusion, session-counter zone continuity/reset, both kinds of favourites and Safe Teleport. Key teleports must retain their unlocked-waypoint route with Travel Anywhere on/off. Other pending Force Drop/crafting/drop-rate branches are separate builds.
 
 Keep the complete log and exact commit. Expected bounded lines are `[TravelAnywhere] Load`, `Complete` or a reason for recovery. On a build failure, retain `build.log`; on native target failure, retain `tests.log`. The runner stops before installation in either case.
 
 ## Recorded verification
 
 - The Windows build of `5744c5b7` failed before installation with CS1061: the generated `IList<SceneDetails>` wrapper does not expose inherited `Count`. The fix reads `Count` through its native `ICollection<SceneDetails>` interface and retains the list indexer. It uses the actual collection size, not a fixed scene count. Rebuild selection 11 against the installed SDK; this correction has not yet been validated by a native build.
-- Direct Roslyn/.NET 8 execution: **1,064 passed, six SDK-dependent checks skipped**, zero failures. Includes 40 new cases for historical destination exclusions, generated-area sources and transition ordering/failure/recovery.
+- Direct Roslyn/.NET 8 execution: **1,069 passed, six SDK-dependent checks skipped**, zero failures. Includes 40 new cases for historical destination exclusions, generated-area sources and transition ordering/failure/recovery.
 - Changed C# source checked with CSharpier; whitespace and locale JSON checks passed. The menu/right-click follow-up changes four C# files; unrelated locale entries are preserved while the map guidance is updated in all five locales.
 - The compiled historical API and source were compared. No old DLL was installed or executed.
 - Native mod compilation, current SDK signatures/Harmony targets and all gameplay/map/scene-recovery behaviour remain **pending**. Pure tests confirm the protocol rules, not current-game success. Temporary native flags, normal left-click menus, right-click dispatch and stale-menu restoration are not covered by those pure tests; use the runtime checks above.
