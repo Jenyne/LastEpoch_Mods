@@ -31,6 +31,39 @@ internal static class Items_CraftingSlot
             () => ModSettings.InfiniteForgingPotential.Enabled.Value,
             v => ModSettings.InfiniteForgingPotential.Enabled.Set(v)
         );
+        AddToggle(
+            card,
+            "AdvancedForgeT7",
+            "Craft Affixes to T7",
+            () => ModSettings.AdvancedForge.AllowT7Crafting.Value,
+            v => ModSettings.AdvancedForge.AllowT7Crafting.Set(v)
+        );
+        AddToggle(
+            card,
+            "AdvancedForgeMaxRoll",
+            "Max Crafted Roll",
+            () => ModSettings.AdvancedForge.AffixRoll.Enabled,
+            v =>
+            {
+                ModSettings.AdvancedForge.AffixRoll.SetEnabled(v);
+                if (v)
+                    ModSettings.AdvancedForge.AffixRoll.SetValue(255f);
+            }
+        );
+        AddToggle(
+            card,
+            "AdvancedForgeHope",
+            "Guarantee Hope",
+            () => ModSettings.AdvancedForge.GuaranteedGlyphOfHope.Value,
+            v => ModSettings.AdvancedForge.GuaranteedGlyphOfHope.Set(v)
+        );
+        AddToggle(
+            card,
+            "AdvancedForgeDespair",
+            "Guarantee Despair",
+            () => ModSettings.AdvancedForge.GuaranteedGlyphOfDespair.Value,
+            v => ModSettings.AdvancedForge.GuaranteedGlyphOfDespair.Set(v)
+        );
         page.AddButton(card, "DeselectAll", "Deselect All", DeselectAll);
 
         AddOverride(
