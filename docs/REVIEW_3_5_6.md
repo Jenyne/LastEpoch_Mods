@@ -2,11 +2,11 @@
 
 Updated 2026-10-09. The active queue is **3, 5 and 6**. Item 7 is user-confirmed and done for now; deeper work is deferred.
 
-Published source: #3 [6e835e85](https://github.com/Jenyne/LastEpoch_Mods/commit/6e835e85542df08070faf3de56d4eeb194292c3f), #5 [b59281d6](https://github.com/Jenyne/LastEpoch_Mods/commit/b59281d66dcccace92a50e67723965ebcc1ff1b4), #6 [75e23254](https://github.com/Jenyne/LastEpoch_Mods/commit/75e23254a0b0f54b6107f023384592926a58b9cf).
+Published source: #3 [7a91a7c1](https://github.com/Jenyne/LastEpoch_Mods/commit/7a91a7c1d48181f302fe4bb4f3fbd96d3390e3ae), #5 [b59281d6](https://github.com/Jenyne/LastEpoch_Mods/commit/b59281d66dcccace92a50e67723965ebcc1ff1b4), #6 [75e23254](https://github.com/Jenyne/LastEpoch_Mods/commit/75e23254a0b0f54b6107f023384592926a58b9cf).
 
 | Queue | Source change | Remaining evidence |
 |---|---|---|
-| 3 | Observes passive clicks, real spend results and cap writes. F9 captures UI raycast winners/listeners with meter visibility. | Installed-SDK compilation, failed allocation log and comparable idle/combat hover snapshots. Neither gameplay failure is marked fixed. |
+| 3 | New checkbox owns its event; application is deferred to normal Update and forced native tree rebuilding is removed. Chain changes only affect active panels. F9 prioritizes hidden/active owned listeners and blockers, with raycaster types, selection, button state and listener totals. | Node requirement removal is user-confirmed working/persistent. Repeated mastery-checkbox crashes, beyond-chain allocation and combat hover remain open. Retest on installed SDK; supplied Player preview errors have no mastery stack, and four hidden-meter F9 snapshots did not show a meter intercept. |
 | 5 | Replaces the literal max-tier marker gate with the known native localization key's output from the same check; logs original result/title, flags, item, tier, FP and keys. | Native key/title and item-tracking confirmation. Custom crafting still needs material consumption, complete glyph semantics and tier-definition checks. |
 | 6 | Uses Hud_Manager's live Drop resolver, waits for visible layout, preserves legacy rows, inherits UI layers and handles native toggle/slider/input paths. | Four visible controls, synchronized inputs, persistence and separate natural-rate comparisons. Backend rate calculations are unchanged. |
 
@@ -18,7 +18,7 @@ The older review focused on the untranslated `affix_maxed` placeholder. The loca
 
 1. Selection 6: open Items > Drop, scroll to Natural Drop Rates, verify four rows and legacy controls. Test toggle/drag/type 0, 50, 100 and 1000, close/reopen and restart. Keep `[DropRates]` lines.
 2. Selection 5: enable T7 crafting and Infinite FP on expendable normal equipment. Keep `[ForgeTrace]` while selecting a T5 affix. Check no-shard rejection and actual material consumption alongside T5 → T6 → T7.
-3. Selection 3: leave Remove Node Requirements off and attempt another mastery beyond the chain. Keep `[MasteryTrace]`. Hover the same ground item and press F9 idle and in combat; repeat with the damage meter hidden/visible/stopped/recording and annotate which snapshot failed.
+3. Selection 3: leave the confirmed-working Remove Node Requirements option off to isolate this test. Toggle mastery unlock with the passive panel closed/open, then reopen or change pages and attempt beyond-chain allocation. Keep `[MasteryTrace]` toggle/cap/click/spend lines and the matching MelonLoader/native crash stack for another crash. Press F9 over the same item idle/in combat with all meter states; keep prioritized candidates and totals.
 
 Each selection is a separate topic build. Close the game before switching. The runner compiles and tests against the installed SDK before replacing the DLL. No new change here is in-game confirmed.
 
@@ -32,4 +32,4 @@ The environment's .NET CLI/MSBuild fails during process-information initializati
 | Advanced Forge | 51 | 3 | 0 |
 | Drop rates | 45 | 3 | 0 |
 
-Skipped checks require game assemblies. These runs cover game-independent logic and repository contracts; they do not compile or verify the new game-dependent hooks. CSharpier checked the new/updated hook implementations; whitespace checks passed throughout. Embedded runner JSON was parsed and all nine selection IDs preserved; installer control flow is unchanged.
+Skipped checks require game assemblies. These runs cover game-independent logic and repository contracts; they do not compile or verify the new game-dependent hooks. CSharpier checked the new/updated hook implementations; whitespace checks passed throughout. The refreshed runner JSON preserves all 11 selection IDs; only entry 3 changed in this follow-up and installer control flow is byte-for-byte unchanged.

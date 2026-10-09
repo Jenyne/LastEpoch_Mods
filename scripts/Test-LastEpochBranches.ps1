@@ -41,13 +41,13 @@ $queueJson = @'
     "id": 3,
     "title": "Mastery chains / combat ground-item hover",
     "branch": "fix/mastery-lock-ground-tooltips",
-    "status": "Open: allocation and F9 hover traces added; runtime pending",
+    "status": "Open: mastery toggle crashes, beyond-chain allocation and combat hover; safer candidate published",
     "location": "Skills > Unlock Other Mastery Trees",
     "checks": [
-      "Leave Remove Node Requirements off. Enable Unlock Other Mastery Trees; allocate beyond the chain in both other mastery trees.",
+      "Remove Node Requirements is user-confirmed working/persistent; leave it off for this test. Toggle Unlock Other Mastery Trees first with the passive tree closed, then open. The candidate removes the forced native tree rebuild. Reopen/change pages and try beyond-chain allocation in both other trees; crash prevention and allocation are not yet confirmed.",
       "Normal prerequisites, point costs and rank caps should still apply. Test turning the option off, tree page changes and restart persistence.",
       "Hover dropped items during combat/minion attacks with the damage meter hidden, visible but stopped, and recording. Test meter controls/controller casting too.",
-      "Keep [MasteryTrace] click/spend lines. Press F9 over the same ground item idle and in combat; repeat meter hidden/visible/stopped/recording and label the failed [HoverTrace] snapshot."
+      "Keep [MasteryTrace] toggle request, cap request/write, click and spend lines. Press F9 over the same ground item idle/in combat with meter hidden/visible/stopped/recording. New [HoverTrace] prioritizes mod-owned/blocking listeners, includes hidden listeners, raycaster types and active/blocking totals. The earlier four hidden-meter snapshots did not show a meter intercept. If it crashes, retain the matching MelonLoader log/native stack; supplied Player preview errors did not locate the toggle crash."
     ]
   },
   {
