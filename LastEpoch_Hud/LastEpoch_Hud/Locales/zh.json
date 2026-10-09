@@ -399,5 +399,8 @@
   "Affix 1": "词缀 1",
   "Affix 2": "词缀 2",
   "Affix 3": "词缀 3",
-  "Affix 4": "词缀 4"
+  "Affix 4": "词缀 4",
+  "Search all items": "搜索所有物品",
+  "No matching items": "没有匹配的物品",
+  "Item unavailable. Search again or choose an item manually.": "物品不可用。请重新搜索或手动选择物品。"
 }

@@ -6,6 +6,8 @@ The combined branch includes the legal filtering and LP fixes from `fix/force-dr
 
 ## Changes to test
 
+- Search all items before choosing any category or rarity. Search checks native translated names, raw/internal names and aliases across base items, uniques and sets. Results show category/rarity; clicking one fills all three selectors by stable identity. Clearing the search returns to the selected category/rarity list. The native catalog supplies the names and IDs; no item is hardcoded.
+
 - All ordinary affix and idol enchantment pickers now use the existing wheel/drag scrolling system rather than Previous/Next pages. Legal prefix-only and suffix-only slots use one full-width list; enchantment, sealed and corruption pools retain separate Prefix/Suffix lists. None stays pinned above each list. Search resets scroll positions and only visible rows are pooled. Legal eligibility, duplicate exclusions and family colors are unchanged.
 - Selecting an ordinary affix for a unique clears LP to zero and disables its input and Fixed/Random button. Maximum/Random presets cannot restore LP while the affix remains selected. Clear every ordinary affix to re-enable LP; fixed native unique modifiers alone do not disable it. Creation requests also enforce zero LP on the resulting Legendary item.
 - Normal affix selectors use the complete deduplicated native catalog and shared eligibility rules. Their log lines include choice counts and exclusion counts by reason.
@@ -21,7 +23,7 @@ The combined branch includes the legal filtering and LP fixes from `fix/force-dr
 
 ## Install the test build
 
-Close Last Epoch. Fetch and run `scripts/Test-LastEpochBranches.ps1` from `chore/test-queue-runner`, then choose **1**. Entries 1 and 2 install the same current `feat/force-drop` build with different checklists. The older dedicated legal script targets its historical branch.
+Close Last Epoch. Fetch and run `scripts/Test-LastEpochBranches.ps1` from `chore/test-queue-runner`, then choose **1**. Selection 1 is the single combined legal/illegal build; selection 2 is retired. The older dedicated legal script targets its historical branch.
 
 The queue runner updates the selected branch, builds Release, runs the full suite against the just-built DLL and your supplied game assemblies, backs up the installed mod and copies the new DLL only after success. Tracked local changes or a branch that differs from the remote stop installation.
 
@@ -29,6 +31,9 @@ The queue runner updates the selected branch, builds Release, runs the full suit
 
 | Selection | Expected result |
 | --- | --- |
+| Search `seed` with category/rarity unset or set to a different category | Matching native items appear across categories; choosing the desired helmet fills helmet category, Unique rarity and the exact unique. Verify preview, affix pool, LP and actual drop identity. |
+| Search partial/case-insensitive names, translated names and aliases; `seed helmet`; unmatched query; clear search | Every query word matches name/category/rarity/aliases. Empty results show No matching items and do not alter selection. Clearing search shows the selected category/rarity list. Switch locale and reopen the menu; labels/search refresh. |
+| Same-name items, base items and set items; choose a new result after customizing another item | Stable IDs select the right item, never a name collision. Dependent catalogs refill and old affix/unique-modifier/corruption choices clear, matching ordinary item selection. Check paged results and both legal/illegal modes. |
 | Legal prefix and suffix slots; mouse wheel, drag and scrollbar | One full-width list containing only that slot's eligible family; reach the last entry and select it. No Previous/Next controls. Smooth drag movement, clipped rows and pinned None. |
 | Legal enchantment, sealed and corruption pickers; search while scrolled, empty results, clear search | Separate Prefix/Suffix lists scroll independently; search resets both positions. None remains available, including zero results. Switching from a full-width picker restores both columns correctly. |
 | Unique with all ordinary/sealed affixes None and no corruption affix | With Corrupted: No, LP input and Fixed/Random are editable; dedicated unique modifiers alone keep them editable. With Corrupted: Yes, LP remains disabled/zero even when every affix is None: native corruption removes LP independently of transferred affixes. Turn corruption off and confirm LP becomes editable again. |

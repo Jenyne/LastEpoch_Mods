@@ -1,6 +1,6 @@
 # Force Drop Illegal Mode and Primordial sealed tiers
 
-Branch: `feat/force-drop`, combining `feat/force-drop-illegal-mode` and `fix/force-drop-legal-affixes` (including the final LP correction). Previous testing branches remain available.
+Branch: `feat/force-drop`, combining `feat/force-drop-illegal-mode` and `fix/force-drop-legal-affixes` (including the final LP correction). Their histories are preserved in this combined branch; use it for all new Force Drop work.
 
 The current Force Drop layout stays in use. Its new themed **Illegal mode** checkbox starts off. Changing mode clears ordinary/sealed/corruption selections so an illegal selection cannot leak into Legal Mode. Item identity and the exclusive unique modifier controls remain separate.
 
@@ -22,7 +22,7 @@ Illegal means gameplay eligibility is bypassed. It does not promise the game can
 
 ## Install the testing build
 
-Close Last Epoch. Fetch and run `scripts/Test-LastEpochBranches.ps1` from `chore/test-queue-runner`, then choose **2**. Entries 1 and 2 install the same current `feat/force-drop` build with different checklists. The older dedicated illegal script targets its historical branch.
+Close Last Epoch. Fetch and run `scripts/Test-LastEpochBranches.ps1` from `chore/test-queue-runner`, then choose **1**. Selection 1 installs the combined `feat/force-drop` build; selection 2 is retired. The older dedicated illegal script targets its historical branch.
 
 The script switches/updates the named branch, requires its revision to match origin, builds and runs tests against the fresh DLL, backs up the installed DLL, then installs. A build/test/update failure stops installation.
 
@@ -73,3 +73,9 @@ The container's `dotnet` CLI cannot initialize its process-information API, so c
 - Legal ordinary prefix/suffix slots use one full-width list; legal enchantment, sealed and corruption pools use two columns. Reopen between layouts and check search resets, clipping, pinned None and exact legal eligibility. Corrupted: Yes still disables LP with every affix None; Corrupted: No unlocks LP once every ordinary affix is cleared.
 
 For this legal scrolling follow-up, the game-independent suite reports 1,156 passed with six SDK-dependent skips. Formatting and diff checks pass. Native compilation and in-game UI checks remain pending in the current workspace.
+
+## Global item search
+
+Use Search all items before choosing category/rarity. Choosing a result fills category, rarity and item by exact native identity. Clearing the query restores the filtered category list. Repeat the [global search checks](TEST_FORCE_DROP_LEGAL_AFFIXES.md#in-game-checks) with Illegal Mode enabled and retest reset/LP/unique-variant behavior. Search does not change the affix or drop rules.
+
+Latest checks: 1,164 core/source tests passed; six SDK-dependent checks skipped. Search UI/native compilation and actual drops require the Windows guarded build and in-game testing.

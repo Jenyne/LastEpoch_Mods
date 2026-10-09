@@ -399,5 +399,8 @@
   "Affix 1": "옵션 1",
   "Affix 2": "옵션 2",
   "Affix 3": "옵션 3",
-  "Affix 4": "옵션 4"
+  "Affix 4": "옵션 4",
+  "Search all items": "모든 아이템 검색",
+  "No matching items": "일치하는 아이템 없음",
+  "Item unavailable. Search again or choose an item manually.": "아이템을 사용할 수 없습니다. 다시 검색하거나 직접 선택하세요."
 }

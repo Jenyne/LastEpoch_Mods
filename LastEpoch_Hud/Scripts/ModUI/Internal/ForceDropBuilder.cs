@@ -51,7 +51,8 @@ public static class ForceDropBuilder
     static Text preview,
         status,
         pickerTitle,
-        corruptionSelectedLabel;
+        corruptionSelectedLabel,
+        itemSearchStatus;
     static Button typeButton,
         rarityButton,
         dropButton,
@@ -76,6 +77,11 @@ public static class ForceDropBuilder
     static readonly List<Choice> choices = new List<Choice>();
     static readonly List<Choice> filtered = new List<Choice>();
     static readonly List<int> itemIndexes = new List<int>();
+    static List<NativeItemNames.SearchChoice> allItems;
+    static readonly List<NativeItemNames.SearchChoice> itemMatches = new();
+    static string lastCatalogKey = "";
+    static bool SearchAllItems => !string.IsNullOrWhiteSpace(search.text);
+    static int VisibleItemCount => SearchAllItems ? itemMatches.Count : itemIndexes.Count;
     static readonly List<Number> numbers = new List<Number>();
     static readonly AffixRow[] rows = new AffixRow[5];
     static Number forging,
@@ -301,7 +307,13 @@ public static class ForceDropBuilder
         foreach (var n in numbers)
             n.Read();
         string signature =
-            FD.item_type + ":" + FD.item_rarity + ":" + FD.items_dropdown.options.Count;
+            FD.item_type
+            + ":"
+            + FD.item_rarity
+            + ":"
+            + FD.items_dropdown.options.Count
+            + ":"
+            + NativeItemNames.CatalogKey;
         if (lastSearch != search.text || lastItems != signature)
         {
             lastSearch = search.text;
@@ -475,7 +487,7 @@ public static class ForceDropBuilder
         var middle = Panel(root, "Customize", 0.30f, 0.02f, 0.73f, 0.945f);
         var right = Panel(root, "Preview", 0.74f, 0.02f, 0.99f, 0.945f);
         Label(left, "Choose item", .03f, .95f, .97f, .99f, 18);
-        Label(left, "Search items", .03f, .90f, .97f, .94f);
+        Label(left, "Search all items", .03f, .90f, .97f, .94f);
         search = Input(left, "Item search", .03f, .84f, .97f, .89f, "", false);
         typeButton = Button(
             left,
@@ -510,6 +522,7 @@ public static class ForceDropBuilder
                 )
             );
         }
+        itemSearchStatus = Label(left, "", .03f, .10f, .97f, .15f, 12);
         Button(
             left,
             "Previous",
@@ -532,7 +545,7 @@ public static class ForceDropBuilder
             .09f,
             () =>
             {
-                if ((itemPage + 1) * 12 < itemIndexes.Count)
+                if ((itemPage + 1) * 12 < VisibleItemCount)
                     itemPage++;
                 RefreshItems();
             }
@@ -784,30 +797,57 @@ public static class ForceDropBuilder
     {
         nativeItems = NativeItemNames.Items(FD.items_dropdown, FD.item_type, FD.item_rarity);
         itemIndexes.Clear();
-        for (int i = 1; i < FD.items_dropdown.options.Count; i++)
+        itemMatches.Clear();
+        if (SearchAllItems)
         {
-            string raw = FD.items_dropdown.options[i].text;
-            nativeItems.TryGetValue(i, out var item);
-            if (
-                NativeItemNames.Matches(
-                    search.text,
-                    item == null ? raw : item.name,
-                    item == null ? raw : item.aliases
-                )
-            )
-                itemIndexes.Add(i);
+            string key = NativeItemNames.CatalogKey;
+            if (allItems == null || lastCatalogKey != key)
+            {
+                allItems = NativeItemNames.SearchCatalog(nativeCategories);
+                lastCatalogKey = NativeItemNames.CatalogKey;
+            }
+            foreach (var item in allItems)
+                if (ForceDropItemSearch.Matches(search.text, item.item.name, item.aliases))
+                    itemMatches.Add(item);
         }
+        else
+            for (int i = 1; i < FD.items_dropdown.options.Count; i++)
+                itemIndexes.Add(i);
+        itemSearchStatus.text =
+            SearchAllItems && VisibleItemCount == 0 ? L("No matching items") : "";
+        var identity = new ForceDropItemIdentity(
+            FD.item_type,
+            FD.item_subtype,
+            FD.item_rarity,
+            FD.item_unique_id
+        );
         for (int slot = 0; slot < itemButtons.Count; slot++)
         {
             int index = itemPage * 12 + slot;
-            itemButtons[slot].gameObject.SetActive(index < itemIndexes.Count);
-            if (index < itemIndexes.Count)
+            itemButtons[slot].gameObject.SetActive(index < VisibleItemCount);
+            if (index < VisibleItemCount)
             {
-                bool selected = itemIndexes[index] == FD.items_dropdown.value;
-                Caption(
-                    itemButtons[slot],
-                    (selected ? "Selected: " : "") + ItemName(itemIndexes[index])
-                );
+                var match = SearchAllItems ? itemMatches[index] : null;
+                bool selected =
+                    FD.items_dropdown.value > 0
+                    && (
+                        match == null
+                            ? itemIndexes[index] == FD.items_dropdown.value
+                            : match.Identity == identity
+                    );
+                string name =
+                    match == null
+                        ? ItemName(itemIndexes[index])
+                        : match.item.name
+                            + " — "
+                            + match.category.name
+                            + " / "
+                            + NativeItemNames.RarityName(match.RarityLabel);
+                Caption(itemButtons[slot], (selected ? "Selected: " : "") + name);
+                var label = itemButtons[slot].GetComponentInChildren<Text>(true);
+                label.resizeTextForBestFit = SearchAllItems;
+                label.resizeTextMinSize = 10;
+                label.resizeTextMaxSize = 15;
                 itemButtons[slot].GetComponent<Image>().color = selected
                     ? new Color(.29f, .24f, .13f)
                     : dark;
@@ -821,14 +861,20 @@ public static class ForceDropBuilder
     static void ChooseItem(int slot)
     {
         int i = itemPage * 12 + slot;
-        if (i >= itemIndexes.Count)
+        if (i >= VisibleItemCount)
             return;
-        int option = itemIndexes[i];
-        FD.items_dropdown.SetValueWithoutNotify(option);
-        if (nativeItems.TryGetValue(option, out var item))
-            NativeItemNames.SelectItem(item);
+        bool selected = true;
+        if (SearchAllItems)
+            selected = NativeItemNames.SelectSearchChoice(itemMatches[i]);
         else
-            FD.SelectItem();
+        {
+            int option = itemIndexes[i];
+            FD.items_dropdown.SetValueWithoutNotify(option);
+            if (nativeItems.TryGetValue(option, out var item))
+                NativeItemNames.SelectItem(item);
+            else
+                FD.SelectItem();
+        }
         ResetRage();
         RefreshItems();
         foreach (var row in rows)
@@ -845,7 +891,7 @@ public static class ForceDropBuilder
                 ? "Corrupted affix: None"
                 : "Corrupted affix API unavailable"
         );
-        result = "";
+        result = selected ? "" : "Item unavailable. Search again or choose an item manually.";
     }
 
     static UniqueList.Entry SelectedRageEntry()
@@ -1811,6 +1857,7 @@ public static class ForceDropBuilder
         lastModLocale = modLocale;
         lastCategoryCount = categoryCount;
         nativeCategories = NativeItemNames.Categories(FD.type_dropdown);
+        allItems = null;
         lastItems = "";
         lastSearch = "";
         itemPage = 0;
