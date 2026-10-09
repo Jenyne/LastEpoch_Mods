@@ -23,9 +23,13 @@ internal static class HeadhunterKillHandler
             return;
         }
 
+        HeadhunterTimerPause.ApplyPending();
         HeadhunterBuffSink.FillActive(buffs, HeadhunterConfigLoader.Resolved.Stats, _liveRows);
         IReadOnlyList<BuffAction> actions = mechanic.OnKill(kill, _liveRows);
-        HeadhunterBuffSink.Apply(buffs, actions);
+        HeadhunterBuffSink.Apply(
+            buffs,
+            HeadhunterTimerPause.Freeze.Hold(HeadhunterConfigLoader.Resolved, actions)
+        );
         HeadhunterBuffBar.MarkDirty();
         LogKill(kill, actions);
     }

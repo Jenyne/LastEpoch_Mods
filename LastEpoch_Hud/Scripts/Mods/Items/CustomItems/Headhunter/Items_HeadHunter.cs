@@ -5,6 +5,7 @@ using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Bar;
 using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Buffs;
 using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Kills;
+using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Probe;
 using LastEpoch_Hud.Scripts.ModUI;
 using MelonLoader;
 using UnityEngine;
@@ -29,7 +30,16 @@ public class Items_HeadHunter : MonoBehaviour
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         HeadhunterIconLoads.AllowRetry();
-        if (!HeadhunterRunReset.IsCharacterExit(scene.name))
+        string active = SceneManager.GetActiveScene().name;
+        HeadhunterTimerPause.OnSceneLoaded(active, Time.unscaledTime);
+        HeadhunterProbe.OnSceneLoaded(active, Time.unscaledTime);
+        ResetRunIfCharacterExit(scene.name);
+    }
+
+    /// <summary>Clears the HH run on login/character select.</summary>
+    private static void ResetRunIfCharacterExit(string sceneName)
+    {
+        if (!HeadhunterRunReset.IsCharacterExit(sceneName))
         {
             return;
         }
@@ -46,9 +56,11 @@ public class Items_HeadHunter : MonoBehaviour
         _registrar.Update();
         HeadhunterKillSource.EnsureHooked();
         HeadhunterConfigLoader.ReloadIfChanged(Time.unscaledTime);
+        HeadhunterTimerPause.Tick(Time.unscaledTime);
         HeadhunterBuffBar.Tick(Time.unscaledTime);
         HeadhunterBarHover.Tick();
         HeadhunterHeartbeat.Tick(Time.unscaledTime);
+        HeadhunterProbe.Tick(Time.unscaledTime);
         MonsterModDump.Tick(Time.unscaledTime);
     }
 

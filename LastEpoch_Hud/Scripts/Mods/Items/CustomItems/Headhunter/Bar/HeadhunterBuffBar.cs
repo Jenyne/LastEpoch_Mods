@@ -56,15 +56,21 @@ internal static class HeadhunterBuffBar
         }
 
         HeadhunterResolvedConfig config = HeadhunterConfigLoader.Resolved;
+        HeadhunterTimerPause.ApplyPending();
         float[] remaining = RemainingFor(config.Stats.Count);
         HeadhunterBuffSink.FillRemaining(buffs, config.Stats, remaining);
+        HeadhunterTimerPause.Freeze.ShowFrozen(remaining);
         IReadOnlyList<HeadhunterBarEntry> entries = _model.Build(
             config.Stats,
             remaining,
             HeadhunterConfigLoader.Stacks,
             config.DurationSeconds
         );
-        HeadhunterBuffBarView.Show(entries, HeadhunterConfigLoader.Current.Bar);
+        HeadhunterBuffBarView.Show(
+            entries,
+            HeadhunterConfigLoader.Current.Bar,
+            HeadhunterTimerPause.Freeze.IsHolding
+        );
         HeadhunterModelScaler.Apply(entries.Count);
         HeadhunterAreaBuff.Sync(entries.Count);
         HeadhunterReach.Sync(entries.Count);

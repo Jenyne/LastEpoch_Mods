@@ -9,9 +9,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Bar;
 /// <summary>Owns the bar's own canvas: shows, places and hides the icon slots.</summary>
 internal static class HeadhunterBuffBarView
 {
+    private const float PausedAlpha = 0.45f;
     private static readonly List<HeadhunterBarSlot> _slots = new();
     private static GameObject _root;
     private static RectTransform _panel;
+    private static CanvasGroup _panelGroup;
     private static Canvas _canvas;
     private static Canvas _matchedSource;
     private static UnityEngine.Camera _matchedCamera;
@@ -90,7 +92,8 @@ internal static class HeadhunterBuffBarView
 
     public static void Show(
         IReadOnlyList<HeadhunterBarEntry> entries,
-        HeadhunterBarSettings settings
+        HeadhunterBarSettings settings,
+        bool paused
     )
     {
         if (entries.Count == 0 || !EnsureCreated())
@@ -99,6 +102,7 @@ internal static class HeadhunterBuffBarView
             return;
         }
 
+        _panelGroup.alpha = paused ? PausedAlpha : 1f;
         for (int i = 0; i < entries.Count; i++)
         {
             SlotAt(i).Show(entries[i]);
@@ -181,6 +185,18 @@ internal static class HeadhunterBuffBarView
         _panel.pivot = new Vector2(0.5f, 0f);
         _panel.sizeDelta = new Vector2(20f, HeadhunterBarLayout.EntrySize + 4f);
         panelObject.GetComponent<GridLayoutGroup>().enabled = false;
+        _panelGroup = EnsureGroup(panelObject);
+    }
+
+    private static CanvasGroup EnsureGroup(GameObject panelObject)
+    {
+        CanvasGroup group = panelObject.GetComponent<CanvasGroup>();
+        if (!group.IsNullOrDestroyed())
+        {
+            return group;
+        }
+
+        return panelObject.AddComponent<CanvasGroup>();
     }
 
     private static void ApplyLayout(HeadhunterBarGrid grid)

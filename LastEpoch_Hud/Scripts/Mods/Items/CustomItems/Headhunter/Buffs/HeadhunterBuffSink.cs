@@ -70,12 +70,26 @@ internal static class HeadhunterBuffSink
             case BuffActionKind.Remove:
                 buffs.removeBuffsWithName(action.BuffName);
                 break;
+            case BuffActionKind.SetRemaining:
+                SetRemaining(buffs, action);
+                break;
         }
     }
 
     public static bool IsLive(StatBuffs buffs, string name)
     {
         return TryGetLive(buffs, name, out _);
+    }
+
+    /// <summary>Sets the seconds of a live buff.</summary>
+    private static void SetRemaining(StatBuffs buffs, BuffAction action)
+    {
+        if (!TryGetLive(buffs, action.BuffName, out Buff buff))
+        {
+            return;
+        }
+
+        buff.remainingDuration = action.DurationSeconds;
     }
 
     private static void Refresh(StatBuffs buffs, BuffAction action)
