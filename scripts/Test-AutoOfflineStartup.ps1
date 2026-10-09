@@ -34,6 +34,6 @@ if (Test-Path -LiteralPath $installedDll) {
 }
 New-Item -ItemType Directory -Path (Split-Path -Parent $installedDll) -Force | Out-Null
 Copy-Item -LiteralPath $builtDll -Destination $installedDll -Force
-Write-Host 'Installed the auto-offline test DLL. Existing assets and saves were left in place.'
-Write-Host 'Launch normally. Expect offline character selection without clicking Play Offline.'
+Write-Host 'Installed the manual offline-only test DLL. Existing assets and saves were left in place.'
+Write-Host 'Launch normally and click Play Offline. Automatic offline selection is removed.'
 Write-Host 'Look for [Offline] messages in MelonLoader\Latest.log.'

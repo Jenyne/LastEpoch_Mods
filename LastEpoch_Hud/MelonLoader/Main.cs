@@ -31,6 +31,7 @@ public class Main : MelonLoader.MelonMod
                 BuildInfo.Time
             )
         );
+        LoggerInstance.Msg("[Offline] Click Play Offline to continue. Online actions are blocked.");
     }
 
     public override void OnSceneWasLoaded(int buildIndex, string sceneName)
@@ -49,7 +50,7 @@ public class Main : MelonLoader.MelonMod
         {
             Base.Init();
         }
-        Scripts.Mods.Login.Login_AutoLoginOffline.Tick();
+        Scripts.Mods.Login.Login_OfflineOnly.Tick();
         Scripts.Mods.Login.Login_OfflineCharacterSelect.Tick();
     }
 
