@@ -553,7 +553,8 @@ public static class ForceDropBuilder
             }
         );
         Label(middle, "Customize", .03f, .955f, .55f, .99f, 18);
-        BuildIllegalToggle(middle);
+        // Render the mode toggle above the panels, aligned with Customize header.
+        BuildIllegalToggle(root);
         Button(middle, "Random", .03f, .905f, .32f, .948f, () => Preset(true));
         Button(middle, "Maximum", .35f, .905f, .64f, .948f, () => Preset(false));
         Button(
@@ -1720,7 +1721,9 @@ public static class ForceDropBuilder
         var row = new GameObject("ForceDropIllegalMode");
         row.AddComponent<RectTransform>();
         row.transform.SetParent(parent.transform, false);
-        Rect(row, .66f, .955f, .97f, .99f);
+        // Customize occupies x=.30-.73 and y=.02-.945 of root. Keep this
+        // overlay at root level so it is not clipped or hidden by nested panels.
+        Rect(row, .575f, .902f, .718f, .937f);
         illegalToggle = row.AddComponent<Toggle>();
         var box = new GameObject("Box");
         box.AddComponent<RectTransform>();
@@ -1763,7 +1766,7 @@ public static class ForceDropBuilder
         illegalToggle.targetGraphic = boxImage;
         illegalToggle.graphic = checkImage;
         illegalToggle.SetIsOnWithoutNotify(allowIllegal);
-        Label(row, "Allow Illegal Items", .16f, 0, 1, 1, 14);
+        Label(row, "Allow Illegal Items", .14f, 0, 1, 1, 14);
     }
 
     static void Drop()
