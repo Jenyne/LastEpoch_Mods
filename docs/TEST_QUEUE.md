@@ -35,7 +35,7 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 |---|---|---|---|
 | 1 | `feat/force-drop` | Legal Force Drop / affix coverage | Limited coverage passed; legal scrolling, LP and combined-build regression pending |
 | 2 | `feat/force-drop` | Illegal Force Drop / Primordial T8 | T8/extra Rage persistence confirmed on 5b8199f6; new scroll/cyan UI awaits testing |
-| 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Open: mastery toggle crashes, beyond-chain allocation and combat hover; safer candidate published |
+| 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Open: mastery cap-write boundary removed; allocation pending; hover on hold |
 | 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Graphical trees and item retrieval/preview confirmed; equipment view deferred |
 | 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Open: native locale gate repaired; crafting transaction incomplete |
 | 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | UI recovery added; native build and runtime confirmation pending |
@@ -74,10 +74,10 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 **Where:** Skills > Unlock Other Mastery Trees
 **Branch:** `fix/mastery-lock-ground-tooltips`
 
-- Remove Node Requirements is confirmed working and persistent. Leave it off to isolate this test. Try Unlock Other Mastery Trees with the passive panel closed, then open. The `7a91a7c1` candidate removes the forced native rebuild; reopen/change pages and try allocation beyond the chain. Crash prevention and allocation remain unconfirmed.
-- Normal prerequisites, point costs and rank caps should still apply. Test turning the option off, tree page changes and restart persistence.
-- Hover dropped items during combat/minion attacks with the damage meter hidden, visible but stopped, and recording. Test meter controls/controller casting too.
-- Keep `[MasteryTrace]` toggle/cap/click/spend lines. If it crashes, retain the matching MelonLoader log/native stack. The supplied Player logs show preview errors without a mastery stack. F9 now prioritizes mod-owned/blocking listeners, includes hidden listeners and reports raycaster types/totals; compare idle/combat and all meter states. Four earlier hidden-meter snapshots did not show a meter intercept.
+- Remove Node Requirements is confirmed working/persistent; leave it off. Latest candidate 764ea599 removes the native global-cap write after two runs stopped at the 22->45 write boundary. Toggle Unlock Other Mastery Trees with the passive tree closed, then open; test off/on, page changes and restart. Crash prevention remains unconfirmed.
+- The global cap stays unchanged. This is a crash-isolation candidate, not a completed allocation bypass. Try beyond-chain nodes with adequate prerequisites and points, and report whether a real point is spent. Check selected mastery, innate bonus, point costs and rank caps.
+- Keep `[MasteryTrace]` toggle, Visual unlock active, click/spend lines and the once-per-run `[MasteryApi]` method signatures. If it crashes again, keep the matching MelonLoader log and native crash stack.
+- Hover investigation is on hold at the user's request. Existing hover implementation is unchanged; no F9 test is requested in this pass.
 
 [Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/fix/mastery-lock-ground-tooltips/docs/TEST_MASTERY_LOCK_AND_TOOLTIPS.md)
 
@@ -218,7 +218,7 @@ Current development priorities and remaining work are tracked in [DEV_TODO.md](D
 - On `5b8199f6`, screenshots showed four ordinary T8 affixes, seals/corruption, retained item identity and additional distinct Rage modifiers. Nyk confirmed persistence. Individual gameplay effects and broader legal-mode regression remain open.
 - The combined build adds cyan idol affixes in Illegal Mode, independent Prefix/Suffix scrolling and full-width legal prefix/suffix scrolling, with pinned None and scrollbar handles. These new UI changes await in-game confirmation; earlier persistence confirmation does not certify this build.
 - Legal Force Drop had limited successful coverage tests. The LP correction is included in the combined branch but still needs a final regression: transferred ordinary affixes consume/disable LP; clearing them re-enables LP; dedicated ring/glove modifiers alone preserve it.
-- Build 3: Remove Node Requirements works and persists. Unlock Other Mastery Trees repeatedly crashes on clicking; beyond-chain allocation and combat loot hover still fail. Published `7a91a7c1` removes synchronous native tree rebuilding and improves F9 evidence, with 1,007 core/source tests passed and six SDK checks skipped. Native compilation/runtime remain pending. The Player preview errors did not identify the mastery crash; hidden-meter F9 snapshots did not show a meter intercept.
+- Build 3: Remove Node Requirements works/persists. Two 7a91 runs stop immediately after requesting the native cap write 22→45. Published `764ea599` removes that write and logs read-only allocation-check signatures. Crash prevention is unconfirmed; beyond-chain allocation may still be blocked. Hover is on hold. 999 core/source tests passed; six SDK checks skipped. Native compilation/runtime remain pending.
 - Build 4 graphical trees are much better; item retrieval/preview is confirmed. Equipment presentation improvements are deferred.
 - Build 5 failed at runtime: normal crafting still stops at T5. The missing `Force Crafted Affix Roll` locale key is fixed; it was not the runtime ceiling fix.
 - Build 6 has no visible Natural Drop Rates sliders. Rate behavior and persistence remain unconfirmed.

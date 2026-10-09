@@ -41,13 +41,13 @@ $queueJson = @'
     "id": 3,
     "title": "Mastery chains / combat ground-item hover",
     "branch": "fix/mastery-lock-ground-tooltips",
-    "status": "Open: mastery toggle crashes, beyond-chain allocation and combat hover; safer candidate published",
+    "status": "Open: mastery cap-write boundary removed; allocation pending; hover on hold",
     "location": "Skills > Unlock Other Mastery Trees",
     "checks": [
-      "Remove Node Requirements is user-confirmed working/persistent; leave it off for this test. Toggle Unlock Other Mastery Trees first with the passive tree closed, then open. The candidate removes the forced native tree rebuild. Reopen/change pages and try beyond-chain allocation in both other trees; crash prevention and allocation are not yet confirmed.",
-      "Normal prerequisites, point costs and rank caps should still apply. Test turning the option off, tree page changes and restart persistence.",
-      "Hover dropped items during combat/minion attacks with the damage meter hidden, visible but stopped, and recording. Test meter controls/controller casting too.",
-      "Keep [MasteryTrace] toggle request, cap request/write, click and spend lines. Press F9 over the same ground item idle/in combat with meter hidden/visible/stopped/recording. New [HoverTrace] prioritizes mod-owned/blocking listeners, includes hidden listeners, raycaster types and active/blocking totals. The earlier four hidden-meter snapshots did not show a meter intercept. If it crashes, retain the matching MelonLoader log/native stack; supplied Player preview errors did not locate the toggle crash."
+      "Remove Node Requirements is confirmed working/persistent; leave it off. Latest candidate 764ea599 removes the native global-cap write after two runs stopped at the 22->45 write boundary. Toggle Unlock Other Mastery Trees with the passive tree closed, then open; test off/on, page changes and restart. Crash prevention remains unconfirmed.",
+      "The global cap stays unchanged. This is a crash-isolation candidate, not a completed allocation bypass. Try beyond-chain nodes with adequate prerequisites and points, and report whether a real point is spent. Check selected mastery, innate bonus, point costs and rank caps.",
+      "Keep [MasteryTrace] toggle, Visual unlock active, click/spend lines and the once-per-run [MasteryApi] method signatures. If it crashes again, keep the matching MelonLoader log and native crash stack.",
+      "Hover investigation is on hold at the user's request. Existing hover implementation is unchanged; no F9 test is requested in this pass."
     ]
   },
   {
