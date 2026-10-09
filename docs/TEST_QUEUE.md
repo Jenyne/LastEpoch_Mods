@@ -42,6 +42,7 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 | 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Done for now; confirmed working, deeper investigation deferred |
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
 | 9 | `master` | Current main baseline | Baseline/control build |
+| 10 | `feat/gold-favourites-session-stats` | Fixed gold, favourite waypoints, XP/Favour/Amber counters | Implemented; native build and gameplay pending |
 
 ## 1. Legal Force Drop / affix coverage
 
@@ -145,6 +146,20 @@ Done for now at the user's request. The following checklist is retained for opti
 
 - Use this to compare behavior with current main after testing a feature branch.
 - Each selection installs one branch DLL; this runner does not combine pending features.
+
+## 10. Gold, favourite teleports and session counters
+
+**Where:** Character > Cheats > Currencies; Scenes > Misc (scroll)
+**Branch:** `feat/gold-favourites-session-stats` (`87e5d8c4`)
+
+- Click Spawn 1,000,000 Gold once with Auto Pickup Gold off, collect the pile, then test with auto-pickup on. Check exactly 1,000,000 per click, including with monster gold multipliers enabled; no runes should be added.
+- Save favourite unlocked waypoints, travel between them, remove/re-add, fill eight slots and restart. Switching to a character without a saved waypoint must reject travel and leave its unlocks alone. Open the world map once if pins are unavailable.
+- Reset counters, farm for 60 active seconds and compare XP/Favour/Memory Amber totals and hourly rates with actual gains. Test level-ups, multipliers/caps, currency spending, manual mod grants, pause/resume/reset, loading/zone continuity and character reset.
+- Scroll Misc to every control, retest Safe Teleport, hide/show the HUD and restart. Check loot hover/casting below the overlay and EN > FR > KO > ZH > EN captions.
+
+[Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/gold-favourites-session-stats/docs/TEST_GOLD_FAVOURITES_SESSION_STATS.md)
+
+Core/locale tests: 1,024 passed, six SDK-dependent checks skipped. Native mod compilation, patch targets and all gameplay behaviours remain unconfirmed. General map-node travel is a separate follow-up.
 
 ## What the runner does
 

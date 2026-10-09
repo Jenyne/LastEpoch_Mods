@@ -120,6 +120,19 @@ $queueJson = @'
       "Use this to compare behavior with current main after testing a feature branch.",
       "Each selection installs one branch DLL; this runner does not combine pending features."
     ]
+  },
+  {
+    "id": 10,
+    "title": "Gold / favourite teleports / session counters",
+    "branch": "feat/gold-favourites-session-stats",
+    "status": "Implemented; native build and gameplay pending",
+    "location": "Character > Cheats > Currencies; Scenes > Misc (scroll)",
+    "checks": [
+      "Click Spawn 1,000,000 Gold once with Auto Pickup Gold off, collect the pile, then test with auto-pickup on. Check exactly 1,000,000 per click with monster gold multipliers enabled; no runes should be added.",
+      "Save favourite unlocked waypoints, travel, remove/re-add, fill eight slots and restart. A character lacking a saved waypoint must be rejected without unlocking it. Open the map once if pins are unavailable.",
+      "Reset counters and farm for 60 active seconds. Compare XP/Favour/Memory Amber totals and rates with actual gains, including level-ups, multipliers/caps, spending and manual mod grants. Test pause/resume/reset, loading/zone continuity and character reset.",
+      "Scroll Misc to all controls, retest Safe Teleport, hide/show the counter HUD and restart. Check loot hover/casting beneath the overlay and EN > FR > KO > ZH > EN captions. See docs/TEST_GOLD_FAVOURITES_SESSION_STATS.md."
+    ]
   }
 ]
 '@
