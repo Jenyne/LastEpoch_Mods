@@ -47,6 +47,17 @@ public sealed class SceneTravelProgress
         return true;
     }
 
+    // A rejected load has no async operation to finish. Only release the guard when
+    // the caller verifies that the source is intact and no destination was loaded.
+    public bool LoadRejected(string reason, bool sourceRetained, bool targetAbsent)
+    {
+        if (Phase != SceneTravelPhase.Loading || !sourceRetained || !targetAbsent)
+            return false;
+        Failure = reason ?? "Scene loading did not start";
+        Phase = SceneTravelPhase.Idle;
+        return true;
+    }
+
     public bool Placed(bool success, double now)
     {
         if (Phase != SceneTravelPhase.Placing || !success || !double.IsFinite(now))

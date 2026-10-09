@@ -5,6 +5,49 @@ namespace LastEpoch_Hud.Tests.Core.QualityOfLife;
 public sealed class SceneTravelProgressTests
 {
     [Fact]
+    public void RejectedLoadReleasesGuardWithoutWaitingForAnOperationThatNeverStarted()
+    {
+        var travel = new SceneTravelProgress();
+        Assert.True(travel.Begin("EoT", "WE502", 0));
+        Assert.True(travel.LoadRejected("Scene loading did not start", true, true));
+        Assert.Equal("Scene loading did not start", travel.Failure);
+        Assert.False(travel.Busy);
+        Assert.False(travel.CanUnloadSource);
+        Assert.True(travel.Begin("EoT", "Bazaar", 1));
+    }
+
+    [Theory]
+    [InlineData(false, true)]
+    [InlineData(true, false)]
+    [InlineData(false, false)]
+    public void RejectedLoadCannotReleaseGuardWithoutVerifiedSourceAndAbsentTarget(
+        bool sourceRetained,
+        bool targetAbsent
+    )
+    {
+        var travel = new SceneTravelProgress();
+        travel.Begin("EoT", "CampaignArea", 0);
+        Assert.False(travel.LoadRejected("rejected", sourceRetained, targetAbsent));
+        Assert.True(travel.Busy);
+        Assert.False(travel.CanUnloadSource);
+        Assert.False(travel.Begin("EoT", "Bazaar", 1));
+    }
+
+    [Fact]
+    public void AStartedPlacementOrAcceptedUnloadCannotUseTheRejectedLoadShortcut()
+    {
+        var travel = new SceneTravelProgress();
+        travel.Begin("EoT", "CampaignArea", 0);
+        travel.Loaded(1);
+        Assert.False(travel.LoadRejected("rejected", true, true));
+        Assert.True(travel.Busy);
+        travel.Placed(true, 2);
+        Assert.False(travel.LoadRejected("rejected", true, true));
+        Assert.True(travel.CanUnloadSource);
+        Assert.True(travel.Busy);
+    }
+
+    [Fact]
     public void SourceCannotUnloadUntilLoadAndVerifiedPlacementComplete()
     {
         var travel = new SceneTravelProgress();

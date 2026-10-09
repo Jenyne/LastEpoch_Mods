@@ -2,7 +2,7 @@
 
 Branch: `feat/gold-favourites-session-stats`, based on `master` at `92fb33de`.
 
-These three additions share one test build. Other pending feature branches remain separate.
+These three additions are now merged into `feat/travel-anywhere`, test selection **11**. Selection 10 is retired; the original QoL branch is retained as a historical reference. Other pending feature branches remain separate.
 
 ## Gold button
 
@@ -56,3 +56,5 @@ The HUD shows session time, positive XP/Favour/Memory Amber gains and average ra
 Upstream commit `65b8e77b348ed0f2c1420ff6bdfc118386df0bea` (2026-10-04) deliberately hides the old scene picker and replaces direct additive scene loading/player placement with the native waypoint transition service. The previous helper called `LoadSceneAsync`, `TryPlacePlayerAtSpawn(..., 0, ...)` and unloaded the old scene. The current helper resolves a map waypoint gate, with gate zero as its fallback.
 
 Restoring a general scene selector is a contained UI task. Supporting click-to-travel on every world-map node additionally needs native map-node/gate and scene-entry validation, especially locations without a waypoint and progression/instance-specific areas. The old direct-loader path needs a current-game regression before reuse. This build adds favourite unlocked waypoints; general map-node travel remains a separate follow-up, not a confirmed restored feature.
+
+Combined-build follow-up (2026-10-09): user confirmed map Travel Anywhere on `2466cc0a`. The full scene picker is removed, and its failed-load busy state is corrected. Preset keys and saved unlocked-waypoint favourites use the native waypoint route; saved non-waypoint areas use the guarded direct route only with Travel Anywhere enabled. Rebuild selection 11 to retest key teleports after failed/rejected travel.

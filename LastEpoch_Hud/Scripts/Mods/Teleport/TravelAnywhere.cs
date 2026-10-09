@@ -18,8 +18,7 @@ public class TravelAnywhere : MonoBehaviour
 
     public static TravelAnywhere Instance { get; private set; }
     public static bool Busy => !Instance.IsNullOrDestroyed() && Instance.progress.Busy;
-    public static string Status { get; private set; } =
-        "Choose an area, or right-click a map node when enabled.";
+    public static string Status { get; private set; } = "Use the world map to travel when enabled.";
 
     readonly SceneTravelProgress progress = new();
     Scene source;
@@ -114,7 +113,7 @@ public class TravelAnywhere : MonoBehaviour
             "[TravelAnywhere] Load " + source.name + " -> " + scene + "; gate=" + gate
         );
         loading = SceneManager.LoadSceneAsync(scene, LoadSceneMode.Additive);
-        if (loading.IsNullOrDestroyed())
+        if (loading == null)
         {
             Fail("Scene loading did not start.");
             return false;
@@ -181,7 +180,7 @@ public class TravelAnywhere : MonoBehaviour
         {
             if (progress.Expired(now, 30))
                 Fail("Destination loading timed out.");
-            else if (!loading.IsNullOrDestroyed() && loading.isDone)
+            else if (loading != null && loading.isDone)
             {
                 target = SceneManager.GetSceneByName(progress.Target);
                 if (!target.IsValid() || !target.isLoaded)
@@ -221,11 +220,7 @@ public class TravelAnywhere : MonoBehaviour
                     "[TravelAnywhere] Source cleanup still pending; further travel blocked."
                 );
             }
-            if (
-                source.isLoaded
-                && cleanup.IsNullOrDestroyed()
-                && Time.realtimeSinceStartup >= nextCleanup
-            )
+            if (source.isLoaded && cleanup == null && Time.realtimeSinceStartup >= nextCleanup)
             {
                 nextCleanup = Time.realtimeSinceStartup + 1;
                 cleanup = SceneManager.UnloadSceneAsync(source);
@@ -302,6 +297,37 @@ public class TravelAnywhere : MonoBehaviour
 
     void Fail(string reason)
     {
+        if (
+            progress.Phase == SceneTravelPhase.Loading
+            && loading == null
+            && !touchedPlayer
+            && !movedPlayer
+        )
+        {
+            target = SceneManager.GetSceneByName(progress.Target);
+            var current = SceneManager.GetActiveScene();
+            var local = PlayerFinder.getPlayerActor();
+            bool sourceRetained =
+                source.IsValid()
+                && source.isLoaded
+                && current.handle == source.handle
+                && !traveller.IsNullOrDestroyed()
+                && !local.IsNullOrDestroyed()
+                && local.Pointer == traveller.Pointer;
+            if (
+                progress.LoadRejected(reason, sourceRetained, !target.IsValid() || !target.isLoaded)
+            )
+            {
+                Status = "Travel failed; original area retained. See the mod log.";
+                Main.logger_instance?.Warning(
+                    "[TravelAnywhere] "
+                        + reason
+                        + "; no load started; source retained; travel guard released."
+                );
+                ClearNativeRefs();
+                return;
+            }
+        }
         if (!progress.Recover(reason, Time.realtimeSinceStartup))
             return;
         Status = "Travel failed; restoring the original area...";
@@ -332,7 +358,7 @@ public class TravelAnywhere : MonoBehaviour
             return;
         // LoadSceneAsync has no cancellation API. Wait for a timed-out load to finish
         // before removing its destination; retain the busy guard throughout cleanup.
-        if (!loading.IsNullOrDestroyed() && !loading.isDone)
+        if (loading != null && !loading.isDone)
         {
             Status = "Original area retained; waiting for destination cleanup.";
             return;
@@ -356,7 +382,7 @@ public class TravelAnywhere : MonoBehaviour
             Status = "Recovery paused because the local player changed. See the mod log.";
             return;
         }
-        if (cleanup.IsNullOrDestroyed() && Time.realtimeSinceStartup >= nextCleanup)
+        if (cleanup == null && Time.realtimeSinceStartup >= nextCleanup)
         {
             nextCleanup = Time.realtimeSinceStartup + 1;
             cleanup = SceneManager.UnloadSceneAsync(target);

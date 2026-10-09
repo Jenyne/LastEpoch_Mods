@@ -106,6 +106,11 @@ internal static class FavouriteTeleports
 
     public static void Travel(string scene)
     {
+        if (Teleport_ToScene.CanTravelToUnlockedWaypoint(scene))
+        {
+            TravelWaypoint(scene);
+            return;
+        }
         if (ModUI.ModSettings.TravelAnywhere.Enabled.Value)
         {
             TravelAnywhere.StartTravel(scene);
