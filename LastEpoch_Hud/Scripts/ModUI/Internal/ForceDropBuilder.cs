@@ -192,6 +192,7 @@ public static class ForceDropBuilder
         public int group;
         public string name;
         public string aliases;
+
         // Five-bit class compatibility mask for affix choices; -1 for other choices.
         public int classMask = -1;
         public Action select;
