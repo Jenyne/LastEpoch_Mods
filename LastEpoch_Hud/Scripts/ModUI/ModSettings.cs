@@ -82,8 +82,12 @@ public static class ModSettings
             format: DisplayFormat.Percent,
             label: "Force Crafted Affix Roll"
         );
-        public static readonly BoolSetting GuaranteedGlyphOfHope = Group.Bool("GuaranteedGlyphOfHope");
-        public static readonly BoolSetting GuaranteedGlyphOfDespair = Group.Bool("GuaranteedGlyphOfDespair");
+        public static readonly BoolSetting GuaranteedGlyphOfHope = Group.Bool(
+            "GuaranteedGlyphOfHope"
+        );
+        public static readonly BoolSetting GuaranteedGlyphOfDespair = Group.Bool(
+            "GuaranteedGlyphOfDespair"
+        );
     }
 
     public static class Weaver
