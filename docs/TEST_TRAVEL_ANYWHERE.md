@@ -68,6 +68,7 @@ Keep the complete log and exact commit. Expected bounded lines are `[TravelAnywh
 
 ## Recorded verification
 
+- The Windows build of `5744c5b7` failed before installation with CS1061: the generated `IList<SceneDetails>` wrapper does not expose inherited `Count`. The fix reads `Count` through its native `ICollection<SceneDetails>` interface and retains the list indexer. It uses the actual collection size, not a fixed scene count. Rebuild selection 11 against the installed SDK; this correction has not yet been validated by a native build.
 - Direct Roslyn/.NET 8 execution: **1,064 passed, six SDK-dependent checks skipped**, zero failures. Includes 40 new cases for historical destination exclusions, generated-area sources and transition ordering/failure/recovery.
 - Changed C# source checked with CSharpier; whitespace and locale JSON checks passed. The menu/right-click follow-up changes four C# files; unrelated locale entries are preserved while the map guidance is updated in all five locales.
 - The compiled historical API and source were compared. No old DLL was installed or executed.

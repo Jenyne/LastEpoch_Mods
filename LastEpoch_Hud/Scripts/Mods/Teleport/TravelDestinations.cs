@@ -21,13 +21,23 @@ internal static class TravelDestinations
         var list = Refs_Manager.scene_list;
         if (list.IsNullOrDestroyed())
             list = SceneList.instance;
-        if (list.IsNullOrDestroyed() || list.scenes == null)
+        if (list.IsNullOrDestroyed())
             return;
+        var scenes = list.scenes;
+        if (scenes == null)
+            return;
+        // Generated IL2CPP interface wrappers do not expose inherited members.
+        // IList supplies the indexer; ICollection supplies the native count.
+        var collection =
+            scenes.TryCast<Il2CppSystem.Collections.Generic.ICollection<SceneDetails>>();
+        if (collection == null)
+            return;
+        int count = collection.Count;
         var updated = new List<Destination>();
         var names = new HashSet<string>(StringComparer.Ordinal);
-        for (int i = 0; i < list.scenes.Count; i++)
+        for (int i = 0; i < count; i++)
         {
-            var details = list.scenes[i];
+            var details = scenes[i];
             if (
                 details.IsNullOrDestroyed()
                 || !TravelSceneRules.IsDestination(details.Name)
