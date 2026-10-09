@@ -19,7 +19,7 @@ public class TravelAnywhere : MonoBehaviour
     public static TravelAnywhere Instance { get; private set; }
     public static bool Busy => !Instance.IsNullOrDestroyed() && Instance.progress.Busy;
     public static string Status { get; private set; } =
-        "Choose an area, or click a map node when enabled.";
+        "Choose an area, or right-click a map node when enabled.";
 
     readonly SceneTravelProgress progress = new();
     Scene source;
@@ -36,6 +36,13 @@ public class TravelAnywhere : MonoBehaviour
     float nextCleanup;
 
     void Awake() => Instance = this;
+
+    void OnDestroy()
+    {
+        TravelMapWaypoints.RestoreAll(true);
+        if (Instance == this)
+            Instance = null;
+    }
 
     public static bool StartTravel(string scene, int entrance = 0)
     {
@@ -119,6 +126,7 @@ public class TravelAnywhere : MonoBehaviour
     {
         try
         {
+            TravelMapWaypoints.Tick();
             HandleMapClick();
             TickTravel();
             TravelAnywhereControls.Tick();
@@ -140,7 +148,7 @@ public class TravelAnywhere : MonoBehaviour
         if (
             Busy
             || !ModSettings.TravelAnywhere.Enabled.Value
-            || !Input.GetMouseButtonDown(0)
+            || !Input.GetMouseButtonDown(1)
             || Refs_Manager.game_uibase.IsNullOrDestroyed()
             || !Refs_Manager.game_uibase.IsWorldMapPanelOpen()
         )
@@ -148,7 +156,11 @@ public class TravelAnywhere : MonoBehaviour
         var events = EventSystem.current;
         if (events.IsNullOrDestroyed())
             return;
-        var pointer = new PointerEventData(events) { position = Input.mousePosition };
+        var pointer = new PointerEventData(events)
+        {
+            position = Input.mousePosition,
+            button = PointerEventData.InputButton.Right,
+        };
         var hits = new Il2CppSystem.Collections.Generic.List<RaycastResult>();
         events.RaycastAll(pointer, hits);
         // Use the frontmost graphic only. A popup above the map must block travel.
@@ -156,7 +168,10 @@ public class TravelAnywhere : MonoBehaviour
             return;
         var pin = hits[0].gameObject.GetComponentInParent<UIWaypoint>();
         if (!pin.IsNullOrDestroyed())
+        {
+            TravelMapWaypoints.Prepare(pin);
             StartTravel(pin.sceneName, pin.gate);
+        }
     }
 
     void TickTravel()
@@ -364,6 +379,14 @@ public class TravelAnywhere : MonoBehaviour
             // while an additive load/cleanup is still pending.
             if (Busy)
                 return false;
+            if (
+                !ModSettings.TravelAnywhere.Enabled.Value
+                && TravelMapWaypoints.BlocksStaleNativeAction(__instance)
+            )
+            {
+                Status = "Enable Travel Anywhere first.";
+                return false;
+            }
             if (
                 !ModSettings.TravelAnywhere.Enabled.Value
                 || !Scenes.IsGameScene()

@@ -413,7 +413,7 @@
   "Refresh": "새로고침",
   "Select an area": "지역 선택",
   "Favourite current area": "현재 지역 즐겨찾기",
-  "Choose an area, or click a map node when enabled.": "지역을 선택하거나 활성화 후 지도에서 지역을 클릭하세요.",
+  "Choose an area, or right-click a map node when enabled.": "지역을 선택하거나 활성화 상태에서 지도 노드를 우클릭하세요.",
   "Travel is not ready.": "순간이동을 아직 사용할 수 없습니다.",
   "Enable Travel Anywhere first.": "먼저 자유 순간이동을 활성화하세요.",
   "This area is not available for direct travel.": "이 지역은 직접 순간이동할 수 없습니다.",

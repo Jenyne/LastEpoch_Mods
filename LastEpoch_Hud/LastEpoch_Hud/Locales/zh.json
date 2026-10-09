@@ -413,7 +413,7 @@
   "Refresh": "刷新",
   "Select an area": "选择区域",
   "Favourite current area": "收藏当前区域",
-  "Choose an area, or click a map node when enabled.": "选择区域，或在启用后点击地图地点。",
+  "Choose an area, or right-click a map node when enabled.": "选择区域，或在启用后右键点击地图节点。",
   "Travel is not ready.": "传送尚未就绪。",
   "Enable Travel Anywhere first.": "请先启用自由传送。",
   "This area is not available for direct travel.": "此区域无法直接传送。",

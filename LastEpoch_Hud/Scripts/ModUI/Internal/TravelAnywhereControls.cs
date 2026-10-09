@@ -53,6 +53,7 @@ internal static class TravelAnywhereControls
                     ModSettings.TravelAnywhere.Enabled.Set(
                         !ModSettings.TravelAnywhere.Enabled.Value
                     );
+                    TravelMapWaypoints.Tick();
                     RefreshStatus();
                 }
             )

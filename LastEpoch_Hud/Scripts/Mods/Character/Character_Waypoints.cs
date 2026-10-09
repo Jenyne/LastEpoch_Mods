@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Mods.Teleport;
 
 namespace LastEpoch_Hud.Scripts.Mods.Character;
 
@@ -30,10 +31,17 @@ public class Character_Waypoints
         [HarmonyPrefix]
         static void Prefix(ref UIWaypointStandard __instance)
         {
+            TravelMapWaypoints.Prepare(__instance);
             if (CanRun())
             {
                 __instance.isActive = true;
             }
+        }
+
+        [HarmonyPostfix]
+        static void Postfix(UIWaypointStandard __instance)
+        {
+            TravelMapWaypoints.Prepare(__instance);
         }
     }
 }

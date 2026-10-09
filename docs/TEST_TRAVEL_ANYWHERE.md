@@ -18,18 +18,22 @@ TryPlacePlayerAtSpawn(Actor, source, destination, int gate,
     out PlayerSpawn, false, true, false)
 ```
 
-It also confirms that `LoadWaypointScene` is declared on **UIWaypoint**, the base class. This is historical API evidence; it does not establish compatibility with the installed 1.5 SDK.
+It also confirms that `LoadWaypointScene`, `isActive` and the scene/gate members belong to **UIWaypoint**, the base class. The current fork already reads `noWaypointInScene` in its waypoint helper. This is source/historical API evidence; it does not establish compatibility with the installed 1.5 SDK.
 
 ## Where and how to use it
 
 Scenes > Misc > Travel Anywhere. The option defaults off and persists in `SaveModUI.json` under `TravelAnywhere.Enabled`.
 
 1. Enable Travel Anywhere.
-2. Select an area and click **Travel to selected area**, or open the world map and left-click a map node.
+2. Select an area and click **Travel to selected area**. On the world map, left-click a node to open its normal area menu and use **Travel**, or right-click the node to request direct travel.
 3. **Refresh** rebuilds the destination list. Native localized area names are used; untranslated new entries remain available.
 4. While enabled, **Favourite current area** can save a non-waypoint area. Its favourite uses the same direct loader. With the option off, favourites return to their unlocked-waypoint rules.
 
-The map-click path reads the frontmost UI hit and requires a `UIWaypoint` parent. A popup over the map blocks clicks. Native waypoint clicks are intercepted while this mode is enabled so a click cannot dispatch both the additive loader and the normal waypoint loader. Map widgets that expose no waypoint component require a later adapter; this build does not assert that every game map widget is covered.
+The map override temporarily sets eligible nodes to `noWaypointInScene = false` and `isActive = true`. It runs before and after the existing standard-node hover handler, and refreshes visible waypoint widgets while the map is open, so the normal menu can offer waypoint travel for a non-waypoint area. Left-click is left to the game; the earlier immediate left-click fallback has been removed. Right-click reads the frontmost UI hit and requires a `UIWaypoint` parent. A popup over the map blocks direct clicks. The menu/native waypoint action is intercepted while enabled so both paths use the same loader without dispatching the normal waypoint service as well.
+
+Original map flags are restored when the option is disabled, the map closes or the component is destroyed. Real saved unlocks and the separate Unlock All Waypoints option are respected. Snapshots are checked against scene identity before restoring a reused widget. An already-open temporary Travel action is blocked after disabling; reopening the menu should rebuild its normal availability. No waypoint is spawned into the physical game area, and no scene is added to the saved unlock list.
+
+Map widgets that expose no waypoint component require a later adapter; this build does not assert that every game map widget is covered. The current native menu may have additional availability or visual checks, so the Travel button and waypoint appearance still need runtime confirmation.
 
 The destination list uses the game scene database and retains the old menu/utility/PCG/arena exclusions. Waypoint existence/unlock and missing localization are not eligibility requirements. This restores static-area selection; generated echo/arena instances remain outside its destination scope. Leaving a generated area for an eligible static area is allowed and still requires a runtime check.
 
@@ -52,7 +56,7 @@ Use test-menu selection **11** after refreshing `chore/test-queue-runner`. The r
 1. **Option off:** check ordinary waypoint travel, unlocked-waypoint favourites, Safe Teleport and the main-quest action retain their existing behaviour. No new map-click travel should occur.
 2. **Picker:** verify the section/dropdown/buttons appear, the popup is usable through the Misc scroll viewport, selection is preserved on Refresh, and close/reopen does not duplicate listeners or controls.
 3. **Non-waypoint area:** select a known campaign location without a waypoint. Confirm correct destination and usable spawn, camera, movement/pathfinding, mobs, damage, XP and loot. Walk through an exit/NPC interaction afterward, then travel back.
-4. **Map:** test a non-waypoint node, a locked waypoint and an unlocked waypoint. Verify one click gives one `[TravelAnywhere] Load` and one completion. Test a popup over a node, the same-area node, each era and controller map/picker navigation.
+4. **Map/menu:** test a non-waypoint node, a locked waypoint and an unlocked waypoint. Left-click must keep opening the normal area menu without the mod starting travel; confirm its waypoint/Travel controls become usable while enabled, then travel from that menu. Right-click each node and verify one `[TravelAnywhere] Load` and one completion. Test a popup over a node, the same-area node, each era and controller menu/picker navigation. Disable with a menu already open; its temporary action must be blocked. Reopen it and check ordinary availability. Repeat with Unlock All Waypoints on/off, close/reopen the map and change eras to check flag restoration/reused widgets.
 5. **Spawn gates:** test ordinary gate-zero scenes and nodes with nonzero gates. Check placement actually reaches the selected location rather than another entrance. Missing/unusable spawns should retain the source and report a recovery outcome.
 6. **Busy/recovery:** double-click, click another node while loading, turn the option off during loading and try Safe Teleport. Verify no second load. For a failed/timed-out destination, check the original area remains playable, position/camera/navigation recover and partial destination cleanup finishes before another request is accepted.
 7. **Favourites:** save a non-waypoint area, leave, return using its favourite, remove/re-add and restart. With Travel Anywhere disabled, the non-waypoint favourite must be blocked. Verify no new entries were added to `UnlockedWaypointScenes`.
@@ -65,8 +69,8 @@ Keep the complete log and exact commit. Expected bounded lines are `[TravelAnywh
 ## Recorded verification
 
 - Direct Roslyn/.NET 8 execution: **1,064 passed, six SDK-dependent checks skipped**, zero failures. Includes 40 new cases for historical destination exclusions, generated-area sources and transition ordering/failure/recovery.
-- Changed C# source checked with CSharpier; whitespace and locale JSON checks passed.
+- Changed C# source checked with CSharpier; whitespace and locale JSON checks passed. The menu/right-click follow-up changes four C# files; unrelated locale entries are preserved while the map guidance is updated in all five locales.
 - The compiled historical API and source were compared. No old DLL was installed or executed.
-- Native mod compilation, current SDK signatures/Harmony targets and all gameplay/map/scene-recovery behaviour remain **pending**. Pure tests confirm the protocol rules, not current-game success.
+- Native mod compilation, current SDK signatures/Harmony targets and all gameplay/map/scene-recovery behaviour remain **pending**. Pure tests confirm the protocol rules, not current-game success. Temporary native flags, normal left-click menus, right-click dispatch and stale-menu restoration are not covered by those pure tests; use the runtime checks above.
 
-Unity references used during the review: [additive scene management](https://docs.unity.com/en-us/engine/6000.7/script-reference/unityengine/scenemanagement/scenemanager), [SetActiveScene result](https://docs.unity3d.com/ru/2021.1/ScriptReference/SceneManagement.SceneManager.SetActiveScene.html), [root-only scene transfer](https://docs.unity3d.com/ja/current/ScriptReference/SceneManagement.SceneManager.MoveGameObjectToScene.html), and [async scene unload](https://docs.unity.com/en-us/engine/6000.3/script-reference/unityengine/scenemanagement/scenemanager/unloadsceneasync), and [async operation controls](https://docs.unity3d.com/2021.3/Documentation/ScriptReference/AsyncOperation.html). These describe Unity operations, rather than Last Epoch's service invariants.
+Unity references used during the review: [additive scene management](https://docs.unity.com/en-us/engine/6000.7/script-reference/unityengine/scenemanagement/scenemanager), [SetActiveScene result](https://docs.unity3d.com/ru/2021.1/ScriptReference/SceneManagement.SceneManager.SetActiveScene.html), [root-only scene transfer](https://docs.unity3d.com/ja/current/ScriptReference/SceneManagement.SceneManager.MoveGameObjectToScene.html), and [async scene unload](https://docs.unity.com/en-us/engine/6000.3/script-reference/unityengine/scenemanagement/scenemanager/unloadsceneasync), and [async operation controls](https://docs.unity3d.com/2021.3/Documentation/ScriptReference/AsyncOperation.html). The [Unity pointer-button reference](https://docs.unity.cn/Packages/com.unity.ugui%402.0/api/UnityEngine.EventSystems.PointerEventData.InputButton.html) was also checked for right-click dispatch. These describe Unity operations, rather than Last Epoch's service invariants.

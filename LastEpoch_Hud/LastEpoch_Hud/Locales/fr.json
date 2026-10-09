@@ -402,7 +402,7 @@
   "Refresh": "Actualiser",
   "Select an area": "Choisir une zone",
   "Favourite current area": "Ajouter cette zone aux favoris",
-  "Choose an area, or click a map node when enabled.": "Choisissez une zone, ou cliquez sur un lieu de la carte après activation.",
+  "Choose an area, or right-click a map node when enabled.": "Choisissez une zone ou faites un clic droit sur un nœud de la carte lorsque cette option est activée.",
   "Travel is not ready.": "La téléportation n’est pas prête.",
   "Enable Travel Anywhere first.": "Activez d’abord la téléportation libre.",
   "This area is not available for direct travel.": "Cette zone n’est pas accessible par téléportation directe.",
