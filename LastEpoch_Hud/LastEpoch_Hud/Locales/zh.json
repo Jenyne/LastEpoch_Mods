@@ -407,5 +407,6 @@
   "Already has a sealed affix": "已有封印词缀",
   "Guaranteed Despair cannot seal a second affix.": "必定绝望无法封印第二个词缀。",
   "No Memory Amber Cost": "不消耗记忆琥珀",
-  "Unlimited Idol Altar Uses": "神像祭坛无限使用次数"
+  "Unlimited Idol Altar Uses": "神像祭坛无限使用次数",
+  "No Transform Health Decay": "变形时无生命值流失"
 }

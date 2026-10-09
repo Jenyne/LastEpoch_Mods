@@ -407,5 +407,6 @@
   "Already has a sealed affix": "이미 봉인된 접사가 있습니다",
   "Guaranteed Despair cannot seal a second affix.": "확정 절망으로 두 번째 접사를 봉인할 수 없습니다.",
   "No Memory Amber Cost": "기억의 호박 비용 없음",
-  "Unlimited Idol Altar Uses": "우상 제단 사용 횟수 무제한"
+  "Unlimited Idol Altar Uses": "우상 제단 사용 횟수 무제한",
+  "No Transform Health Decay": "변신 중 생명력 감쇠 없음"
 }
