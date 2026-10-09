@@ -103,7 +103,6 @@ public class Save_Manager : MonoBehaviour
                 Shrines_Override = false, //Change Shrine with another shrines
                 Shrines_Override_id = 0, //see Shrines_Override.cs
             },
-            Login = { Enable_AutoLoginOffline = true },
             Character =
             {
                 Cheats =
@@ -581,7 +580,6 @@ public class Save_Manager : MonoBehaviour
             public string ModVersion;
             public KeyBinds KeyBinds;
             public ModsNotInHud modsNotInHud;
-            public Login Login;
             public Character Character;
             public Cosmetics Cosmetics;
             public Items Items;
@@ -621,13 +619,6 @@ public class Save_Manager : MonoBehaviour
             public bool Shrines_Unlimited;
             public bool Shrines_Override;
             public int Shrines_Override_id;
-        }
-
-        //Login
-        public struct Login
-        {
-            //public bool Enable_Mods;
-            public bool Enable_AutoLoginOffline;
         }
 
         //Character

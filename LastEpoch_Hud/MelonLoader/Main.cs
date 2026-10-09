@@ -49,6 +49,8 @@ public class Main : MelonLoader.MelonMod
         {
             Base.Init();
         }
+        Scripts.Mods.Login.Login_AutoLoginOffline.Tick();
+        Scripts.Mods.Login.Login_OfflineCharacterSelect.Tick();
     }
 
     public override void OnApplicationQuit()
