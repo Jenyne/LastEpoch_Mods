@@ -5,6 +5,7 @@ using System.Text;
 using HarmonyLib;
 using Il2Cpp;
 using Il2CppTMPro;
+using LastEpoch_Hud.Scripts.Core.ForceDrop;
 using UnityEngine;
 using UnityEngine.UI;
 using FD = LastEpoch_Hud.Scripts.Hud_Manager.Content.OdlForceDrop;
@@ -14,8 +15,12 @@ namespace LastEpoch_Hud.Scripts.ModUI;
 // A new view over the existing catalog and item creation code. No asset bundle rebuild.
 public static class ForceDropBuilder
 {
-    static Color gold => HudTheme.AccentBright;
-    static Color dark => HudTheme.InputBackground;
+    static Color gold => HudTheme.Accent;
+    static Color foreground => HudTheme.TextPrimary;
+    static Color dark => HudTheme.Surface;
+    static Color setGreen => HudTheme.ForceDropSetText;
+    static Color corruptionPurple => HudTheme.ForceDropCorruptionText;
+    static Color idolCyan => HudTheme.ForceDropIdolText;
     static readonly Dictionary<int, Action> clicks = new Dictionary<int, Action>();
     static GameObject root,
         basePage,
@@ -27,14 +32,28 @@ public static class ForceDropBuilder
         search,
         pickerSearch;
     static bool categoryPicker,
-        rarityPicker;
+        rarityPicker,
+        scrollAffixPicker;
+
+    // Legal prefix/suffix slots use one full-width column; mixed pools use both.
+    static int affixPickerColumn = -1;
+    const float AffixRowHeight = 40f;
+    static readonly ScrollRect[] columnScrolls = new ScrollRect[2];
+    static readonly Button[] columnClear = new Button[2];
+    static readonly List<Button>[] columnButtons = { new List<Button>(), new List<Button>() };
+    static readonly int[] columnStarts = { -1, -1 };
+    static readonly int[] columnEnds = { -1, -1 };
+    static readonly List<Choice>[] columnChoices = { new List<Choice>(), new List<Choice>() };
+    static readonly Text[] columnTitles = new Text[2];
     static readonly List<Choice> visiblePicks = new List<Choice>();
     static readonly List<Text> pickerHeaders = new List<Text>();
     static readonly string[] groups = { "Weapons", "Armour", "Accessories", "Idols", "Other" };
     static Font font;
     static Text preview,
         status,
-        pickerTitle;
+        pickerTitle,
+        corruptionSelectedLabel,
+        itemSearchStatus;
     static Button typeButton,
         rarityButton,
         dropButton,
@@ -59,6 +78,11 @@ public static class ForceDropBuilder
     static readonly List<Choice> choices = new List<Choice>();
     static readonly List<Choice> filtered = new List<Choice>();
     static readonly List<int> itemIndexes = new List<int>();
+    static List<NativeItemNames.SearchChoice> allItems;
+    static readonly List<NativeItemNames.SearchChoice> itemMatches = new();
+    static string lastCatalogKey = "";
+    static bool SearchAllItems => !string.IsNullOrWhiteSpace(search.text);
+    static int VisibleItemCount => SearchAllItems ? itemMatches.Count : itemIndexes.Count;
     static readonly List<Number> numbers = new List<Number>();
     static readonly AffixRow[] rows = new AffixRow[5];
     static Number forging,
@@ -67,8 +91,9 @@ public static class ForceDropBuilder
         ww;
     static readonly Number[] implicits = new Number[3],
         uniqueRolls = new Number[8];
-    static int itemPage,
-        pickerPage;
+    static int pickerPage;
+    static ScrollRect itemScroll;
+    static int itemScrollStart = -1;
     static string lastSearch = "",
         lastPickerSearch = "",
         lastItems = "";
@@ -80,11 +105,88 @@ public static class ForceDropBuilder
     static Dictionary<int, NativeItemNames.ItemChoice> nativeItems =
         new Dictionary<int, NativeItemNames.ItemChoice>();
     static bool corrupted,
+        allowIllegal,
         failed,
         metadataLogged;
     static float nextCorruptionCheck;
     static string result = "";
+    static Button illegalModeButton;
+    static int RouteMaximum => allowIllegal ? 8 : 7;
     public static bool IsReady => !root.IsNullOrDestroyed();
+
+    static readonly Dictionary<int, ForceDropLegalAffixes> legalContexts =
+        new Dictionary<int, ForceDropLegalAffixes>();
+    static string legalContextKey = "",
+        corruptionPoolKey = "";
+    static ForceDropCorruptionPool corruptionPool;
+    static string corruptionPoolError = "";
+
+    static string SelectionKey()
+    {
+        var key = new StringBuilder()
+            .Append(FD.item_type)
+            .Append(':')
+            .Append(FD.item_subtype)
+            .Append(':')
+            .Append(FD.item_rarity)
+            .Append(':')
+            .Append(FD.item_unique_id)
+            .Append(':')
+            .Append(corrupted)
+            .Append(':')
+            .Append(lp.value)
+            .Append(':')
+            .Append(ww.value);
+        key.Append(':').Append(allowIllegal);
+        foreach (var row in rows)
+            key.Append(':').Append(row.id).Append('/').Append(row.tier.value);
+        foreach (int id in variantIds)
+            key.Append(':').Append(id);
+        return key.ToString();
+    }
+
+    static ForceDropLegalAffixes LegalContext(int editingSlot)
+    {
+        string key = SelectionKey();
+        if (key != legalContextKey)
+        {
+            legalContextKey = key;
+            legalContexts.Clear();
+        }
+        if (!legalContexts.TryGetValue(editingSlot, out var context))
+        {
+            var ids = new List<int>();
+            for (int slot = 0; slot < rows.Length; slot++)
+                if (slot != editingSlot && rows[slot].id >= 0)
+                    ids.Add(rows[slot].id);
+            context = new ForceDropLegalAffixes(FD.item_type, FD.item_subtype, FD.item_rarity, ids);
+            legalContexts[editingSlot] = context;
+        }
+        return context;
+    }
+
+    static ForceDropCorruptionPool CorruptionPool()
+    {
+        string key = SelectionKey();
+        if (key == corruptionPoolKey)
+            return corruptionPool;
+        corruptionPoolKey = key;
+        corruptionPool = null;
+        corruptionPoolError = "";
+        try
+        {
+            var request = ResolveItem(true, false);
+            corruptionPool = new ForceDropCorruptionPool(
+                ForceDropItemCreator.CreateBeforeCorruption(request)
+            );
+            corruptionPoolError = corruptionPool.Error;
+        }
+        catch (Exception ex)
+        {
+            corruptionPoolError = ex.Message;
+        }
+        return corruptionPool;
+    }
 
     sealed class Choice
     {
@@ -92,8 +194,57 @@ public static class ForceDropBuilder
         public int group;
         public string name;
         public string aliases;
+
+        // Five-bit class compatibility mask for affix choices; -1 for other choices.
+        public int classMask = -1;
         public Action select;
+        public ForceDropAffixFamily affixFamily;
+        public bool champion;
+        public bool suffix;
     }
+
+    // Sort by native family, never translated labels. None remains the first
+    // choice regardless of language; names are alphabetical within each family.
+    static int AffixGroup(Choice choice)
+    {
+        if (choice.id < 0)
+            return -1;
+        return choice.affixFamily switch
+        {
+            ForceDropAffixFamily.Standard => 0,
+            ForceDropAffixFamily.Experimental => 1,
+            ForceDropAffixFamily.Personal => choice.champion ? 2 : 3,
+            ForceDropAffixFamily.Set => 4,
+            ForceDropAffixFamily.IdolWeaver => 5,
+            ForceDropAffixFamily.IdolEnchantment => 6,
+            ForceDropAffixFamily.Corrupted => 7,
+            ForceDropAffixFamily.UniqueModifier => 8,
+            _ => 9,
+        };
+    }
+
+    static int CompareAffixChoices(Choice a, Choice b)
+    {
+        int comparison = AffixGroup(a).CompareTo(AffixGroup(b));
+        if (comparison == 0)
+            comparison = string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase);
+        return comparison != 0 ? comparison : a.id.CompareTo(b.id);
+    }
+
+    static Color AffixColor(ForceDropAffixFamily family) =>
+        family == ForceDropAffixFamily.Set ? setGreen
+        : family == ForceDropAffixFamily.Corrupted ? corruptionPurple
+        : gold;
+
+    static Color ChoiceColor(Choice choice) =>
+        allowIllegal && choice.id >= 0 && ForceDropLegalAffixes.IsIdolAffix(FindAffix(choice.id))
+            ? idolCyan
+            : AffixColor(choice.affixFamily);
+
+    static Color SelectedAffixColor(int id) =>
+        id < 0 ? gold
+        : allowIllegal && ForceDropLegalAffixes.IsIdolAffix(FindAffix(id)) ? idolCyan
+        : AffixColor(ForceDropLegalAffixes.Family(FindAffix(id)));
 
     sealed class Number
     {
@@ -126,6 +277,8 @@ public static class ForceDropBuilder
         public int id = -1;
         public string name = "None";
         public Button select;
+        public Text slotLabel;
+        public Text selectedLabel;
         public Number tier,
             roll;
     }
@@ -153,23 +306,35 @@ public static class ForceDropBuilder
         if (!IsReady)
             return false;
         RefreshNativeLocale();
+        RefreshTierLimits();
         foreach (var n in numbers)
             n.Read();
         string signature =
-            FD.item_type + ":" + FD.item_rarity + ":" + FD.items_dropdown.options.Count;
+            FD.item_type
+            + ":"
+            + FD.item_rarity
+            + ":"
+            + FD.items_dropdown.options.Count
+            + ":"
+            + NativeItemNames.CatalogKey;
         if (lastSearch != search.text || lastItems != signature)
         {
             lastSearch = search.text;
             lastItems = signature;
-            itemPage = 0;
+            ResetItemScroll();
             RefreshItems();
         }
+        RefreshItemScrollRows();
         if (picker.activeSelf && lastPickerSearch != pickerSearch.text)
         {
             lastPickerSearch = pickerSearch.text;
             pickerPage = 0;
+            ResetAffixScrolls();
             RefreshPicker();
         }
+        if (picker.activeSelf && scrollAffixPicker)
+            for (int column = 0; column < 2; column++)
+                RefreshAffixScrollRows(column);
         Caption(typeButton, SelectedCategoryName("Choose category"));
         Caption(
             rarityButton,
@@ -218,15 +383,10 @@ public static class ForceDropBuilder
         // Keep the exclusive modifier next to the item preview and outside the affix grid.
         bool twoVariants = variantCount == 2;
         Rect(ragePage, .04f, .28f, .96f, twoVariants ? .54f : .45f);
-        LocaleRegistry.Apply(
-            variantHeader,
-            twoVariants ? "Exclusive glove modifiers" : "Unsated Rage modifier"
-        );
+        LocaleRegistry.Apply(variantHeader, "Exclusive unique modifiers");
         LocaleRegistry.Apply(
             variantDescription,
-            twoVariants
-                ? "Two exclusive modifiers · separate from LP"
-                : "Exclusive ring modifier · separate from LP"
+            "Native modifiers · separate from ordinary affixes"
         );
         Rect(variantHeader.gameObject, .03f, twoVariants ? .78f : .72f, .97f, .97f);
         Rect(variantDescription.gameObject, .03f, .02f, .97f, twoVariants ? .22f : .25f);
@@ -255,6 +415,36 @@ public static class ForceDropBuilder
             corruptionSelect.interactable = CorruptedAffixAdapter.IsSupported;
             if (corruptionSelect.interactable && corruptionId < 0)
                 Caption(corruptionSelect, "Corrupted affix: None");
+        }
+        forging.input.interactable = !corrupted && !forging.random;
+        if (forging.mode != null)
+            forging.mode.interactable = !corrupted;
+        RefreshPotentialControls();
+        for (int slot = 0; slot < rows.Length; slot++)
+        {
+            var context = LegalContext(slot);
+            bool enchantment = !allowIllegal && context.IsHereticalIdol && (slot == 1 || slot == 3);
+            bool available = allowIllegal
+                ? FD.item_type < 100
+                : ForceDropLegalRules.SlotAllowed(
+                    slot,
+                    context.IsIdol,
+                    context.IsUnique,
+                    context.IsSet,
+                    context.IsHereticalIdol
+                );
+            LocaleRegistry.Apply(
+                rows[slot].slotLabel,
+                allowIllegal && slot < 4 ? "Affix " + (slot + 1)
+                    : enchantment ? "Enchantment " + (slot == 1 ? 1 : 2)
+                    : slot == 4 ? (rows[slot].tier.value == 8 ? "Primordial" : "Sealed")
+                    : slot < 2 ? "Prefix " + (slot + 1)
+                    : "Suffix " + (slot - 1)
+            );
+            rows[slot].select.interactable = available;
+            rows[slot].tier.input.interactable = available;
+            rows[slot].roll.input.interactable = available && !rows[slot].roll.random;
+            rows[slot].roll.mode.interactable = available;
         }
         RefreshPreview();
         return true;
@@ -292,13 +482,18 @@ public static class ForceDropBuilder
         itemButtons.Clear();
         pickButtons.Clear();
         pickerHeaders.Clear();
-        root = Panel(FD.content_obj, "ForceDropBuilder", 0, 0, 1, 1);
-        Label(root, "Force Drop", 0.02f, 0.955f, 0.98f, 0.995f, 22);
-        var left = Panel(root, "Choose item", 0.01f, 0.02f, 0.29f, 0.945f);
-        var middle = Panel(root, "Customize", 0.30f, 0.02f, 0.73f, 0.945f);
-        var right = Panel(root, "Preview", 0.74f, 0.02f, 0.99f, 0.945f);
-        Label(left, "Choose item", .03f, .95f, .97f, .99f, 18);
-        Label(left, "Search items", .03f, .90f, .97f, .94f);
+        foreach (var buttons in columnButtons)
+            buttons.Clear();
+        root = Panel(FD.content_obj, "ForceDropBuilder", 0, 0, 1, 1, false);
+        root.GetComponent<Image>().color = HudTheme.Background;
+        Label(root, "Force Drop", 0.02f, 0.955f, 0.64f, 0.995f, HudTheme.SliderCardTitleFontSize);
+        // Reserve a footer beneath the panels so panel outlines do not cross status text.
+        var left = Panel(root, "Choose item", 0.01f, 0.06f, 0.29f, 0.945f);
+        var middle = Panel(root, "Customize", 0.30f, 0.06f, 0.73f, 0.945f);
+        var right = Panel(root, "Preview", 0.74f, 0.06f, 0.99f, 0.945f);
+        Label(left, "Choose item", .03f, .95f, .97f, .99f, HudTheme.CardTitleFontSize);
+        Divider(left, .03f, .945f, .97f);
+        Label(left, "Search all items", .03f, .90f, .97f, .94f);
         search = Input(left, "Item search", .03f, .84f, .97f, .89f, "", false);
         typeButton = Button(
             left,
@@ -318,57 +513,46 @@ public static class ForceDropBuilder
             .76f,
             () => CatalogPicker(FD.rarity_dropdown, FD.SelectRarity, true)
         );
+        var itemViewport = Panel(left, "Item scroll viewport", .03f, .16f, .925f, .695f);
+        itemViewport.AddComponent<RectMask2D>();
+        var itemContent = new GameObject("Item scroll content");
+        var itemContentRect = itemContent.AddComponent<RectTransform>();
+        itemContent.transform.SetParent(itemViewport.transform, false);
+        itemContentRect.anchorMin = new Vector2(0, 1);
+        itemContentRect.anchorMax = new Vector2(1, 1);
+        itemContentRect.pivot = new Vector2(.5f, 1);
+        itemContentRect.sizeDelta = Vector2.zero;
+        itemScroll = itemViewport.AddComponent<ScrollRect>();
+        itemScroll.viewport = itemViewport.GetComponent<RectTransform>();
+        itemScroll.content = itemContentRect;
+        itemScroll.horizontal = false;
+        itemScroll.vertical = true;
+        itemScroll.movementType = ScrollRect.MovementType.Clamped;
+        itemScroll.scrollSensitivity = AffixRowHeight;
+        var itemTrack = Panel(left, "Item scrollbar", .94f, .16f, .97f, .695f);
+        var itemHandle = Panel(itemTrack, "Handle", 0, 0, 1, 1);
+        itemHandle.GetComponent<Image>().color = gold;
+        var itemScrollbar = itemTrack.AddComponent<Scrollbar>();
+        itemScrollbar.handleRect = itemHandle.GetComponent<RectTransform>();
+        itemScrollbar.targetGraphic = itemHandle.GetComponent<Image>();
+        itemScrollbar.direction = Scrollbar.Direction.BottomToTop;
+        itemScroll.verticalScrollbar = itemScrollbar;
         for (int i = 0; i < 12; i++)
         {
             int slot = i;
-            itemButtons.Add(
-                Button(
-                    left,
-                    "",
-                    .03f,
-                    .65f - i * .045f,
-                    .97f,
-                    .69f - i * .045f,
-                    () => ChooseItem(slot)
-                )
-            );
+            itemButtons.Add(Button(itemContent, "", 0, 0, 1, 1, () => ChooseItem(slot)));
         }
-        Button(
-            left,
-            "Previous",
-            .03f,
-            .035f,
-            .48f,
-            .09f,
-            () =>
-            {
-                itemPage = Math.Max(0, itemPage - 1);
-                RefreshItems();
-            }
-        );
-        Button(
-            left,
-            "Next",
-            .52f,
-            .035f,
-            .97f,
-            .09f,
-            () =>
-            {
-                if ((itemPage + 1) * 12 < itemIndexes.Count)
-                    itemPage++;
-                RefreshItems();
-            }
-        );
-        Label(middle, "Customize", .03f, .955f, .97f, .99f, 18);
-        Button(middle, "Random", .03f, .905f, .32f, .948f, () => Preset(true));
-        Button(middle, "Maximum", .35f, .905f, .64f, .948f, () => Preset(false));
+        itemSearchStatus = Label(left, "", .03f, .10f, .97f, .15f, 12);
+        Label(middle, "Customize", .03f, .955f, .55f, .99f, HudTheme.CardTitleFontSize);
+        Divider(middle, .03f, .952f, .97f);
+        Button(middle, "Random", .03f, .905f, .245f, .948f, () => Preset(true));
+        Button(middle, "Maximum", .27f, .905f, .485f, .948f, () => Preset(false));
         Button(
             middle,
             "Custom",
-            .67f,
+            .51f,
             .905f,
-            .97f,
+            .725f,
             .948f,
             () =>
             {
@@ -377,6 +561,16 @@ public static class ForceDropBuilder
                 RefreshModes();
             }
         );
+        illegalModeButton = Button(
+            middle,
+            "Illegal: Off",
+            .75f,
+            .905f,
+            .97f,
+            .948f,
+            () => ChangeMode(!allowIllegal)
+        );
+        RefreshIllegalButton();
         basePage = Panel(middle, "Base properties", .02f, .735f, .98f, .895f);
         forging = NumericGrid(basePage, "Forging potential", 0, 1, 0, 255, 100, false);
         for (int i = 0; i < 3; i++)
@@ -404,7 +598,7 @@ public static class ForceDropBuilder
                 i == 4 ? "Sealed"
                 : i < 2 ? "Prefix " + (i + 1)
                 : "Suffix " + (i - 1);
-            Label(affixPage, slot, .03f, y, .17f, y + .12f, 12);
+            row.slotLabel = Label(affixPage, slot, .03f, y, .17f, y + .12f, 12);
             row.select = Button(
                 affixPage,
                 "None",
@@ -414,6 +608,7 @@ public static class ForceDropBuilder
                 y + .13f,
                 () => AffixPicker(index)
             );
+            row.selectedLabel = row.select.GetComponentInChildren<Text>(true);
             row.tier = NumericCompact(affixPage, .59f, y, .72f, y + .13f, 1, 7, 7);
             row.roll = NumericCompact(affixPage, .75f, y, .86f, y + .13f, 0, 100, 100);
             row.roll.mode = Button(
@@ -453,6 +648,7 @@ public static class ForceDropBuilder
             .80f,
             CorruptionPicker
         );
+        corruptionSelectedLabel = corruptionSelect.GetComponentInChildren<Text>(true);
         corruptionTier = NumericCompact(corruptionPanel, .64f, .25f, .77f, .80f, 1, 7, 7);
         corruptionRoll = NumericCompact(corruptionPanel, .80f, .25f, .96f, .80f, 0, 100, 100);
         Label(corruptionPanel, "Tier", .64f, .81f, .77f, .99f, 11);
@@ -507,17 +703,20 @@ public static class ForceDropBuilder
             11
         );
         ragePage.SetActive(false);
-        Label(right, "Item preview", .04f, .92f, .96f, .99f, 20);
+        Label(right, "Item preview", .04f, .92f, .96f, .99f, HudTheme.CardTitleFontSize);
+        Divider(right, .04f, .915f, .96f);
         preview = Label(right, "Choose an item", .04f, .28f, .96f, .90f, 15);
         quantity = Numeric(right, "Quantity", .20f, 1, 99, 1, false, false);
         dropButton = Button(right, "Drop Item", .04f, .105f, .96f, .18f, Drop);
         Button(right, "Reset", .04f, .03f, .96f, .09f, Reset);
-        status = Label(root, "", .30f, .00f, .99f, .025f, 12);
+        status = Label(root, "", .30f, .01f, .99f, .045f, 12);
         BuildPicker();
         // Hide only after the entire replacement view has been built successfully.
         foreach (var child in Functions.GetAllChild(FD.content_obj))
             if (child != root)
                 child.SetActive(false);
+        HudTheme.NormalizeSelectableGraphics(root);
+        HudTheme.ApplyFontScale(root);
         RefreshItems();
         LogCorruptionMetadata();
     }
@@ -546,6 +745,37 @@ public static class ForceDropBuilder
                 Caption(n.mode, n.random ? "Random" : "Fixed");
                 n.input.interactable = !n.random;
             }
+        RefreshPotentialControls();
+    }
+
+    static bool CreatesLegendary()
+    {
+        int selected = 0;
+        foreach (var row in rows)
+            if (row != null && row.id >= 0)
+                selected++;
+        return ForceDropPotentialRules.CreatesLegendary(FD.item_rarity, selected);
+    }
+
+    static void RefreshPotentialControls()
+    {
+        if (lp == null || ww == null)
+            return;
+        bool legendary = CreatesLegendary();
+        if (legendary)
+        {
+            lp.value = 0;
+            lp.random = false;
+            lp.input.SetTextWithoutNotify("0");
+            if (lp.mode != null)
+                Caption(lp.mode, "Fixed");
+        }
+        lp.input.interactable = !corrupted && !legendary && !lp.random;
+        if (lp.mode != null)
+            lp.mode.interactable = !corrupted && !legendary;
+        ww.input.interactable = !corrupted && !ww.random;
+        if (ww.mode != null)
+            ww.mode.interactable = !corrupted;
     }
 
     static void Reset()
@@ -574,51 +804,117 @@ public static class ForceDropBuilder
     {
         nativeItems = NativeItemNames.Items(FD.items_dropdown, FD.item_type, FD.item_rarity);
         itemIndexes.Clear();
-        for (int i = 1; i < FD.items_dropdown.options.Count; i++)
+        itemMatches.Clear();
+        if (SearchAllItems)
         {
-            string raw = FD.items_dropdown.options[i].text;
-            nativeItems.TryGetValue(i, out var item);
-            if (
-                NativeItemNames.Matches(
-                    search.text,
-                    item == null ? raw : item.name,
-                    item == null ? raw : item.aliases
-                )
-            )
-                itemIndexes.Add(i);
+            string key = NativeItemNames.CatalogKey;
+            if (allItems == null || lastCatalogKey != key)
+            {
+                allItems = NativeItemNames.SearchCatalog(nativeCategories);
+                lastCatalogKey = NativeItemNames.CatalogKey;
+            }
+            foreach (var item in allItems)
+                if (ForceDropItemSearch.Matches(search.text, item.item.name, item.aliases))
+                    itemMatches.Add(item);
         }
+        else
+            for (int i = 1; i < FD.items_dropdown.options.Count; i++)
+                itemIndexes.Add(i);
+        itemSearchStatus.text =
+            SearchAllItems && VisibleItemCount == 0 ? L("No matching items") : "";
+        itemScrollStart = -1;
+        RefreshItemScrollRows();
+    }
+
+    static void ResetItemScroll()
+    {
+        if (itemScroll.IsNullOrDestroyed())
+            return;
+        itemScroll.StopMovement();
+        itemScroll.content.anchoredPosition = Vector2.zero;
+        itemScrollStart = -1;
+    }
+
+    static void RefreshItemScrollRows()
+    {
+        if (itemScroll.IsNullOrDestroyed())
+            return;
+        float height = Math.Max(1f, itemScroll.viewport.rect.height);
+        itemScroll.content.sizeDelta = new Vector2(
+            0,
+            Math.Max(height, VisibleItemCount * AffixRowHeight)
+        );
+        int start = Math.Min(
+            Math.Max(0, (int)(itemScroll.content.anchoredPosition.y / AffixRowHeight)),
+            Math.Max(0, VisibleItemCount - 1)
+        );
+        if (start == itemScrollStart)
+            return;
+        itemScrollStart = start;
+        var identity = new ForceDropItemIdentity(
+            FD.item_type,
+            FD.item_subtype,
+            FD.item_rarity,
+            FD.item_unique_id
+        );
         for (int slot = 0; slot < itemButtons.Count; slot++)
         {
-            int index = itemPage * 12 + slot;
-            itemButtons[slot].gameObject.SetActive(index < itemIndexes.Count);
-            if (index < itemIndexes.Count)
+            int index = itemScrollStart + slot;
+            itemButtons[slot].gameObject.SetActive(index < VisibleItemCount);
+            if (index < VisibleItemCount)
             {
-                bool selected = itemIndexes[index] == FD.items_dropdown.value;
-                Caption(
-                    itemButtons[slot],
-                    (selected ? "Selected: " : "") + ItemName(itemIndexes[index])
-                );
-                itemButtons[slot].GetComponent<Image>().color = selected
-                    ? HudTheme.ItemSelection
-                    : dark;
-                itemButtons[slot].GetComponent<Outline>().effectColor = selected
-                    ? gold
-                    : HudTheme.AccentSoft;
+                var rect = itemButtons[slot].GetComponent<RectTransform>();
+                rect.anchorMin = new Vector2(0, 1);
+                rect.anchorMax = new Vector2(1, 1);
+                rect.pivot = new Vector2(.5f, 1);
+                rect.offsetMin = new Vector2(0, -(index + 1) * AffixRowHeight + 4);
+                rect.offsetMax = new Vector2(0, -index * AffixRowHeight);
+            }
+            if (index < VisibleItemCount)
+            {
+                var match = SearchAllItems ? itemMatches[index] : null;
+                bool selected =
+                    FD.items_dropdown.value > 0
+                    && (
+                        match == null
+                            ? itemIndexes[index] == FD.items_dropdown.value
+                            : match.Identity == identity
+                    );
+                string name =
+                    match == null
+                        ? ItemName(itemIndexes[index])
+                        : match.item.name
+                            + " — "
+                            + match.category.name
+                            + " / "
+                            + NativeItemNames.RarityName(match.RarityLabel);
+                Caption(itemButtons[slot], (selected ? "Selected: " : "") + name);
+                var label = itemButtons[slot].GetComponentInChildren<Text>(true);
+                label.resizeTextForBestFit = SearchAllItems;
+                label.resizeTextMinSize = 10;
+                label.resizeTextMaxSize = 15;
+                StyleSelection(itemButtons[slot], selected);
             }
         }
     }
 
     static void ChooseItem(int slot)
     {
-        int i = itemPage * 12 + slot;
-        if (i >= itemIndexes.Count)
+        int i = itemScrollStart + slot;
+        if (i >= VisibleItemCount)
             return;
-        int option = itemIndexes[i];
-        FD.items_dropdown.SetValueWithoutNotify(option);
-        if (nativeItems.TryGetValue(option, out var item))
-            NativeItemNames.SelectItem(item);
+        bool selected = true;
+        if (SearchAllItems)
+            selected = NativeItemNames.SelectSearchChoice(itemMatches[i]);
         else
-            FD.SelectItem();
+        {
+            int option = itemIndexes[i];
+            FD.items_dropdown.SetValueWithoutNotify(option);
+            if (nativeItems.TryGetValue(option, out var item))
+                NativeItemNames.SelectItem(item);
+            else
+                FD.SelectItem();
+        }
         ResetRage();
         RefreshItems();
         foreach (var row in rows)
@@ -635,7 +931,7 @@ public static class ForceDropBuilder
                 ? "Corrupted affix: None"
                 : "Corrupted affix API unavailable"
         );
-        result = "";
+        result = selected ? "" : "Item unavailable. Search again or choose an item manually.";
     }
 
     static UniqueList.Entry SelectedRageEntry()
@@ -670,7 +966,11 @@ public static class ForceDropBuilder
         foreach (var definition in UniqueVariantAdapter.Catalog(SelectedRageEntry()))
         {
             int id = definition.affixId;
-            if (variantIds[1 - slot] == id)
+            if (
+                variantIds[1 - slot] == id
+                || Array.Exists(rows, row => row.id == id)
+                || (corrupted && corruptionId == id)
+            )
                 continue;
             string name = NativeItemNames.AffixName(definition);
             choices.Add(
@@ -713,27 +1013,37 @@ public static class ForceDropBuilder
                 },
             }
         );
-        foreach (var a in CorruptedAffixAdapter.Catalog())
+        var pool = allowIllegal ? null : CorruptionPool();
+        if (!allowIllegal && (pool == null || corruptionPoolError.Length > 0))
+            result = corruptionPoolError;
+        var definitions =
+            allowIllegal ? ForceDropCatalog.Definitions()
+            : pool == null ? Array.Empty<AffixList.Affix>()
+            : pool.Definitions();
+        foreach (var a in definitions)
         {
-            if (!CorruptedAffixAdapter.FitsItem(a, FD.item_type, FD.item_subtype))
+            if (a.IsNullOrDestroyed() || ForceDropCatalog.MaximumTier(a, RouteMaximum) == 0)
                 continue;
             int id = a.affixId;
-            bool used = false;
-            foreach (var row in rows)
-                if (row.id == id)
-                {
-                    used = true;
-                    break;
-                }
-            if (used || choices.Exists(x => x.id == id))
+            if (Array.Exists(rows, row => row.id == id) || Array.IndexOf(variantIds, id) >= 0)
                 continue;
             string name = NativeItemNames.AffixName(a);
+            bool champion = LegalContext(-1).IsChampion(a);
+            string family = champion ? "Champion" : a.specialAffixType.ToString();
             choices.Add(
                 new Choice
                 {
                     id = id,
-                    name = name,
-                    aliases = NativeItemNames.AffixAliases(a),
+                    name =
+                        name
+                        + " · "
+                        + L(
+                            CorruptedAffixAdapter.IsCorruption(a) ? "Corruption-exclusive" : family
+                        ),
+                    aliases = NativeItemNames.AffixAliases(a) + "\n" + family,
+                    affixFamily = ForceDropLegalAffixes.Family(a),
+                    champion = champion,
+                    suffix = a.type == AffixList.AffixType.SUFFIX,
                     select = () =>
                     {
                         corruptionId = id;
@@ -741,42 +1051,35 @@ public static class ForceDropBuilder
                         corrupted = true;
                         Caption(corruptButton, "Corrupted: Yes");
                         Caption(corruptionSelect, name);
+                        RefreshTierLimits();
                     },
                 }
             );
         }
-        OpenPicker("Corrupted affix");
-    }
-
-    public static void ApplySelectedCorruption(ItemDataUnpacked item)
-    {
-        if (!IsReady)
-            return;
-        if (UniqueVariantAdapter.VariantCount(SelectedRageEntry()) > 0)
-            UniqueVariantAdapter.Apply(item, SelectedVariantIds());
-        if (!corrupted || corruptionId < 0)
-            return;
-        CorruptedAffixAdapter.Apply(
-            item,
-            corruptionId,
-            corruptionTier.value - 1,
-            Roll(corruptionRoll)
+        choices.Sort(CompareAffixChoices);
+        Main.logger_instance.Msg(
+            (
+                allowIllegal
+                    ? "Force Drop illegal corruption pool: base="
+                    : "Force Drop legal corruption pool: base="
+            )
+                + FD.item_type
+                + ", subtype="
+                + FD.item_subtype
+                + ", unique="
+                + FD.item_unique_id
+                + ", choices="
+                + (choices.Count - 1)
+                + ", status="
+                + corruptionPoolError
         );
+        OpenPicker("Corrupted affix", true);
     }
 
-    public static void VerifySelectedCorruption(ItemDataUnpacked item)
+    public static void DropSelection()
     {
-        if (!IsReady)
-            return;
-        if (UniqueVariantAdapter.VariantCount(SelectedRageEntry()) > 0)
-            UniqueVariantAdapter.VerifySelection(item, SelectedVariantIds());
-        if (corrupted && corruptionId >= 0)
-            CorruptedAffixAdapter.VerifySelection(
-                item,
-                corruptionId,
-                corruptionTier.value - 1,
-                Roll(corruptionRoll)
-            );
+        if (IsReady)
+            Drop();
     }
 
     static int[] SelectedVariantIds()
@@ -857,52 +1160,113 @@ public static class ForceDropBuilder
         var list = AffixList.get();
         if (list.IsNullOrDestroyed())
             return;
-        foreach (var a in list.singleAffixes)
-            AddAffixChoice(a, slot);
-        foreach (var a in list.multiAffixes)
-            AddAffixChoice(a, slot);
-        choices.Sort((a, b) => string.Compare(a.name, b.name, StringComparison.OrdinalIgnoreCase));
+        var exclusions = new Dictionary<string, int>();
+        foreach (var a in ForceDropCatalog.Definitions())
+        {
+            string reason = AddAffixChoice(a, slot);
+            if (reason.Length > 0)
+            {
+                exclusions.TryGetValue(reason, out int count);
+                exclusions[reason] = count + 1;
+            }
+        }
+        var excluded = new StringBuilder();
+        foreach (var pair in exclusions)
+            excluded.Append(pair.Key).Append('=').Append(pair.Value).Append(';');
+        choices.Sort(CompareAffixChoices);
+        Main.logger_instance.Msg(
+            (
+                allowIllegal
+                    ? "Force Drop illegal affix pool: base="
+                    : "Force Drop legal affix pool: base="
+            )
+                + FD.item_type
+                + ", subtype="
+                + FD.item_subtype
+                + ", unique="
+                + FD.item_unique_id
+                + ", slot="
+                + slot
+                + ", choices="
+                + (choices.Count - 1)
+                + ", excluded="
+                + excluded
+        );
+        bool idolEnchantment = LegalContext(slot).IsHereticalIdol && (slot == 1 || slot == 3);
         OpenPicker(
-            slot == 4 ? "Sealed affix"
-            : slot < 2 ? "Prefix"
-            : "Suffix"
+            allowIllegal && slot < 4 ? "Affix " + (slot + 1)
+                : idolEnchantment ? "Idol enchantment"
+                : slot == 4 ? "Sealed affix"
+                : slot < 2 ? "Prefix"
+                : "Suffix",
+            true,
+            !allowIllegal && slot < 4 && !idolEnchantment ? (slot < 2 ? 0 : 1) : -1
         );
     }
 
-    static void AddAffixChoice(AffixList.Affix a, int slot)
+    static string AddAffixChoice(AffixList.Affix a, int slot)
     {
+        var context = LegalContext(slot);
         if (
-            a.IsNullOrDestroyed()
-            || CorruptedAffixAdapter.IsCorruption(a)
-            || UniqueVariantAdapter.IsVariant(a)
-            || FD.item_type < 0
-            || FD.item_subtype < 0
+            !allowIllegal
+            && !ForceDropLegalRules.SlotAllowed(
+                slot,
+                context.IsIdol,
+                context.IsUnique,
+                context.IsSet,
+                context.IsHereticalIdol
+            )
         )
-            return;
-        if (a.type != AffixList.AffixType.PREFIX && a.type != AffixList.AffixType.SUFFIX)
-            return;
+            return "Unavailable slot";
+        string reason = context.OrdinaryReason(
+            a,
+            slot == 4,
+            context.IsHereticalIdol && (slot == 1 || slot == 3)
+        );
+        if (!allowIllegal && reason.Length > 0)
+            return reason;
+        if (a.IsNullOrDestroyed() || ForceDropCatalog.MaximumTier(a, RouteMaximum) == 0)
+            return "Definition/tier unavailable";
         if (
-            slot < 4
+            !allowIllegal
+            && slot < 4
+            && !(context.IsHereticalIdol && (slot == 1 || slot == 3))
             && a.type != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX)
         )
-            return;
-        if (!CorruptedAffixAdapter.FitsItem(a, FD.item_type, FD.item_subtype))
-            return;
+            return "Placement or duplicate exclusion";
         int id = a.affixId;
         for (int other = 0; other < rows.Length; other++)
             if (other != slot && rows[other].id == id)
-                return;
+                return "Placement or duplicate exclusion";
         if (corrupted && corruptionId == id)
-            return;
+            return "Placement or duplicate exclusion";
+        if (Array.IndexOf(variantIds, id) >= 0)
+            return "Already selected as a unique modifier";
         if (choices.Exists(x => x.id == id))
-            return;
+            return "Placement or duplicate exclusion";
         string name = NativeItemNames.AffixName(a);
         choices.Add(
             new Choice
             {
                 id = id,
-                name = name,
-                aliases = NativeItemNames.AffixAliases(a),
+                name =
+                    a.specialAffixType == AffixList.SpecialAffixType.Standard
+                        ? name
+                        : name
+                            + " · "
+                            + L(
+                                context.IsChampion(a) ? "Champion"
+                                : a.specialAffixType == AffixList.SpecialAffixType.IdolWeaver
+                                    ? "Weaver idol"
+                                : a.specialAffixType == AffixList.SpecialAffixType.IdolEnchantment
+                                    ? "Idol enchantment"
+                                : a.specialAffixType.ToString()
+                            ),
+                aliases = NativeItemNames.AffixAliases(a) + "\n" + a.specialAffixType,
+                classMask = AffixClassMask(a),
+                affixFamily = ForceDropLegalAffixes.Family(a),
+                champion = context.IsChampion(a),
+                suffix = a.type == AffixList.AffixType.SUFFIX,
                 select = () =>
                 {
                     rows[slot].id = id;
@@ -911,20 +1275,144 @@ public static class ForceDropBuilder
                 },
             }
         );
+        return "";
     }
 
-    static AffixList.Affix FindAffix(int id)
+    static readonly string[] affixClasses = { "Acolyte", "Mage", "Primalist", "Rogue", "Sentinel" };
+
+    // Probe native compatibility for each class; never infer it from translated names.
+    static int AffixClassMask(AffixList.Affix affix)
     {
-        var list = AffixList.get();
-        if (list.IsNullOrDestroyed())
-            return null;
-        foreach (var a in list.singleAffixes)
-            if (!a.IsNullOrDestroyed() && a.affixId == id)
-                return a;
-        foreach (var a in list.multiAffixes)
-            if (!a.IsNullOrDestroyed() && a.affixId == id)
-                return a;
-        return null;
+        int mask = 0;
+        for (int i = 0; i < affixClasses.Length; i++)
+        {
+            if (!Enum.TryParse(affixClasses[i], true, out ItemList.ClassRequirement requirement))
+                continue;
+            try
+            {
+                if (affix.CanRollOn(FD.item_type, FD.item_subtype, requirement))
+                    mask |= 1 << i;
+            }
+            catch (Exception) { }
+        }
+        return mask;
+    }
+
+    static bool MatchesPickerSearch(Choice choice, string query)
+    {
+        if (choice.id < 0)
+            return true;
+        // Non-affix pickers keep the existing plain-text search.
+        if (choice.classMask < 0)
+            return NativeItemNames.Matches(query, choice.name, choice.aliases);
+        var terms = new List<string>();
+        int includeMask = 0,
+            excludeMask = 0;
+        foreach (
+            string word in (query ?? "").Split(
+                new[] { ' ', '\t' },
+                StringSplitOptions.RemoveEmptyEntries
+            )
+        )
+        {
+            string token = word.ToLowerInvariant();
+            if (token == "class:all")
+                continue;
+            bool exclude = token.StartsWith("-", StringComparison.Ordinal);
+            string cls = exclude ? token.Substring(1) : token;
+            if (cls.StartsWith("class:", StringComparison.Ordinal))
+                cls = cls.Substring(6);
+            int index = Array.FindIndex(
+                affixClasses,
+                name => string.Equals(name, cls, StringComparison.OrdinalIgnoreCase)
+            );
+            if (index >= 0)
+            {
+                if (exclude)
+                    excludeMask |= 1 << index;
+                else
+                    includeMask |= 1 << index;
+            }
+            else
+                terms.Add(word);
+        }
+        bool generic = choice.classMask == 31;
+        if (includeMask != 0 && !generic && (choice.classMask & includeMask) == 0)
+            return false;
+        if (!generic && (choice.classMask & excludeMask) != 0)
+            return false;
+        return NativeItemNames.Matches(
+            string.Join(" ", terms.ToArray()),
+            choice.name,
+            choice.aliases
+        );
+    }
+
+    static AffixList.Affix FindAffix(int id) => ForceDropCatalog.Find(id);
+
+    static int RowMaximum(int slot, AffixList.Affix definition)
+    {
+        if (
+            slot == 4
+            && (
+                definition.IsNullOrDestroyed()
+                    ? allowIllegal
+                        || (FD.item_type >= 0 && FD.item_type <= 24 && FD.item_rarity < 7)
+                    : ForceDropModeRules.CanSealPrimordial(
+                        FD.item_type,
+                        FD.item_rarity,
+                        ForceDropLegalAffixes.Family(definition),
+                        ForceDropCatalog.MaximumTier(definition, 8),
+                        allowIllegal ? ForceDropMode.Illegal : ForceDropMode.Legal
+                    )
+            )
+        )
+            return 8;
+        return RouteMaximum;
+    }
+
+    static void RefreshTierLimits()
+    {
+        for (int slot = 0; slot < rows.Length; slot++)
+        {
+            var row = rows[slot];
+            var definition = FindAffix(row.id);
+            int maximum = RowMaximum(slot, definition);
+            SetTierLimit(
+                row.tier,
+                row.id < 0 ? maximum : ForceDropCatalog.MaximumTier(definition, maximum)
+            );
+            row.selectedLabel.color = SelectedAffixColor(row.id);
+        }
+        corruptionSelectedLabel.color = SelectedAffixColor(corruptionId);
+        if (corruptionId < 0)
+            SetTierLimit(corruptionTier, RouteMaximum);
+        else if (allowIllegal)
+            SetTierLimit(corruptionTier, ForceDropCatalog.MaximumTier(FindAffix(corruptionId), 8));
+        else
+        {
+            var pool = CorruptionPool();
+            int mask = pool == null ? 0 : pool.TierMask(corruptionId);
+            SetTierLimit(corruptionTier, ForceDropLegalTiers.MaximumDisplayTier(mask));
+            int value = ForceDropLegalTiers.ClampDisplayTier(mask, corruptionTier.value);
+            if (value > 0 && value != corruptionTier.value)
+            {
+                corruptionTier.value = value;
+                corruptionTier.input.SetTextWithoutNotify(
+                    value.ToString(CultureInfo.InvariantCulture)
+                );
+            }
+        }
+    }
+
+    static void SetTierLimit(Number number, int maximum)
+    {
+        number.max = Math.Max(1, maximum);
+        if (number.value > number.max)
+        {
+            number.value = number.max;
+            number.input.SetTextWithoutNotify(number.value.ToString(CultureInfo.InvariantCulture));
+        }
     }
 
     static bool ValidSelectedItem()
@@ -997,9 +1485,7 @@ public static class ForceDropBuilder
             for (int slot = 0; slot < variantCount; slot++)
             {
                 if (!variantCatalog.Exists(a => a.affixId == variantIds[slot]))
-                    return variantCount == 1
-                        ? "Choose the ring's exclusive Rage modifier."
-                        : "Choose both exclusive glove modifiers.";
+                    return "Choose every exclusive unique modifier.";
                 if (!ids.Add(variantIds[slot]))
                     return "Exclusive unique modifiers must be different and separate from ordinary affixes.";
             }
@@ -1010,48 +1496,71 @@ public static class ForceDropBuilder
             if (row.id < 0)
                 continue;
             var definition = FindAffix(row.id);
+            var context = LegalContext(slot);
             if (
-                definition.IsNullOrDestroyed()
-                || CorruptedAffixAdapter.IsCorruption(definition)
-                || UniqueVariantAdapter.IsVariant(definition)
+                !allowIllegal
+                && !ForceDropLegalRules.SlotAllowed(
+                    slot,
+                    context.IsIdol,
+                    context.IsUnique,
+                    context.IsSet,
+                    context.IsHereticalIdol
+                )
             )
-                return "Choose a regular affix for "
-                    + (
-                        slot == 4 ? "Sealed"
-                        : slot < 2 ? "Prefix"
-                        : "Suffix"
-                    )
-                    + ".";
+                return "This item has no legal affix slot here. Clear the selection.";
+            string reason = context.OrdinaryReason(
+                definition,
+                slot == 4,
+                context.IsHereticalIdol && (slot == 1 || slot == 3)
+            );
+            if (!allowIllegal && reason.Length > 0)
+                return NativeItemNames.AffixName(row.id, row.name) + ": " + reason;
             if (
-                definition.type != AffixList.AffixType.PREFIX
-                && definition.type != AffixList.AffixType.SUFFIX
-            )
-                return "Special modifiers belong in the Corruption row.";
-            if (
-                slot < 4
+                !allowIllegal
+                && slot < 4
+                && !(context.IsHereticalIdol && (slot == 1 || slot == 3))
                 && definition.type
                     != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX)
             )
                 return "Affix type does not match its slot.";
-            if (!CorruptedAffixAdapter.FitsItem(definition, FD.item_type, FD.item_subtype))
-                return "An affix cannot roll on the selected item. Choose it again.";
+            if (
+                row.tier.value
+                > ForceDropCatalog.MaximumTier(definition, RowMaximum(slot, definition))
+            )
+                return "The selected tier does not exist for this affix.";
+        }
+        var itemContext = LegalContext(-1);
+        if (!allowIllegal && itemContext.IsWeaverIdol)
+        {
+            bool hasWeaver = false;
+            foreach (var row in rows)
+            {
+                var definition = FindAffix(row.id);
+                hasWeaver |=
+                    !definition.IsNullOrDestroyed()
+                    && definition.specialAffixType == AffixList.SpecialAffixType.IdolWeaver;
+            }
+            if (!hasWeaver)
+                return "A Weaver idol requires at least one Weaver affix.";
         }
         if (corrupted && corruptionId >= 0)
         {
-            AffixList.Affix definition = null;
-            foreach (var entry in CorruptedAffixAdapter.Catalog())
-                if (entry.affixId == corruptionId)
-                {
-                    definition = entry;
-                    break;
-                }
+            var pool = allowIllegal ? null : CorruptionPool();
+            if (!CorruptedAffixAdapter.IsSupported || (!allowIllegal && pool == null))
+                return "Corruption selection unavailable: " + corruptionPoolError;
             if (
-                !CorruptedAffixAdapter.IsSupported
-                || definition.IsNullOrDestroyed()
-                || !CorruptedAffixAdapter.IsCorruption(definition)
-                || !CorruptedAffixAdapter.FitsItem(definition, FD.item_type, FD.item_subtype)
+                !allowIllegal
+                && !ForceDropLegalTiers.Supports(
+                    pool.TierMask(corruptionId),
+                    corruptionTier.value - 1
+                )
             )
-                return "The corrupted affix is not valid for this item.";
+                return "The chosen corruption affix or tier is not permitted by this item's native outcomes.";
+            if (
+                allowIllegal
+                && corruptionTier.value > ForceDropCatalog.MaximumTier(FindAffix(corruptionId), 8)
+            )
+                return "The selected tier does not exist for this affix.";
             if (!ids.Add(corruptionId))
                 return "Corruption cannot duplicate another affix.";
         }
@@ -1078,11 +1587,19 @@ public static class ForceDropBuilder
                 s.Append("\n")
                     .Append(L("Forging potential"))
                     .Append(": ")
-                    .Append(forging.random ? L("Random") : forging.value.ToString());
+                    .Append(
+                        corrupted ? "0"
+                        : forging.random ? L("Random")
+                        : forging.value.ToString()
+                    );
             foreach (var r in rows)
                 if (r.id >= 0)
                     s.Append("\n\n")
-                        .Append(r == rows[4] ? L("Sealed") + ": " : "")
+                        .Append(
+                            r == rows[4]
+                                ? L(r.tier.value == 8 ? "Primordial" : "Sealed") + ": "
+                                : ""
+                        )
                         .Append(r.name)
                         .Append("\nT")
                         .Append(r.tier.value)
@@ -1093,10 +1610,20 @@ public static class ForceDropBuilder
                 s.Append("\n\n")
                     .Append(
                         FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential
-                            ? L("LP") + ": " + (lp.random ? L("Random") : lp.value.ToString())
+                            ? L("LP")
+                                + ": "
+                                + (
+                                    corrupted || CreatesLegendary() ? "0"
+                                    : lp.random ? L("Random")
+                                    : lp.value.ToString()
+                                )
                             : L("Weaver's Will")
                                 + ": "
-                                + (ww.random ? L("Random") : ww.value.ToString())
+                                + (
+                                    corrupted ? "0"
+                                    : ww.random ? L("Random")
+                                    : ww.value.ToString()
+                                )
                     );
         }
         int variantCount = UniqueVariantAdapter.VariantCount(SelectedRageEntry());
@@ -1130,95 +1657,138 @@ public static class ForceDropBuilder
         dropButton.interactable = problem.Length == 0;
     }
 
-    static void Assign(Slider slider, int value)
-    {
-        if (slider.IsNullOrDestroyed())
-            throw new InvalidOperationException("Required drop control is missing");
-        slider.SetValueWithoutNotify(value);
-    }
-
     static int Sample(Number n) => n.random ? UnityEngine.Random.Range(n.min, n.max + 1) : n.value;
 
     static int Roll(Number n) =>
         n.random ? UnityEngine.Random.Range(0, 256) : Mathf.RoundToInt(n.value / 100f * 255f);
 
+    static ResolvedForceDrop ResolveItem(bool previewOnly = false, bool includeCorruption = true)
+    {
+        bool equipment = FD.item_type < 100;
+        bool unique = FD.item_rarity >= 7;
+        int ResolvedRoll(Number n) => previewOnly ? 255 : Roll(n);
+        int ResolvedNumber(Number n) => previewOnly ? n.value : Sample(n);
+        var selected = new List<ResolvedForceDropAffix>();
+        if (equipment)
+            for (int slot = 0; slot < rows.Length; slot++)
+            {
+                var row = rows[slot];
+                if (row.id >= 0)
+                    selected.Add(
+                        new ResolvedForceDropAffix(
+                            row.id,
+                            row.tier.value - 1,
+                            ResolvedRoll(row.roll),
+                            slot == 4
+                                ? (
+                                    row.tier.value == 8
+                                        ? ForceDropSeal.Primordial
+                                        : ForceDropSeal.Regular
+                                )
+                                : ForceDropSeal.None
+                        )
+                    );
+            }
+        var implicitValues = new int[implicits.Length];
+        for (int i = 0; i < implicitValues.Length; i++)
+            implicitValues[i] = equipment ? ResolvedRoll(implicits[i]) : 0;
+        var uniqueValues = new int[uniqueRolls.Length];
+        if (unique)
+            for (int i = 0; i < uniqueValues.Length; i++)
+                uniqueValues[i] = ResolvedRoll(uniqueRolls[i]);
+        bool usesLP =
+            unique && FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential;
+        return new ResolvedForceDrop(
+            FD.item_type,
+            FD.item_subtype,
+            unique ? FD.item_unique_id : 0,
+            FD.item_rarity,
+            equipment && !unique && !corrupted ? ResolvedNumber(forging) : 0,
+            usesLP
+            && !corrupted
+            && !ForceDropPotentialRules.CreatesLegendary(FD.item_rarity, selected.Count)
+                ? ResolvedNumber(lp)
+                : 0,
+            unique && !usesLP && !corrupted ? ResolvedNumber(ww) : 0,
+            corrupted,
+            implicitValues,
+            uniqueValues,
+            selected,
+            UniqueVariantAdapter.VariantCount(SelectedRageEntry()) > 0
+                ? SelectedVariantIds()
+                : Array.Empty<int>(),
+            includeCorruption && corrupted && corruptionId >= 0
+                ? new ResolvedForceDropAffix(
+                    corruptionId,
+                    corruptionTier.value - 1,
+                    ResolvedRoll(corruptionRoll),
+                    ForceDropSeal.Corruption
+                )
+                : null,
+            allowIllegal ? ForceDropMode.Illegal : ForceDropMode.Legal
+        );
+    }
+
+    static void ChangeMode(bool illegal)
+    {
+        allowIllegal = illegal;
+        // Selections made under one rule set must not leak into the other.
+        foreach (var row in rows)
+        {
+            row.id = -1;
+            row.name = "None";
+            Caption(row.select, "None");
+        }
+        corruptionId = -1;
+        corruptionName = "None";
+        Caption(corruptionSelect, "Corrupted affix: None");
+        legalContextKey = corruptionPoolKey = "";
+        legalContexts.Clear();
+        corruptionPool = null;
+        corruptionPoolError = result = "";
+        if (!picker.IsNullOrDestroyed())
+            picker.SetActive(false);
+        RefreshTierLimits();
+        RefreshIllegalButton();
+    }
+
+    static void RefreshIllegalButton()
+    {
+        if (illegalModeButton.IsNullOrDestroyed())
+            return;
+        Caption(illegalModeButton, allowIllegal ? "Illegal: On" : "Illegal: Off");
+        StyleSelection(illegalModeButton, allowIllegal);
+    }
+
     static void Drop()
     {
+        RefreshTierLimits();
         foreach (var n in numbers)
             n.Read();
-        if (Validate().Length != 0)
+        RefreshPotentialControls();
+        string problem = Validate();
+        if (problem.Length != 0)
+        {
+            result = problem;
             return;
+        }
+        int requested = quantity.value;
+        int dropped = 0;
         try
         {
-            for (int copy = 0; copy < quantity.value; copy++)
+            for (int copy = 0; copy < requested; copy++)
             {
-                bool equipment = FD.item_type < 100;
-                FD.implicits_roll = equipment;
-                Assign(FD.implicit_0_slider, Roll(implicits[0]));
-                Assign(FD.implicit_1_slider, Roll(implicits[1]));
-                Assign(FD.implicit_2_slider, Roll(implicits[2]));
-                FD.forgin_potencial_roll = equipment;
-                Assign(FD.forgin_potencial_slider, Sample(forging));
-                FD.affixs_roll = equipment;
-                FD.affix_0_id = equipment ? rows[0].id : -1;
-                FD.affix_1_id = equipment ? rows[1].id : -1;
-                FD.affix_2_id = equipment ? rows[2].id : -1;
-                FD.affix_3_id = equipment ? rows[3].id : -1;
-                FD.affix_4_id = FD.affix_5_id = -1;
-                Assign(FD.affix_0_tier_slider, rows[0].tier.value - 1);
-                Assign(FD.affix_1_tier_slider, rows[1].tier.value - 1);
-                Assign(FD.affix_2_tier_slider, rows[2].tier.value - 1);
-                Assign(FD.affix_3_tier_slider, rows[3].tier.value - 1);
-                Assign(FD.affix_0_value_slider, Roll(rows[0].roll));
-                Assign(FD.affix_1_value_slider, Roll(rows[1].roll));
-                Assign(FD.affix_2_value_slider, Roll(rows[2].roll));
-                Assign(FD.affix_3_value_slider, Roll(rows[3].roll));
-                foreach (
-                    var toggle in new[]
-                    {
-                        FD.affix_0_random_toggle,
-                        FD.affix_1_random_toggle,
-                        FD.affix_2_random_toggle,
-                        FD.affix_3_random_toggle,
-                    }
-                )
-                    if (!toggle.IsNullOrDestroyed())
-                        toggle.SetIsOnWithoutNotify(false);
-                FD.seal_id = equipment ? rows[4].id : -1;
-                FD.seal_roll = equipment && rows[4].id >= 0;
-                Assign(FD.seal_tier_slider, rows[4].tier.value - 1);
-                Assign(FD.seal_value_slider, Roll(rows[4].roll));
-                FD.unique_mods_roll = true;
-                var sliders = new[]
-                {
-                    FD.unique_mod_0_slider,
-                    FD.unique_mod_1_slider,
-                    FD.unique_mod_2_slider,
-                    FD.unique_mod_3_slider,
-                    FD.unique_mod_4_slider,
-                    FD.unique_mod_5_slider,
-                    FD.unique_mod_6_slider,
-                    FD.unique_mod_7_slider,
-                };
-                for (int i = 0; i < sliders.Length; i++)
-                    Assign(sliders[i], Roll(uniqueRolls[i]));
-                FD.legenday_potencial_roll = true;
-                Assign(FD.legenday_potencial_slider, Sample(lp));
-                FD.weaver_will_roll = true;
-                Assign(FD.weaver_will_slider, Sample(ww));
-                Assign(FD.forcedrop_quantity_slider, 1);
-                if (FD.corrupted_toggle.IsNullOrDestroyed() && corrupted)
-                    throw new InvalidOperationException("Corruption control is unavailable");
-                if (!FD.corrupted_toggle.IsNullOrDestroyed())
-                    FD.corrupted_toggle.SetIsOnWithoutNotify(corrupted);
-                FD.UpdateUI();
-                FD.Drop();
+                // Each copy gets one immutable request and independently resolved
+                // rolls. Construction and verification never sample them again.
+                ForceDropItemCreator.Drop(ResolveItem());
+                dropped++;
             }
-            result = "Dropped " + quantity.value + " item(s).";
+            result = "Dropped " + dropped + " item(s).";
         }
         catch (Exception ex)
         {
-            result = "Drop failed: " + ex.Message;
+            result =
+                "Dropped " + dropped + " of " + requested + " item(s). Drop failed: " + ex.Message;
             Main.logger_instance.Error(result);
         }
     }
@@ -1278,6 +1848,46 @@ public static class ForceDropBuilder
                 RefreshPicker();
             }
         );
+        for (int i = 0; i < 2; i++)
+        {
+            int column = i;
+            float left = column == 0 ? .03f : .51f;
+            columnTitles[column] = Label(
+                picker,
+                column == 0 ? "Prefix" : "Suffix",
+                left,
+                .74f,
+                left + .46f,
+                .795f,
+                15
+            );
+            columnClear[column] = Button(picker, "None", left, .68f, left + .46f, .735f, () => { });
+            var viewport = Panel(picker, "Affix scroll viewport", left, .10f, left + .435f, .67f);
+            viewport.AddComponent<RectMask2D>();
+            var content = new GameObject("Affix scroll content");
+            var contentRect = content.AddComponent<RectTransform>();
+            content.transform.SetParent(viewport.transform, false);
+            contentRect.anchorMin = new Vector2(0, 1);
+            contentRect.anchorMax = new Vector2(1, 1);
+            contentRect.pivot = new Vector2(.5f, 1);
+            contentRect.sizeDelta = Vector2.zero;
+            var scroll = viewport.AddComponent<ScrollRect>();
+            scroll.viewport = viewport.GetComponent<RectTransform>();
+            scroll.content = contentRect;
+            scroll.horizontal = false;
+            scroll.vertical = true;
+            scroll.movementType = ScrollRect.MovementType.Clamped;
+            scroll.scrollSensitivity = AffixRowHeight;
+            var track = Panel(picker, "Affix scrollbar", left + .44f, .10f, left + .46f, .67f);
+            var handle = Panel(track, "Handle", 0, 0, 1, 1);
+            handle.GetComponent<Image>().color = gold;
+            var scrollbar = track.AddComponent<Scrollbar>();
+            scrollbar.handleRect = handle.GetComponent<RectTransform>();
+            scrollbar.targetGraphic = handle.GetComponent<Image>();
+            scrollbar.direction = Scrollbar.Direction.BottomToTop;
+            scroll.verticalScrollbar = scrollbar;
+            columnScrolls[column] = scroll;
+        }
         for (int i = 0; i < groups.Length; i++)
             pickerHeaders.Add(
                 Label(picker, groups[i], .03f + i * .19f, .74f, .21f + i * .19f, .795f, 15)
@@ -1285,13 +1895,16 @@ public static class ForceDropBuilder
         picker.SetActive(false);
     }
 
-    static void OpenPicker(string title)
+    static void OpenPicker(string title, bool scrollAffixes = false, int affixColumn = -1)
     {
         categoryPicker = rarityPicker = false;
+        scrollAffixPicker = scrollAffixes;
+        affixPickerColumn = affixColumn;
         LocaleRegistry.Apply(pickerTitle, title);
         pickerSearch.SetTextWithoutNotify("");
         lastPickerSearch = "";
         pickerPage = 0;
+        ResetAffixScrolls();
         picker.SetActive(true);
         picker.transform.SetAsLastSibling();
         RefreshPicker();
@@ -1312,9 +1925,10 @@ public static class ForceDropBuilder
         lastModLocale = modLocale;
         lastCategoryCount = categoryCount;
         nativeCategories = NativeItemNames.Categories(FD.type_dropdown);
+        allItems = null;
         lastItems = "";
         lastSearch = "";
-        itemPage = 0;
+        ResetItemScroll();
         // Picker actions keep stable ids; reopen to rebuild its translated labels.
         if (!picker.IsNullOrDestroyed())
             picker.SetActive(false);
@@ -1427,10 +2041,33 @@ public static class ForceDropBuilder
         filtered.Clear();
         visiblePicks.Clear();
         foreach (var choice in choices)
-            if (NativeItemNames.Matches(pickerSearch.text, choice.name, choice.aliases))
+            if (MatchesPickerSearch(choice, pickerSearch.text))
                 filtered.Add(choice);
-        pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker);
-        pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker);
+        pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker && !scrollAffixPicker);
+        pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker && !scrollAffixPicker);
+        for (int column = 0; column < 2; column++)
+        {
+            bool visible =
+                scrollAffixPicker && (affixPickerColumn < 0 || affixPickerColumn == column);
+            columnTitles[column].gameObject.SetActive(visible);
+            columnClear[column].gameObject.SetActive(visible);
+            columnScrolls[column].gameObject.SetActive(visible);
+            columnScrolls[column].verticalScrollbar.gameObject.SetActive(visible);
+            if (!visible)
+                continue;
+            float left = affixPickerColumn < 0 && column == 1 ? .51f : .03f;
+            float right = affixPickerColumn < 0 ? left + .46f : .97f;
+            Rect(columnTitles[column].gameObject, left, .74f, right, .795f);
+            Rect(columnClear[column].gameObject, left, .68f, right, .735f);
+            Rect(columnScrolls[column].gameObject, left, .10f, right - .025f, .67f);
+            Rect(
+                columnScrolls[column].verticalScrollbar.gameObject,
+                right - .02f,
+                .10f,
+                right,
+                .67f
+            );
+        }
         foreach (var header in pickerHeaders)
             header.gameObject.SetActive(categoryPicker);
         if (categoryPicker)
@@ -1457,6 +2094,11 @@ public static class ForceDropBuilder
             }
         foreach (var button in pickButtons)
             button.gameObject.SetActive(false);
+        if (scrollAffixPicker)
+        {
+            RefreshAffixColumns();
+            return;
+        }
         if (categoryPicker)
         {
             int rowCount = 15;
@@ -1483,6 +2125,7 @@ public static class ForceDropBuilder
                         .73f - row * step - .004f
                     );
                     Caption(button, column[index].name);
+                    button.GetComponentInChildren<Text>(true).color = gold;
                     button.gameObject.SetActive(true);
                     visiblePicks.Add(column[index]);
                 }
@@ -1508,9 +2151,100 @@ public static class ForceDropBuilder
                     .739f - row * .058f
                 );
                 Caption(button, filtered[index].name);
+                button.GetComponentInChildren<Text>(true).color = ChoiceColor(filtered[index]);
                 button.gameObject.SetActive(true);
                 visiblePicks.Add(filtered[index]);
             }
+        }
+    }
+
+    static void RefreshAffixColumns()
+    {
+        foreach (var column in columnChoices)
+            column.Clear();
+        Choice clear = null;
+        foreach (var choice in filtered)
+            if (choice.id < 0)
+                clear = choice;
+            else
+                columnChoices[choice.suffix ? 1 : 0].Add(choice);
+
+        for (int column = 0; column < 2; column++)
+        {
+            if (affixPickerColumn >= 0 && affixPickerColumn != column)
+                continue;
+            columnTitles[column].text =
+                L(column == 0 ? "Prefix" : "Suffix") + " · " + columnChoices[column].Count;
+            columnClear[column].gameObject.SetActive(clear != null);
+            if (clear != null)
+                clicks[columnClear[column].GetInstanceID()] = () =>
+                {
+                    clear.select();
+                    picker.SetActive(false);
+                };
+            columnStarts[column] = columnEnds[column] = -1;
+            RefreshAffixScrollRows(column);
+        }
+    }
+
+    static void ResetAffixScrolls()
+    {
+        for (int column = 0; column < 2; column++)
+        {
+            var scroll = columnScrolls[column];
+            if (scroll.IsNullOrDestroyed())
+                continue;
+            scroll.StopMovement();
+            scroll.content.anchoredPosition = Vector2.zero;
+            columnStarts[column] = columnEnds[column] = -1;
+        }
+    }
+
+    // Pool only visible rows rather than building thousands of native UI objects.
+    // ScrollRect owns wheel/drag input and smooth movement in each independent column.
+    static void RefreshAffixScrollRows(int column)
+    {
+        var scroll = columnScrolls[column];
+        if (!scroll.gameObject.activeSelf)
+            return;
+        var list = columnChoices[column];
+        float height = Math.Max(1f, scroll.viewport.rect.height);
+        scroll.content.sizeDelta = new Vector2(0, Math.Max(height, list.Count * AffixRowHeight));
+        int start = Math.Min(
+            Math.Max(0, (int)(scroll.content.anchoredPosition.y / AffixRowHeight)),
+            Math.Max(0, list.Count - 1)
+        );
+        int end = Math.Min(list.Count, start + (int)Math.Ceiling(height / AffixRowHeight) + 1);
+        if (start == columnStarts[column] && end == columnEnds[column])
+            return;
+        columnStarts[column] = start;
+        columnEnds[column] = end;
+        var buttons = columnButtons[column];
+        while (buttons.Count < end - start)
+            buttons.Add(Button(scroll.content.gameObject, "", 0, 0, 1, 1, () => { }));
+        for (int slot = 0; slot < buttons.Count; slot++)
+        {
+            var button = buttons[slot];
+            bool visible = slot < end - start;
+            button.gameObject.SetActive(visible);
+            if (!visible)
+                continue;
+            int index = start + slot;
+            var choice = list[index];
+            var rect = button.GetComponent<RectTransform>();
+            rect.anchorMin = new Vector2(0, 1);
+            rect.anchorMax = new Vector2(1, 1);
+            rect.pivot = new Vector2(.5f, 1);
+            rect.offsetMin = new Vector2(0, -(index + 1) * AffixRowHeight + 4);
+            rect.offsetMax = new Vector2(0, -index * AffixRowHeight);
+            Caption(button, choice.name);
+            button.GetComponentInChildren<Text>(true).color = ChoiceColor(choice);
+            clicks[button.GetInstanceID()] = () =>
+            {
+                // Both columns retain the original action for the opened slot.
+                choice.select();
+                picker.SetActive(false);
+            };
         }
     }
 
@@ -1556,17 +2290,35 @@ public static class ForceDropBuilder
         return n;
     }
 
-    static GameObject Panel(GameObject parent, string name, float x0, float y0, float x1, float y1)
+    static GameObject Panel(
+        GameObject parent,
+        string name,
+        float x0,
+        float y0,
+        float x1,
+        float y1,
+        bool bordered = true
+    )
     {
         var go = new GameObject(name);
         go.AddComponent<RectTransform>();
         go.transform.SetParent(parent.transform, false);
         Rect(go, x0, y0, x1, y1);
         go.AddComponent<Image>().color = dark;
-        var outline = go.AddComponent<Outline>();
-        outline.effectColor = HudTheme.AccentSoft;
-        outline.effectDistance = new Vector2(1f, -1f);
+        if (bordered)
+            HudStyler.AddPrimaryBorder(go, HudTheme.BorderWidth);
         return go;
+    }
+
+    static void Divider(GameObject parent, float x0, float y, float x1)
+    {
+        var divider = new GameObject("TitleDivider");
+        divider.AddComponent<RectTransform>();
+        divider.transform.SetParent(parent.transform, false);
+        Rect(divider, x0, y, x1, y + .002f);
+        var image = divider.AddComponent<Image>();
+        image.color = HudTheme.CardDivider;
+        image.raycastTarget = false;
     }
 
     static void Rect(GameObject go, float x0, float y0, float x1, float y1)
@@ -1595,7 +2347,7 @@ public static class ForceDropBuilder
         var label = go.AddComponent<Text>();
         label.font = font;
         label.fontSize = size;
-        label.color = gold;
+        label.color = foreground;
         LocaleRegistry.Apply(label, text);
         label.raycastTarget = false;
         label.alignment = TextAnchor.UpperLeft;
@@ -1617,10 +2369,36 @@ public static class ForceDropBuilder
         var go = Panel(parent, "Button", x0, y0, x1, y1);
         var button = go.AddComponent<Button>();
         button.targetGraphic = go.GetComponent<Image>();
+        button.targetGraphic.color = Color.white;
+        button.colors = HudTheme.ActionButtonColors(HudTheme.Surface, HudTheme.Surface);
         var label = Label(go, text, .025f, .04f, .975f, .96f);
         label.alignment = TextAnchor.MiddleLeft;
+        var accent = new GameObject("LEHUD_SelectedAccent");
+        accent.AddComponent<RectTransform>();
+        accent.transform.SetParent(go.transform, false);
+        Rect(accent, 0f, 0f, .012f, 1f);
+        var accentImage = accent.AddComponent<Image>();
+        accentImage.color = HudTheme.Accent;
+        accentImage.raycastTarget = false;
+        accent.SetActive(false);
         clicks[button.GetInstanceID()] = action;
         return button;
+    }
+
+    static void StyleSelection(Button button, bool selected)
+    {
+        if (button.IsNullOrDestroyed())
+            return;
+        var image = button.GetComponent<Image>();
+        if (!image.IsNullOrDestroyed())
+            image.color = Color.white;
+        button.colors = HudTheme.ActionButtonColors(
+            selected ? HudTheme.Selection : HudTheme.Surface,
+            selected ? HudTheme.Selection : HudTheme.Surface
+        );
+        var accent = button.transform.Find("LEHUD_SelectedAccent");
+        if (!accent.IsNullOrDestroyed())
+            accent.gameObject.SetActive(selected);
     }
 
     static void Caption(Button button, string text)
@@ -1668,11 +2446,12 @@ public static class ForceDropBuilder
         if (!background.IsNullOrDestroyed())
         {
             background.sprite = null;
-            background.color = HudTheme.SurfaceRaised;
+            background.color = HudTheme.InputBackground;
         }
+        HudStyler.AddPrimaryBorder(go, HudTheme.ControlBorderWidth);
         if (!input.placeholder.IsNullOrDestroyed())
             input.placeholder.gameObject.SetActive(false);
-        input.textComponent.color = gold;
+        input.textComponent.color = foreground;
         input.textComponent.fontSize = 15;
         input.textComponent.enableAutoSizing = true;
         input.textComponent.fontSizeMin = 10;

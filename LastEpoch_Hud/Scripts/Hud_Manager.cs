@@ -13002,6 +13002,12 @@ public partial class Hud_Manager : MonoBehaviour
 
             public static void Drop()
             {
+                if (ModUI.ForceDropBuilder.IsReady)
+                {
+                    ModUI.ForceDropBuilder.DropSelection();
+                    return;
+                }
+
                 if (
                     (btn_enable)
                     && (!Refs_Manager.ground_item_manager.IsNullOrDestroyed())
@@ -13234,9 +13240,7 @@ public partial class Hud_Manager : MonoBehaviour
                             item.CorruptWithoutEffect();
                             item.SetAsCorrupted();
                         }
-                        ModUI.ForceDropBuilder.ApplySelectedCorruption(item);
                         item.RefreshIDAndValues(); //Refresh item for implicits, unique mods, and the saved id
-                        ModUI.ForceDropBuilder.VerifySelectedCorruption(item);
                         if ((item_type < 100) && (ra < 7))
                         {
                             Mods.Items.Items_Drop_ForginPotencial.Stamp(item, fg);

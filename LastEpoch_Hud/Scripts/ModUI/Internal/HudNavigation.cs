@@ -178,12 +178,7 @@ internal static class HudNavigation
             "Items",
             true,
             new HudPageDefinition("items.drop", "Drop", new HudArea[0]),
-            new HudPageDefinition(
-                "items.force-drop",
-                "Force Drop",
-                new[] { HudArea.ForceDrop },
-                new HudPanelUse(HudPanelIds.ForceDrop)
-            ),
+            new HudPageDefinition("items.force-drop", "Force Drop", new HudArea[0]),
             new HudPageDefinition("items.crafting", "Crafting Slot", new HudArea[0])
         ),
         new(

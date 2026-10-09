@@ -946,6 +946,7 @@ public static class HudLayout
         Utilities_QOL.Hide();
         Utilities_Currency.Hide();
         Items_Drop.Hide();
+        Items_ForceDrop.Hide();
         Items_CraftingSlot.Hide();
         World_Difficulty.Hide();
         World_Monoliths.Hide();
@@ -999,6 +1000,14 @@ public static class HudLayout
         {
             SetLegacyAreas(Array.Empty<HudArea>());
             Items_Drop.Show();
+            SetSelected(page.Id);
+            activePage = page;
+            return;
+        }
+        if (page.Id == "items.force-drop")
+        {
+            SetLegacyAreas(Array.Empty<HudArea>());
+            Items_ForceDrop.Show();
             SetSelected(page.Id);
             activePage = page;
             return;

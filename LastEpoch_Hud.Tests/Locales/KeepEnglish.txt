@@ -12,6 +12,8 @@ fr:Type
 fr:Scorpions
 fr:Mage
 fr:Rare
+fr:Standard
+fr:Champion
 # Not words: option label and a "?" placeholder.
 fr:Option A
 fr:Max ?
