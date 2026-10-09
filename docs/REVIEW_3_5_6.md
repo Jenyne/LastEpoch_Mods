@@ -31,6 +31,6 @@ The environment's .NET CLI/MSBuild fails during process-information initializati
 | Advanced Forge | 51 | 3 | 0 |
 | Drop rates | 45 | 3 | 0 |
 
-Skipped checks require game assemblies. These runs cover game-independent logic and repository contracts; they do not compile or verify the new game-dependent hooks. CSharpier checked the new/updated hook implementations; whitespace checks passed throughout. The refreshed runner has 10 entries: Force Drop is selection 1, duplicate selection 2 is retired, and IDs 3–11 remain unchanged. Selection 5 is retained for optional regression and marked done. Installer control flow is unchanged.
+Skipped checks require game assemblies. These runs cover game-independent logic and repository contracts; they do not compile or verify the new game-dependent hooks. CSharpier checked the new/updated hook implementations; whitespace checks passed throughout. The refreshed runner has nine entries: Force Drop is selection 1; duplicate selection 2 and merged QoL selection 10 are retired. Combined QoL/travel is selection 11; other IDs remain unchanged. Selection 5 is retained for optional regression and marked done. Installer control flow is unchanged.
 
 The eight obsolete cap-ownership test cases were removed with the global-write strategy; the lower count does not indicate failing tests.

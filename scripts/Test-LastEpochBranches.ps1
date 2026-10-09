@@ -115,31 +115,18 @@ $queueJson = @'
     ]
   },
   {
-    "id": 10,
-    "title": "Gold / favourite teleports / session counters",
-    "branch": "feat/gold-favourites-session-stats",
-    "status": "Key teleport list, movable overlay and favour fix; runtime retest pending",
-    "location": "Character > Cheats > Currencies; Scenes > Misc (scroll)",
-    "checks": [
-      "Click Spawn 1,000,000 Gold once with Auto Pickup Gold off, collect the pile, then test with auto-pickup on. Check exactly 1,000,000 per click with monster gold multipliers enabled; no runes should be added.",
-      "Open the world map and refresh key teleports. Test End of Time, all three dungeon entrances, Bazaar and Observatory; preserve dungeon keys/tier entry and reject unresolved/ambiguous/locked destinations. Keep [KeyTeleports] lines. Also save/remove/re-add eight extra waypoint favourites and restart; another character must not gain unlocks.",
-      "Reset and farm for 60 active seconds. Retest natural Favour in CoF/MG and Weaver Amber, including auto-pickup, multipliers/caps and spending. Verify no hook/poll double counting and Add/Set Favour and Add Amber do not count. Check XP, pause/resume/reset, loading/zone continuity and character reset.",
-      "Alt-left-drag the counter to each screen edge; restart, hide/show and change resolution to check saved/clamped position. Test Reset counter position, Misc scrolling, Safe Teleport, loot hover/casting and locales. See docs/TEST_GOLD_FAVOURITES_SESSION_STATS.md."
-    ]
-  },
-  {
     "id": 11,
-    "title": "Travel Anywhere / map menus and right-click",
+    "title": "Combined QoL / key teleports / session counters / Travel Anywhere",
     "branch": "feat/travel-anywhere",
-    "status": "CS1061 scene-count fix and QoL follow-up; native rebuild/gameplay pending",
-    "location": "Scenes > Misc > Travel Anywhere; world map",
+    "status": "10 merged into 11; map travel confirmed; picker removed and failed-load guard fixed for retest",
+    "location": "Character > Cheats > Currencies; Scenes > Misc; world map",
     "checks": [
-      "Rebuild first: 5744c5b7 failed before installation on IList<SceneDetails>.Count. The current source reads the count through native ICollection. Retain build.log if the installed SDK still rejects it.",
-      "With the option off, check ordinary waypoints, favourites and Safe Teleport. Enable Travel Anywhere, select a non-waypoint campaign area and travel; check spawn, movement, camera, enemies, loot, exits and NPCs.",
-      "Left-click non-waypoint, locked and unlocked map nodes to open the normal area menu; its Travel action should be usable while enabled. Right-click each node for direct travel. Check one Load/Complete pair, nonzero gates, every era and popups blocking direct clicks.",
-      "Double-click and switch the option off while loading or with an area menu open. A stale temporary Travel action must be blocked; reopen the menu for normal availability. Check original map flags return on close/off, Unlock All Waypoints on/off and reused era widgets. Failed placement must retain the source and finish cleanup. Keep [TravelAnywhere] lines.",
-      "Save/use a non-waypoint favourite while enabled, then disable and confirm it is blocked. Check restart/locales and unchanged saved waypoint unlocks. The temporary waypoint is a map control, not a new world object; widgets without a UIWaypoint component still need an adapter.",
-      "Repeat trips and leave an echo/arena for a static area; check actors, portals, quests and memory. Includes revised selection 10: retest key dungeon teleports, Alt-drag/saved counter position and natural favour tracking. Key presets must retain unlocked-waypoint travel with Travel Anywhere on/off; custom non-waypoint favourites retain the enabled direct route. See docs/TEST_TRAVEL_ANYWHERE.md."
+      "Combined build: selection 10 is retired. Check Spawn 1,000,000 Gold with auto-pickup off/on and multipliers; test Alt-left-drag, saved/clamped counter position, Reset counter position, natural XP/Favour/Amber, no double counting or manual grant credit, pause/reset and zone continuity.",
+      "Only the Travel Anywhere toggle/status should remain; no full scene picker. Open the map and refresh key teleports, then test End of Time, Temporal Sanctum, Lightless Arbor, Soulfire Bastion, Bazaar and Observatory. Preserve normal key/tier entry and current-character waypoint locks. Keep [KeyTeleports] lines. Test extra saved waypoint favourites and restart.",
+      "Map-menu travel is user-confirmed on 2466cc0a. Retest non-waypoint left-click menus and Travel with the option on, plus spawn, movement, camera, enemies, loot, exits and NPCs. Non-waypoint right-click is a known limitation accepted for now; check supported right-click nodes and popups without expanding that scope.",
+      "The old full-picker attempt EoT -> WE502 failed to start loading and left the busy guard set. The current build removes the picker and immediately releases rejected loads only with the original source/player intact and no target loaded. If a direct attempt fails, key and ordinary waypoint travel must resume after cleanup. Real pending async loads/cleanup must still block overlapping requests; keep [TravelAnywhere] lines.",
+      "Double-click and disable during loading or with an area menu open. Block stale temporary actions; reopen for normal availability. Check map flags return on close/off, Unlock All Waypoints combinations, gates, era widgets, failed placement/source retention and non-waypoint favourites enabled versus disabled.",
+      "Repeat trips and leave an echo/arena for a static area; check actors, portals, quests and memory. Retest Safe Teleport, Misc scrolling, loot hover/casting and locales. See docs/TEST_TRAVEL_ANYWHERE.md and docs/TEST_GOLD_FAVOURITES_SESSION_STATS.md."
     ]
   }
 ]
