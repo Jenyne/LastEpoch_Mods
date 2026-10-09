@@ -42,7 +42,7 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
 | 9 | `master` | Current main baseline | Baseline/control build |
 | 10 | `feat/gold-favourites-session-stats` | Fixed gold, favourite waypoints, XP/Favour/Amber counters | Implemented; native build and gameplay pending |
-| 11 | `feat/travel-anywhere` | Non-waypoint map menus, right-click, scene picker and favourites | Restoration candidate; current-game build and gameplay pending |
+| 11 | `feat/travel-anywhere` | Non-waypoint map menus, right-click, scene picker and favourites | CS1061 source fix published; native rebuild/gameplay pending |
 
 ## 1. Force Drop / legal + illegal / global item search
 
@@ -150,32 +150,34 @@ Done for now at the user's request. The following checklist is retained for opti
 ## 10. Gold, favourite teleports and session counters
 
 **Where:** Character > Cheats > Currencies; Scenes > Misc (scroll)
-**Branch:** `feat/gold-favourites-session-stats` (`87e5d8c4`)
+**Branch:** `feat/gold-favourites-session-stats` (`638504c0`)
 
 - Click Spawn 1,000,000 Gold once with Auto Pickup Gold off, collect the pile, then test with auto-pickup on. Check exactly 1,000,000 per click, including with monster gold multipliers enabled; no runes should be added.
-- Save favourite unlocked waypoints, travel between them, remove/re-add, fill eight slots and restart. Switching to a character without a saved waypoint must reject travel and leave its unlocks alone. Open the world map once if pins are unavailable.
+- Open the map and refresh key teleports. Test all dungeon entrance/hub buttons, locked/unresolved destinations and normal key/tier entry; keep `[KeyTeleports]` lines. Save extra favourite unlocked waypoints, travel between them, remove/re-add, fill eight slots and restart. Switching to a character without a saved waypoint must reject travel and leave its unlocks alone. Open the world map once if pins are unavailable.
 - Reset counters, farm for 60 active seconds and compare XP/Favour/Memory Amber totals and hourly rates with actual gains. Test level-ups, multipliers/caps, currency spending, manual mod grants, pause/resume/reset, loading/zone continuity and character reset.
-- Scroll Misc to every control, retest Safe Teleport, hide/show the HUD and restart. Check loot hover/casting below the overlay and EN > FR > KO > ZH > EN captions.
+- Alt-left-drag the counter to every screen edge. Restart, change resolution and use Reset counter position; verify saved/clamped placement. Scroll Misc to every control, retest Safe Teleport, hide/show the HUD and restart. Check loot hover/casting below the overlay and EN > FR > KO > ZH > EN captions.
 
 [Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/gold-favourites-session-stats/docs/TEST_GOLD_FAVOURITES_SESSION_STATS.md)
 
-Core/locale tests: 1,024 passed, six SDK-dependent checks skipped. Native mod compilation, patch targets and all gameplay behaviours remain unconfirmed. Selection 11 is the separate Travel Anywhere restoration candidate, based on this QoL build.
+Core/locale tests: 1,029 passed, six SDK-dependent checks skipped. Native mod compilation, patch targets and all gameplay behaviours remain unconfirmed. Selection 11 is the separate Travel Anywhere restoration candidate, based on this QoL build.
 
 ## 11. Travel Anywhere / map menus and right-click
 
 **Where:** Scenes > Misc > Travel Anywhere; world map
-**Branch:** `feat/travel-anywhere` (`5744c5b7`), based on QoL `87e5d8c4`
+**Branch:** `feat/travel-anywhere` (`2466cc0a`), includes QoL follow-up `638504c0`
 
 - Leave the option off first and check ordinary waypoints, favourites and Safe Teleport. Enable it, select a campaign area without a waypoint and travel. Confirm usable spawn, movement/pathfinding, camera, enemies, loot, exits and NPCs.
 - Left-click non-waypoint, locked and unlocked map nodes to open the normal area menu. Check its waypoint/Travel controls are usable while enabled, then travel using the menu. Right-click each node for direct travel. Verify one Load/Complete pair, nonzero gates, same-area rejection, every era and popups blocking direct clicks. This requires a `UIWaypoint` parent; universal map-widget coverage is not confirmed.
 - Double-click, click another node while loading and disable mid-flight or with an area menu already open. A stale temporary Travel action must be blocked; reopen the menu for normal availability. Check map flags return on close/off, Unlock All Waypoints on/off and reused era widgets. Failed placement must retain the source and clean up before another request. Keep `[TravelAnywhere]` lines and check recovery position/camera/navigation.
 - Save and travel to a non-waypoint favourite while enabled; disable and confirm it is blocked. Check restart, EN > FR > KO > ZH > EN and unchanged saved waypoint unlocks. The temporary waypoint only changes map controls; it does not create a physical waypoint in the world.
 - Repeat trips, including leaving an echo/arena for a static area. Watch for duplicate actors/managers, broken portals, quests or memory growth. Generated echo/arena destinations remain excluded.
-- This build includes selection 10's gold, favourites and session counters. Retest fixed gold and counter continuity across zones.
+- This build includes selection 10's updated key teleport list, movable overlay and live favour reconciliation. Retest fixed gold, natural favour, manual grant exclusion and counter continuity across zones. Preset buttons keep unlocked-waypoint travel with Travel Anywhere on/off; custom non-waypoint favourites retain their enabled direct route.
 
 [Full branch checklist and historical findings](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/travel-anywhere/docs/TEST_TRAVEL_ANYWHERE.md)
 
-Core/locale checks: 1,064 passed, six SDK-dependent checks skipped; formatting passed. Current SDK compilation, Harmony targets and all gameplay remain unconfirmed. Refresh the runner branch and copy the script to TEMP again to see entry 11.
+Core/locale checks: 1,069 passed, six SDK-dependent checks skipped; formatting passed. Current SDK compilation, Harmony targets and all gameplay remain unconfirmed. Refresh the runner branch and copy the script to TEMP again to see entry 11.
+
+Build failure recorded: `5744c5b7` stopped before installing on `IList<SceneDetails>.Count` (CS1061). The source now reads native `ICollection<SceneDetails>.Count`; rebuild selection 11 and retain `build.log` on any further SDK error.
 
 ## What the runner does
 
@@ -237,3 +239,5 @@ Published follow-up source: #3 `6e835e85`, #5 `b59281d6`, #6 `75e23254`. Fetch t
 Travel Anywhere source was published on `feat/travel-anywhere` at `43ea2bc8`. Selection 11 includes QoL selection 10 and restores static-area picker/map travel as a default-off test candidate. Current SDK and gameplay validation are still pending; this is not confirmation of every map node or generated instance.
 
 Menu/right-click follow-up: `feat/travel-anywhere` at `5744c5b7` temporarily enables eligible map waypoint flags, keeps normal left-click menus and adds guarded right-click travel. Formatting and the existing 1,064 core/locale checks passed (six SDK-dependent skipped). Native menu appearance/actions and restoration still need in-game testing; the pure tests do not cover these new native UI paths.
+
+QoL follow-up: `638504c0` adds key teleport buttons and Alt-drag position persistence. The reported missing favour count is addressed using the fresh local faction tracker plus balance/event reconciliation, including paused/manual baselines. Source checks: 1,029 passed, six native SDK checks skipped. Travel `2466cc0a` includes these changes and the CS1061 fix (1,069 passed, six skips). All new native behaviour remains pending.
