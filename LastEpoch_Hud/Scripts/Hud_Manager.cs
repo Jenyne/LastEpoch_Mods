@@ -304,6 +304,13 @@ public partial class Hud_Manager : MonoBehaviour
                             ModUI.SaveManager.BindHud(hud_object);
                         }
                     );
+                    SafeInit(
+                        "ModUI.HudLayout.Initialize",
+                        () =>
+                        {
+                            ModUI.HudLayout.Initialize(hud_object);
+                        }
+                    );
                 }
                 else
                 {
@@ -476,6 +483,7 @@ public partial class Hud_Manager : MonoBehaviour
 
     void Update_Hud_Content()
     {
+        ModUI.HudLayout.RefreshActivePage();
         if ((Content.Character.enable) && (Content.Character.need_update))
         {
             Content.Character.Update_PlayerData();
@@ -3598,7 +3606,7 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     memoryamber_slider.wholeNumbers = true;
                     memoryamber_slider.minValue = 1f;
-                    memoryamber_slider.maxValue = 10000f;
+                    memoryamber_slider.maxValue = 255f;
 
                     if (!Save_Manager.instance.IsNullOrDestroyed())
                     {
@@ -3612,9 +3620,9 @@ public partial class Hud_Manager : MonoBehaviour
                         {
                             value = 1;
                         }
-                        if (value > 10000)
+                        if (value > 255)
                         {
-                            value = 10000;
+                            value = 255;
                         }
                         Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier = value;
                         memoryamber_slider.value = value;

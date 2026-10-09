@@ -1740,7 +1740,7 @@ public partial class Hud_Manager
                                 case "Slider_Character_Cheats_MemoryAmberMultiplier":
                                 {
                                     uint multiplier = (uint)
-                                        Mathf.Clamp(Mathf.RoundToInt(__0), 1, 10000);
+                                        Mathf.Clamp(Mathf.RoundToInt(__0), 1, 255);
                                     Save_Manager
                                         .instance
                                         .data

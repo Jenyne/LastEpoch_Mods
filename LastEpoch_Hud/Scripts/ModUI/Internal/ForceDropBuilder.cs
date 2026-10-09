@@ -14,8 +14,8 @@ namespace LastEpoch_Hud.Scripts.ModUI;
 // A new view over the existing catalog and item creation code. No asset bundle rebuild.
 public static class ForceDropBuilder
 {
-    static readonly Color gold = new Color(0.96f, 0.81f, 0.48f);
-    static readonly Color dark = new Color(0.10f, 0.12f, 0.15f);
+    static Color gold => HudTheme.AccentBright;
+    static Color dark => HudTheme.InputBackground;
     static readonly Dictionary<int, Action> clicks = new Dictionary<int, Action>();
     static GameObject root,
         basePage,
@@ -599,11 +599,11 @@ public static class ForceDropBuilder
                     (selected ? "Selected: " : "") + ItemName(itemIndexes[index])
                 );
                 itemButtons[slot].GetComponent<Image>().color = selected
-                    ? new Color(.29f, .24f, .13f)
+                    ? HudTheme.ItemSelection
                     : dark;
                 itemButtons[slot].GetComponent<Outline>().effectColor = selected
                     ? gold
-                    : new Color(gold.r, gold.g, gold.b, .65f);
+                    : HudTheme.AccentSoft;
             }
         }
     }
@@ -1564,7 +1564,7 @@ public static class ForceDropBuilder
         Rect(go, x0, y0, x1, y1);
         go.AddComponent<Image>().color = dark;
         var outline = go.AddComponent<Outline>();
-        outline.effectColor = new Color(gold.r, gold.g, gold.b, .65f);
+        outline.effectColor = HudTheme.AccentSoft;
         outline.effectDistance = new Vector2(1f, -1f);
         return go;
     }
@@ -1668,7 +1668,7 @@ public static class ForceDropBuilder
         if (!background.IsNullOrDestroyed())
         {
             background.sprite = null;
-            background.color = new Color(.16f, .18f, .21f);
+            background.color = HudTheme.SurfaceRaised;
         }
         if (!input.placeholder.IsNullOrDestroyed())
             input.placeholder.gameObject.SetActive(false);

@@ -57,11 +57,11 @@ internal static class InfiniteForgingPotentialControls
         // Keep the row transparent and reuse the label's gold for the divider.
         var line = Node(row, "Divider", 0, 0, 1, 0).AddComponent<Image>();
         line.rectTransform.sizeDelta = new Vector2(0, 1);
-        line.color = label.IsNullOrDestroyed() ? new Color(.9f, .73f, .4f) : label.color;
+        line.color = label.IsNullOrDestroyed() ? HudTheme.Accent : label.color;
         line.raycastTarget = false;
         var buttonObject = Node(row, "Btn_Craft_DeselectAll", .76f, .12f, .99f, .88f);
         var buttonImage = buttonObject.AddComponent<Image>();
-        buttonImage.color = new Color(.10f, .12f, .15f);
+        buttonImage.color = HudTheme.InputBackground;
         var button = buttonObject.AddComponent<Button>();
         button.targetGraphic = buttonImage;
         // Explicit Text: arbitrary HUD buttons can have no Text or use TMP.

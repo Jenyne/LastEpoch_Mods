@@ -39,7 +39,10 @@ public static class SliderHook
             if (SaveManager.instance == null)
                 return;
             if (handlers.TryGetValue(__instance.GetInstanceID(), out var handler))
-                handler(value);
+                // The setter argument is the raw pointer-derived value. Unity applies
+                // clamping and whole-number rounding before storing Slider.value, so
+                // consumers must read the finalized value from the control.
+                handler(__instance.value);
         }
     }
 }

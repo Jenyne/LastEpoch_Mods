@@ -30,9 +30,9 @@ internal static class SafeTeleportControls
         var toggleGo = Node(section, "Enabled", .03f, .33f, .40f, .67f);
         var toggle = toggleGo.AddComponent<Toggle>();
         var box = Node(toggleGo, "Box", 0, .2f, .045f, .8f).AddComponent<Image>();
-        box.color = new Color(.58f, .45f, .20f);
+        box.color = HudTheme.ControlBox;
         var check = Node(box.gameObject, "Check", .2f, .2f, .8f, .8f).AddComponent<Image>();
-        check.color = new Color(.93f, .84f, .65f);
+        check.color = HudTheme.ControlCheck;
         var boxRect = box.GetComponent<RectTransform>();
         boxRect.anchorMin = new Vector2(0, .5f);
         boxRect.anchorMax = new Vector2(0, .5f);
@@ -72,7 +72,7 @@ internal static class SafeTeleportControls
         var separator = Node(section, "Separator", .01f, .29f, .99f, .29f);
         separator.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 1);
         var line = separator.AddComponent<Image>();
-        line.color = new Color(.83f, .69f, .36f);
+        line.color = HudTheme.Accent;
         line.raycastTarget = false;
         Label(
             section,
@@ -197,7 +197,7 @@ internal static class SafeTeleportControls
         var text = Node(parent, name, left, bottom, right, top).AddComponent<Text>();
         text.font = font;
         text.fontSize = 12;
-        text.color = new Color(.93f, .84f, .65f);
+        text.color = HudTheme.ControlCheck;
         text.alignment = TextAnchor.MiddleLeft;
         text.raycastTarget = false;
         text.horizontalOverflow = HorizontalWrapMode.Wrap;
@@ -209,7 +209,7 @@ internal static class SafeTeleportControls
     {
         var go = Node(parent, name, left, .05f, right, .95f);
         var image = go.AddComponent<Image>();
-        image.color = new Color(.18f, .20f, .23f);
+        image.color = HudTheme.SurfaceRaised;
         var button = go.AddComponent<Button>();
         button.targetGraphic = image;
         Label(go, "Value", font, name == "Reset" ? "Clear" : "Unbound", .05f, 0, .95f, 1);

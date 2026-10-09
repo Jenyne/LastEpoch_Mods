@@ -5,15 +5,13 @@ using Character = LastEpoch_Hud.Scripts.Hud_Manager.Content.Character;
 
 namespace LastEpoch_Hud.Scripts.ModUI;
 
-// Reuse native buttons and their existing actions; only their parents/layout change.
+// Legacy action cleanup. Rebuilt pages own currency presentation, while the
+// blessing group still reuses its native controls until that page is rebuilt.
 internal static class CharacterActionControls
 {
     public static void Bind(GameObject cheats, GameObject data)
     {
-        Group(
-            cheats,
-            "CurrencyActions",
-            "Currencies",
+        HideCurrencyActions(
             new[]
             {
                 Character.Cheats.add_runes_button,
@@ -36,6 +34,22 @@ internal static class CharacterActionControls
                 Character.Cheats.unlock_blessing_slots_button,
             }
         );
+    }
+
+    static void HideCurrencyActions(Button[] buttons)
+    {
+        foreach (var button in buttons)
+        {
+            if (button.IsNullOrDestroyed())
+                continue;
+            var parent = button.transform.parent;
+            button.gameObject.SetActive(false);
+            if (
+                !parent.IsNullOrDestroyed()
+                && parent.gameObject.name == "CharacterCurrencyActions"
+            )
+                parent.gameObject.SetActive(false);
+        }
     }
 
     static void Group(GameObject content, string name, string caption, Button[] buttons)
@@ -73,7 +87,7 @@ internal static class CharacterActionControls
         Place(title.gameObject, 0, 1, 0, 20);
         LocaleRegistry.Apply(title, caption);
         var line = Node(section, "Separator").AddComponent<Image>();
-        line.color = new Color(.83f, .69f, .36f);
+        line.color = HudTheme.Accent;
         line.raycastTarget = false;
         Place(line.gameObject, 0, 1, 21, 1);
         int index = 0;

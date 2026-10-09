@@ -9,13 +9,15 @@ namespace LastEpoch_Hud.Scripts.ModUI;
 internal static class MonolithTimelineEditor
 {
     const float EditorHeight = 500f;
-    static readonly Color Gold = new Color(0.988f, 0.855f, 0.561f, 1f);
-    static readonly Color PanelColor = new Color(0.105f, 0.12f, 0.145f, 1f);
+    static Color Gold => HudTheme.AccentBright;
+    static Color PanelColor => HudTheme.InputBackground;
     static GameObject root;
     static Text selectedLabel;
     static Text availabilityLabel;
     static readonly System.Collections.Generic.List<Button> timelineButtons =
         new System.Collections.Generic.List<Button>();
+    static readonly System.Collections.Generic.List<GameObject> timelineAccents =
+        new System.Collections.Generic.List<GameObject>();
 
     public static void Build(GameObject content)
     {
@@ -60,6 +62,7 @@ internal static class MonolithTimelineEditor
         CreateLabel(actions, template, "Actions", 8f, 32f);
 
         timelineButtons.Clear();
+        timelineAccents.Clear();
         // The existing dropdown indices are the game's timeline IDs (1 through 10).
         for (int id = 1; id < Data.monolith_dropdown.options.Count; id++)
         {
@@ -71,6 +74,7 @@ internal static class MonolithTimelineEditor
                 new System.Action(() => Select(timelineId))
             );
             timelineButtons.Add(button);
+            timelineAccents.Add(CreateSelectionAccent(button.gameObject));
         }
 
         MoveValue(
@@ -112,6 +116,7 @@ internal static class MonolithTimelineEditor
         {
             GameObject buttonObject = Data.monolith_corruption_all_button.gameObject;
             buttonObject.transform.SetParent(actions.transform, false);
+            StyleButton(Data.monolith_corruption_all_button);
             Place(buttonObject, 0f, 1f, 46f, 40f, 10f, 10f);
             Text label = buttonObject.GetComponentInChildren<Text>(true);
             if (!label.IsNullOrDestroyed())
@@ -188,9 +193,17 @@ internal static class MonolithTimelineEditor
             {
                 continue;
             }
-            ColorBlock colors = Data.save_button.colors;
-            colors.normalColor = i + 1 == selected ? colors.highlightedColor : PanelColor;
-            button.colors = colors;
+            bool isSelected = i + 1 == selected;
+            Color normal = isSelected ? HudTheme.Selection : HudTheme.Surface;
+            button.colors = HudTheme.ActionButtonColors(
+                normal,
+                isSelected ? HudTheme.Selection : HudTheme.SurfaceHover
+            );
+            var image = button.GetComponent<Image>();
+            if (!image.IsNullOrDestroyed())
+                image.color = Color.white;
+            if (i < timelineAccents.Count && !timelineAccents[i].IsNullOrDestroyed())
+                timelineAccents[i].SetActive(isSelected);
         }
         bool basic = IsVisible(Data.monolith_stability_basic_go);
         bool empowered = IsVisible(Data.monolith_stability_empower_go);
@@ -207,6 +220,26 @@ internal static class MonolithTimelineEditor
         {
             Data.monolith_corruption_all_button.interactable = basic || empowered;
         }
+    }
+
+    public static void AttachTo(GameObject parent)
+    {
+        if (root.IsNullOrDestroyed() || parent.IsNullOrDestroyed())
+            return;
+        root.transform.SetParent(parent.transform, false);
+        var rect = root.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0f, 1f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(0.5f, 1f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(0f, EditorHeight);
+        var layout = root.GetComponent<LayoutElement>();
+        if (layout.IsNullOrDestroyed())
+            layout = root.AddComponent<LayoutElement>();
+        layout.ignoreLayout = false;
+        layout.minHeight = EditorHeight;
+        layout.preferredHeight = EditorHeight;
+        layout.flexibleHeight = 0f;
     }
 
     static bool IsVisible(GameObject row)
@@ -243,7 +276,7 @@ internal static class MonolithTimelineEditor
         Text label = obj.AddComponent<Text>();
         label.font = template.font;
         label.fontSize = 16;
-        label.color = Gold;
+        label.color = HudTheme.TextPrimary;
         label.alignment = TextAnchor.MiddleLeft;
         label.horizontalOverflow = HorizontalWrapMode.Wrap;
         label.verticalOverflow = VerticalWrapMode.Truncate;
@@ -266,15 +299,12 @@ internal static class MonolithTimelineEditor
         GameObject obj = CreateObject("Btn_" + text.Replace(' ', '_'), parent);
         Place(obj, 0f, 1f, top, height, 10f, 10f);
         Image image = obj.AddComponent<Image>();
-        Image source = Data.save_button.GetComponent<Image>();
-        if (!source.IsNullOrDestroyed())
-        {
-            image.sprite = source.sprite;
-            image.type = source.type;
-        }
+        image.sprite = null;
+        image.type = Image.Type.Simple;
+        image.color = HudTheme.Surface;
         Button button = obj.AddComponent<Button>();
         button.targetGraphic = image;
-        button.colors = Data.save_button.colors;
+        StyleButton(button);
         Text label = CreateLabel(obj, template, text, 0f, height);
         label.alignment = TextAnchor.MiddleCenter;
         label.resizeTextForBestFit = true;
@@ -311,10 +341,89 @@ internal static class MonolithTimelineEditor
         if (!input.IsNullOrDestroyed())
         {
             Place(input.gameObject, 0f, 1f, 32f, 32f);
+            StyleInput(input);
         }
         else if (!slider.IsNullOrDestroyed())
         {
             Place(slider.gameObject, 0f, 1f, 32f, 32f);
+            HudStyler.ApplySlider(slider);
+        }
+    }
+
+    static void StyleButton(Button button)
+    {
+        if (button.IsNullOrDestroyed())
+            return;
+        var image = button.GetComponent<Image>();
+        if (!image.IsNullOrDestroyed())
+        {
+            image.sprite = null;
+            image.type = Image.Type.Simple;
+            image.color = HudTheme.Surface;
+        }
+        var oldOutline = button.GetComponent<Outline>();
+        if (!oldOutline.IsNullOrDestroyed())
+            oldOutline.enabled = false;
+        HudStyler.AddPrimaryBorder(button.gameObject);
+        button.targetGraphic = image;
+        button.colors = HudTheme.ActionButtonColors(
+            HudTheme.Surface,
+            HudTheme.Selection
+        );
+        foreach (var text in button.GetComponentsInChildren<Text>(true))
+            text.color = HudTheme.TextPrimary;
+        foreach (var text in button.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
+            text.color = HudTheme.TextPrimary;
+    }
+
+    static GameObject CreateSelectionAccent(GameObject button)
+    {
+        var accent = CreateObject("SelectedAccent", button);
+        var rect = accent.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = new Vector2(0f, 1f);
+        rect.pivot = new Vector2(0f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(4f, 0f);
+        var image = accent.AddComponent<Image>();
+        image.color = HudTheme.Accent;
+        image.raycastTarget = false;
+        accent.transform.SetAsLastSibling();
+        accent.SetActive(false);
+        return accent;
+    }
+
+    static void StyleInput(Il2CppTMPro.TMP_InputField input)
+    {
+        var background = input.GetComponent<Image>();
+        if (!background.IsNullOrDestroyed())
+        {
+            background.sprite = null;
+            background.type = Image.Type.Simple;
+            background.color = HudTheme.ControlBox;
+        }
+        var oldOutline = input.GetComponent<Outline>();
+        if (!oldOutline.IsNullOrDestroyed())
+            oldOutline.enabled = false;
+        HudStyler.AddPrimaryBorder(input.gameObject, 1f);
+        input.colors = HudTheme.ButtonColors(HudTheme.ControlBox, HudTheme.Selection);
+        if (!input.placeholder.IsNullOrDestroyed())
+            input.placeholder.gameObject.SetActive(false);
+        if (!input.textViewport.IsNullOrDestroyed())
+        {
+            input.textViewport.anchorMin = Vector2.zero;
+            input.textViewport.anchorMax = Vector2.one;
+            input.textViewport.offsetMin = new Vector2(8f, 0f);
+            input.textViewport.offsetMax = new Vector2(-10f, 0f);
+        }
+        if (!input.textComponent.IsNullOrDestroyed())
+        {
+            input.textComponent.color = HudTheme.TextPrimary;
+            input.textComponent.fontSize = HudTheme.ValueFontSize;
+            input.textComponent.horizontalAlignment =
+                Il2CppTMPro.HorizontalAlignmentOptions.Right;
+            input.textComponent.verticalAlignment =
+                Il2CppTMPro.VerticalAlignmentOptions.Middle;
         }
     }
 

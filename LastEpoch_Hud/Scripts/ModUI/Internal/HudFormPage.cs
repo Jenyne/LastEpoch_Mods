@@ -1,0 +1,955 @@
+using System;
+using System.Collections.Generic;
+using System.Globalization;
+using Il2CppTMPro;
+using UnityEngine;
+using UnityEngine.Events;
+using UnityEngine.UI;
+
+namespace LastEpoch_Hud.Scripts.ModUI;
+
+// Shared renderer for pages made from several vertically stacked cards. The
+// page owns one scrollbar; cards only describe their controls and bindings.
+internal sealed class HudFormPage
+{
+    internal sealed class Card
+    {
+        internal GameObject Root;
+        internal GameObject Body;
+        internal Text Indicator;
+        internal bool Expanded = true;
+    }
+
+    private sealed class ToggleBinding
+    {
+        public Toggle Control;
+        public Func<bool> Read;
+    }
+
+    private sealed class SliderBinding
+    {
+        public Slider Control;
+        public TMP_InputField Input;
+        public Func<float> Read;
+        public Action<float> Write;
+        public float Minimum;
+        public float Maximum;
+        public string Unit;
+    }
+
+    private sealed class DropdownBinding
+    {
+        public Dropdown Control;
+        public Dropdown Source;
+        public Func<int> Read;
+    }
+
+    private sealed class VisibilityBinding
+    {
+        public GameObject Root;
+        public Func<bool> Read;
+    }
+
+    private sealed class KeybindBinding
+    {
+        public Text Display;
+        public KeybindSetting Setting;
+    }
+
+    private readonly GameObject root;
+    private readonly GameObject content;
+    private readonly Font font;
+    private readonly TMP_InputField inputTemplate;
+    private readonly Sprite handleSprite;
+    private readonly ScrollRect scroll;
+    private readonly RectTransform contentRect;
+    private readonly List<ToggleBinding> toggles = new();
+    private readonly List<SliderBinding> sliders = new();
+    private readonly List<DropdownBinding> dropdowns = new();
+    private readonly List<VisibilityBinding> visibility = new();
+    private readonly List<KeybindBinding> keybinds = new();
+    private bool refreshing;
+
+    private HudFormPage(GameObject parent, GameObject hud, Font inheritedFont, string name)
+    {
+        font = inheritedFont;
+        inputTemplate = FindInputTemplate(hud);
+        handleSprite = FindHandleSprite(hud);
+
+        root = Node(parent, name);
+        var rootRect = root.GetComponent<RectTransform>();
+        rootRect.anchorMin = Vector2.zero;
+        rootRect.anchorMax = Vector2.one;
+        rootRect.offsetMin = new Vector2(
+            HudTheme.SidebarWidth + HudTheme.ContentPadding,
+            HudTheme.ContentPadding
+        );
+        rootRect.offsetMax = new Vector2(
+            -HudTheme.ContentPadding,
+            -HudTheme.HeaderHeight - HudTheme.ContentPadding
+        );
+
+        var scrollObject = Node(root, "Scroll");
+        Stretch(scrollObject.GetComponent<RectTransform>());
+        scroll = scrollObject.AddComponent<ScrollRect>();
+        scroll.horizontal = false;
+        scroll.vertical = true;
+        scroll.movementType = ScrollRect.MovementType.Clamped;
+        scroll.scrollSensitivity = 38f;
+        scroll.inertia = true;
+        scroll.decelerationRate = 0.12f;
+
+        var viewport = Node(scrollObject, "Viewport");
+        var viewportRect = viewport.GetComponent<RectTransform>();
+        Stretch(viewportRect);
+        viewportRect.offsetMax = new Vector2(-HudTheme.SliderScrollbarWidth - 10f, 0f);
+        var viewportInput = viewport.AddComponent<Image>();
+        viewportInput.color = new Color(0f, 0f, 0f, 0f);
+        viewportInput.raycastTarget = true;
+        viewport.AddComponent<RectMask2D>();
+
+        content = Node(viewport, "Content");
+        contentRect = content.GetComponent<RectTransform>();
+        contentRect.anchorMin = new Vector2(0f, 1f);
+        contentRect.anchorMax = new Vector2(1f, 1f);
+        contentRect.pivot = new Vector2(0.5f, 1f);
+        contentRect.anchoredPosition = Vector2.zero;
+        contentRect.sizeDelta = Vector2.zero;
+        var layout = content.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(
+            (int)HudTheme.CardHorizontalInset,
+            (int)HudTheme.CardHorizontalInset,
+            1,
+            1
+        );
+        layout.spacing = HudTheme.CardGap;
+        layout.childAlignment = TextAnchor.UpperLeft;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+        var fitter = content.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        scroll.viewport = viewportRect;
+        scroll.content = contentRect;
+        scroll.verticalScrollbar = BuildScrollbar(scrollObject);
+        scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
+        scroll.verticalScrollbarSpacing = 0f;
+        root.SetActive(false);
+    }
+
+    public static HudFormPage Build(GameObject parent, GameObject hud, Font font, string name)
+    {
+        if (parent.IsNullOrDestroyed() || hud.IsNullOrDestroyed())
+            return null;
+        return new HudFormPage(parent, hud, font, name);
+    }
+
+    public Card AddCard(string id, string title)
+    {
+        var cardObject = Node(content, "Card_" + id);
+        var image = cardObject.AddComponent<Image>();
+        image.color = HudTheme.Surface;
+        var outline = cardObject.AddComponent<Outline>();
+        outline.effectColor = HudTheme.Border;
+        outline.effectDistance = new Vector2(HudTheme.BorderWidth, -HudTheme.BorderWidth);
+        outline.useGraphicAlpha = false;
+
+        var layout = cardObject.AddComponent<VerticalLayoutGroup>();
+        layout.padding = new RectOffset(
+            (int)HudTheme.SliderCardPadding,
+            (int)HudTheme.SliderCardPadding,
+            18,
+            26
+        );
+        layout.spacing = 10f;
+        layout.childAlignment = TextAnchor.UpperLeft;
+        layout.childControlWidth = true;
+        layout.childControlHeight = true;
+        layout.childForceExpandWidth = true;
+        layout.childForceExpandHeight = false;
+        var fitter = cardObject.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+
+        var header = Node(cardObject, "Header");
+        var headerElement = header.AddComponent<LayoutElement>();
+        headerElement.minHeight = 62f;
+        headerElement.preferredHeight = 62f;
+        var headerImage = header.AddComponent<Image>();
+        headerImage.color = new Color(0f, 0f, 0f, 0f);
+        var headerButton = header.AddComponent<Button>();
+        headerButton.targetGraphic = headerImage;
+        headerButton.colors = HudTheme.ButtonColors(Color.clear, HudTheme.SurfaceHover);
+
+        var titleText = TextNode(header, "Title", title, HudTheme.SliderCardTitleFontSize);
+        var titleRect = titleText.GetComponent<RectTransform>();
+        Stretch(titleRect);
+        titleRect.offsetMin = new Vector2(0f, 5f);
+        titleRect.offsetMax = new Vector2(-48f, 0f);
+        titleText.alignment = TextAnchor.MiddleLeft;
+
+        var indicator = TextNode(header, "Indicator", "-", HudTheme.SliderCardTitleFontSize);
+        var indicatorRect = indicator.GetComponent<RectTransform>();
+        indicatorRect.anchorMin = new Vector2(1f, 0f);
+        indicatorRect.anchorMax = Vector2.one;
+        indicatorRect.pivot = new Vector2(1f, 0.5f);
+        indicatorRect.offsetMin = new Vector2(-42f, 0f);
+        indicatorRect.offsetMax = Vector2.zero;
+        indicator.alignment = TextAnchor.MiddleCenter;
+
+        var divider = Node(header, "TitleDivider");
+        var dividerRect = divider.GetComponent<RectTransform>();
+        dividerRect.anchorMin = Vector2.zero;
+        dividerRect.anchorMax = new Vector2(1f, 0f);
+        dividerRect.pivot = new Vector2(0.5f, 0f);
+        dividerRect.anchoredPosition = Vector2.zero;
+        dividerRect.sizeDelta = new Vector2(0f, HudTheme.BorderWidth);
+        var dividerImage = divider.AddComponent<Image>();
+        dividerImage.color = HudTheme.CardDivider;
+        dividerImage.raycastTarget = false;
+
+        var body = Node(cardObject, "Body");
+        var bodyLayout = body.AddComponent<VerticalLayoutGroup>();
+        bodyLayout.padding = new RectOffset(0, 0, 8, 0);
+        bodyLayout.spacing = 10f;
+        bodyLayout.childAlignment = TextAnchor.UpperLeft;
+        bodyLayout.childControlWidth = true;
+        bodyLayout.childControlHeight = true;
+        bodyLayout.childForceExpandWidth = true;
+        bodyLayout.childForceExpandHeight = false;
+        var bodyFitter = body.AddComponent<ContentSizeFitter>();
+        bodyFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        bodyFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        var card = new Card { Root = cardObject, Body = body, Indicator = indicator };
+        ButtonHook.Register(headerButton, new Action(() =>
+        {
+            card.Expanded = !card.Expanded;
+            card.Body.SetActive(card.Expanded);
+            card.Indicator.text = card.Expanded ? "-" : "+";
+            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+        }));
+        return card;
+    }
+
+    public void AddButtonGrid(string id, string[] labels, Action[] clicks)
+    {
+        if (labels == null || clicks == null || labels.Length != clicks.Length)
+            return;
+        var grid = Node(content, "Actions_" + id);
+        var gridLayout = grid.AddComponent<VerticalLayoutGroup>();
+        gridLayout.spacing = HudTheme.ActionButtonGap;
+        gridLayout.childControlWidth = true;
+        gridLayout.childControlHeight = true;
+        gridLayout.childForceExpandWidth = true;
+        gridLayout.childForceExpandHeight = false;
+        var fitter = grid.AddComponent<ContentSizeFitter>();
+        fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
+        fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        for (int i = 0; i < labels.Length; i += 2)
+        {
+            var row = Node(grid, "Row_" + (i / 2));
+            var rowElement = row.AddComponent<LayoutElement>();
+            rowElement.minHeight = HudTheme.ActionButtonHeight;
+            rowElement.preferredHeight = HudTheme.ActionButtonHeight;
+            var rowLayout = row.AddComponent<HorizontalLayoutGroup>();
+            rowLayout.spacing = HudTheme.ActionButtonGap;
+            rowLayout.childControlWidth = true;
+            rowLayout.childControlHeight = true;
+            rowLayout.childForceExpandWidth = true;
+            rowLayout.childForceExpandHeight = true;
+            AddGridButton(row, i, labels[i], clicks[i]);
+            if (i + 1 < labels.Length)
+                AddGridButton(row, i + 1, labels[i + 1], clicks[i + 1]);
+        }
+    }
+
+    public Button AddButton(Card card, string id, string label, Action click)
+    {
+        var buttonObject = Node(card.Body, "Button_" + id);
+        var element = buttonObject.AddComponent<LayoutElement>();
+        element.minHeight = HudTheme.ActionButtonHeight;
+        element.preferredHeight = HudTheme.ActionButtonHeight;
+        var image = buttonObject.AddComponent<Image>();
+        image.color = HudTheme.Surface;
+        HudStyler.AddPrimaryBorder(buttonObject);
+        var button = buttonObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        button.colors = HudTheme.ActionButtonColors(HudTheme.Surface, HudTheme.Selection);
+        if (click != null)
+            Prefab.BindButton(button, click);
+        var text = TextNode(buttonObject, "Label", label, HudTheme.BodyFontSize);
+        Stretch(text.GetComponent<RectTransform>());
+        text.alignment = TextAnchor.MiddleCenter;
+        return button;
+    }
+
+    public Text AddText(Card card, string id, string text, float height = 48f)
+    {
+        var row = Row(card, "Text_" + id, height);
+        var label = TextNode(row, "Label", text, HudTheme.BodyFontSize);
+        Stretch(label.GetComponent<RectTransform>());
+        label.GetComponent<RectTransform>().offsetMin = new Vector2(6f, 0f);
+        label.GetComponent<RectTransform>().offsetMax = new Vector2(-6f, 0f);
+        label.alignment = TextAnchor.MiddleLeft;
+        label.color = HudTheme.TextMuted;
+        return label;
+    }
+
+    public void AddKeybind(
+        Card card,
+        string id,
+        string label,
+        KeybindSetting setting,
+        string resetLabel = "Clear"
+    )
+    {
+        if (setting == null)
+            return;
+        var row = Row(card, "Keybind_" + id, HudTheme.RowHeight + 10f);
+        var labelText = TextNode(row, "Label", label, HudTheme.BodyFontSize);
+        var labelRect = labelText.GetComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = new Vector2(0.34f, 1f);
+        labelRect.offsetMin = new Vector2(6f, 0f);
+        labelRect.offsetMax = Vector2.zero;
+        labelText.alignment = TextAnchor.MiddleLeft;
+
+        var capture = KeybindButton(row, "Capture", 0.35f, 0.82f);
+        var display = capture.GetComponentInChildren<Text>(true);
+        var clear = KeybindButton(row, "Clear", 0.83f, 1f);
+        var clearText = clear.GetComponentInChildren<Text>(true);
+        LocaleRegistry.Apply(clearText, resetLabel);
+        Prefab.BindButton(
+            capture,
+            new Action(() =>
+            {
+                display.text = "Press a key...";
+                KeybindCapture.Begin(setting, display);
+            })
+        );
+        Prefab.BindButton(clear, new Action(setting.ResetToDefault));
+        setting.Changed += value =>
+        {
+            if (!display.IsNullOrDestroyed())
+                display.text = KeybindFormat.Friendly(value);
+        };
+        keybinds.Add(new KeybindBinding { Display = display, Setting = setting });
+    }
+
+    public Toggle AddToggle(
+        Card card,
+        string id,
+        string label,
+        Func<bool> read,
+        Action<bool> write
+    )
+    {
+        var row = Row(card, "Toggle_" + id, HudTheme.RowHeight);
+        var labelText = TextNode(row, "Label", label, HudTheme.BodyFontSize);
+        var labelRect = labelText.GetComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = Vector2.one;
+        labelRect.offsetMin = new Vector2(6f, 0f);
+        labelRect.offsetMax = new Vector2(-64f, 0f);
+        labelText.alignment = TextAnchor.MiddleLeft;
+
+        var box = Node(row, "Box");
+        var boxRect = box.GetComponent<RectTransform>();
+        boxRect.anchorMin = new Vector2(1f, 0.5f);
+        boxRect.anchorMax = new Vector2(1f, 0.5f);
+        boxRect.pivot = new Vector2(1f, 0.5f);
+        boxRect.anchoredPosition = new Vector2(-6f, 0f);
+        boxRect.sizeDelta = new Vector2(HudTheme.ToggleSize, HudTheme.ToggleSize);
+        var boxImage = box.AddComponent<Image>();
+        boxImage.color = HudTheme.ControlBox;
+        HudStyler.AddPrimaryBorder(box);
+
+        var check = Node(box, "Checkmark");
+        var checkRect = check.GetComponent<RectTransform>();
+        Stretch(checkRect);
+        checkRect.offsetMin = new Vector2(5f, 5f);
+        checkRect.offsetMax = new Vector2(-5f, -5f);
+        var checkImage = check.AddComponent<Image>();
+        checkImage.color = HudTheme.ControlCheck;
+
+        var toggle = row.AddComponent<Toggle>();
+        toggle.targetGraphic = boxImage;
+        toggle.graphic = checkImage;
+        toggle.colors = HudTheme.ButtonColors(HudTheme.ControlBox, HudTheme.SurfaceHover);
+        ToggleHook.Register(toggle, value =>
+        {
+            if (!refreshing)
+                write?.Invoke(value);
+        });
+        toggles.Add(new ToggleBinding { Control = toggle, Read = read });
+        return toggle;
+    }
+
+    public Slider AddSlider(
+        Card card,
+        string id,
+        string label,
+        string unit,
+        float minimum,
+        float maximum,
+        bool wholeNumbers,
+        Func<float> read,
+        Action<float> write
+    )
+    {
+        return AddSliderRow(
+            card,
+            id,
+            label,
+            unit,
+            minimum,
+            maximum,
+            wholeNumbers,
+            read,
+            write,
+            null,
+            null
+        );
+    }
+
+    public Slider AddToggleSlider(
+        Card card,
+        string id,
+        string label,
+        string unit,
+        float minimum,
+        float maximum,
+        bool wholeNumbers,
+        Func<bool> readEnabled,
+        Action<bool> writeEnabled,
+        Func<float> read,
+        Action<float> write
+    )
+    {
+        return AddSliderRow(
+            card,
+            id,
+            label,
+            unit,
+            minimum,
+            maximum,
+            wholeNumbers,
+            read,
+            write,
+            readEnabled,
+            writeEnabled
+        );
+    }
+
+    private Slider AddSliderRow(
+        Card card,
+        string id,
+        string label,
+        string unit,
+        float minimum,
+        float maximum,
+        bool wholeNumbers,
+        Func<float> read,
+        Action<float> write,
+        Func<bool> readEnabled,
+        Action<bool> writeEnabled
+    )
+    {
+        var row = Row(card, "Slider_" + id, HudTheme.SliderCardRowHeight);
+        var labelText = TextNode(row, "Label", label, HudTheme.BodyFontSize);
+        var labelRect = labelText.GetComponent<RectTransform>();
+        labelRect.anchorMin = new Vector2(0f, 1f);
+        labelRect.anchorMax = new Vector2(1f, 1f);
+        labelRect.pivot = new Vector2(0f, 1f);
+        labelRect.offsetMin = new Vector2(6f, -38f);
+        labelRect.offsetMax = new Vector2(readEnabled == null ? -150f : -190f, -4f);
+        labelText.alignment = TextAnchor.MiddleLeft;
+
+        if (readEnabled != null)
+        {
+            var box = Node(row, "Box");
+            var boxRect = box.GetComponent<RectTransform>();
+            boxRect.anchorMin = new Vector2(1f, 1f);
+            boxRect.anchorMax = new Vector2(1f, 1f);
+            boxRect.pivot = new Vector2(1f, 1f);
+            boxRect.anchoredPosition = new Vector2(-4f, -9f);
+            boxRect.sizeDelta = new Vector2(HudTheme.ToggleSize, HudTheme.ToggleSize);
+            var boxImage = box.AddComponent<Image>();
+            boxImage.color = HudTheme.ControlBox;
+            HudStyler.AddPrimaryBorder(box);
+
+            var check = Node(box, "Checkmark");
+            var checkRect = check.GetComponent<RectTransform>();
+            Stretch(checkRect);
+            checkRect.offsetMin = new Vector2(5f, 5f);
+            checkRect.offsetMax = new Vector2(-5f, -5f);
+            var checkImage = check.AddComponent<Image>();
+            checkImage.color = HudTheme.ControlCheck;
+
+            var toggle = row.AddComponent<Toggle>();
+            toggle.targetGraphic = boxImage;
+            toggle.graphic = checkImage;
+            toggle.colors = HudTheme.ButtonColors(HudTheme.ControlBox, HudTheme.SurfaceHover);
+            ToggleHook.Register(toggle, value =>
+            {
+                if (!refreshing)
+                    writeEnabled?.Invoke(value);
+            });
+            toggles.Add(new ToggleBinding { Control = toggle, Read = readEnabled });
+        }
+
+        var sliderObject = Node(row, "Control");
+        var sliderRect = sliderObject.GetComponent<RectTransform>();
+        sliderRect.anchorMin = new Vector2(0f, 0f);
+        sliderRect.anchorMax = new Vector2(1f, 0f);
+        sliderRect.pivot = new Vector2(0.5f, 0f);
+        sliderRect.anchoredPosition = new Vector2(0f, 9f);
+        sliderRect.sizeDelta = new Vector2(-8f, 24f);
+
+        var track = Node(sliderObject, "Track");
+        var trackRect = track.GetComponent<RectTransform>();
+        trackRect.anchorMin = new Vector2(0f, 0.5f);
+        trackRect.anchorMax = new Vector2(1f, 0.5f);
+        trackRect.sizeDelta = new Vector2(-6f, HudTheme.SliderTrackHeight);
+        track.AddComponent<Image>().color = HudTheme.ControlTrack;
+
+        var handleArea = Node(sliderObject, "Handle Slide Area");
+        var handleAreaRect = handleArea.GetComponent<RectTransform>();
+        Stretch(handleAreaRect);
+        handleAreaRect.offsetMin = new Vector2(4f, 0f);
+        handleAreaRect.offsetMax = new Vector2(-4f, 0f);
+        var handle = Node(handleArea, "Handle");
+        var handleRect = handle.GetComponent<RectTransform>();
+        handleRect.anchorMin = new Vector2(0f, 0.5f);
+        handleRect.anchorMax = new Vector2(0f, 0.5f);
+        handleRect.pivot = new Vector2(0.5f, 0.5f);
+        handleRect.sizeDelta = new Vector2(HudTheme.SliderHandleSize, HudTheme.SliderHandleSize);
+        var handleImage = handle.AddComponent<Image>();
+        handleImage.color = HudTheme.ControlHandle;
+        if (!handleSprite.IsNullOrDestroyed())
+        {
+            handleImage.sprite = handleSprite;
+            handleImage.preserveAspect = true;
+        }
+
+        var slider = sliderObject.AddComponent<Slider>();
+        slider.minValue = minimum;
+        slider.maxValue = maximum;
+        slider.wholeNumbers = wholeNumbers;
+        slider.direction = Slider.Direction.LeftToRight;
+        slider.handleRect = handleRect;
+        slider.targetGraphic = handleImage;
+        slider.colors = HudTheme.ButtonColors(HudTheme.ControlHandle, HudTheme.ControlHandle);
+
+        var input = BuildInput(row);
+        if (readEnabled != null && !input.IsNullOrDestroyed())
+        {
+            // Toggle-slider rows consistently place the editable value first and
+            // the enable checkbox at the far-right edge.
+            var inputRect = input.GetComponent<RectTransform>();
+            inputRect.anchoredPosition = new Vector2(-HudTheme.ToggleSize - 16f, -4f);
+            inputRect.sizeDelta = new Vector2(HudTheme.SliderValueWidth - 14f, 34f);
+        }
+        var binding = new SliderBinding
+        {
+            Control = slider,
+            Input = input,
+            Read = read,
+            Write = write,
+            Minimum = minimum,
+            Maximum = maximum,
+            Unit = unit ?? string.Empty,
+        };
+        sliders.Add(binding);
+        SliderHook.Register(slider, value => SliderChanged(binding, value));
+        if (!binding.Input.IsNullOrDestroyed())
+        {
+            binding.Input.onEndEdit = new TMP_InputField.SubmitEvent();
+            binding.Input.onEndEdit.AddListener(
+                (UnityAction<string>)(text => CommitInput(binding, text))
+            );
+        }
+        return slider;
+    }
+
+    public void SetVisibleWhen(Slider control, Func<bool> read)
+    {
+        if (control.IsNullOrDestroyed() || control.transform.parent == null || read == null)
+            return;
+        visibility.Add(
+            new VisibilityBinding
+            {
+                Root = control.transform.parent.gameObject,
+                Read = read,
+            }
+        );
+    }
+
+    public Dropdown AddDropdown(
+        Card card,
+        string id,
+        string label,
+        Dropdown source,
+        Func<int> read,
+        Action<int> write
+    )
+    {
+        var row = Row(card, "Dropdown_" + id, HudTheme.RowHeight + 8f);
+        var labelText = TextNode(row, "Label", label, HudTheme.BodyFontSize);
+        var labelRect = labelText.GetComponent<RectTransform>();
+        labelRect.anchorMin = Vector2.zero;
+        labelRect.anchorMax = new Vector2(0.38f, 1f);
+        labelRect.offsetMin = new Vector2(6f, 0f);
+        labelRect.offsetMax = Vector2.zero;
+        labelText.alignment = TextAnchor.MiddleLeft;
+
+        if (source.IsNullOrDestroyed())
+        {
+            Main.logger_instance?.Warning("HudFormPage: dropdown source missing for " + id);
+            return null;
+        }
+        var clone = UnityEngine.Object.Instantiate(source.gameObject, row.transform, false);
+        clone.name = "Control";
+        clone.SetActive(true);
+        var dropdown = clone.GetComponent<Dropdown>();
+        dropdown.onValueChanged.RemoveAllListeners();
+        var rect = clone.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.38f, 0.5f);
+        rect.anchorMax = new Vector2(1f, 0.5f);
+        rect.pivot = new Vector2(1f, 0.5f);
+        rect.anchoredPosition = new Vector2(-6f, 0f);
+        rect.sizeDelta = new Vector2(-10f, 36f);
+        rect.localScale = Vector3.one;
+        var layout = clone.GetComponent<LayoutElement>();
+        if (!layout.IsNullOrDestroyed())
+            layout.ignoreLayout = true;
+        var image = clone.GetComponent<Image>();
+        if (!image.IsNullOrDestroyed())
+        {
+            image.sprite = null;
+            image.type = Image.Type.Simple;
+            image.color = HudTheme.Surface;
+        }
+        var outline = clone.GetComponent<Outline>();
+        if (!outline.IsNullOrDestroyed())
+            outline.enabled = false;
+        HudStyler.AddPrimaryBorder(clone);
+        dropdown.colors = HudTheme.ButtonColors(HudTheme.Surface, HudTheme.Selection);
+        foreach (var text in clone.GetComponentsInChildren<Text>(true))
+        {
+            text.color = HudTheme.TextPrimary;
+            text.fontSize = HudTheme.ValueFontSize;
+        }
+        HudStyler.ApplyDropdown(dropdown);
+        Prefab.BindDropdown(
+            dropdown,
+            new Action<int>(value =>
+            {
+                if (!refreshing)
+                    write?.Invoke(value);
+            })
+        );
+        dropdowns.Add(
+            new DropdownBinding { Control = dropdown, Source = source, Read = read }
+        );
+        return dropdown;
+    }
+
+    public void Show()
+    {
+        if (root.IsNullOrDestroyed())
+            return;
+        root.SetActive(true);
+        Refresh();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+        Canvas.ForceUpdateCanvases();
+        scroll.StopMovement();
+        scroll.verticalNormalizedPosition = 1f;
+    }
+
+    public void Hide()
+    {
+        if (!root.IsNullOrDestroyed())
+            root.SetActive(false);
+    }
+
+    public void RefreshValues()
+    {
+        if (root.IsNullOrDestroyed())
+            return;
+        Refresh();
+        LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+    }
+
+    private void Refresh()
+    {
+        refreshing = true;
+        try
+        {
+            foreach (var binding in toggles)
+                if (!binding.Control.IsNullOrDestroyed())
+                    binding.Control.isOn = binding.Read?.Invoke() ?? false;
+            foreach (var binding in sliders)
+            {
+                if (binding.Control.IsNullOrDestroyed())
+                    continue;
+                float value = Mathf.Clamp(
+                    binding.Read?.Invoke() ?? 0f,
+                    binding.Minimum,
+                    binding.Maximum
+                );
+                binding.Control.value = value;
+                SetInputText(binding, binding.Control.value);
+            }
+            foreach (var binding in dropdowns)
+            {
+                if (binding.Control.IsNullOrDestroyed())
+                    continue;
+                if (!binding.Source.IsNullOrDestroyed())
+                    binding.Control.options = binding.Source.options;
+                binding.Control.value = Mathf.Clamp(
+                    binding.Read?.Invoke() ?? 0,
+                    0,
+                    Mathf.Max(0, binding.Control.options.Count - 1)
+                );
+                binding.Control.RefreshShownValue();
+            }
+            foreach (var binding in visibility)
+                if (!binding.Root.IsNullOrDestroyed())
+                    binding.Root.SetActive(binding.Read?.Invoke() ?? true);
+            foreach (var binding in keybinds)
+                if (!binding.Display.IsNullOrDestroyed() && !KeybindCapture.Active)
+                    binding.Display.text = KeybindFormat.Friendly(binding.Setting.Value);
+        }
+        finally
+        {
+            refreshing = false;
+        }
+    }
+
+    private void SliderChanged(SliderBinding binding, float value)
+    {
+        if (refreshing)
+            return;
+        value = Mathf.Clamp(value, binding.Minimum, binding.Maximum);
+        binding.Write?.Invoke(value);
+        SetInputText(binding, value);
+    }
+
+    private void CommitInput(SliderBinding binding, string text)
+    {
+        if (binding == null || binding.Control.IsNullOrDestroyed())
+            return;
+        if (TryParse(text, out float value))
+            binding.Control.value = Mathf.Clamp(value, binding.Minimum, binding.Maximum);
+        SetInputText(binding, binding.Control.value);
+    }
+
+    private TMP_InputField BuildInput(GameObject parent)
+    {
+        if (inputTemplate.IsNullOrDestroyed())
+            return null;
+        var clone = UnityEngine.Object.Instantiate(inputTemplate.gameObject, parent.transform, false);
+        clone.name = "ValueInput";
+        var input = clone.GetComponent<TMP_InputField>();
+        var rect = clone.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(1f, 1f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(1f, 1f);
+        rect.anchoredPosition = new Vector2(-4f, -4f);
+        rect.sizeDelta = new Vector2(HudTheme.SliderValueWidth, 34f);
+        rect.localScale = Vector3.one;
+        var layout = clone.GetComponent<LayoutElement>();
+        if (!layout.IsNullOrDestroyed())
+            layout.ignoreLayout = true;
+        var background = clone.GetComponent<Image>();
+        if (!background.IsNullOrDestroyed())
+        {
+            background.sprite = null;
+            background.type = Image.Type.Simple;
+            background.color = HudTheme.ControlBox;
+        }
+        HudStyler.AddPrimaryBorder(clone, 1f);
+        input.colors = HudTheme.ButtonColors(HudTheme.ControlBox, HudTheme.Selection);
+        input.onValueChanged.RemoveAllListeners();
+        input.contentType = TMP_InputField.ContentType.DecimalNumber;
+        input.characterLimit = 12;
+        input.readOnly = false;
+        input.interactable = true;
+        if (!input.placeholder.IsNullOrDestroyed())
+            input.placeholder.gameObject.SetActive(false);
+        if (!input.textViewport.IsNullOrDestroyed())
+        {
+            input.textViewport.anchorMin = Vector2.zero;
+            input.textViewport.anchorMax = Vector2.one;
+            input.textViewport.offsetMin = new Vector2(8f, 0f);
+            input.textViewport.offsetMax = new Vector2(-10f, 0f);
+        }
+        if (!input.textComponent.IsNullOrDestroyed())
+        {
+            input.textComponent.color = HudTheme.TextPrimary;
+            input.textComponent.fontSize = HudTheme.BodyFontSize;
+            input.textComponent.horizontalAlignment = HorizontalAlignmentOptions.Right;
+            input.textComponent.verticalAlignment = VerticalAlignmentOptions.Middle;
+        }
+        clone.SetActive(true);
+        return input;
+    }
+
+    private Scrollbar BuildScrollbar(GameObject parent)
+    {
+        var scrollbarObject = Node(parent, "Scrollbar");
+        var scrollbarRect = scrollbarObject.GetComponent<RectTransform>();
+        scrollbarRect.anchorMin = new Vector2(1f, 0f);
+        scrollbarRect.anchorMax = new Vector2(1f, 1f);
+        scrollbarRect.pivot = new Vector2(1f, 0.5f);
+        scrollbarRect.anchoredPosition = new Vector2(-2f, 0f);
+        scrollbarRect.sizeDelta = new Vector2(HudTheme.SliderScrollbarWidth, -8f);
+        scrollbarObject.AddComponent<Image>().color = HudTheme.Background;
+        var slidingArea = Node(scrollbarObject, "Sliding Area");
+        var slidingRect = slidingArea.GetComponent<RectTransform>();
+        Stretch(slidingRect);
+        slidingRect.offsetMin = new Vector2(2f, 2f);
+        slidingRect.offsetMax = new Vector2(-2f, -2f);
+        var handle = Node(slidingArea, "Handle");
+        var handleRect = handle.GetComponent<RectTransform>();
+        Stretch(handleRect);
+        var handleImage = handle.AddComponent<Image>();
+        handleImage.color = HudTheme.Accent;
+        var scrollbar = scrollbarObject.AddComponent<Scrollbar>();
+        scrollbar.handleRect = handleRect;
+        scrollbar.targetGraphic = handleImage;
+        scrollbar.direction = Scrollbar.Direction.BottomToTop;
+        scrollbar.colors = HudTheme.ButtonColors(HudTheme.Accent, HudTheme.Accent);
+        scrollbar.size = 0.2f;
+        return scrollbar;
+    }
+
+    private Button KeybindButton(GameObject parent, string name, float left, float right)
+    {
+        var buttonObject = Node(parent, name);
+        var rect = buttonObject.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(left, 0.14f);
+        rect.anchorMax = new Vector2(right, 0.86f);
+        rect.offsetMin = new Vector2(3f, 0f);
+        rect.offsetMax = new Vector2(-3f, 0f);
+        var image = buttonObject.AddComponent<Image>();
+        image.color = HudTheme.Surface;
+        HudStyler.AddPrimaryBorder(buttonObject);
+        var button = buttonObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        button.colors = HudTheme.ActionButtonColors(HudTheme.Surface, HudTheme.Selection);
+        var text = TextNode(buttonObject, "Label", string.Empty, HudTheme.ValueFontSize);
+        Stretch(text.GetComponent<RectTransform>());
+        text.alignment = TextAnchor.MiddleCenter;
+        return button;
+    }
+
+    private void AddGridButton(GameObject parent, int index, string label, Action click)
+    {
+        var buttonObject = Node(parent, "Button_" + index);
+        var element = buttonObject.AddComponent<LayoutElement>();
+        element.minHeight = HudTheme.ActionButtonHeight;
+        element.preferredHeight = HudTheme.ActionButtonHeight;
+        element.flexibleWidth = 1f;
+        var image = buttonObject.AddComponent<Image>();
+        image.color = HudTheme.Surface;
+        HudStyler.AddPrimaryBorder(buttonObject);
+        var button = buttonObject.AddComponent<Button>();
+        button.targetGraphic = image;
+        button.colors = HudTheme.ActionButtonColors(HudTheme.Surface, HudTheme.Selection);
+        if (click != null)
+            Prefab.BindButton(button, click);
+        var text = TextNode(buttonObject, "Label", label, HudTheme.BodyFontSize);
+        Stretch(text.GetComponent<RectTransform>());
+        text.alignment = TextAnchor.MiddleCenter;
+    }
+
+    private GameObject Row(Card card, string name, float height)
+    {
+        var row = Node(card.Body, name);
+        var element = row.AddComponent<LayoutElement>();
+        element.minHeight = height;
+        element.preferredHeight = height;
+        element.flexibleHeight = 0f;
+        return row;
+    }
+
+    private static bool TryParse(string text, out float value)
+    {
+        value = 0f;
+        if (string.IsNullOrWhiteSpace(text))
+            return false;
+        string cleaned = text.Replace("%", "").Replace("x", "").Replace("X", "").Trim();
+        return float.TryParse(cleaned, NumberStyles.Float, CultureInfo.InvariantCulture, out value)
+            || float.TryParse(cleaned, NumberStyles.Float, CultureInfo.CurrentCulture, out value);
+    }
+
+    private static void SetInputText(SliderBinding binding, float value)
+    {
+        if (binding.Input.IsNullOrDestroyed() || binding.Input.isFocused)
+            return;
+        string number = Mathf.Abs(value - Mathf.Round(value)) < 0.001f
+            ? Mathf.Round(value).ToString("0", CultureInfo.InvariantCulture)
+            : value.ToString("0.##", CultureInfo.InvariantCulture);
+        binding.Input.SetTextWithoutNotify(number + binding.Unit);
+    }
+
+    private static TMP_InputField FindInputTemplate(GameObject hud)
+    {
+        foreach (var candidate in hud.GetComponentsInChildren<TMP_InputField>(true))
+            if (!candidate.IsNullOrDestroyed() && candidate.name == "InputField")
+                return candidate;
+        foreach (var candidate in hud.GetComponentsInChildren<TMP_InputField>(true))
+            if (!candidate.IsNullOrDestroyed())
+                return candidate;
+        return null;
+    }
+
+    private static Sprite FindHandleSprite(GameObject hud)
+    {
+        foreach (var slider in hud.GetComponentsInChildren<Slider>(true))
+        {
+            if (slider.IsNullOrDestroyed() || slider.handleRect.IsNullOrDestroyed())
+                continue;
+            var image = slider.handleRect.GetComponent<Image>();
+            if (!image.IsNullOrDestroyed() && !image.sprite.IsNullOrDestroyed())
+                return image.sprite;
+        }
+        return null;
+    }
+
+    private GameObject Node(GameObject parent, string name)
+    {
+        var node = new GameObject(name);
+        node.layer = parent.layer;
+        node.AddComponent<RectTransform>().SetParent(parent.transform, false);
+        return node;
+    }
+
+    private Text TextNode(GameObject parent, string name, string caption, int size)
+    {
+        var node = Node(parent, name);
+        var text = node.AddComponent<Text>();
+        text.font = font;
+        text.fontSize = size;
+        text.fontStyle = FontStyle.Normal;
+        text.color = HudTheme.TextPrimary;
+        text.horizontalOverflow = HorizontalWrapMode.Wrap;
+        text.verticalOverflow = VerticalWrapMode.Truncate;
+        text.raycastTarget = false;
+        LocaleRegistry.Apply(text, caption);
+        return text;
+    }
+
+    private static void Stretch(RectTransform rect)
+    {
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = Vector2.one;
+        rect.offsetMin = Vector2.zero;
+        rect.offsetMax = Vector2.zero;
+    }
+}
