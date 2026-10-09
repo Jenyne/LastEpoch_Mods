@@ -1,4 +1,4 @@
-﻿using System.IO;
+using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 using HarmonyLib;
@@ -304,6 +304,13 @@ public partial class Hud_Manager : MonoBehaviour
                             ModUI.SaveManager.BindHud(hud_object);
                         }
                     );
+                    SafeInit(
+                        "ModUI.HudLayout.Initialize",
+                        () =>
+                        {
+                            ModUI.HudLayout.Initialize(hud_object);
+                        }
+                    );
                 }
                 else
                 {
@@ -468,116 +475,15 @@ public partial class Hud_Manager : MonoBehaviour
 
     void Update_Locale()
     {
-        if ((Locales.update) && (!hud_object.IsNullOrDestroyed()))
-        {
-            Locales.update = false;
-            /*if (Locales.debug_text)
-            {
-                Locales.debug_json = new System.Collections.Generic.List<string>();
-                Locales.debug_json.Add("{");
-            }*/
-
-            //need to make a function to remove all this trash
-            foreach (GameObject level_0_go in Functions.GetAllChild(hud_object))
-            {
-                foreach (GameObject level_1_go in Functions.GetAllChild(level_0_go))
-                {
-                    ReplaceText(level_1_go);
-                    foreach (GameObject level_2_go in Functions.GetAllChild(level_1_go))
-                    {
-                        ReplaceText(level_2_go);
-                        foreach (GameObject level_3_go in Functions.GetAllChild(level_2_go))
-                        {
-                            ReplaceText(level_3_go);
-                            foreach (GameObject level_4_go in Functions.GetAllChild(level_3_go))
-                            {
-                                ReplaceText(level_4_go);
-                                foreach (GameObject level_5_go in Functions.GetAllChild(level_4_go))
-                                {
-                                    ReplaceText(level_5_go);
-                                    foreach (
-                                        GameObject level_6_go in Functions.GetAllChild(level_5_go)
-                                    )
-                                    {
-                                        ReplaceText(level_6_go);
-                                        foreach (
-                                            GameObject level_7_go in Functions.GetAllChild(
-                                                level_6_go
-                                            )
-                                        )
-                                        {
-                                            ReplaceText(level_7_go);
-                                            foreach (
-                                                GameObject level_8_go in Functions.GetAllChild(
-                                                    level_7_go
-                                                )
-                                            )
-                                            {
-                                                ReplaceText(level_8_go);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            /*if (Locales.debug_text)
-            {
-                Locales.debug_json.Add("}");
-                string json = "";
-                foreach (string s in Locales.debug_json)
-                {
-                    json += s;
-                }
-
-                Main.logger_instance.Msg("Copy to " + Locales.dictionnary_filename + Extensions.json);
-                Main.logger_instance.Msg(json);
-            }*/
-        }
-    }
-
-    void ReplaceText(GameObject go)
-    {
-        try
-        {
-            Text label = go.GetComponent<Text>();
-            if (!label.IsNullOrDestroyed())
-            {
-                bool ignore = false;
-                foreach (char c in label.text)
-                {
-                    if (Locales.igrone_str.Contains(c))
-                    {
-                        ignore = true;
-                        break;
-                    }
-                }
-                if (!ignore)
-                {
-                    /*if (Locales.debug_text)
-                    {
-                        //string s = "\"" + label.text + "\": \"\", ";
-                        string s = "\"" + label.text + "\": \"" + label.text + "\", "; //generate default en.json
-                        if (!Locales.debug_json.Contains(s)) { Locales.debug_json.Add(s); }
-                    }*/
-
-                    if (Locales.TryGetTranslation(label.text, out string translated))
-                    {
-                        label.text = translated;
-                    }
-                }
-            }
-        }
-        catch
-        {
-            //Not a textbox
-        }
+        if (!Locales.update || hud_object.IsNullOrDestroyed())
+            return;
+        ModUI.LocaleRegistry.RefreshTree(hud_object);
+        Locales.update = false;
     }
 
     void Update_Hud_Content()
     {
+        ModUI.HudLayout.RefreshActivePage();
         if ((Content.Character.enable) && (Content.Character.need_update))
         {
             Content.Character.Update_PlayerData();
@@ -657,7 +563,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("seal_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.seal_select_text"
+                        );
                     }
                 }
                 else
@@ -772,7 +681,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("affix_0_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.affix_0_select_text"
+                        );
                     }
                     if (!Content.OdlForceDrop.affix_1_select_text.IsNullOrDestroyed())
                     {
@@ -782,7 +694,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("affix_1_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.affix_1_select_text"
+                        );
                     }
                     if (!Content.OdlForceDrop.affix_2_select_text.IsNullOrDestroyed())
                     {
@@ -792,7 +707,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("affix_2_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.affix_2_select_text"
+                        );
                     }
                     if (!Content.OdlForceDrop.affix_3_select_text.IsNullOrDestroyed())
                     {
@@ -802,7 +720,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("affix_3_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.affix_3_select_text"
+                        );
                     }
                     if (!Content.OdlForceDrop.affix_4_select_text.IsNullOrDestroyed())
                     {
@@ -812,7 +733,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("affix_4_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.affix_4_select_text"
+                        );
                     }
                     if (!Content.OdlForceDrop.affix_5_select_text.IsNullOrDestroyed())
                     {
@@ -822,7 +746,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     else
                     {
-                        Main.logger_instance.Error("affix_5_select_text NULLLLL");
+                        ErrorLog.Report(
+                            "UI object is missing",
+                            "Hud_Manager.OdlForceDrop.affix_5_select_text"
+                        );
                     }
                 }
                 else
@@ -898,7 +825,10 @@ public partial class Hud_Manager : MonoBehaviour
                 }
                 else
                 {
-                    Main.logger_instance.Error("affix_5_select_text NULLLLL");
+                    ErrorLog.Report(
+                        "quantity_text or forcedrop_quantity_slider is missing",
+                        "Hud_Manager.OdlForceDrop.quantity_text"
+                    );
                 }
             }
         }
@@ -913,390 +843,6 @@ public partial class Hud_Manager : MonoBehaviour
         else
         {
             return false;
-        }
-    }
-
-    public class Events
-    {
-        public static void Set_Base_Button_Event(
-            GameObject base_obj,
-            string child,
-            string btn_name,
-            UnityEngine.Events.UnityAction action
-        )
-        {
-            if (!base_obj.IsNullOrDestroyed())
-            {
-                GameObject go = Functions.GetChild(base_obj, child);
-                if (go.IsNullOrDestroyed())
-                {
-                    go = Functions.FindDescendant(base_obj, child);
-                }
-                if (!go.IsNullOrDestroyed())
-                {
-                    GameObject btn_obj = Functions.FindDescendant(go, btn_name);
-                    if (!btn_obj.IsNullOrDestroyed())
-                    {
-                        Button btn = btn_obj.GetComponent<Button>();
-                        if (btn.IsNullOrDestroyed())
-                        {
-                            btn = btn_obj.GetComponentInChildren<Button>(true);
-                        }
-                        if (!btn.IsNullOrDestroyed())
-                        {
-                            Set_Button_Event(btn, action);
-                        }
-                        else
-                        {
-                            Main.logger_instance.Error("Set_Base_Button_Event Can't found button");
-                        }
-                    }
-                    else
-                    {
-                        Main.logger_instance.Error(
-                            "Set_Base_Button_Event Can't found GameObject button " + btn_name
-                        );
-                    }
-                }
-                else
-                {
-                    Main.logger_instance.Error(
-                        "Set_Base_Button_Event Can't found " + child + " in base_obj"
-                    );
-                }
-            }
-            else
-            {
-                Main.logger_instance.Error("Set_Base_Button_Event base_obj is null");
-            }
-        }
-
-        public static void Set_Button_Event(Button btn, UnityEngine.Events.UnityAction action)
-        {
-            if (btn.IsNullOrDestroyed() || action == null)
-            {
-                return;
-            }
-            Button.ButtonClickedEvent click = btn.onClick;
-            if (click == null)
-            {
-                click = new Button.ButtonClickedEvent();
-                btn.onClick = click;
-            }
-            click.AddListener(action);
-        }
-
-        public static void Set_Slider_Event(
-            Slider slider,
-            UnityEngine.Events.UnityAction<float> action
-        )
-        {
-            slider.onValueChanged = new Slider.SliderEvent();
-            slider.onValueChanged.AddListener(action);
-        }
-
-        public static void Set_Input_Event(
-            Il2CppTMPro.TMP_InputField input,
-            UnityEngine.Events.UnityAction<string> action
-        )
-        {
-            if (input.IsNullOrDestroyed() || action == null)
-            {
-                return;
-            }
-            input.onEndEdit = new Il2CppTMPro.TMP_InputField.SubmitEvent();
-            input.onEndEdit.AddListener(action);
-        }
-
-        public static void Set_Toggle_Event(
-            Toggle toggle,
-            UnityEngine.Events.UnityAction<bool> action
-        )
-        {
-            toggle.onValueChanged = new Toggle.ToggleEvent();
-            toggle.onValueChanged.AddListener(action);
-        }
-    }
-
-    public class Hud_Base
-    {
-        public static bool Initialized = false;
-        public static bool Initializing = false;
-        public static GameObject Default_PauseMenu_Btns = null;
-        public static Button Btn_Resume;
-        public static GameObject ChapterInfo = null;
-        public static GameObject Menu_Fade_Background = null;
-        public static GameObject Chapter_Fade_Background = null;
-
-        public static bool Get_DefaultPauseMenu()
-        {
-            bool result = false;
-            if (!Refs_Manager.game_uibase.IsNullOrDestroyed())
-            {
-                GameObject root = null;
-                if (!Refs_Manager.game_uibase.bottomScreenMenu.IsNullOrDestroyed())
-                {
-                    root = Refs_Manager.game_uibase.bottomScreenMenu.gameObject;
-                }
-                if (!root.IsNullOrDestroyed())
-                {
-                    // The old pause panel lived under "Menu Image". The bottom bar does not.
-                    // Only treat this object as the pause menu when that panel is actually there,
-                    // otherwise the title screen looks paused and clicks (Play Offline) are blocked.
-                    GameObject menuImage = FindDirectChild(root, "Menu Image");
-                    if (!menuImage.IsNullOrDestroyed())
-                    {
-                        game_pause_menu = root;
-                        Default_PauseMenu_Btns = menuImage;
-                        Get_Refs();
-                        result = true;
-                    }
-                }
-            }
-
-            return result;
-        }
-
-        static GameObject FindDirectChild(GameObject obj, string name)
-        {
-            if (obj.IsNullOrDestroyed())
-            {
-                return null;
-            }
-            for (int i = 0; i < obj.transform.childCount; i++)
-            {
-                GameObject child = obj.transform.GetChild(i).gameObject;
-                if (child.name == name)
-                {
-                    return child;
-                }
-            }
-            return null;
-        }
-
-        public static void Set_ChapterInfo(bool show)
-        {
-            if (
-                (!Refs_Manager.game_uibase.IsNullOrDestroyed())
-                && (!game_pause_menu.IsNullOrDestroyed())
-            )
-            {
-                if (ChapterInfo.IsNullOrDestroyed())
-                {
-                    ChapterInfo = Functions.GetChild(game_pause_menu, "ChapterInfo");
-                }
-                if (!ChapterInfo.IsNullOrDestroyed())
-                {
-                    ChapterInfo.active = show;
-                }
-
-                if (Menu_Fade_Background.IsNullOrDestroyed())
-                {
-                    Menu_Fade_Background = Functions.GetChild(
-                        game_pause_menu,
-                        "Menu_Fade_Background"
-                    );
-                }
-                if (!Menu_Fade_Background.IsNullOrDestroyed())
-                {
-                    Menu_Fade_Background.active = show;
-                }
-
-                if (Chapter_Fade_Background.IsNullOrDestroyed())
-                {
-                    Chapter_Fade_Background = Functions.GetChild(
-                        game_pause_menu,
-                        "Chapter_Fade_Background"
-                    );
-                }
-                if (!Chapter_Fade_Background.IsNullOrDestroyed())
-                {
-                    Chapter_Fade_Background.active = show;
-                }
-            }
-        }
-
-        public static bool Get_DefaultPauseMenu_Open()
-        {
-            if (!Default_PauseMenu_Btns.IsNullOrDestroyed())
-            {
-                return Default_PauseMenu_Btns.active;
-            }
-            else
-            {
-                return false;
-            }
-        }
-
-        public static void Toogle_DefaultPauseMenu(bool show)
-        {
-            if (!Default_PauseMenu_Btns.IsNullOrDestroyed())
-            {
-                Default_PauseMenu_Btns.active = show;
-            }
-        }
-
-        public static void Get_Refs()
-        {
-            if (!Default_PauseMenu_Btns.IsNullOrDestroyed())
-            {
-                GameObject Btns = Functions.GetChild(Default_PauseMenu_Btns, "Buttons");
-                if (!Btns.IsNullOrDestroyed())
-                {
-                    GameObject resume = Functions.GetChild(Btns, "ResumeButton (1)", false);
-                    if (!resume.IsNullOrDestroyed())
-                    {
-                        Hud_Base.Btn_Resume = resume.GetComponent<Button>();
-                    }
-                }
-            }
-        }
-
-        public static void Resume_Click()
-        {
-            if (!Btn_Resume.IsNullOrDestroyed())
-            {
-                Btn_Resume.onClick.Invoke();
-            }
-        }
-    }
-
-    public class Hud_Menu
-    {
-        public static void Set_Events()
-        {
-            if (!hud_object.IsNullOrDestroyed())
-            {
-                Events.Set_Base_Button_Event(
-                    hud_object,
-                    "Menu",
-                    "Btn_Menu_Character",
-                    Character_OnClick_Action
-                );
-                Events.Set_Base_Button_Event(
-                    hud_object,
-                    "Menu",
-                    "Btn_Menu_Items",
-                    Items_OnClick_Action
-                );
-                Events.Set_Base_Button_Event(
-                    hud_object,
-                    "Menu",
-                    "Btn_Menu_Scenes",
-                    Scenes_OnClick_Action
-                );
-                Events.Set_Base_Button_Event(
-                    hud_object,
-                    "Menu",
-                    "Btn_Menu_TreeSkills",
-                    Skills_OnClick_Action
-                );
-                Events.Set_Base_Button_Event(
-                    hud_object,
-                    "Menu",
-                    "Btn_Menu_ForceDrop",
-                    OldForceDrop_OnClick_Action
-                );
-                // Optional unfinished page: only wire/show the button when the
-                // donor HUD bundle actually contains Headhunter content.
-                var headhunterButton = Functions.FindDescendant(hud_object, "Btn_Menu_Headhunter");
-                var headhunterContent = Functions.FindDescendant(hud_object, "Headhunter_Content");
-                if (!headhunterButton.IsNullOrDestroyed())
-                {
-                    headhunterButton.SetActive(!headhunterContent.IsNullOrDestroyed());
-                    if (!headhunterContent.IsNullOrDestroyed())
-                    {
-                        var button = headhunterButton.GetComponent<Button>();
-                        if (!button.IsNullOrDestroyed())
-                        {
-                            button.onClick = new Button.ButtonClickedEvent();
-                            button.onClick.AddListener(Headhunter_OnClick_Action);
-                        }
-                    }
-                }
-            }
-        }
-
-        private static readonly System.Action Character_OnClick_Action = new System.Action(
-            Character_Click
-        );
-
-        public static void Character_Click()
-        {
-            Content.Items.Set_Active(false);
-            Content.Scenes.Set_Active(false);
-            Content.Skills.Set_Active(false);
-            Content.OdlForceDrop.Set_Active(false);
-            Content.Headhunter.Set_Active(false);
-            Content.Character.Set_Active(true);
-        }
-
-        private static readonly System.Action Items_OnClick_Action = new System.Action(Items_Click);
-
-        public static void Items_Click()
-        {
-            Content.Character.Set_Active(false);
-            Content.Scenes.Set_Active(false);
-            Content.Skills.Set_Active(false);
-            Content.OdlForceDrop.Set_Active(false);
-            Content.Headhunter.Set_Active(false);
-            Content.Items.Set_Active(true);
-        }
-
-        private static readonly System.Action Scenes_OnClick_Action = new System.Action(
-            Scenes_Click
-        );
-
-        public static void Scenes_Click()
-        {
-            Content.Character.Set_Active(false);
-            Content.Items.Set_Active(false);
-            Content.Skills.Set_Active(false);
-            Content.OdlForceDrop.Set_Active(false);
-            Content.Headhunter.Set_Active(false);
-            Content.Scenes.Set_Active(true);
-        }
-
-        private static readonly System.Action Skills_OnClick_Action = new System.Action(
-            Skills_Click
-        );
-
-        public static void Skills_Click()
-        {
-            Content.Character.Set_Active(false);
-            Content.Items.Set_Active(false);
-            Content.Scenes.Set_Active(false);
-            Content.OdlForceDrop.Set_Active(false);
-            Content.Headhunter.Set_Active(false);
-            Content.Skills.Set_Active(true);
-        }
-
-        private static readonly System.Action OldForceDrop_OnClick_Action = new System.Action(
-            OldForceDrop_Click
-        );
-
-        public static void OldForceDrop_Click()
-        {
-            Content.Character.Set_Active(false);
-            Content.Items.Set_Active(false);
-            Content.Scenes.Set_Active(false);
-            Content.Skills.Set_Active(false);
-            Content.Headhunter.Set_Active(false);
-            Content.OdlForceDrop.Set_Active(true);
-        }
-
-        private static readonly System.Action Headhunter_OnClick_Action = new System.Action(
-            Headhunter_Click
-        );
-
-        public static void Headhunter_Click()
-        {
-            Content.Character.Set_Active(false);
-            Content.Items.Set_Active(false);
-            Content.Scenes.Set_Active(false);
-            Content.Skills.Set_Active(false);
-            Content.OdlForceDrop.Set_Active(false);
-            Content.Headhunter.Set_Active(true);
         }
     }
 
@@ -1605,6 +1151,9 @@ public partial class Hud_Manager : MonoBehaviour
                             {
                                 Cheats.add_ancient_bones_button =
                                     ancient_bones_button.GetComponent<Button>();
+                                Mods.Character.Character_MemoryAmber.BuildButton(
+                                    Cheats.add_ancient_bones_button
+                                );
                             }
                             Cheats.discover_blessings_button = Functions
                                 .GetChild(
@@ -1697,7 +1246,10 @@ public partial class Hud_Manager : MonoBehaviour
                                 "Slider_Character_Data_LanternLuminance"
                             );
 
-                            Data.soul_row = Functions.GetChild(character_data_content, "Soul Embers");
+                            Data.soul_row = Functions.GetChild(
+                                character_data_content,
+                                "Soul Embers"
+                            );
                             Data.soul_text = Functions.Get_TextInButton(
                                 character_data_content,
                                 "Soul Embers",
@@ -1930,6 +1482,10 @@ public partial class Hud_Manager : MonoBehaviour
                             }
                             Data.SetupSoulEmberControls();
                             Data.SetupCorruptionAllButton();
+                            ModUI.CharacterActionControls.Bind(
+                                character_cheats_content,
+                                character_data_content
+                            );
                         }
 
                         //Faction Tracker
@@ -2061,6 +1617,26 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_buffs_content,
                                 "Damage",
                                 "Slider_Character_Buffs_Damage"
+                            );
+
+                            Buffs.EnsureAreaOfEffectBuffRow(character_buffs_content);
+
+                            //AreaOfEffect
+                            Buffs.aoe_toggle = Functions.Get_ToggleInPanel(
+                                character_buffs_content,
+                                "AreaOfEffect",
+                                "Toggle_Character_Buffs_AreaOfEffect"
+                            );
+                            Buffs.aoe_text = Functions.Get_TextInToggle(
+                                character_buffs_content,
+                                "AreaOfEffect",
+                                "Toggle_Character_Buffs_AreaOfEffect",
+                                "Value"
+                            );
+                            Buffs.aoe_slider = Functions.Get_SliderInPanel(
+                                character_buffs_content,
+                                "AreaOfEffect",
+                                "Slider_Character_Buffs_AreaOfEffect"
                             );
 
                             //AttackSpeed
@@ -2293,11 +1869,20 @@ public partial class Hud_Manager : MonoBehaviour
                     Events.Set_Toggle_Event(Cheats.lowlife_toggle, Cheats.Lowlife_Toggle_Action);
                 }
                 if (!Cheats.max_blessings_button.IsNullOrDestroyed())
-                    Events.Set_Button_Event(Cheats.max_blessings_button, Cheats.MaxOutBlessings_OnClick_Action);
+                    Events.Set_Button_Event(
+                        Cheats.max_blessings_button,
+                        Cheats.MaxOutBlessings_OnClick_Action
+                    );
                 if (!Cheats.unlock_blessing_slots_button.IsNullOrDestroyed())
-                    Events.Set_Button_Event(Cheats.unlock_blessing_slots_button, Cheats.UnlockBlessingSlots_OnClick_Action);
+                    Events.Set_Button_Event(
+                        Cheats.unlock_blessing_slots_button,
+                        Cheats.UnlockBlessingSlots_OnClick_Action
+                    );
                 if (!Cheats.choose_blessings_button.IsNullOrDestroyed())
-                    Events.Set_Button_Event(Cheats.choose_blessings_button, Cheats.ChooseBlessings_OnClick_Action);
+                    Events.Set_Button_Event(
+                        Cheats.choose_blessings_button,
+                        Cheats.ChooseBlessings_OnClick_Action
+                    );
                 if (!Cheats.unlock_all_idols.IsNullOrDestroyed())
                 {
                     Events.Set_Toggle_Event(
@@ -2493,6 +2078,9 @@ public partial class Hud_Manager : MonoBehaviour
 
                 if (!Data.soul_add_button.IsNullOrDestroyed())
                 {
+                    // This runtime button owns its listeners. Rebinding must not
+                    // stack a second currency grant onto the existing click.
+                    Data.soul_add_button.onClick.RemoveAllListeners();
                     Events.Set_Button_Event(Data.soul_add_button, Data.SoulEmbers_Add_Action);
                 }
                 if (!Data.monolith_corruption_all_button.IsNullOrDestroyed())
@@ -2855,6 +2443,24 @@ public partial class Hud_Manager : MonoBehaviour
                                 .Character
                                 .PermanentBuffs
                                 .Damage_Buff_Value;
+                        }
+                        if (!Buffs.aoe_toggle.IsNullOrDestroyed())
+                        {
+                            Buffs.aoe_toggle.isOn = Save_Manager
+                                .instance
+                                .data
+                                .Character
+                                .PermanentBuffs
+                                .Enable_AoE_Buff;
+                        }
+                        if (!Buffs.aoe_slider.IsNullOrDestroyed())
+                        {
+                            Buffs.aoe_slider.value = Save_Manager
+                                .instance
+                                .data
+                                .Character
+                                .PermanentBuffs
+                                .AoE_Buff_Value;
                         }
                         if (!Buffs.attackspeed_toggle.IsNullOrDestroyed())
                         {
@@ -3485,6 +3091,20 @@ public partial class Hud_Manager : MonoBehaviour
                                 )
                                 + " %";
                         }
+                        if (!Buffs.aoe_text.IsNullOrDestroyed())
+                        {
+                            Buffs.aoe_text.text =
+                                "+ "
+                                + (int)(
+                                    Save_Manager
+                                        .instance
+                                        .data
+                                        .Character
+                                        .PermanentBuffs
+                                        .AoE_Buff_Value * 100
+                                )
+                                + " %";
+                        }
                         if (!Buffs.attackspeed_text.IsNullOrDestroyed())
                         {
                             Buffs.attackspeed_text.text =
@@ -3715,48 +3335,76 @@ public partial class Hud_Manager : MonoBehaviour
 
                 public static void BuildUnlockBlessingSlotsButton()
                 {
-                    if (!unlock_blessing_slots_button.IsNullOrDestroyed() || discover_blessings_button.IsNullOrDestroyed()) return;
+                    if (
+                        !unlock_blessing_slots_button.IsNullOrDestroyed()
+                        || discover_blessings_button.IsNullOrDestroyed()
+                    )
+                        return;
                     var original = discover_blessings_button.gameObject;
                     var rect = original.GetComponent<RectTransform>();
                     var row = new GameObject("Blessing discovery actions");
                     var rowRect = row.AddComponent<RectTransform>();
                     row.transform.SetParent(original.transform.parent, false);
                     row.transform.SetSiblingIndex(original.transform.GetSiblingIndex());
-                    rowRect.anchorMin = rect.anchorMin; rowRect.anchorMax = rect.anchorMax;
-                    rowRect.pivot = rect.pivot; rowRect.anchoredPosition = rect.anchoredPosition;
+                    rowRect.anchorMin = rect.anchorMin;
+                    rowRect.anchorMax = rect.anchorMax;
+                    rowRect.pivot = rect.pivot;
+                    rowRect.anchoredPosition = rect.anchoredPosition;
                     rowRect.sizeDelta = rect.sizeDelta;
                     var layout = original.GetComponent<LayoutElement>();
                     if (!layout.IsNullOrDestroyed())
                     {
                         var copy = row.AddComponent<LayoutElement>();
-                        copy.minWidth = layout.minWidth; copy.minHeight = layout.minHeight;
-                        copy.preferredWidth = layout.preferredWidth; copy.preferredHeight = layout.preferredHeight;
-                        copy.flexibleWidth = layout.flexibleWidth; copy.flexibleHeight = layout.flexibleHeight;
+                        copy.minWidth = layout.minWidth;
+                        copy.minHeight = layout.minHeight;
+                        copy.preferredWidth = layout.preferredWidth;
+                        copy.preferredHeight = layout.preferredHeight;
+                        copy.flexibleWidth = layout.flexibleWidth;
+                        copy.flexibleHeight = layout.flexibleHeight;
                     }
                     var button = UnityEngine.Object.Instantiate(original, row.transform, false);
                     button.name = "Btn_Character_Cheats_UnlockBlessingSlots";
                     unlock_blessing_slots_button = button.GetComponent<Button>();
                     unlock_blessing_slots_button.onClick = new Button.ButtonClickedEvent();
-                    foreach (var label in button.GetComponentsInChildren<Text>(true)) ModUI.LocaleRegistry.Apply(label, "Unlock Blessing Slots");
-                    foreach (var label in button.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)) label.text = "Unlock Blessing Slots";
-                    foreach (var label in original.GetComponentsInChildren<Text>(true)) ModUI.LocaleRegistry.Apply(label, "Discover All Blessings");
-                    foreach (var label in original.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)) ModUI.LocaleRegistry.Apply(label, "Discover All Blessings");
+                    foreach (var label in button.GetComponentsInChildren<Text>(true))
+                        ModUI.LocaleRegistry.Apply(label, "Unlock Blessing Slots");
+                    foreach (
+                        var label in button.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)
+                    )
+                        label.text = "Unlock Blessing Slots";
+                    foreach (var label in original.GetComponentsInChildren<Text>(true))
+                        ModUI.LocaleRegistry.Apply(label, "Discover All Blessings");
+                    foreach (
+                        var label in original.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)
+                    )
+                        ModUI.LocaleRegistry.Apply(label, "Discover All Blessings");
                     original.transform.SetParent(row.transform, false);
-                    rect.anchorMin = Vector2.zero; rect.anchorMax = new Vector2(.32f, 1f);
+                    rect.anchorMin = Vector2.zero;
+                    rect.anchorMax = new Vector2(.32f, 1f);
                     rect.offsetMin = rect.offsetMax = Vector2.zero;
                     var buttonRect = button.GetComponent<RectTransform>();
-                    buttonRect.anchorMin = new Vector2(.68f, 0f); buttonRect.anchorMax = Vector2.one;
+                    buttonRect.anchorMin = new Vector2(.68f, 0f);
+                    buttonRect.anchorMax = Vector2.one;
                     buttonRect.offsetMin = buttonRect.offsetMax = Vector2.zero;
-                    var maxButtonObject = UnityEngine.Object.Instantiate(original, row.transform, false);
+                    var maxButtonObject = UnityEngine.Object.Instantiate(
+                        original,
+                        row.transform,
+                        false
+                    );
                     maxButtonObject.name = "Btn_Character_Cheats_MaxOutBlessings";
                     max_blessings_button = maxButtonObject.GetComponent<Button>();
                     max_blessings_button.onClick = new Button.ButtonClickedEvent();
                     foreach (var label in maxButtonObject.GetComponentsInChildren<Text>(true))
                         ModUI.LocaleRegistry.Apply(label, "Max Out Blessings");
-                    foreach (var label in maxButtonObject.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
+                    foreach (
+                        var label in maxButtonObject.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(
+                            true
+                        )
+                    )
                         ModUI.LocaleRegistry.Apply(label, "Max Out Blessings");
                     var maxRect = maxButtonObject.GetComponent<RectTransform>();
-                    maxRect.anchorMin = new Vector2(.34f, 0f); maxRect.anchorMax = new Vector2(.66f, 1f);
+                    maxRect.anchorMin = new Vector2(.34f, 0f);
+                    maxRect.anchorMax = new Vector2(.66f, 1f);
                     maxRect.offsetMin = maxRect.offsetMax = Vector2.zero;
                     foreach (var label in row.GetComponentsInChildren<Text>(true))
                     {
@@ -3775,11 +3423,15 @@ public partial class Hud_Manager : MonoBehaviour
                 public static void BuildChooseBlessingsButton(GameObject content)
                 {
                     var oldRow = Functions.GetChild(content, "AllowChoosingBlessings");
-                    if (oldRow.IsNullOrDestroyed() || discover_blessings_button.IsNullOrDestroyed()) return;
+                    if (oldRow.IsNullOrDestroyed() || discover_blessings_button.IsNullOrDestroyed())
+                        return;
                     if (choose_blessings_button.IsNullOrDestroyed())
                     {
                         var replacement = UnityEngine.Object.Instantiate(
-                            discover_blessings_button.gameObject, oldRow.transform.parent, false);
+                            discover_blessings_button.gameObject,
+                            oldRow.transform.parent,
+                            false
+                        );
                         replacement.name = "Btn_Character_Cheats_ChooseBlessings";
                         replacement.transform.SetSiblingIndex(oldRow.transform.GetSiblingIndex());
                         var sourceRect = oldRow.GetComponent<RectTransform>();
@@ -3794,16 +3446,24 @@ public partial class Hud_Manager : MonoBehaviour
                         var newLayout = replacement.GetComponent<LayoutElement>();
                         if (!oldLayout.IsNullOrDestroyed())
                         {
-                            if (newLayout.IsNullOrDestroyed()) newLayout = replacement.AddComponent<LayoutElement>();
-                            newLayout.minWidth = oldLayout.minWidth; newLayout.minHeight = oldLayout.minHeight;
-                            newLayout.preferredWidth = oldLayout.preferredWidth; newLayout.preferredHeight = oldLayout.preferredHeight;
-                            newLayout.flexibleWidth = oldLayout.flexibleWidth; newLayout.flexibleHeight = oldLayout.flexibleHeight;
+                            if (newLayout.IsNullOrDestroyed())
+                                newLayout = replacement.AddComponent<LayoutElement>();
+                            newLayout.minWidth = oldLayout.minWidth;
+                            newLayout.minHeight = oldLayout.minHeight;
+                            newLayout.preferredWidth = oldLayout.preferredWidth;
+                            newLayout.preferredHeight = oldLayout.preferredHeight;
+                            newLayout.flexibleWidth = oldLayout.flexibleWidth;
+                            newLayout.flexibleHeight = oldLayout.flexibleHeight;
                         }
                         choose_blessings_button = replacement.GetComponent<Button>();
                         choose_blessings_button.onClick = new Button.ButtonClickedEvent();
                         foreach (var label in replacement.GetComponentsInChildren<Text>(true))
                             ModUI.LocaleRegistry.Apply(label, "Choose Blessings");
-                        foreach (var label in replacement.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
+                        foreach (
+                            var label in replacement.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(
+                                true
+                            )
+                        )
                             label.text = "Choose Blessings";
                         replacement.SetActive(true);
                     }
@@ -3946,18 +3606,23 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                     memoryamber_slider.wholeNumbers = true;
                     memoryamber_slider.minValue = 1f;
-                    memoryamber_slider.maxValue = 10000f;
+                    memoryamber_slider.maxValue = 255f;
 
                     if (!Save_Manager.instance.IsNullOrDestroyed())
                     {
-                        uint value = Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier;
+                        uint value = Save_Manager
+                            .instance
+                            .data
+                            .Character
+                            .Cheats
+                            .MemoryAmberMultiplier;
                         if (value < 1)
                         {
                             value = 1;
                         }
-                        if (value > 10000)
+                        if (value > 255)
                         {
-                            value = 10000;
+                            value = 255;
                         }
                         Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier = value;
                         memoryamber_slider.value = value;
@@ -4168,7 +3833,6 @@ public partial class Hud_Manager : MonoBehaviour
                 public static GameObject soul_row = null;
                 public static Text soul_text = null;
                 public static Slider soul_slider = null;
-                public static Il2CppTMPro.TMP_InputField soul_amount_input = null;
                 public static Button soul_add_button = null;
                 public static readonly System.Action SoulEmbers_Add_Action = new System.Action(
                     AddSoulEmbers
@@ -4185,97 +3849,29 @@ public partial class Hud_Manager : MonoBehaviour
 
                 public static void SetupSoulEmberControls()
                 {
+                    if (!soul_row.IsNullOrDestroyed())
+                        soul_row.SetActive(false);
                     if (
-                        soul_row.IsNullOrDestroyed()
-                        || soul_slider.IsNullOrDestroyed()
-                        || save_button.IsNullOrDestroyed()
-                        || !soul_amount_input.IsNullOrDestroyed()
+                        !soul_add_button.IsNullOrDestroyed()
+                        || Cheats.add_ancient_bones_button.IsNullOrDestroyed()
                     )
-                    {
                         return;
-                    }
-
-                    GameObject inputTemplate = FindShardNameInput(hud_object);
-                    if (inputTemplate.IsNullOrDestroyed())
-                    {
-                        return;
-                    }
-
-                    RectTransform source = soul_slider.GetComponent<RectTransform>();
-                    if (source.IsNullOrDestroyed())
-                    {
-                        return;
-                    }
-
-                    soul_slider.gameObject.SetActive(false);
-
-                    GameObject inputClone = Object.Instantiate(inputTemplate, soul_row.transform);
-                    inputClone.name = "SoulEmberAmountInput";
-                    soul_amount_input = inputClone.GetComponent<Il2CppTMPro.TMP_InputField>();
-                    RectTransform inputRect = inputClone.GetComponent<RectTransform>();
-
-                    if (!inputRect.IsNullOrDestroyed())
-                    {
-                        inputRect.anchorMin = source.anchorMin;
-                        inputRect.anchorMax = source.anchorMax;
-                        inputRect.pivot = source.pivot;
-                        inputRect.anchoredPosition = source.anchoredPosition;
-                        inputRect.sizeDelta = source.sizeDelta;
-                        inputRect.localScale = Vector3.one;
-                    }
-
-                    PrepareNumericInput(soul_amount_input, "1000");
-
-                    GameObject buttonClone = Object.Instantiate(save_button.gameObject, soul_row.transform);
-                    buttonClone.name = "Btn_Character_Data_AddSoulEmbers";
-                    soul_add_button = buttonClone.GetComponent<Button>();
-                    PrepareFullWidthActionButton(buttonClone, soul_add_button, "Add Soul Embers");
-
-                    RectTransform buttonRect = buttonClone.GetComponent<RectTransform>();
-                    if (!buttonRect.IsNullOrDestroyed() && !inputRect.IsNullOrDestroyed())
-                    {
-                        inputRect.anchorMin = new Vector2(0f, source.anchorMin.y);
-                        inputRect.anchorMax = new Vector2(0.64f, source.anchorMax.y);
-                        inputRect.anchoredPosition = new Vector2(0f, source.anchoredPosition.y);
-                        inputRect.sizeDelta = new Vector2(-8f, source.sizeDelta.y);
-                        buttonRect.anchorMin = new Vector2(0.65f, source.anchorMin.y);
-                        buttonRect.anchorMax = new Vector2(1f, source.anchorMax.y);
-                        buttonRect.pivot = source.pivot;
-                        buttonRect.anchoredPosition = new Vector2(0f, source.anchoredPosition.y);
-                        buttonRect.sizeDelta = new Vector2(-8f, source.sizeDelta.y);
-                    }
-                    LayoutElement actionLayout = buttonClone.GetComponent<LayoutElement>();
-                    if (!actionLayout.IsNullOrDestroyed())
-                    {
-                        actionLayout.ignoreLayout = true;
-                    }
-                    buttonClone.SetActive(true);
-                    Events.Set_Button_Event(soul_add_button, SoulEmbers_Add_Action);
-
-                    inputClone.transform.SetAsLastSibling();
-                    UpdateSoulEmberBalance();
+                    var clone = Object.Instantiate(
+                        Cheats.add_ancient_bones_button.gameObject,
+                        Cheats.add_ancient_bones_button.transform.parent,
+                        false
+                    );
+                    clone.name = "Btn_Character_Cheats_AddSoulEmbers";
+                    soul_add_button = clone.GetComponent<Button>();
+                    soul_add_button.onClick = new Button.ButtonClickedEvent();
+                    PrepareFullWidthActionButton(clone, soul_add_button, "Add 1,000 Soul Embers");
+                    clone.SetActive(true);
                 }
 
                 public static void AddSoulEmbers()
                 {
-                    if (soul_amount_input.IsNullOrDestroyed())
-                    {
-                        return;
-                    }
-                    if (!int.TryParse(soul_amount_input.text, out int amount) || amount <= 0)
-                    {
-                        soul_amount_input.text = "1000";
-                        return;
-                    }
-                    if (amount > 9999999)
-                    {
-                        amount = 9999999;
-                    }
-
-                    if (Mods.Character.Character_SoulEmbers.Add(amount))
-                    {
+                    if (Mods.Character.Character_SoulEmbers.Add(1000))
                         UpdateSoulEmberBalance();
-                    }
                 }
 
                 public static void UpdateSoulEmberBalance()
@@ -4466,9 +4062,8 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Slider monolith_corruption_slider = null;
                 public static Il2CppTMPro.TMP_InputField monolith_corruption_input = null;
                 public static Button monolith_corruption_all_button = null;
-                public static readonly System.Action MonolithCorruptionAll_Action = new System.Action(
-                    CopySelectedTimelineToAll
-                );
+                public static readonly System.Action MonolithCorruptionAll_Action =
+                    new System.Action(CopySelectedTimelineToAll);
                 public static readonly System.Action<float> monolith_corruption_slider_Action =
                     new System.Action<float>(Set_monolith_corruption_slider);
                 public static readonly System.Action<string> monolith_corruption_input_Action =
@@ -4582,7 +4177,10 @@ public partial class Hud_Manager : MonoBehaviour
                         return;
                     }
 
-                    GameObject buttonClone = Object.Instantiate(save_button.gameObject, parent.transform);
+                    GameObject buttonClone = Object.Instantiate(
+                        save_button.gameObject,
+                        parent.transform
+                    );
                     buttonClone.name = "Btn_Monolith_Corruption_ApplyAll";
                     monolith_corruption_all_button = buttonClone.GetComponent<Button>();
                     PrepareFullWidthActionButton(
@@ -4610,8 +4208,10 @@ public partial class Hud_Manager : MonoBehaviour
                         !monolith_stability_empower_go.IsNullOrDestroyed()
                         && monolith_stability_empower_go.activeSelf;
                     bool copyCorruption =
-                        !monolith_corruption_go.IsNullOrDestroyed() && monolith_corruption_go.activeSelf;
-                    bool copyGaze = !monolith_gaze_go.IsNullOrDestroyed() && monolith_gaze_go.activeSelf;
+                        !monolith_corruption_go.IsNullOrDestroyed()
+                        && monolith_corruption_go.activeSelf;
+                    bool copyGaze =
+                        !monolith_gaze_go.IsNullOrDestroyed() && monolith_gaze_go.activeSelf;
                     int basic = 0,
                         empowered = 0,
                         corruption = 0,
@@ -4657,7 +4257,10 @@ public partial class Hud_Manager : MonoBehaviour
                         return;
                     }
 
-                    var runs = new System.Collections.Generic.List<(int TimelineId, int Difficulty)>();
+                    var runs = new System.Collections.Generic.List<(
+                        int TimelineId,
+                        int Difficulty
+                    )>();
                     foreach (SavedMonolithRun saved in Refs_Manager.player_data.MonolithRuns)
                     {
                         if (saved.DifficultyIndex == 0 && copyBasic)
@@ -4666,7 +4269,8 @@ public partial class Hud_Manager : MonoBehaviour
                             runs.Add((saved.TimelineID, 0));
                         }
                         else if (
-                            saved.DifficultyIndex == 1 && (copyEmpowered || copyCorruption || copyGaze)
+                            saved.DifficultyIndex == 1
+                            && (copyEmpowered || copyCorruption || copyGaze)
                         )
                         {
                             if (copyEmpowered)
@@ -4738,10 +4342,16 @@ public partial class Hud_Manager : MonoBehaviour
                     {
                         return false;
                     }
-                    return TryReadMonolithValue(Mathf.RoundToInt(slider.value).ToString(), out value);
+                    return TryReadMonolithValue(
+                        Mathf.RoundToInt(slider.value).ToString(),
+                        out value
+                    );
                 }
 
-                static void PrepareNumericInput(Il2CppTMPro.TMP_InputField input, string defaultText)
+                static void PrepareNumericInput(
+                    Il2CppTMPro.TMP_InputField input,
+                    string defaultText
+                )
                 {
                     if (input.IsNullOrDestroyed())
                     {
@@ -4829,7 +4439,10 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static void MoveEndgameControls(GameObject monolithTarget, GameObject dungeonTarget)
+                public static void MoveEndgameControls(
+                    GameObject monolithTarget,
+                    GameObject dungeonTarget
+                )
                 {
                     if (!monolithTarget.IsNullOrDestroyed())
                     {
@@ -4904,9 +4517,9 @@ public partial class Hud_Manager : MonoBehaviour
 
                     Il2CppTMPro.TMP_InputField input =
                         clone.GetComponent<Il2CppTMPro.TMP_InputField>();
-                        if (!input.IsNullOrDestroyed())
-                        {
-                            PrepareNumericInput(input, "");
+                    if (!input.IsNullOrDestroyed())
+                    {
+                        PrepareNumericInput(input, "");
                         if (!input.textViewport.IsNullOrDestroyed())
                         {
                             RectTransform view = input.textViewport;
@@ -5410,6 +5023,10 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Text damage_text = null;
                 public static Slider damage_slider = null;
 
+                public static Toggle aoe_toggle = null;
+                public static Text aoe_text = null;
+                public static Slider aoe_slider = null;
+
                 public static Toggle attackspeed_toggle = null;
                 public static Text attackspeed_text = null;
                 public static Slider attackspeed_slider = null;
@@ -5453,6 +5070,156 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Toggle att_toggle = null;
                 public static Text att_text = null;
                 public static Slider att_slider = null;
+
+                static readonly string[] BuffPanelOrder =
+                {
+                    "MoveSpeed",
+                    "Damage",
+                    "AreaOfEffect",
+                    "AttackSpeed",
+                    "CastingSpeed",
+                    "CriticalChance",
+                    "CriticalMultiplier",
+                    "HealthRegen",
+                    "ManaRegen",
+                    "Strenght",
+                    "Intelligence",
+                    "Dexterity",
+                    "Vitality",
+                    "Attunement",
+                };
+
+                public static void EnsureAreaOfEffectBuffRow(GameObject character_buffs_content)
+                {
+                    if (character_buffs_content.IsNullOrDestroyed())
+                    {
+                        return;
+                    }
+
+                    GameObject source = Functions.GetChild(
+                        character_buffs_content,
+                        "Damage",
+                        false
+                    );
+                    if (source.IsNullOrDestroyed())
+                    {
+                        return;
+                    }
+
+                    SettingRow.AddMultiplier(
+                        character_buffs_content,
+                        "Damage",
+                        "AreaOfEffect",
+                        "Toggle_Character_Buffs_Damage",
+                        "Toggle_Character_Buffs_AreaOfEffect",
+                        "Slider_Character_Buffs_Damage",
+                        "Slider_Character_Buffs_AreaOfEffect",
+                        "Area of Effect"
+                    );
+
+                    GameObject row = Functions.GetChild(
+                        character_buffs_content,
+                        "AreaOfEffect",
+                        false
+                    );
+                    if (row.IsNullOrDestroyed())
+                    {
+                        return;
+                    }
+
+                    foreach (Transform child in row.GetComponentsInChildren<Transform>(true))
+                    {
+                        if (child.name != "Slider_Character_Buffs_AreaOfEffect")
+                        {
+                            continue;
+                        }
+                        Slider slider = child.GetComponent<Slider>();
+                        if (!slider.IsNullOrDestroyed())
+                        {
+                            slider.minValue = 0f;
+                            slider.maxValue = 100f;
+                        }
+                    }
+
+                    foreach (Text label in row.GetComponentsInChildren<Text>(true))
+                    {
+                        if (label.gameObject.name == "Value")
+                        {
+                            continue;
+                        }
+                        ModUI.LocaleRegistry.Apply(label, "Area of Effect");
+                    }
+                    foreach (
+                        Il2CppTMPro.TMP_Text label in row.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(
+                            true
+                        )
+                    )
+                    {
+                        if (label.gameObject.name == "Value")
+                        {
+                            continue;
+                        }
+                        ModUI.LocaleRegistry.Apply(label, "Area of Effect");
+                    }
+
+                    LayoutBuffPanels(character_buffs_content);
+                }
+
+                static void LayoutBuffPanels(GameObject content)
+                {
+                    var rows = new System.Collections.Generic.List<RectTransform>();
+                    foreach (string panelName in BuffPanelOrder)
+                    {
+                        GameObject panel = Functions.GetChild(content, panelName, false);
+                        if (panel.IsNullOrDestroyed())
+                        {
+                            continue;
+                        }
+                        RectTransform rect = panel.GetComponent<RectTransform>();
+                        if (!rect.IsNullOrDestroyed())
+                        {
+                            rows.Add(rect);
+                        }
+                    }
+                    if (rows.Count < 2)
+                    {
+                        return;
+                    }
+
+                    float step = rows[1].anchoredPosition.y - rows[0].anchoredPosition.y;
+                    if (Mathf.Abs(step) < 0.01f)
+                    {
+                        float rowHeight = Mathf.Abs(rows[0].rect.height);
+                        if (rowHeight < 1f)
+                        {
+                            rowHeight = Mathf.Abs(rows[0].sizeDelta.y);
+                        }
+                        if (rowHeight < 1f)
+                        {
+                            rowHeight = 32f;
+                        }
+                        step = -rowHeight;
+                    }
+
+                    float baseY = rows[0].anchoredPosition.y;
+                    for (int i = 0; i < rows.Count; i++)
+                    {
+                        RectTransform rect = rows[i];
+                        rect.SetSiblingIndex(i);
+                        Vector2 pos = rect.anchoredPosition;
+                        rect.anchoredPosition = new Vector2(pos.x, baseY + (i * step));
+                    }
+
+                    RectTransform parent = content.GetComponent<RectTransform>();
+                    if (!parent.IsNullOrDestroyed())
+                    {
+                        float neededHeight = Mathf.Abs(step) * rows.Count;
+                        if (parent.sizeDelta.y < neededHeight)
+                        {
+                            parent.sizeDelta = new Vector2(parent.sizeDelta.x, neededHeight);
+                        }
+                    }
+                }
             }
         }
 
@@ -5967,7 +5734,10 @@ public partial class Hud_Manager : MonoBehaviour
                         );
                         if (!items_craft_content.IsNullOrDestroyed())
                         {
-                            ModUI.InfiniteForgingPotentialControls.Bind(content_obj, items_craft_content);
+                            ModUI.InfiniteForgingPotentialControls.Bind(
+                                content_obj,
+                                items_craft_content
+                            );
                             CraftingSlot.forgin_potencial_toggle = Functions.Get_ToggleInPanel(
                                 items_craft_content,
                                 "ForginPotencial",
@@ -12201,7 +11971,11 @@ public partial class Hud_Manager : MonoBehaviour
                         UpdateRarity();
                         UpdateItems();
                         shard_initialized = false; //Reset shards
-                        if (enable && !ModUI.ForceDropBuilder.IsReady && !center_content.IsNullOrDestroyed())
+                        if (
+                            enable
+                            && !ModUI.ForceDropBuilder.IsReady
+                            && !center_content.IsNullOrDestroyed()
+                        )
                         {
                             InitializeShardsView();
                         }
@@ -12492,7 +12266,11 @@ public partial class Hud_Manager : MonoBehaviour
                             }
                         }
                         shard_initialized = false;
-                        if (enable && !ModUI.ForceDropBuilder.IsReady && !center_content.IsNullOrDestroyed())
+                        if (
+                            enable
+                            && !ModUI.ForceDropBuilder.IsReady
+                            && !center_content.IsNullOrDestroyed()
+                        )
                         {
                             InitializeShardsView();
                         }
@@ -13126,11 +12904,11 @@ public partial class Hud_Manager : MonoBehaviour
                                     affixName = affix.affixName,
                                     affixTitle = affix.affixTitle,
                                     affixType = affix.type,
-                                specialAffixType = affix.specialAffixType,
-                                titleType = affix.titleType,
-                                sealedAffixType = seal
-                                    ? Il2Cpp.SealedAffixType.Regular
-                                    : Il2Cpp.SealedAffixType.None,
+                                    specialAffixType = affix.specialAffixType,
+                                    titleType = affix.titleType,
+                                    sealedAffixType = seal
+                                        ? Il2Cpp.SealedAffixType.Regular
+                                        : Il2Cpp.SealedAffixType.None,
                                     //isSealedAffix = seal,
                                     affixTier = tier,
                                     affixRoll = roll,

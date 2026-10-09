@@ -8,7 +8,10 @@
   </PropertyGroup>
   <ItemGroup>
     <!-- Game-independent mod code. Il2Cpp types here fail to compile on purpose. -->
-    <Compile Include="..\LastEpoch_Hud\Scripts\Core\**\*.cs" Link="Mod\Core\%(RecursiveDir)%(Filename)%(Extension)" />
+    <Compile
+      Include="..\LastEpoch_Hud\Scripts\Core\**\*.cs"
+      Link="Mod\Core\%(RecursiveDir)%(Filename)%(Extension)"
+    />
     <Using Include="Xunit" />
     <None Include="KnownIssues.txt" CopyToOutputDirectory="PreserveNewest" />
     <None Include="Locales\KeepEnglish.txt" CopyToOutputDirectory="PreserveNewest" />
@@ -16,6 +19,7 @@
   <ItemGroup>
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="18.10.1" />
     <PackageReference Include="Mono.Cecil" Version="0.11.6" />
+    <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="xunit.runner.visualstudio" Version="4.0.0">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>

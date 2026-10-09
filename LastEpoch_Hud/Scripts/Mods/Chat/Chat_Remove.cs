@@ -1,18 +1,17 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
 
-namespace LastEpoch_Hud.Scripts.Mods.Chat
+namespace LastEpoch_Hud.Scripts.Mods.Chat;
+
+public class Chat_Remove
 {
-    public class Chat_Remove
+    [HarmonyPatch(typeof(UIBase), "ChatKeyDown")]
+    public class UIBase_ChatKeyDown
     {
-        [HarmonyPatch(typeof(UIBase), "ChatKeyDown")]
-        public class UIBase_ChatKeyDown
+        [HarmonyPrefix]
+        static bool Prefix()
         {
-            [HarmonyPrefix]
-            static bool Prefix()
-            {
-                return false;
-            }
+            return false;
         }
     }
 }

@@ -448,9 +448,13 @@ AssetBundleExport/Assets/Hud/Prefab/Hud.prefab.back.meta
 AssetBundleExport/Assets/DamageMeter/Prefab/Details_BottomCircle.prefab.meta
 AssetBundleExport/Assets/DamageMeter/Prefab/Details_TopCircle.prefab.meta
 
-# Local data and development artifacts
+# Local data and development artifacts (DO NOT TOUCH OR DELETE OR FORCE PUSH!!!)
 CLAUDE.md
+CLAUDE.bak.md
 AGENTS.md
 .claude
 .idea
 .vs
+
+# Old build archives; releases are GitHub release assets now (docs/RELEASING.md)
+/Latest/LastEpoch_Hud*.rar

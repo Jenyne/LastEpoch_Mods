@@ -19,7 +19,9 @@ internal static class PatchTargetResolver
         if (candidates.Count == 0)
             return $"{type.FullName} declares no method {patch.Method}";
         if (patch.ArgumentTypes == null)
-            return candidates.Count == 1 ? null : $"{type.FullName}.{patch.Method} has {candidates.Count} overloads; give argument types";
+            return candidates.Count == 1
+                ? null
+                : $"{type.FullName}.{patch.Method} has {candidates.Count} overloads; give argument types";
 
         return candidates.Any(m => ParametersMatch(m, patch.ArgumentTypes))
             ? null
@@ -28,13 +30,26 @@ internal static class PatchTargetResolver
 
     private static TypeDefinition TryResolve(TypeReference reference)
     {
-        try { return reference.Resolve(); }
-        catch (AssemblyResolutionException) { return null; }
+        try
+        {
+            return reference.Resolve();
+        }
+        catch (AssemblyResolutionException)
+        {
+            return null;
+        }
     }
 
-    private static bool ParametersMatch(MethodDefinition method, IReadOnlyList<string> argumentTypes) =>
-        method.Parameters.Select(p => p.ParameterType.FullName).SequenceEqual(argumentTypes);
+    private static bool ParametersMatch(
+        MethodDefinition method,
+        IReadOnlyList<string> argumentTypes
+    ) => method.Parameters.Select(p => p.ParameterType.FullName).SequenceEqual(argumentTypes);
 
     private static string Describe(IEnumerable<MethodDefinition> methods) =>
-        string.Join(" | ", methods.Select(m => $"({string.Join(", ", m.Parameters.Select(p => p.ParameterType.FullName))})"));
+        string.Join(
+            " | ",
+            methods.Select(m =>
+                $"({string.Join(", ", m.Parameters.Select(p => p.ParameterType.FullName))})"
+            )
+        );
 }

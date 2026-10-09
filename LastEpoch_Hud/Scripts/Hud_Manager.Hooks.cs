@@ -305,6 +305,16 @@ public partial class Hud_Manager
                                         .Enable_Att_Buff = __instance.isOn;
                                     break;
                                 }
+                                case "Toggle_Character_Buffs_AreaOfEffect":
+                                {
+                                    Save_Manager
+                                        .instance
+                                        .data
+                                        .Character
+                                        .PermanentBuffs
+                                        .Enable_AoE_Buff = __instance.isOn;
+                                    break;
+                                }
                             }
                         }
                         else if (__instance.name.Contains("Toggle_Items_"))
@@ -1729,10 +1739,17 @@ public partial class Hud_Manager
                                 }
                                 case "Slider_Character_Cheats_MemoryAmberMultiplier":
                                 {
-                                    uint multiplier = (uint)Mathf.Clamp(Mathf.RoundToInt(__0), 1, 10000);
-                                    Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier =
-                                        multiplier;
-                                    if (!Content.Character.Cheats.memoryamber_text.IsNullOrDestroyed())
+                                    uint multiplier = (uint)
+                                        Mathf.Clamp(Mathf.RoundToInt(__0), 1, 255);
+                                    Save_Manager
+                                        .instance
+                                        .data
+                                        .Character
+                                        .Cheats
+                                        .MemoryAmberMultiplier = multiplier;
+                                    if (
+                                        !Content.Character.Cheats.memoryamber_text.IsNullOrDestroyed()
+                                    )
                                     {
                                         Content.Character.Cheats.memoryamber_text.text =
                                             "x " + multiplier;
@@ -1929,6 +1946,16 @@ public partial class Hud_Manager
                                         .PermanentBuffs
                                         .Att_Buff_Value = __0;
                                     //Content.Character.Buffs.att_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.Att_Buff_Value / 255) * 100) + " %";
+                                    break;
+                                }
+                                case "Slider_Character_Buffs_AreaOfEffect":
+                                {
+                                    Save_Manager
+                                        .instance
+                                        .data
+                                        .Character
+                                        .PermanentBuffs
+                                        .AoE_Buff_Value = __0;
                                     break;
                                 }
                             }

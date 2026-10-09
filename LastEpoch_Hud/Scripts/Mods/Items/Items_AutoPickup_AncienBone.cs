@@ -1,34 +1,48 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items
+namespace LastEpoch_Hud.Scripts.Mods.Items;
+
+public class Items_AutoPickup_AncienBone
 {
-    public class Items_AutoPickup_AncienBone
+    public static bool CanRun()
     {
-        public static bool CanRun()
+        if (
+            (Scenes.IsGameScene())
+            && (!Save_Manager.instance.IsNullOrDestroyed())
+            && (!Refs_Manager.player_actor.IsNullOrDestroyed())
+        )
         {
-            if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()) &&
-                (!Refs_Manager.player_actor.IsNullOrDestroyed()))
-            {
-                return Save_Manager.instance.data.Items.Pickup.Enable_AutoPickup_Materials;
-            }
-            else { return false; }
+            return Save_Manager.instance.data.Items.Pickup.Enable_AutoPickup_Materials;
         }
-
-        [HarmonyPatch(typeof(GroundItemManager), "dropAncientBoneForPlayer")]
-        public class GroundItemManager_dropAncientBoneForPlayer
+        else
         {
-            [HarmonyPrefix]
-            static bool Prefix(Actor __0, int __1)
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(GroundItemManager), "dropAncientBoneForPlayer")]
+    public class GroundItemManager_dropAncientBoneForPlayer
+    {
+        [HarmonyPrefix]
+        static bool Prefix(Actor __0, int __1)
+        {
+            if ((!CanRun()) || (__1 <= 0) || (__0.IsNullOrDestroyed()))
             {
-                if ((!CanRun()) || (__1 <= 0) || (__0.IsNullOrDestroyed())) { return true; }
-
-                AncientBonesTracker tracker = __0.ancientBonesTracker;
-                if (tracker.IsNullOrDestroyed()) { tracker = PlayerFinder.getAncientBonesTracker(); }
-                if (tracker.IsNullOrDestroyed()) { return true; }
-
-                return !tracker.modifyAncientBones(__1);
+                return true;
             }
+
+            AncientBonesTracker tracker = __0.ancientBonesTracker;
+            if (tracker.IsNullOrDestroyed())
+            {
+                tracker = PlayerFinder.getAncientBonesTracker();
+            }
+            if (tracker.IsNullOrDestroyed())
+            {
+                return true;
+            }
+
+            return !tracker.modifyAncientBones(__1);
         }
     }
 }

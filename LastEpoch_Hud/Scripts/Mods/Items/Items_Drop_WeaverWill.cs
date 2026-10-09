@@ -1,40 +1,70 @@
 ﻿using HarmonyLib;
-using UnityEngine;
 using Il2Cpp;
+using UnityEngine;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items
+namespace LastEpoch_Hud.Scripts.Mods.Items;
+
+public class Items_Drop_WeaverWill
 {
-    public class Items_Drop_WeaverWill
+    public static bool CanRun()
     {
-        public static bool CanRun()
+        if ((Hud_Manager.IsPauseOpen()) && (Hud_Manager.Content.OdlForceDrop.enable))
         {
-            if ((Hud_Manager.IsPauseOpen()) && (Hud_Manager.Content.OdlForceDrop.enable)) { return false; }
-            else if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()))
-            {
-                if (!Save_Manager.instance.data.IsNullOrDestroyed())
-                {
-                    return Save_Manager.instance.data.Items.Drop.Enable_WeaverWill;
-                }
-                else { return false; }
-            }
-            else { return false; }
+            return false;
         }
-
-        [HarmonyPatch(typeof(ItemData), "RollWeaversWill")]
-        public class RollWeaversWill
+        else if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()))
         {
-            [HarmonyPrefix]
-            static bool Prefix(ref ItemData __instance, ref int __result, UniqueList.Entry __0, int __1, int __2)
+            if (!Save_Manager.instance.data.IsNullOrDestroyed())
             {
-                if (CanRun())
+                return Save_Manager.instance.data.Items.Drop.Enable_WeaverWill;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
+
+    [HarmonyPatch(typeof(ItemData), "RollWeaversWill")]
+    public class RollWeaversWill
+    {
+        [HarmonyPrefix]
+        static bool Prefix(
+            ref ItemData __instance,
+            ref int __result,
+            UniqueList.Entry __0,
+            int __1,
+            int __2
+        )
+        {
+            if (CanRun())
+            {
+                int roll = 0;
+                if (
+                    Save_Manager.instance.data.Items.Drop.WeaverWill_Min
+                    == Save_Manager.instance.data.Items.Drop.WeaverWill_Max
+                )
                 {
-                    int roll = 0;
-                    if (Save_Manager.instance.data.Items.Drop.WeaverWill_Min == Save_Manager.instance.data.Items.Drop.WeaverWill_Max) { roll = (int)Save_Manager.instance.data.Items.Drop.WeaverWill_Max; }
-                    else { roll = (int)Random.RandomRange(Save_Manager.instance.data.Items.Drop.WeaverWill_Min, Save_Manager.instance.data.Items.Drop.WeaverWill_Max); }
-                    __result = roll;
-                    return false;
+                    roll = (int)Save_Manager.instance.data.Items.Drop.WeaverWill_Max;
                 }
-                else { return true; }
+                else
+                {
+                    roll = (int)
+                        Random.RandomRange(
+                            Save_Manager.instance.data.Items.Drop.WeaverWill_Min,
+                            Save_Manager.instance.data.Items.Drop.WeaverWill_Max
+                        );
+                }
+                __result = roll;
+                return false;
+            }
+            else
+            {
+                return true;
             }
         }
     }
