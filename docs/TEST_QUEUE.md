@@ -36,7 +36,7 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 | 1 | `feat/force-drop` | Force Drop / legal + illegal / global item search | Single combined branch; global search/scrolling/cyan and LP regressions await testing |
 | 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Checkbox no longer crashes (user-confirmed); allocation blocked; hover on hold |
 | 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Graphical trees and item retrieval/preview confirmed; equipment view deferred |
-| 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Open: T5 ceiling; existing-seal guard added for Guaranteed Despair |
+| 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Done — user confirmed 2026-10-09 |
 | 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | UI recovery added; native build and runtime confirmation pending |
 | 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Done for now; confirmed working, deeper investigation deferred |
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
@@ -94,15 +94,16 @@ Selection 2 is retired; other test numbers remain unchanged.
 
 **Where:** Items > Crafting
 **Branch:** `feat/advanced-forge-t7`
+**Status:** Done — Nyk confirmed selection 5 is good and called it done on 2026-10-09. The checks below are retained for optional regression.
 
 - Enable Craft Affixes to T7 plus Infinite Forging Potential on expendable normal equipment. Keep `[ForgeTrace]` when selecting T5; check T5 -> T6 -> T7 and stopping at T7.
 - Test Max Crafted Roll. Slot a real Hope or Despair glyph to test its guarantee; inspect actual FP, seal outcome and material consumption.
 - Toggle off, swap items, reopen the forge and restart. Deselect All should leave Infinite FP and the four advanced controls alone.
-- Record exact forge title, selected affix, no-shard rejection, actual shard/glyph counts and locale. The custom transaction remains incomplete.
+- Record exact forge title, selected affix, no-shard rejection, actual shard/glyph counts and locale. These are optional regression observations if a new issue appears.
 
 [Rejection trace checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/advanced-forge-t7/docs/TEST_FORGE_REJECTION_TRACE.md)
 
-Latest source: `7575671e`. With Guarantee Despair enabled and a real Despair glyph slotted, any existing sealed affix blocks the craft, including explicit Primordial/corruption flags. Rejection happens before native/custom Forge execution. Test immediate second attempts, item swaps and T7 on/off; item/tier/roll/FP/materials must stay unchanged. Switching to an unsealed item retains the first-seal option. Other glyphs and the guarantee-off native path retain native eligibility. This guard needs in-game confirmation; it does not resolve the open T5 ceiling or broader transaction limitations. Existing suite: 51 passed, three SDK-dependent checks skipped.
+Latest source: `7575671e`. With Guarantee Despair enabled and a real Despair glyph slotted, any existing sealed affix blocks the craft, including explicit Primordial/corruption flags. Rejection happens before native/custom Forge execution. Test immediate second attempts, item swaps and T7 on/off; item/tier/roll/FP/materials must stay unchanged. Switching to an unsealed item retains the first-seal option. Other glyphs and the guarantee-off native path retain native eligibility. Nyk’s 2026-10-09 completion report closes selection 5; earlier T5-ceiling and pending-test notes are superseded. The report does not enumerate individual checks. Existing suite: 51 passed, three SDK-dependent checks skipped.
 
 ## 6. Separate natural drop rate controls
 
@@ -192,7 +193,7 @@ Build failure recorded: `5744c5b7` stopped before installing on `IList<SceneDeta
 
 Each selection replaces the installed mod DLL. These branches are separate test builds; features from another selection may disappear until the branches are integrated.
 
-Advanced Forge and independent drop rates still require compilation/runtime confirmation on the installed game version. A failed build or failed test stops before installation; retain the printed log folder.
+Advanced Forge is user-confirmed done. Independent drop rates still require compilation/runtime confirmation on the installed game version. A failed build or failed test stops before installation; retain the printed log folder.
 
 Offline diagnostics includes the latest auto-offline startup and online-switch UI changes, so a separate startup-only test is not required in this queue. It is an observer build, not an implemented comprehensive runtime permission guard.
 
@@ -220,7 +221,7 @@ Current development priorities and remaining work are tracked in [DEV_TODO.md](D
 - Legal Force Drop had limited successful coverage tests. The LP correction is included in the combined branch but still needs a final regression: transferred ordinary affixes consume/disable LP; clearing them re-enables LP; dedicated ring/glove modifiers alone preserve it.
 - Build 3: Remove Node Requirements works/persists. Two 7a91 runs stop immediately after requesting the native cap write 22→45. Published `764ea599` removes that write and logs read-only allocation-check signatures. User confirms the mastery checkbox no longer crashes on this candidate; allocation is still not functional. Broader reopen/restart behavior needs checking. Hover is on hold. 999 core/source tests passed; six SDK checks skipped. Native compilation/runtime remain pending.
 - Build 4 graphical trees are much better; item retrieval/preview is confirmed. Equipment presentation improvements are deferred.
-- Build 5 failed at runtime: normal crafting still stops at T5. The missing `Force Crafted Affix Roll` locale key is fixed; it was not the runtime ceiling fix.
+- Build 5: done — Nyk confirmed it is good on 2026-10-09. The earlier T5 runtime failure is historical and no longer an active task.
 - Build 6 has no visible Natural Drop Rates sliders. Rate behavior and persistence remain unconfirmed.
 - Build 7 is confirmed working with repeated logging removed and a single confirmation retained. This is an observer/diagnostics build, not a comprehensive runtime permission guard.
 - Build 8 idol rerolling is confirmed working. Restart/locale checks remain optional regressions.
