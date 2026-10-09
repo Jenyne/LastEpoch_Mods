@@ -5,13 +5,13 @@ namespace LastEpoch_Hud.Scripts.Core.QualityOfLife;
 
 public static class KeyTeleportTargetRules
 {
-    // Prefer the campaign approach; never match the dungeon's own map label.
+    // Dungeon presets use only the three known entrance waypoint scenes.
     static readonly string[][] aliases =
     {
         new[] { "eot", "endoftime" },
-        new[] { "ruinedcoast" },
-        new[] { "shroudedridge", "surface" },
-        new[] { "felledwood" },
+        new[] { "temporalsanctum" },
+        new[] { "lightlessarbor" },
+        new[] { "soulfirebastion" },
         new[] { "bazaar" },
         new[] { "observatory" },
     };
@@ -27,7 +27,11 @@ public static class KeyTeleportTargetRules
 
     public static int MatchPriority(int index, string scene, string localizedName)
     {
-        if (index < 0 || index >= aliases.Length || !TravelSceneRules.IsDestination(scene))
+        if (index < 0 || index >= aliases.Length)
+            return -1;
+        if (index >= 1 && index <= 3)
+            return SavedDungeonPreset(scene) == index ? 0 : -1;
+        if (!TravelSceneRules.IsDestination(scene))
             return -1;
         string normalized = Normalize(scene);
         string label = Normalize(localizedName);

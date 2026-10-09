@@ -52,18 +52,22 @@ internal static class FavouriteTeleports
     {
         Load();
         string scene = LastEpoch_Hud.Scenes.SceneName;
-        if (TravelSceneRules.IsDungeonScene(scene))
+        bool dungeon = TravelSceneRules.IsDungeonScene(scene);
+        if (dungeon && !DungeonWaypointTravel.CanTravel(scene))
         {
-            Status = "Save the campaign waypoint outside the dungeon instead.";
+            Status = "Only unlocked dungeon entrance waypoints can be saved.";
             return;
         }
-        bool anywhere = ModUI.ModSettings.TravelAnywhere.Enabled.Value;
+        bool anywhere = !dungeon && ModUI.ModSettings.TravelAnywhere.Enabled.Value;
         if (anywhere)
             TravelDestinations.Refresh();
         if (
-            anywhere
-                ? TravelDestinations.Find(scene) == null
-                : !Teleport_ToScene.CanTravelToUnlockedWaypoint(scene)
+            !dungeon
+            && (
+                anywhere
+                    ? TravelDestinations.Find(scene) == null
+                    : !Teleport_ToScene.CanTravelToUnlockedWaypoint(scene)
+            )
         )
         {
             Status = anywhere
@@ -117,12 +121,12 @@ internal static class FavouriteTeleports
             if (preset >= 0)
             {
                 Main.logger_instance?.Msg(
-                    "[KeyTeleports] Redirect saved " + scene + " to campaign approach."
+                    "[KeyTeleports] Use native handler for saved dungeon waypoint " + scene + "."
                 );
-                KeyTeleportDestinations.Travel(preset);
+                DungeonWaypointTravel.Travel(scene);
             }
             else
-                Status = "Dungeon travel requires its entrance. Use a campaign waypoint instead.";
+                Status = "Only dungeon entrance waypoints support favourite travel.";
             return;
         }
         if (Teleport_ToScene.CanTravelToUnlockedWaypoint(scene))

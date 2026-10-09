@@ -11,9 +11,9 @@ internal static class KeyTeleportDestinations
     public static readonly string[] Labels =
     {
         "End of Time",
-        "Temporal Sanctum (Ruined Coast)",
-        "Lightless Arbor (campaign approach)",
-        "Soulfire Bastion (Felled Wood)",
+        "Temporal Sanctum",
+        "Lightless Arbor",
+        "Soulfire Bastion",
         "The Bazaar",
         "The Observatory",
     };
@@ -25,8 +25,8 @@ internal static class KeyTeleportDestinations
         Array.Clear(scenes, 0, scenes.Length);
         try
         {
-            // Resolve campaign approach waypoints. Dungeon labels resolve to lobby scenes
-            // (Dun1Q10 etc.) that are unsafe through the generic waypoint route.
+            // Only real map waypoints qualify. Dungeon entrance scenes must use
+            // their own UIWaypoint handler, never generic/additive scene travel.
             var names = new Dictionary<string, string>(StringComparer.Ordinal);
             var list = Refs_Manager.scene_list;
             if (list.IsNullOrDestroyed())
@@ -97,11 +97,16 @@ internal static class KeyTeleportDestinations
         if (scene == null)
         {
             FavouriteTeleports.SetStatus(
-                "Campaign waypoint unavailable. Open the world map, then refresh key teleports."
+                "Waypoint unavailable. Open the world map, then refresh key teleports."
             );
             return;
         }
-        // Always use the real unlocked waypoint route for presets, including in build 11.
+        if (KeyTeleportTargetRules.SavedDungeonPreset(scene) >= 0)
+        {
+            DungeonWaypointTravel.Travel(scene);
+            return;
+        }
+        // Ordinary hubs retain the existing unlocked waypoint route.
         FavouriteTeleports.TravelWaypoint(scene);
     }
 }

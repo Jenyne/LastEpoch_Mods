@@ -83,18 +83,21 @@ Unity references used during the review: [additive scene management](https://doc
 
 The user reports being stuck after dungeon preset travel and needing Alt+F4. Latest log confirms build `f53998db`: Observatory travel at 09:17:45.484 followed by `Dun2Q10` at 09:17:54.815. Player log shows scene load and `ClientDungeonService.HandleTransition`, not a rejected/missing scene. The previous run similarly reaches `Dun1Q10`. Later AbilityObjectIndicator.OnDestroy exceptions occur during shutdown and do not identify the initial hang cause. The exact reason dungeon handling stalls is unproven.
 
-The fix avoids that path: dungeon presets target the campaign areas outside the entrances, not Dun* lobby scenes. Temporal Sanctum uses Ruined Coast; Lightless Arbor prefers Shrouded Ridge when it has a waypoint, otherwise Surface; Soulfire Bastion uses Felled Wood. Identifiers are resolved from live map data, not guessed. Campaign names are corroborated by the developer-hosted [game guide](https://forum.lastepoch.com/t/community-game-guide/26057/11). The English-name resolver can remain unavailable in other locales; it must reject missing/ambiguous matches rather than guessing a scene.
+The initial correction moved presets to campaign approach areas. The user tested that revision and clarified that favourites must target the dungeon's own waypoint, not the preceding zone.
 
-Generic teleport validation and direct Travel Anywhere exclude Dun+digit scenes. Already-saved Dun1Q10/Dun2Q10/Dun3Q10 favourites redirect to their campaign preset; other dungeon scenes are blocked with a status message. Existing favourites are not deleted. Normal native dungeon map actions retain their own game handling.
+## Dungeon waypoint correction
+
+Presets now resolve the three known entrance waypoint scenes (`Dun1Q10`, `Dun2Q10`, `Dun3Q10`) only when a real map waypoint exists. Dungeon travel delegates to that waypoint's native `LoadWaypointScene()` handler, including its gate. It does not use the generic `TransitionService.Waypoint` call or additive Travel Anywhere loading. Unknown dungeon rooms remain blocked; saved entrance favourites use the same native handler and can be saved again. Campaign approach fallback is removed.
+
+This is a different dispatch path, not a confirmed repair of the earlier hang. Native runtime testing must establish whether it initializes the dungeon lobby correctly. A missing, locked or conflicting-gate waypoint reports unavailable without starting travel.
 
 ### Retest selection 11
 
-- Close the game and rebuild/reinstall selection 11. Open the world map, then Refresh key teleports. Keep the new `[KeyTeleports]` mapping.
-- Test all three dungeon buttons from End of Time. They must target campaign scenes, never Dun1Q10/Dun2Q10/Dun3Q10, and finish loading with movement/camera working. A missing or locked waypoint must report unavailable without starting travel.
-- Repeat from Observatory/Bazaar; double-click a button and check no overlapping transitions. Check End of Time, Bazaar and Observatory still travel normally.
-- Use an old saved dungeon-lobby favourite: it should redirect safely or report unavailable. Other dungeon-room favourites must be blocked. Save/remove normal favourites and restart to check persistence.
-- Walk into each dungeon through its normal entrance and check its ordinary key/tier flow. With Travel Anywhere enabled, dungeon scenes must not be force-loaded additively by this mod.
+- Close the game and rebuild/reinstall selection 11. Open the world map once and refresh key teleports. Keep `[KeyTeleports]` mappings and the printed build commit.
+- From End of Time, test all three dungeon favourites. They must arrive at the dungeon's own waypoint with movement/camera working, before entering a key/tier dungeon run. Keep the `Native dungeon waypoint -> ...; gate=...` lines.
+- Repeat with Travel Anywhere off and on. Ordinary hub favourites and non-waypoint map travel must still work.
+- Use an old saved entrance favourite, save a dungeon entrance again and restart to check persistence. Other dungeon-room favourites must remain blocked.
+- Test an undiscovered/locked entrance: the favourite must report unavailable. Enter each dungeon through its normal key/tier flow after arrival.
+- If a transition hangs, retain Latest.log and Player.log from that run; compare normal map travel to the same dungeon waypoint. Do not call this correction done until all three work.
 
-This is a source/core-tested correction; native compilation and in-game success remain pending. It avoids the reproduced failing route and does not claim to repair arbitrary stalled native dungeon transitions.
-
-Preset and generic-waypoint validation uses each map pin’s original waypoint flag, excluding temporary Travel Anywhere adapters. Verify this with Travel Anywhere on/off: a synthetic non-waypoint button must not become a generic waypoint target. Validation: 1,103 core tests passed, six native-SDK checks skipped; CSharpier passed.
+Core tests/formatting are checked separately; native compilation and in-game confirmation remain pending.
