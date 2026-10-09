@@ -5474,6 +5474,7 @@ public partial class Hud_Manager : MonoBehaviour
                             "Items_Drop",
                             "Items_Data_Content"
                         );
+                        ModUI.DropRateControls.Bind(items_drop_content);
                         if (!items_drop_content.IsNullOrDestroyed())
                         {
                             GameObject force = Functions.GetChild(items_drop_content, "Force");

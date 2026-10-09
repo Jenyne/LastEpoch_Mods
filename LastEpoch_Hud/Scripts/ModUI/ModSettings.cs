@@ -238,10 +238,9 @@ namespace LastEpoch_Hud.Scripts.ModUI
 
         public static class DropRates
         {
-            public static readonly SettingsGroup Group = new SettingsGroup("DropRates")
-                .Content("Items_Content")
-                .Viewport("Items_Drop", "Items_Data_Content")
-                .OnBind((content, viewport) => DropRateControls.Bind(content, viewport));
+            // Persist settings here; Hud_Manager binds runtime controls through its
+            // live viewport resolver (which handles extra Content wrappers).
+            public static readonly SettingsGroup Group = new SettingsGroup("DropRates");
             // Stored as whole percentages: 100 = native rate; 300 = 3x.
             public static readonly FloatSetting Unique = Group.Float("Unique", defaultValue: 100, min: 0, max: 1000);
             public static readonly FloatSetting Set = Group.Float("Set", defaultValue: 100, min: 0, max: 1000);
