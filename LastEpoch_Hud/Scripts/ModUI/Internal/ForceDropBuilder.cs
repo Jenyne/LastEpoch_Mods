@@ -35,6 +35,7 @@ public static class ForceDropBuilder
     static Text preview,
         status,
         pickerTitle;
+    static string currentPickerTitle = "Select";
     static Button typeButton,
         rarityButton,
         dropButton,
@@ -942,11 +943,13 @@ public static class ForceDropBuilder
 
     static bool MatchesAffixSearch(Choice choice, string query)
     {
+        if (choice.id == -1)
+            return true;
         if (choice.classMask < 0)
             return NativeItemNames.Matches(query, choice.name, choice.aliases);
         var terms = new List<string>();
         int includeMask = 0, excludeMask = 0;
-        foreach (string word in (query ?? "").Split(new[] { ' ', '\\t' }, StringSplitOptions.RemoveEmptyEntries))
+        foreach (string word in (query ?? "").Split(new[] { ' ', '\t' }, StringSplitOptions.RemoveEmptyEntries))
         {
             string token = word.ToLowerInvariant();
             if (token == "class:all")
@@ -1351,6 +1354,7 @@ public static class ForceDropBuilder
     static void OpenPicker(string title)
     {
         categoryPicker = rarityPicker = false;
+        currentPickerTitle = title;
         LocaleRegistry.Apply(pickerTitle, title);
         pickerSearch.SetTextWithoutNotify("");
         lastPickerSearch = "";
@@ -1493,7 +1497,7 @@ public static class ForceDropBuilder
             if (MatchesAffixSearch(choice, pickerSearch.text))
                 filtered.Add(choice);
         if (!categoryPicker && !rarityPicker)
-            Caption(pickerTitle, (rows != null ? "Select affix" : "Select") + " (" + filtered.Count + ")");
+            Caption(pickerTitle, currentPickerTitle + " (" + filtered.Count + ")");
         pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker);
         pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker);
         foreach (var header in pickerHeaders)
