@@ -81,15 +81,15 @@ $queueJson = @'
   },
   {
     "id": 7,
-    "title": "Offline startup — observer removed for isolation",
+    "title": "Manual offline-only startup",
     "branch": "test/offline-guard-diagnostics",
-    "status": "951f4e01 user-confirmed no crash; character entries and normal shutdown logged",
-    "location": "Launch -> offline character selection; MelonLoader/Latest.log",
+    "status": "fd79f606 manual-selection correction; native retest pending",
+    "location": "Launch -> click Play Offline -> character selection; Latest.log and Player.log",
     "checks": [
-      "Offline is mandatory while the mod is installed: confirm automatic offline character selection and hidden/blocked online controls. Old Login.Enable_AutoLoginOffline=false or a missing Login section must not bypass this.",
-      "Cold launch and early/repeated manual clicks: completed client Login notification must precede offline dispatch. Check no SystemLoading transition exception; keep Latest.log and Player.log from the same run. Missing startup notification must defer rather than bypass readiness.",
-      "Load an offline character, change zones, run an echo and remain playable for 30+ seconds. Switch characters and reload the first.",
-      "Confirm build 951f4e01, load the same character that worked on selection 9, fight and switch characters. Keep Latest.log and Player.log. The session observer is removed; no [OfflineGuard] lines are expected."
+      "Wait for the landing screen and click Play Offline. Automatic selection and the readiness gate are removed; the game handles the click normally. Repeat a fresh launch with controller if available.",
+      "Confirm online controls remain hidden/blocked, including with old Login.Enable_AutoLoginOffline=false or a missing Login section. Online play requires uninstalling the mod.",
+      "Load a character, fight, run an echo, return to selection and load a second character. Exit normally; retain both same-run logs if loading fails.",
+      "Confirm build fd79f606. The session observer and startup listener are removed. Sync's HUD build needs the same correction applied and tested separately."
     ]
   },
   {

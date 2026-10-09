@@ -38,7 +38,7 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 | 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Graphical trees and item retrieval/preview confirmed; equipment view deferred |
 | 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Done — user confirmed 2026-10-09 |
 | 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | e1b3f857 loaded; nonzero section height logged; combat crash reported, investigation required |
-| 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | 951f4e01 user-confirmed no crash; two character entries and normal shutdown logged |
+| 7 | `test/offline-guard-diagnostics` | Manual offline-only startup | fd79f606 manual-selection correction; native retest pending |
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
 | 9 | `master` | Current main baseline | Baseline/control build |
 | 11 | `feat/travel-anywhere` | Combined gold, key teleports, counters and map travel | Map travel confirmed; picker removed / busy guard fix pending retest |
@@ -119,16 +119,16 @@ Latest test: `Latest(9).log` / `Player(10).log`, build `e1b3f857`. Section heigh
 
 [UI recovery checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/independent-drop-rates/docs/TEST_DROP_RATE_UI_RECOVERY.md)
 
-## 7. Offline startup / session diagnostics
+## 7. Manual offline-only startup
 
-Done for now at the user's request. The following checklist is retained for optional regression; deeper investigation is deferred.
+Current correction `fd79f606` needs native retesting. Earlier successful observer-free runs remain historical evidence.
 
-**Where:** Launch -> offline character selection; MelonLoader/Latest.log
+**Where:** Launch -> click Play Offline -> character selection; Latest.log and Player.log
 **Branch:** `test/offline-guard-diagnostics`
 
-- Login.Enable_AutoLoginOffline must be true. Confirm automatic offline character selection and that its online switch is hidden.
-- Load an offline character, change zones, run an echo and remain playable for 30+ seconds. Switch characters and reload the first.
-- Confirm build `951f4e01`. Load the same character that succeeded on selection 9, fight, switch characters and exit normally. Keep complete Latest.log and Player.log. Session observer and native hooks are removed; no `[OfflineGuard]` lines are expected. The user retest passed: two character entries and normal shutdown; combat/echo endurance is not recorded.
+- Wait for the landing screen and click Play Offline. Repeat with controller if available. The game's offline handler is unpatched; no automatic selection or readiness gate remains.
+- Confirm online landing and character-switch actions stay unavailable, even with old false or missing Login configuration.
+- Load two characters, fight and run an echo. Exit normally and retain both same-run logs if loading fails. Apply this correction separately to Sync's HUD build and repeat.
 
 [Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/test/offline-guard-diagnostics/docs/TEST_OFFLINE_GUARD_DIAGNOSTICS.md)
 
@@ -188,7 +188,7 @@ Each selection replaces the installed mod DLL. These branches are separate test 
 
 Advanced Forge is user-confirmed done. Independent drop rates still require compilation/runtime confirmation on the installed game version. A failed build or failed test stops before installation; retain the printed log folder.
 
-Offline diagnostics includes the latest auto-offline startup and online-switch UI changes, so a separate startup-only test is not required in this queue. It is an observer build, not an implemented comprehensive runtime permission guard.
+Selection 7 now tests manual offline-only startup and online-switch blocking. Both the session observer and automatic offline startup/readiness listener are removed.
 
 Legal and Illegal Force Drop now use only selection 1 and `feat/force-drop` at `2c04bdd0`. Selection 2 is removed; both earlier histories are preserved in the combined branch. Global search now fills the category, rarity and exact native item when selected. Keep the current Force Drop UI; a full UI redesign is deferred.
 
@@ -247,3 +247,7 @@ Rebuild selection 11, open the world map and Refresh key teleports. Verify campa
 ## Offline startup race correction — selection 7 (`9b888a1b`)
 
 Sync’s Player log confirms a CharacterSelect request during SystemLoading. This candidate waits for the completed client Login-state log notification, then applies the existing landing readiness checks. Early manual and duplicate pending requests are blocked; online access stays blocked unconditionally. Test a slow/cold launch, early clicks/controller actions, two characters, combat and echoes. Keep both same-run logs. This adapter depends on the current exact game notification; missing/changed messages leave startup deferred. Native build/runtime confirmation remains pending; 1,018 core tests passed, six SDK checks skipped.
+
+## Manual offline selection — selection 7 (`fd79f606`)
+
+Supersedes the startup race candidate `9b888a1b`: its listener never confirmed Login and blocked manual clicks. Automatic selection and the readiness listener/gate are removed. Click the normal Play Offline button; online actions remain hidden/blocked unconditionally. Retest mouse/controller selection, two characters, combat and echoes. Sync must apply this correction to the HUD build separately. 999 core checks passed, six native-SDK checks skipped; formatting passed. Native compilation/runtime pending.
