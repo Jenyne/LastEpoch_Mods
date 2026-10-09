@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Il2CppTMPro;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -10,7 +11,7 @@ namespace LastEpoch_Hud.Scripts.ModUI;
 
 // Shared renderer for the large single-card slider pages. Page files provide
 // only labels, ranges, units, and save bindings; all visual construction lives here.
-internal sealed class HudSliderCard
+internal sealed class HudSliderCard : IHudSearchPage
 {
     internal sealed class Definition
     {
@@ -28,6 +29,7 @@ internal sealed class HudSliderCard
 
     private sealed class Row
     {
+        public GameObject Root;
         public Definition Definition;
         public Slider Slider;
         public TMP_InputField Input;
@@ -41,7 +43,13 @@ internal sealed class HudSliderCard
     private readonly TMP_InputField inputTemplate;
     private readonly ScrollRect scroll;
     private readonly RectTransform contentRect;
+    private readonly string title;
+    private readonly List<HudSearchEntry> searchEntries = new();
     private bool refreshing;
+    private bool searchActive;
+
+    public string PageId { get; }
+    public IReadOnlyList<HudSearchEntry> SearchEntries => searchEntries;
 
     private HudSliderCard(
         GameObject parent,
@@ -53,6 +61,8 @@ internal sealed class HudSliderCard
     )
     {
         font = inheritedFont;
+        this.title = title;
+        PageId = HudNavigation.SearchPageId(name);
         inputTemplate = FindInputTemplate(hud);
         handleSprite = FindHandleSprite(hud);
 
@@ -162,6 +172,8 @@ internal sealed class HudSliderCard
             AddRow(content, definition);
 
         root.SetActive(false);
+        searchEntries.Add(new HudSearchEntry { Card = title, Label = title });
+        HudSearch.Register(this);
     }
 
     public static HudSliderCard Build(
@@ -196,6 +208,32 @@ internal sealed class HudSliderCard
             root.SetActive(false);
     }
 
+    public void ApplySearch(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            ClearSearch();
+            return;
+        }
+        searchActive = true;
+        bool cardMatch = Matches(query, title);
+        foreach (var row in rows)
+            if (!row.Root.IsNullOrDestroyed())
+                row.Root.SetActive(cardMatch || Matches(query, row.Definition.Label));
+        RebuildAfterSearch();
+    }
+
+    public void ClearSearch()
+    {
+        if (!searchActive)
+            return;
+        searchActive = false;
+        foreach (var row in rows)
+            if (!row.Root.IsNullOrDestroyed())
+                row.Root.SetActive(true);
+        RebuildAfterSearch();
+    }
+
     private void AddRow(GameObject content, Definition definition)
     {
         var rowObject = Node(content, "Row_" + definition.Id);
@@ -223,11 +261,13 @@ internal sealed class HudSliderCard
         }
         var row = new Row
         {
+            Root = rowObject,
             Definition = definition,
             Slider = slider,
             Input = input,
             Toggle = toggle,
         };
+        searchEntries.Add(new HudSearchEntry { Card = title, Label = definition.Label });
         rows.Add(row);
 
         SliderHook.Register(slider, value => SliderChanged(row, value));
@@ -484,6 +524,21 @@ internal sealed class HudSliderCard
                 ? Mathf.Round(value).ToString("0", CultureInfo.InvariantCulture)
                 : value.ToString("0.##", CultureInfo.InvariantCulture);
         row.Input.SetTextWithoutNotify(number + row.Definition.Unit);
+    }
+
+    private bool Matches(string query, string label)
+    {
+        if (!HudNavigation.TryGetPage(PageId, out var section, out var page))
+            return false;
+        return HudSearchText.Score(query, label, title, page.Label, section.Label) >= 0;
+    }
+
+    private void RebuildAfterSearch()
+    {
+        LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+        Canvas.ForceUpdateCanvases();
+        scroll.StopMovement();
+        scroll.verticalNormalizedPosition = 1f;
     }
 
     private static TMP_InputField FindInputTemplate(GameObject hud)

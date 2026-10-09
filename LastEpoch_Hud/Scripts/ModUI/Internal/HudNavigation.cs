@@ -1,3 +1,6 @@
+using System;
+using System.Collections.Generic;
+
 namespace LastEpoch_Hud.Scripts.ModUI;
 
 internal enum HudArea
@@ -100,6 +103,25 @@ internal sealed class HudPanelSource
 
 internal static class HudNavigation
 {
+    private static readonly Dictionary<string, string> SearchPageIds = new(StringComparer.Ordinal)
+    {
+        ["Utilities_Character"] = "character.main",
+        ["Utilities_Multipliers"] = "character.multipliers",
+        ["Utilities_Currency"] = "character.currency",
+        ["Utilities_Buffs"] = "character.buffs",
+        ["Utilities_QOL"] = "character.qol",
+        ["Items_Drop"] = "items.drop",
+        ["Items_CraftingSlot"] = "items.crafting",
+        ["World_Difficulty"] = "world.difficulty",
+        ["World_Monoliths"] = "world.monoliths",
+        ["World_Misc"] = "world.misc",
+        ["World_Camera"] = "world.camera",
+        ["Skills_Minions"] = "skills.minions",
+        ["Skills_Companions"] = "skills.companions",
+        ["Skills_Summon"] = "skills.summon",
+        ["Skills_QOL"] = "skills.qol",
+    };
+
     // Paths are relative to Hud/Content. Keeping them beside the page definitions
     // makes this file the only map between legacy prefab names and the new UI.
     public static readonly HudPanelSource[] PanelSources =
@@ -200,4 +222,26 @@ internal static class HudNavigation
             new HudPageDefinition("skills.qol", "QOL", new HudArea[0])
         ),
     };
+
+    public static string SearchPageId(string rootName) =>
+        rootName != null && SearchPageIds.TryGetValue(rootName, out string pageId) ? pageId : null;
+
+    public static bool TryGetPage(
+        string pageId,
+        out HudSectionDefinition section,
+        out HudPageDefinition page
+    )
+    {
+        foreach (var candidateSection in Sections)
+        foreach (var candidatePage in candidateSection.Pages)
+            if (string.Equals(candidatePage.Id, pageId, StringComparison.Ordinal))
+            {
+                section = candidateSection;
+                page = candidatePage;
+                return true;
+            }
+        section = null;
+        page = null;
+        return false;
+    }
 }

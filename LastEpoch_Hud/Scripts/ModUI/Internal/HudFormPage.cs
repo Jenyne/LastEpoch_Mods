@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Il2CppTMPro;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using UnityEngine;
 using UnityEngine.Events;
 using UnityEngine.UI;
@@ -10,14 +11,31 @@ namespace LastEpoch_Hud.Scripts.ModUI;
 
 // Shared renderer for pages made from several vertically stacked cards. The
 // page owns one scrollbar; cards only describe their controls and bindings.
-internal sealed class HudFormPage
+internal sealed class HudFormPage : IHudSearchPage
 {
     internal sealed class Card
     {
         internal GameObject Root;
         internal GameObject Body;
         internal Text Indicator;
+        internal string Title;
+        internal readonly List<SearchItem> SearchItems = new();
         internal bool Expanded = true;
+        internal bool? ExpandedBeforeSearch;
+    }
+
+    internal sealed class SearchItem
+    {
+        public string Label;
+        public GameObject Root;
+        public bool Conditional;
+    }
+
+    private sealed class ActionSearchGroup
+    {
+        public GameObject Root;
+        public readonly List<GameObject> Rows = new();
+        public readonly List<SearchItem> Items = new();
     }
 
     private sealed class ToggleBinding
@@ -63,16 +81,25 @@ internal sealed class HudFormPage
     private readonly Sprite handleSprite;
     private readonly ScrollRect scroll;
     private readonly RectTransform contentRect;
+    private readonly List<Card> cards = new();
+    private readonly List<ActionSearchGroup> actionSearchGroups = new();
+    private readonly List<HudSearchEntry> searchEntries = new();
+    private readonly Dictionary<GameObject, SearchItem> searchItemsByRoot = new();
     private readonly List<ToggleBinding> toggles = new();
     private readonly List<SliderBinding> sliders = new();
     private readonly List<DropdownBinding> dropdowns = new();
     private readonly List<VisibilityBinding> visibility = new();
     private readonly List<KeybindBinding> keybinds = new();
     private bool refreshing;
+    private bool searchActive;
+
+    public string PageId { get; }
+    public IReadOnlyList<HudSearchEntry> SearchEntries => searchEntries;
 
     private HudFormPage(GameObject parent, GameObject hud, Font inheritedFont, string name)
     {
         font = inheritedFont;
+        PageId = HudNavigation.SearchPageId(name);
         inputTemplate = FindInputTemplate(hud);
         handleSprite = FindHandleSprite(hud);
 
@@ -138,6 +165,7 @@ internal sealed class HudFormPage
         scroll.verticalScrollbarVisibility = ScrollRect.ScrollbarVisibility.Permanent;
         scroll.verticalScrollbarSpacing = 0f;
         root.SetActive(false);
+        HudSearch.Register(this);
     }
 
     public static HudFormPage Build(GameObject parent, GameObject hud, Font font, string name)
@@ -228,7 +256,10 @@ internal sealed class HudFormPage
             Root = cardObject,
             Body = body,
             Indicator = indicator,
+            Title = title,
         };
+        cards.Add(card);
+        searchEntries.Add(new HudSearchEntry { Card = title, Label = title });
         ButtonHook.Register(
             headerButton,
             new Action(() =>
@@ -256,6 +287,8 @@ internal sealed class HudFormPage
         var fitter = grid.AddComponent<ContentSizeFitter>();
         fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
+        var searchGroup = new ActionSearchGroup { Root = grid };
+        actionSearchGroups.Add(searchGroup);
         for (int i = 0; i < labels.Length; i += 2)
         {
             var row = Node(grid, "Row_" + (i / 2));
@@ -268,9 +301,14 @@ internal sealed class HudFormPage
             rowLayout.childControlHeight = true;
             rowLayout.childForceExpandWidth = true;
             rowLayout.childForceExpandHeight = true;
-            AddGridButton(row, i, labels[i], clicks[i]);
+            searchGroup.Rows.Add(row);
+            RegisterAction(searchGroup, labels[i], AddGridButton(row, i, labels[i], clicks[i]));
             if (i + 1 < labels.Length)
-                AddGridButton(row, i + 1, labels[i + 1], clicks[i + 1]);
+                RegisterAction(
+                    searchGroup,
+                    labels[i + 1],
+                    AddGridButton(row, i + 1, labels[i + 1], clicks[i + 1])
+                );
         }
     }
 
@@ -291,6 +329,7 @@ internal sealed class HudFormPage
         var text = TextNode(buttonObject, "Label", label, HudTheme.BodyFontSize);
         Stretch(text.GetComponent<RectTransform>());
         text.alignment = TextAnchor.MiddleCenter;
+        Register(card, label, buttonObject);
         return button;
     }
 
@@ -303,6 +342,7 @@ internal sealed class HudFormPage
         label.GetComponent<RectTransform>().offsetMax = new Vector2(-6f, 0f);
         label.alignment = TextAnchor.MiddleLeft;
         label.color = HudTheme.TextMuted;
+        Register(card, text, row);
         return label;
     }
 
@@ -345,6 +385,7 @@ internal sealed class HudFormPage
                 display.text = KeybindFormat.Friendly(value);
         };
         keybinds.Add(new KeybindBinding { Display = display, Setting = setting });
+        Register(card, label, row);
     }
 
     public Toggle AddToggle(Card card, string id, string label, Func<bool> read, Action<bool> write)
@@ -390,6 +431,7 @@ internal sealed class HudFormPage
             }
         );
         toggles.Add(new ToggleBinding { Control = toggle, Read = read });
+        Register(card, label, row);
         return toggle;
     }
 
@@ -572,6 +614,7 @@ internal sealed class HudFormPage
             Unit = unit ?? string.Empty,
         };
         sliders.Add(binding);
+        Register(card, label, row);
         SliderHook.Register(slider, value => SliderChanged(binding, value));
         if (!binding.Input.IsNullOrDestroyed())
         {
@@ -590,6 +633,8 @@ internal sealed class HudFormPage
         visibility.Add(
             new VisibilityBinding { Root = control.transform.parent.gameObject, Read = read }
         );
+        if (searchItemsByRoot.TryGetValue(control.transform.parent.gameObject, out var item))
+            item.Conditional = true;
     }
 
     public Dropdown AddDropdown(
@@ -664,6 +709,7 @@ internal sealed class HudFormPage
                 Read = read,
             }
         );
+        Register(card, label, row);
         return dropdown;
     }
 
@@ -691,6 +737,94 @@ internal sealed class HudFormPage
             return;
         Refresh();
         LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+    }
+
+    public void ApplySearch(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            ClearSearch();
+            return;
+        }
+
+        Refresh();
+        searchActive = true;
+        foreach (var card in cards)
+        {
+            if (!card.ExpandedBeforeSearch.HasValue)
+                card.ExpandedBeforeSearch = card.Expanded;
+            bool cardMatch = Matches(query, card.Title, card.Title);
+            bool any = cardMatch;
+            foreach (var item in card.SearchItems)
+            {
+                bool show = cardMatch || Matches(query, item.Label, card.Title);
+                if (!item.Root.IsNullOrDestroyed())
+                    item.Root.SetActive(show);
+                any |= show;
+            }
+            if (!card.Root.IsNullOrDestroyed())
+                card.Root.SetActive(any);
+            if (any)
+            {
+                card.Expanded = true;
+                card.Body.SetActive(true);
+                card.Indicator.text = "-";
+            }
+        }
+
+        foreach (var group in actionSearchGroups)
+        {
+            bool any = false;
+            foreach (var item in group.Items)
+            {
+                bool show = Matches(query, item.Label, "Actions");
+                if (!item.Root.IsNullOrDestroyed())
+                    item.Root.SetActive(show);
+                any |= show;
+            }
+            foreach (var row in group.Rows)
+                if (!row.IsNullOrDestroyed())
+                    row.SetActive(HasActiveChild(row));
+            if (!group.Root.IsNullOrDestroyed())
+                group.Root.SetActive(any);
+        }
+
+        RebuildAfterSearch();
+    }
+
+    public void ClearSearch()
+    {
+        if (!searchActive)
+            return;
+        searchActive = false;
+        foreach (var card in cards)
+        {
+            if (!card.Root.IsNullOrDestroyed())
+                card.Root.SetActive(true);
+            foreach (var item in card.SearchItems)
+                if (!item.Root.IsNullOrDestroyed() && !item.Conditional)
+                    item.Root.SetActive(true);
+            if (card.ExpandedBeforeSearch.HasValue)
+            {
+                card.Expanded = card.ExpandedBeforeSearch.Value;
+                card.ExpandedBeforeSearch = null;
+                card.Body.SetActive(card.Expanded);
+                card.Indicator.text = card.Expanded ? "-" : "+";
+            }
+        }
+        foreach (var group in actionSearchGroups)
+        {
+            if (!group.Root.IsNullOrDestroyed())
+                group.Root.SetActive(true);
+            foreach (var row in group.Rows)
+                if (!row.IsNullOrDestroyed())
+                    row.SetActive(true);
+            foreach (var item in group.Items)
+                if (!item.Root.IsNullOrDestroyed())
+                    item.Root.SetActive(true);
+        }
+        Refresh();
+        RebuildAfterSearch();
     }
 
     private void Refresh()
@@ -861,7 +995,7 @@ internal sealed class HudFormPage
         return button;
     }
 
-    private void AddGridButton(GameObject parent, int index, string label, Action click)
+    private GameObject AddGridButton(GameObject parent, int index, string label, Action click)
     {
         var buttonObject = Node(parent, "Button_" + index);
         var element = buttonObject.AddComponent<LayoutElement>();
@@ -879,6 +1013,48 @@ internal sealed class HudFormPage
         var text = TextNode(buttonObject, "Label", label, HudTheme.BodyFontSize);
         Stretch(text.GetComponent<RectTransform>());
         text.alignment = TextAnchor.MiddleCenter;
+        return buttonObject;
+    }
+
+    private void Register(Card card, string label, GameObject row)
+    {
+        if (card == null || row.IsNullOrDestroyed() || string.IsNullOrWhiteSpace(label))
+            return;
+        var item = new SearchItem { Label = label, Root = row };
+        card.SearchItems.Add(item);
+        searchItemsByRoot[row] = item;
+        searchEntries.Add(new HudSearchEntry { Card = card.Title, Label = label });
+    }
+
+    private void RegisterAction(ActionSearchGroup group, string label, GameObject button)
+    {
+        if (group == null || button.IsNullOrDestroyed() || string.IsNullOrWhiteSpace(label))
+            return;
+        group.Items.Add(new SearchItem { Label = label, Root = button });
+        searchEntries.Add(new HudSearchEntry { Card = "Actions", Label = label });
+    }
+
+    private bool Matches(string query, string label, string card)
+    {
+        if (!HudNavigation.TryGetPage(PageId, out var section, out var page))
+            return false;
+        return HudSearchText.Score(query, label, card, page.Label, section.Label) >= 0;
+    }
+
+    private void RebuildAfterSearch()
+    {
+        LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+        Canvas.ForceUpdateCanvases();
+        scroll.StopMovement();
+        scroll.verticalNormalizedPosition = 1f;
+    }
+
+    private static bool HasActiveChild(GameObject parent)
+    {
+        for (int i = 0; i < parent.transform.childCount; i++)
+            if (parent.transform.GetChild(i).gameObject.activeSelf)
+                return true;
+        return false;
     }
 
     private GameObject Row(Card card, string name, float height)

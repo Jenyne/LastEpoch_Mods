@@ -1,12 +1,13 @@
 using System;
 using System.Collections.Generic;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI;
 
 // Shared renderer for single-card pages made from full-width action buttons.
-internal sealed class HudActionCard
+internal sealed class HudActionCard : IHudSearchPage
 {
     internal sealed class Definition
     {
@@ -17,6 +18,13 @@ internal sealed class HudActionCard
 
     private readonly GameObject root;
     private readonly Font font;
+    private readonly string title;
+    private readonly List<(Definition Definition, GameObject Root)> rows = new();
+    private readonly List<HudSearchEntry> searchEntries = new();
+    private bool searchActive;
+
+    public string PageId { get; }
+    public IReadOnlyList<HudSearchEntry> SearchEntries => searchEntries;
 
     private HudActionCard(
         GameObject parent,
@@ -27,6 +35,8 @@ internal sealed class HudActionCard
     )
     {
         font = inheritedFont;
+        this.title = title;
+        PageId = HudNavigation.SearchPageId(name);
         root = Node(parent, name);
         var rootRect = root.GetComponent<RectTransform>();
         rootRect.anchorMin = Vector2.zero;
@@ -96,6 +106,8 @@ internal sealed class HudActionCard
             AddButton(body, definition);
 
         root.SetActive(false);
+        searchEntries.Add(new HudSearchEntry { Card = title, Label = title });
+        HudSearch.Register(this);
     }
 
     public static HudActionCard Build(
@@ -123,6 +135,30 @@ internal sealed class HudActionCard
             root.SetActive(false);
     }
 
+    public void ApplySearch(string query)
+    {
+        if (string.IsNullOrWhiteSpace(query))
+        {
+            ClearSearch();
+            return;
+        }
+        searchActive = true;
+        bool cardMatch = Matches(query, title);
+        foreach (var row in rows)
+            if (!row.Root.IsNullOrDestroyed())
+                row.Root.SetActive(cardMatch || Matches(query, row.Definition.Label));
+    }
+
+    public void ClearSearch()
+    {
+        if (!searchActive)
+            return;
+        searchActive = false;
+        foreach (var row in rows)
+            if (!row.Root.IsNullOrDestroyed())
+                row.Root.SetActive(true);
+    }
+
     private void AddButton(GameObject parent, Definition definition)
     {
         var buttonObject = Node(parent, "Button_" + definition.Id);
@@ -144,6 +180,15 @@ internal sealed class HudActionCard
         Stretch(label.GetComponent<RectTransform>());
         label.alignment = TextAnchor.MiddleCenter;
         label.color = HudTheme.TextPrimary;
+        rows.Add((definition, buttonObject));
+        searchEntries.Add(new HudSearchEntry { Card = title, Label = definition.Label });
+    }
+
+    private bool Matches(string query, string label)
+    {
+        if (!HudNavigation.TryGetPage(PageId, out var section, out var page))
+            return false;
+        return HudSearchText.Score(query, label, title, page.Label, section.Label) >= 0;
     }
 
     private GameObject Node(GameObject parent, string name)
