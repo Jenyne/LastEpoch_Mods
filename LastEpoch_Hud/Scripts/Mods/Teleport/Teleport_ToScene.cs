@@ -1,4 +1,5 @@
 ﻿using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.QualityOfLife;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -34,6 +35,7 @@ public class Teleport_ToScene : MonoBehaviour
         {
             return Scenes.IsGameScene()
                 && !string.IsNullOrEmpty(scene_name)
+                && !TravelSceneRules.IsDungeonScene(scene_name)
                 && !Refs_Manager.player_actor.IsNullOrDestroyed()
                 && !Refs_Manager.player_data.IsNullOrDestroyed()
                 && !Refs_Manager.player_data.UnlockedWaypointScenes.IsNullOrDestroyed()
@@ -67,7 +69,7 @@ public class Teleport_ToScene : MonoBehaviour
         {
             if (
                 (pin.IsNullOrDestroyed())
-                || (pin.noWaypointInScene)
+                || (!TravelMapWaypoints.IsNativeWaypoint(pin))
                 || (pin.sceneName != scene_name)
             )
             {
@@ -85,6 +87,13 @@ public class Teleport_ToScene : MonoBehaviour
 
     bool Begin(string scene_name, bool requireUnlocked = false)
     {
+        if (TravelSceneRules.IsDungeonScene(scene_name))
+        {
+            Main.logger_instance?.Warning(
+                "Teleport blocked: dungeon scenes require their entrance flow."
+            );
+            return false;
+        }
         if (TravelAnywhere.Busy)
         {
             Main.logger_instance?.Warning("Teleport blocked while Travel Anywhere finishes.");
@@ -131,7 +140,14 @@ public class Teleport_ToScene : MonoBehaviour
                 Main.logger_instance?.Error("Teleport service is missing");
                 return false;
             }
-            Main.logger_instance?.Msg("Teleport -> " + scene_name);
+            Main.logger_instance?.Msg(
+                "Teleport -> "
+                    + scene_name
+                    + "; gate="
+                    + gate
+                    + "; from="
+                    + SceneManager.GetActiveScene().name
+            );
             travel.Waypoint(
                 Il2CppLE.Networking.PlayerStore.LocalUserIdentity,
                 Il2CppLE.Services.Models.TransitionFadeType.ToBlack,

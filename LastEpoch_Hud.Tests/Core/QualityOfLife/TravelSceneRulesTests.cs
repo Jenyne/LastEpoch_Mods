@@ -18,6 +18,11 @@ public sealed class TravelSceneRulesTests
     [InlineData("Mastery")]
     [InlineData("Neutral")]
     [InlineData("PCG_Dev")]
+    [InlineData("Dun1Q10")]
+    [InlineData("Dun2Q10")]
+    [InlineData("Dun3Q10")]
+    [InlineData("dun1q11")]
+    [InlineData("Dun2Boss")]
     [InlineData("PCG_EchoForest")]
     [InlineData("a_pcg_zone")]
     [InlineData("ArenaWave")]
@@ -35,6 +40,7 @@ public sealed class TravelSceneRulesTests
     [InlineData("Bazaar")]
     [InlineData("CampaignAreaWithoutWaypoint")]
     [InlineData("NewAreaWithNoTranslation")]
+    [InlineData("Dunes")]
     public void OrdinaryAreaNamesDoNotRequireWaypointsOrLocalizedNames(string scene)
     {
         Assert.True(TravelSceneRules.IsDestination(scene));

@@ -78,3 +78,23 @@ Keep the complete log and exact commit. Expected bounded lines are `[TravelAnywh
 - Native compilation and loading of `2466cc0a`, plus map-menu travel, are user-confirmed. This follow-up’s native build, key teleport travel and detailed scene-recovery regressions remain **pending**. Pure tests confirm the protocol rules, not current-game success. Temporary native flags, normal left-click menus, right-click dispatch and stale-menu restoration are not covered by those pure tests; use the runtime checks above.
 
 Unity references used during the review: [additive scene management](https://docs.unity.com/en-us/engine/6000.7/script-reference/unityengine/scenemanagement/scenemanager), [SetActiveScene result](https://docs.unity3d.com/ru/2021.1/ScriptReference/SceneManagement.SceneManager.SetActiveScene.html), [root-only scene transfer](https://docs.unity3d.com/ja/current/ScriptReference/SceneManagement.SceneManager.MoveGameObjectToScene.html), and [async scene unload](https://docs.unity.com/en-us/engine/6000.3/script-reference/unityengine/scenemanagement/scenemanager/unloadsceneasync), and [async operation controls](https://docs.unity3d.com/2021.3/Documentation/ScriptReference/AsyncOperation.html). The [Unity pointer-button reference](https://docs.unity.cn/Packages/com.unity.ugui%402.0/api/UnityEngine.EventSystems.PointerEventData.InputButton.html) was also checked for right-click dispatch. These describe Unity operations, rather than Last Epoch's service invariants.
+
+## Dungeon preset hang — 2026-10-09 follow-up
+
+The user reports being stuck after dungeon preset travel and needing Alt+F4. Latest log confirms build `f53998db`: Observatory travel at 09:17:45.484 followed by `Dun2Q10` at 09:17:54.815. Player log shows scene load and `ClientDungeonService.HandleTransition`, not a rejected/missing scene. The previous run similarly reaches `Dun1Q10`. Later AbilityObjectIndicator.OnDestroy exceptions occur during shutdown and do not identify the initial hang cause. The exact reason dungeon handling stalls is unproven.
+
+The fix avoids that path: dungeon presets target the campaign areas outside the entrances, not Dun* lobby scenes. Temporal Sanctum uses Ruined Coast; Lightless Arbor prefers Shrouded Ridge when it has a waypoint, otherwise Surface; Soulfire Bastion uses Felled Wood. Identifiers are resolved from live map data, not guessed. Campaign names are corroborated by the developer-hosted [game guide](https://forum.lastepoch.com/t/community-game-guide/26057/11). The English-name resolver can remain unavailable in other locales; it must reject missing/ambiguous matches rather than guessing a scene.
+
+Generic teleport validation and direct Travel Anywhere exclude Dun+digit scenes. Already-saved Dun1Q10/Dun2Q10/Dun3Q10 favourites redirect to their campaign preset; other dungeon scenes are blocked with a status message. Existing favourites are not deleted. Normal native dungeon map actions retain their own game handling.
+
+### Retest selection 11
+
+- Close the game and rebuild/reinstall selection 11. Open the world map, then Refresh key teleports. Keep the new `[KeyTeleports]` mapping.
+- Test all three dungeon buttons from End of Time. They must target campaign scenes, never Dun1Q10/Dun2Q10/Dun3Q10, and finish loading with movement/camera working. A missing or locked waypoint must report unavailable without starting travel.
+- Repeat from Observatory/Bazaar; double-click a button and check no overlapping transitions. Check End of Time, Bazaar and Observatory still travel normally.
+- Use an old saved dungeon-lobby favourite: it should redirect safely or report unavailable. Other dungeon-room favourites must be blocked. Save/remove normal favourites and restart to check persistence.
+- Walk into each dungeon through its normal entrance and check its ordinary key/tier flow. With Travel Anywhere enabled, dungeon scenes must not be force-loaded additively by this mod.
+
+This is a source/core-tested correction; native compilation and in-game success remain pending. It avoids the reproduced failing route and does not claim to repair arbitrary stalled native dungeon transitions.
+
+Preset and generic-waypoint validation uses each map pin’s original waypoint flag, excluding temporary Travel Anywhere adapters. Verify this with Travel Anywhere on/off: a synthetic non-waypoint button must not become a generic waypoint target. Validation: 1,103 core tests passed, six native-SDK checks skipped; CSharpier passed.

@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
-using System.Text;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.QualityOfLife;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Teleport;
@@ -11,40 +11,22 @@ internal static class KeyTeleportDestinations
     public static readonly string[] Labels =
     {
         "End of Time",
-        "Temporal Sanctum",
-        "Lightless Arbor",
-        "Soulfire Bastion",
+        "Temporal Sanctum (Ruined Coast)",
+        "Lightless Arbor (campaign approach)",
+        "Soulfire Bastion (Felled Wood)",
         "The Bazaar",
         "The Observatory",
     };
-    static readonly string[][] aliases =
-    {
-        new[] { "eot", "endoftime" },
-        new[] { "temporalsanctum" },
-        new[] { "lightlessarbor" },
-        new[] { "soulfirebastion" },
-        new[] { "bazaar" },
-        new[] { "observatory" },
-    };
     static readonly string[] scenes = new string[Labels.Length];
     static string lastMapping;
-
-    static string Normalize(string name)
-    {
-        var result = new StringBuilder();
-        foreach (char c in name ?? "")
-            if (char.IsLetterOrDigit(c))
-                result.Append(char.ToLowerInvariant(c));
-        return result.ToString();
-    }
 
     public static void Refresh()
     {
         Array.Clear(scenes, 0, scenes.Length);
         try
         {
-            // Resolve actual game identifiers from real map waypoints rather than invented
-            // scene IDs or a direct jump into generated dungeon rooms.
+            // Resolve campaign approach waypoints. Dungeon labels resolve to lobby scenes
+            // (Dun1Q10 etc.) that are unsafe through the generic waypoint route.
             var names = new Dictionary<string, string>(StringComparer.Ordinal);
             var list = Refs_Manager.scene_list;
             if (list.IsNullOrDestroyed())
@@ -65,32 +47,30 @@ internal static class KeyTeleportDestinations
             var candidates = new HashSet<string>[Labels.Length];
             for (int i = 0; i < candidates.Length; i++)
                 candidates[i] = new HashSet<string>(StringComparer.Ordinal);
+            var priorities = new int[Labels.Length];
+            Array.Fill(priorities, int.MaxValue);
             foreach (var pin in pins)
             {
                 if (
                     pin.IsNullOrDestroyed()
-                    || pin.noWaypointInScene
+                    || !TravelMapWaypoints.IsNativeWaypoint(pin)
                     || string.IsNullOrWhiteSpace(pin.sceneName)
                 )
                     continue;
                 string scene = pin.sceneName;
-                string normalized = Normalize(scene);
-                if (normalized.Contains("pcg") || normalized.Contains("arena"))
-                    continue;
                 names.TryGetValue(scene, out var localized);
-                string label = Normalize(localized);
-                for (int i = 0; i < aliases.Length; i++)
-                    foreach (string alias in aliases[i])
-                        if (
-                            normalized == alias
-                            || (alias != "eot" && normalized.Contains(alias))
-                            || label == alias
-                            || label == "the" + alias
-                        )
-                        {
-                            candidates[i].Add(scene);
-                            break;
-                        }
+                for (int i = 0; i < candidates.Length; i++)
+                {
+                    int priority = KeyTeleportTargetRules.MatchPriority(i, scene, localized);
+                    if (priority < 0 || priority > priorities[i])
+                        continue;
+                    if (priority < priorities[i])
+                    {
+                        candidates[i].Clear();
+                        priorities[i] = priority;
+                    }
+                    candidates[i].Add(scene);
+                }
             }
             for (int i = 0; i < candidates.Length; i++)
                 if (candidates[i].Count == 1)
@@ -117,7 +97,7 @@ internal static class KeyTeleportDestinations
         if (scene == null)
         {
             FavouriteTeleports.SetStatus(
-                "Destination unavailable. Open the world map, then refresh key teleports."
+                "Campaign waypoint unavailable. Open the world map, then refresh key teleports."
             );
             return;
         }

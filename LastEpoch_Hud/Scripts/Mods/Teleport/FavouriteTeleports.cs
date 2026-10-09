@@ -52,6 +52,11 @@ internal static class FavouriteTeleports
     {
         Load();
         string scene = LastEpoch_Hud.Scenes.SceneName;
+        if (TravelSceneRules.IsDungeonScene(scene))
+        {
+            Status = "Save the campaign waypoint outside the dungeon instead.";
+            return;
+        }
         bool anywhere = ModUI.ModSettings.TravelAnywhere.Enabled.Value;
         if (anywhere)
             TravelDestinations.Refresh();
@@ -106,6 +111,20 @@ internal static class FavouriteTeleports
 
     public static void Travel(string scene)
     {
+        if (TravelSceneRules.IsDungeonScene(scene))
+        {
+            int preset = KeyTeleportTargetRules.SavedDungeonPreset(scene);
+            if (preset >= 0)
+            {
+                Main.logger_instance?.Msg(
+                    "[KeyTeleports] Redirect saved " + scene + " to campaign approach."
+                );
+                KeyTeleportDestinations.Travel(preset);
+            }
+            else
+                Status = "Dungeon travel requires its entrance. Use a campaign waypoint instead.";
+            return;
+        }
         if (Teleport_ToScene.CanTravelToUnlockedWaypoint(scene))
         {
             TravelWaypoint(scene);

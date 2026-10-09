@@ -52,6 +52,15 @@ internal static class TravelMapWaypoints
                 Prepare(pin);
     }
 
+    public static bool IsNativeWaypoint(UIWaypoint pin)
+    {
+        if (pin.IsNullOrDestroyed())
+            return false;
+        if (originals.TryGetValue(pin.Pointer, out var original) && original.Scene == pin.sceneName)
+            return !original.NoWaypoint;
+        return !pin.noWaypointInScene;
+    }
+
     public static void Prepare(UIWaypoint pin)
     {
         if (

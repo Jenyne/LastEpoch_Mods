@@ -28,9 +28,16 @@ public static class TravelSceneRules
         return true;
     }
 
+    // Dungeon scenes need the game's dungeon transition/setup, not generic travel.
+    public static bool IsDungeonScene(string name) =>
+        name != null
+        && name.Length > 3
+        && name.StartsWith("Dun", StringComparison.OrdinalIgnoreCase)
+        && char.IsDigit(name[3]);
+
     public static bool IsDestination(string name)
     {
-        if (!IsSceneName(name))
+        if (!IsSceneName(name) || IsDungeonScene(name))
             return false;
         foreach (string blocked in excluded)
             if (string.Equals(name, blocked, StringComparison.OrdinalIgnoreCase))
