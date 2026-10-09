@@ -47,7 +47,12 @@ internal static class World_Misc
         );
 
         var gains = page.AddCard("SessionGains", "Session Gains");
-        sessionTotals = page.AddText(gains, "SessionTotals", Mods.UI.SessionGainCounters.Format(), 124f);
+        sessionTotals = page.AddText(
+            gains,
+            "SessionTotals",
+            Mods.UI.SessionGainCounters.Format(),
+            124f
+        );
         page.AddToggle(
             gains,
             "ShowSessionOverlay",
