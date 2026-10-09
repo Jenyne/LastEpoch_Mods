@@ -64,7 +64,7 @@ internal static class DungeonRevealControls
         var line = Node(section, "Separator", .01f, .22f, .99f, .22f);
         line.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 1);
         var image = line.AddComponent<Image>();
-        image.color = new Color(.83f, .69f, .36f);
+        image.color = HudTheme.Accent;
         image.raycastTarget = false;
         Label(
             section,
@@ -144,9 +144,9 @@ internal static class DungeonRevealControls
         var rect = box.GetComponent<RectTransform>();
         rect.pivot = new Vector2(0, .5f);
         rect.sizeDelta = new Vector2(18, 18);
-        box.color = new Color(.58f, .45f, .20f);
+        box.color = HudTheme.ControlBox;
         var check = Node(box.gameObject, "Check", .2f, .2f, .8f, .8f).AddComponent<Image>();
-        check.color = new Color(.93f, .84f, .65f);
+        check.color = HudTheme.ControlCheck;
         if (!style.IsNullOrDestroyed())
         {
             var sourceBox = style.targetGraphic.IsNullOrDestroyed()
@@ -177,7 +177,7 @@ internal static class DungeonRevealControls
         var separator = Node(row, "Separator", 0, 0, 1, 0);
         separator.GetComponent<RectTransform>().sizeDelta = new Vector2(0, 1);
         var line = separator.AddComponent<Image>();
-        line.color = new Color(.83f, .69f, .36f);
+        line.color = HudTheme.Accent;
         line.raycastTarget = false;
     }
 
@@ -249,7 +249,7 @@ internal static class DungeonRevealControls
         var text = Node(parent, name, left, bottom, right, top).AddComponent<Text>();
         text.font = font;
         text.fontSize = 12;
-        text.color = new Color(.93f, .84f, .65f);
+        text.color = HudTheme.ControlCheck;
         text.alignment = TextAnchor.MiddleLeft;
         text.raycastTarget = false;
         text.horizontalOverflow = HorizontalWrapMode.Wrap;

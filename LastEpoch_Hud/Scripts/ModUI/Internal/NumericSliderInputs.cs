@@ -202,13 +202,13 @@ public static class NumericSliderInputs
         {
             background.sprite = null;
             background.type = Image.Type.Simple;
-            background.color = new Color(0.11f, 0.13f, 0.16f, 1f);
+            background.color = HudTheme.InputBackground;
         }
         ColorBlock colors = input.colors;
         colors.normalColor = Color.white;
-        colors.highlightedColor = new Color(1.15f, 1.15f, 1.15f, 1f);
+        colors.highlightedColor = HudTheme.TextPrimary;
         colors.selectedColor = colors.highlightedColor;
-        colors.pressedColor = new Color(0.85f, 0.85f, 0.85f, 1f);
+        colors.pressedColor = HudTheme.TextSecondary;
         input.colors = colors;
         if (!input.placeholder.IsNullOrDestroyed())
         {

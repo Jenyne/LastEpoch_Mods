@@ -86,7 +86,7 @@ internal static class ScenesSectionControls
             background = Node(center, "SectionBackground");
             var image = background.AddComponent<Image>();
             var source = minimapPanel.GetComponent<Image>();
-            image.color = source.IsNullOrDestroyed() ? new Color(.14f, .14f, .14f) : source.color;
+            image.color = source.IsNullOrDestroyed() ? HudTheme.SurfaceRaised : source.color;
             image.raycastTarget = false;
         }
         var backgroundRect = background.GetComponent<RectTransform>();

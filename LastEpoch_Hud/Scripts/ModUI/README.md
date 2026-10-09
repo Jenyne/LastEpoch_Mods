@@ -2,6 +2,23 @@
 
 Declarative settings framework for the Last Epoch mod HUD.
 
+## HUD layout and visual system
+
+The redesigned shell is runtime-composed around the existing functional prefab controls. This
+keeps legacy gameplay callbacks intact while making navigation and visual styling declarative:
+
+- `Internal/HudTheme.cs` is the single source of truth for colors, typography, spacing, borders,
+  and standard control styling.
+- `Internal/HudNavigation.cs` is the single source of truth for sidebar sections, pages, panel
+  paths, row filters, and page titles.
+- `Internal/HudLayout.cs` builds the header/sidebar, moves the original panels into the content
+  stage, applies page filters, and lays active cards out responsively.
+
+To move a feature between pages, edit only its `HudPanelUse` in `HudNavigation.Sections`. To add a
+new prefab panel, add its path once to `HudNavigation.PanelSources`, then reference its panel id
+from one or more pages. Visual changes belong in `HudTheme`; avoid introducing colors or spacing
+constants in individual control builders.
+
 ## Adding a setting
 
 One line in `ModSettings.cs`:
