@@ -57,6 +57,21 @@ internal static class Utilities_Character
         var card = page.AddCard("Cheats", "Cheats");
         page.AddToggle(
             card,
+            "IdolRerollFreeAmber",
+            "No Memory Amber Cost",
+            () => ModSettings.IdolReroll.FreeMemoryAmber.Value,
+            value => ModSettings.IdolReroll.FreeMemoryAmber.Set(value)
+        );
+        page.AddToggle(
+            card,
+            "IdolRerollUnlimitedUses",
+            "Unlimited Idol Altar Uses",
+            () => ModSettings.IdolReroll.UnlimitedUses.Value,
+            value => ModSettings.IdolReroll.UnlimitedUses.Set(value)
+        );
+
+        page.AddToggle(
+            card,
             "GodMode",
             "God Mode",
             () => HasSave() && Save_Manager.instance.data.Character.Cheats.Enable_GodMode,

@@ -120,6 +120,31 @@ public static class ModSettings
         );
     }
 
+    public static class IdolReroll
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("IdolReroll");
+        public static readonly BoolSetting FreeMemoryAmber = Group.Bool(
+            "FreeMemoryAmber",
+            label: "No Memory Amber Cost"
+        );
+        public static readonly BoolSetting UnlimitedUses = Group.Bool(
+            "UnlimitedUses",
+            label: "Unlimited Idol Altar Uses"
+        );
+
+        static IdolReroll()
+        {
+            FreeMemoryAmber.Changed += _ => Mods.Items.Items_IdolReroll.RefreshUI();
+            UnlimitedUses.Changed += _ => Mods.Items.Items_IdolReroll.RefreshUI();
+        }
+    }
+
+    public static class TravelAnywhere
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("TravelAnywhere");
+        public static readonly BoolSetting Enabled = Group.Bool("Enabled");
+    }
+
     public static class SafeTeleport
     {
         // UI is built in Scenes Misc; keep the same save group and keys.
