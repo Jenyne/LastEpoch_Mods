@@ -85,14 +85,42 @@ internal static class InfiniteForgingPotentialControls
                 toggle.SetIsOnWithoutNotify(enabled);
         };
         toggle.SetIsOnWithoutNotify(ModSettings.InfiniteForgingPotential.Enabled.Value);
-        AddAdvancedToggle(row, original, "Toggle_AdvancedForge_T7", "Craft Affixes to T7",
-            .00f, .25f, ModSettings.AdvancedForge.AllowT7Crafting.Value);
-        AddAdvancedToggle(row, original, "Toggle_AdvancedForge_MaxRoll", "Max Crafted Roll",
-            .25f, .50f, ModSettings.AdvancedForge.AffixRoll.Enabled);
-        AddAdvancedToggle(row, original, "Toggle_AdvancedForge_Hope", "Guarantee Hope",
-            .50f, .75f, ModSettings.AdvancedForge.GuaranteedGlyphOfHope.Value);
-        AddAdvancedToggle(row, original, "Toggle_AdvancedForge_Despair", "Guarantee Despair",
-            .75f, 1.00f, ModSettings.AdvancedForge.GuaranteedGlyphOfDespair.Value);
+        AddAdvancedToggle(
+            row,
+            original,
+            "Toggle_AdvancedForge_T7",
+            "Craft Affixes to T7",
+            .00f,
+            .25f,
+            ModSettings.AdvancedForge.AllowT7Crafting.Value
+        );
+        AddAdvancedToggle(
+            row,
+            original,
+            "Toggle_AdvancedForge_MaxRoll",
+            "Max Crafted Roll",
+            .25f,
+            .50f,
+            ModSettings.AdvancedForge.AffixRoll.Enabled
+        );
+        AddAdvancedToggle(
+            row,
+            original,
+            "Toggle_AdvancedForge_Hope",
+            "Guarantee Hope",
+            .50f,
+            .75f,
+            ModSettings.AdvancedForge.GuaranteedGlyphOfHope.Value
+        );
+        AddAdvancedToggle(
+            row,
+            original,
+            "Toggle_AdvancedForge_Despair",
+            "Guarantee Despair",
+            .75f,
+            1.00f,
+            ModSettings.AdvancedForge.GuaranteedGlyphOfDespair.Value
+        );
         MelonLoader.MelonCoroutines.Start(PositionRow(viewport, row));
         Main.logger_instance?.Msg("Infinite Forging Potential checkbox bound in Items > Crafting.");
     }
@@ -105,19 +133,23 @@ internal static class InfiniteForgingPotentialControls
         [HarmonyPostfix]
         static void Postfix(Toggle __instance)
         {
-            if (__instance.IsNullOrDestroyed() || !__instance.interactable) return;
+            if (__instance.IsNullOrDestroyed() || !__instance.interactable)
+                return;
             switch (__instance.gameObject.name)
             {
                 case "Toggle_InfiniteForgingPotential":
                     ModSettings.InfiniteForgingPotential.Enabled.Set(__instance.isOn);
-                    Main.logger_instance?.Msg("Infinite Forging Potential: " + (__instance.isOn ? "enabled" : "disabled"));
+                    Main.logger_instance?.Msg(
+                        "Infinite Forging Potential: " + (__instance.isOn ? "enabled" : "disabled")
+                    );
                     break;
                 case "Toggle_AdvancedForge_T7":
                     ModSettings.AdvancedForge.AllowT7Crafting.Set(__instance.isOn);
                     break;
                 case "Toggle_AdvancedForge_MaxRoll":
                     ModSettings.AdvancedForge.AffixRoll.SetEnabled(__instance.isOn);
-                    if (__instance.isOn) ModSettings.AdvancedForge.AffixRoll.SetValue(255f);
+                    if (__instance.isOn)
+                        ModSettings.AdvancedForge.AffixRoll.SetValue(255f);
                     break;
                 case "Toggle_AdvancedForge_Hope":
                     ModSettings.AdvancedForge.GuaranteedGlyphOfHope.Set(__instance.isOn);
@@ -241,8 +273,15 @@ internal static class InfiniteForgingPotentialControls
         rowRect.anchoredPosition = new Vector2(rowRect.anchoredPosition.x, 0);
     }
 
-    static void AddAdvancedToggle(GameObject row, GameObject template, string name, string text,
-        float left, float right, bool initial)
+    static void AddAdvancedToggle(
+        GameObject row,
+        GameObject template,
+        string name,
+        string text,
+        float left,
+        float right,
+        bool initial
+    )
     {
         var control = UnityEngine.Object.Instantiate(template, row.transform);
         control.name = name;
@@ -253,14 +292,19 @@ internal static class InfiniteForgingPotentialControls
         rect.offsetMax = new Vector2(-2, 0);
 
         var toggle = control.GetComponent<Toggle>();
-        if (toggle.IsNullOrDestroyed()) { UnityEngine.Object.Destroy(control); return; }
+        if (toggle.IsNullOrDestroyed())
+        {
+            UnityEngine.Object.Destroy(control);
+            return;
+        }
         toggle.group = null;
         toggle.interactable = true;
         toggle.onValueChanged.RemoveAllListeners();
         toggle.SetIsOnWithoutNotify(initial);
 
         var value = Prefab.Child(control, "Value");
-        if (!value.IsNullOrDestroyed()) value.SetActive(false);
+        if (!value.IsNullOrDestroyed())
+            value.SetActive(false);
         var labelObject = Prefab.Child(control, "Label");
         var label = labelObject.IsNullOrDestroyed() ? null : labelObject.GetComponent<Text>();
         if (!label.IsNullOrDestroyed())
