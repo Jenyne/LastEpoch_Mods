@@ -155,15 +155,20 @@ public static class OfflineGuardDiagnostics
         );
         // Confirm once per character load. Zone-loading evidence can fluctuate without
         // producing repeated confirmations or verbose snapshots.
-        if (observation.State == OfflineGuardObservationState.OfflineCandidate
-            && confirmedEpoch != observation.Epoch)
+        if (
+            observation.State == OfflineGuardObservationState.OfflineCandidate
+            && confirmedEpoch != observation.Epoch
+        )
         {
             confirmedEpoch = observation.Epoch;
             revocationReported = false;
             Log("Offline session signals confirmed (observation only).");
         }
-        else if (observation.State == OfflineGuardObservationState.Revoked
-            && confirmedEpoch == observation.Epoch && !revocationReported)
+        else if (
+            observation.State == OfflineGuardObservationState.Revoked
+            && confirmedEpoch == observation.Epoch
+            && !revocationReported
+        )
         {
             revocationReported = true;
             Log("Offline session observation revoked: " + observation.Reason + ".");
