@@ -1,8 +1,12 @@
+using System;
+using System.Collections.Generic;
 using HarmonyLib;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.Items;
 using LastEpoch_Hud.Scripts.ModUI;
-using ModSaveManager = LastEpoch_Hud.Scripts.ModUI.SaveManager;
 using UnityEngine;
+using ModSaveManager = LastEpoch_Hud.Scripts.ModUI.SaveManager;
+using Random = UnityEngine.Random;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items
 {
@@ -14,6 +18,76 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         static CraftingSlotManager craftingSlotManager;
         static ItemData item;
 
+        [ThreadStatic]
+        static ForgeRejectionObservation activeCheck;
+        static readonly HashSet<string> traces = new();
+        static long tracedItem;
+
+        static void Trace(
+            CraftingManager manager,
+            bool accepted,
+            string title,
+            bool flag1,
+            bool flag2,
+            string detail
+        )
+        {
+            try
+            {
+                if (!T7Enabled())
+                    return;
+                long pointer = item.IsNullOrDestroyed() ? 0 : item.Pointer.ToInt64();
+                if (pointer != tracedItem)
+                {
+                    tracedItem = pointer;
+                    traces.Clear();
+                }
+                int tier = GetTier(item, manager.appliedAffixID);
+                string keys = activeCheck?.ObservedKeys ?? "none";
+                string key =
+                    accepted
+                    + ":"
+                    + title
+                    + ":"
+                    + manager.appliedAffixID
+                    + ":"
+                    + tier
+                    + ":"
+                    + PreserveFp()
+                    + ":"
+                    + keys;
+                if (traces.Count >= 12 || !traces.Add(key))
+                    return;
+                Main.logger_instance?.Msg(
+                    "[ForgeTrace] nativeAccepted="
+                        + accepted
+                        + "; title="
+                        + title
+                        + "; flags="
+                        + flag1
+                        + ","
+                        + flag2
+                        + "; detail="
+                        + detail
+                        + "; cachedItem="
+                        + pointer
+                        + "; affix="
+                        + manager.appliedAffixID
+                        + "; internalTier="
+                        + tier
+                        + "; FP="
+                        + (item.IsNullOrDestroyed() ? "n/a" : item.forgingPotential.ToString())
+                        + "; infiniteFP="
+                        + PreserveFp()
+                        + "; localizationKeys="
+                        + keys
+                );
+            }
+            catch (Exception)
+            { /* An observer must never interrupt native crafting. */
+            }
+        }
+
         static bool Ready() =>
             ModSaveManager.instance != null
             && ModSaveManager.instance.initialized
@@ -23,7 +97,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
 
         static int GetTier(ItemData data, int affixId)
         {
-            if (data.IsNullOrDestroyed()) return -1;
+            if (data.IsNullOrDestroyed())
+                return -1;
             foreach (ItemAffix affix in data.affixes)
                 if (affix.affixId == affixId && !affix.IsSealed)
                     return affix.affixTier;
@@ -32,7 +107,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
 
         static ItemAffix GetAffix(ItemData data, int affixId)
         {
-            if (data.IsNullOrDestroyed()) return null;
+            if (data.IsNullOrDestroyed())
+                return null;
             foreach (ItemAffix affix in data.affixes)
                 if (affix.affixId == affixId && !affix.IsSealed)
                     return affix;
@@ -45,31 +121,32 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         static int MaxForgeCost(int internalTier)
         {
             // Historical RCInet values for upgrades into T6/T7.
-            if (internalTier >= 5) return 36;
+            if (internalTier >= 5)
+                return 36;
             return 30;
         }
 
         static int SupportGlyphSubtype(CraftingSlotManager manager)
         {
-            if (manager.IsNullOrDestroyed()) return -1;
+            if (manager.IsNullOrDestroyed())
+                return -1;
             OneItemContainer support = manager.GetSupport();
-            if (support.IsNullOrDestroyed()) return -1;
+            if (support.IsNullOrDestroyed())
+                return -1;
             ItemData supportItem = support.getItem();
-            if (supportItem.IsNullOrDestroyed() || supportItem.itemType != 103) return -1;
+            if (supportItem.IsNullOrDestroyed() || supportItem.itemType != 103)
+                return -1;
             return supportItem.subType;
         }
 
-        static bool PreserveFp() =>
-            ModSettings.InfiniteForgingPotential.Enabled.Value;
+        static bool PreserveFp() => ModSettings.InfiniteForgingPotential.Enabled.Value;
 
         static void ApplyForcedRoll(ItemAffix affix)
         {
-            if (affix.IsNullOrDestroyed() || !ModSettings.AdvancedForge.AffixRoll.Enabled) return;
-            affix.affixRoll = (byte)Mathf.Clamp(
-                Mathf.RoundToInt(ModSettings.AdvancedForge.AffixRoll.Value),
-                0,
-                255
-            );
+            if (affix.IsNullOrDestroyed() || !ModSettings.AdvancedForge.AffixRoll.Enabled)
+                return;
+            affix.affixRoll = (byte)
+                Mathf.Clamp(Mathf.RoundToInt(ModSettings.AdvancedForge.AffixRoll.Value), 0, 255);
         }
 
         [HarmonyPatch(typeof(CraftingManager), "OnMainItemChange")]
@@ -79,7 +156,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             static void Postfix(Il2CppSystem.Object __0)
             {
                 item = null;
-                if (__0.IsNullOrDestroyed()) return;
+                if (__0.IsNullOrDestroyed())
+                    return;
                 OneItemContainer container = __0.TryCast<OneItemContainer>();
                 if (!container.IsNullOrDestroyed() && !container.content.IsNullOrDestroyed())
                     item = container.content.data;
@@ -105,6 +183,17 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
         [HarmonyPatch(typeof(CraftingManager), "CheckForgeCapability")]
         internal static class ForgeCapability
         {
+            [HarmonyPrefix]
+            static void Prefix(out ForgeRejectionObservation __state)
+            {
+                __state = activeCheck;
+                activeCheck = T7Enabled()
+                    ? new ForgeRejectionObservation(
+                        Scripts.Mods.Craft.Craft_Locales.affix_is_maxed_key
+                    )
+                    : null;
+            }
+
             [HarmonyPostfix]
             static void Postfix(
                 CraftingManager __instance,
@@ -112,17 +201,25 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 ref string __0,
                 ref bool __1,
                 ref bool __2,
-                ref string __3)
+                ref string __3
+            )
             {
-                if (!T7Enabled() || item.IsNullOrDestroyed() || IsIdol(item)) return;
-                if (__0 != Scripts.Mods.Craft.Craft_Locales.affix_is_maxed) return;
+                Trace(__instance, __result, __0, __1, __2, __3);
+                if (!T7Enabled() || item.IsNullOrDestroyed() || IsIdol(item))
+                    return;
+                // Match the exact native key's output during this call, rather than
+                // an uninitialized English placeholder or a label from another locale.
+                if (activeCheck == null || !activeCheck.IsMaxedRejection(__result, __0))
+                    return;
 
                 int tier = GetTier(item, __instance.appliedAffixID);
-                if (tier < 4 || tier >= 6) return;
+                if (tier < 4 || tier >= 6)
+                    return;
 
                 // Infinite FP already handles the real cost. Without it, retain the
                 // old mod's conservative "must be able to afford worst case" gate.
-                if (!PreserveFp() && item.forgingPotential <= MaxForgeCost(tier)) return;
+                if (!PreserveFp() && item.forgingPotential <= MaxForgeCost(tier))
+                    return;
 
                 if (!craftingSlotManager.IsNullOrDestroyed() && !PreserveFp())
                     craftingSlotManager.maxForgingPotentialText.text =
@@ -134,6 +231,16 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 __3 = "";
                 __result = true;
             }
+
+            [HarmonyFinalizer]
+            static void Finalizer(ForgeRejectionObservation __state) => activeCheck = __state;
+        }
+
+        [HarmonyPatch(typeof(Il2Cpp.Localization), "GetText")]
+        internal static class NativeForgeLabel
+        {
+            [HarmonyPostfix, HarmonyPriority(Priority.Last)]
+            static void Postfix(string __0, string __result) => activeCheck?.Observe(__0, __result);
         }
 
         [HarmonyPatch(typeof(CraftingUpgradeButton), "UpdateButton")]
@@ -142,9 +249,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             [HarmonyPrefix]
             static void Prefix(int __0, ref bool __1)
             {
-                if (!T7Enabled() || item.IsNullOrDestroyed() || IsIdol(item) || __0 < 0) return;
+                if (!T7Enabled() || item.IsNullOrDestroyed() || IsIdol(item) || __0 < 0)
+                    return;
                 int tier = GetTier(item, __0);
-                if (tier < 4 || tier >= 6) return;
+                if (tier < 4 || tier >= 6)
+                    return;
                 if (PreserveFp() || item.forgingPotential > MaxForgeCost(tier))
                     __1 = true;
             }
@@ -158,7 +267,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
             [HarmonyPrefix, HarmonyPriority(Priority.First)]
             static bool Prefix(CraftingSlotManager __instance)
             {
-                if (!T7Enabled() || item.IsNullOrDestroyed() || IsIdol(item)) return true;
+                if (!T7Enabled() || item.IsNullOrDestroyed() || IsIdol(item))
+                    return true;
 
                 int affixId = __instance.appliedAffixID;
                 ItemAffix affix = GetAffix(item, affixId);
@@ -189,7 +299,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Items
                 {
                     // Native Hope is 25%; guarantee only changes that outcome when
                     // the player actually slotted a Hope glyph.
-                    noCost = ModSettings.AdvancedForge.GuaranteedGlyphOfHope.Value
+                    noCost =
+                        ModSettings.AdvancedForge.GuaranteedGlyphOfHope.Value
                         || Random.RandomRangeInt(0, 4) == 0;
                 }
 
