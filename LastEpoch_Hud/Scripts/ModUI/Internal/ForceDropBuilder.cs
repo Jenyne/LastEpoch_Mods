@@ -1723,7 +1723,12 @@ public static class ForceDropBuilder
         row.transform.SetParent(parent.transform, false);
         // Customize occupies x=.30-.73 and y=.02-.945 of root. Keep this
         // overlay at root level so it is not clipped or hidden by nested panels.
-        Rect(row, .575f, .902f, .718f, .937f);
+        Rect(row, .586f, .902f, .718f, .938f);
+        var background = row.AddComponent<Image>();
+        background.color = new Color(.13f, .14f, .17f, .95f);
+        var border = row.AddComponent<Outline>();
+        border.effectColor = new Color(gold.r, gold.g, gold.b, .65f);
+        border.effectDistance = new Vector2(1f, -1f);
         illegalToggle = row.AddComponent<Toggle>();
         var box = new GameObject("Box");
         box.AddComponent<RectTransform>();
@@ -1766,7 +1771,9 @@ public static class ForceDropBuilder
         illegalToggle.targetGraphic = boxImage;
         illegalToggle.graphic = checkImage;
         illegalToggle.SetIsOnWithoutNotify(allowIllegal);
-        Label(row, "Allow Illegal Items", .14f, 0, 1, 1, 14);
+        var label = Label(row, "Allow Illegal Items", .16f, .05f, .98f, .95f, 12);
+        label.alignment = TextAnchor.MiddleLeft;
+        label.horizontalOverflow = HorizontalWrapMode.Overflow;
     }
 
     static void Drop()
