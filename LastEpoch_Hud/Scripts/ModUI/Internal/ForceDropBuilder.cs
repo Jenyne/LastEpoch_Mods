@@ -485,7 +485,6 @@ public static class ForceDropBuilder
             buttons.Clear();
         root = Panel(FD.content_obj, "ForceDropBuilder", 0, 0, 1, 1);
         Label(root, "Force Drop", 0.02f, 0.955f, 0.64f, 0.995f, 22);
-        BuildIllegalToggle();
         var left = Panel(root, "Choose item", 0.01f, 0.02f, 0.29f, 0.945f);
         var middle = Panel(root, "Customize", 0.30f, 0.02f, 0.73f, 0.945f);
         var right = Panel(root, "Preview", 0.74f, 0.02f, 0.99f, 0.945f);
@@ -553,7 +552,8 @@ public static class ForceDropBuilder
                 RefreshItems();
             }
         );
-        Label(middle, "Customize", .03f, .955f, .97f, .99f, 18);
+        Label(middle, "Customize", .03f, .955f, .55f, .99f, 18);
+        BuildIllegalToggle(middle);
         Button(middle, "Random", .03f, .905f, .32f, .948f, () => Preset(true));
         Button(middle, "Maximum", .35f, .905f, .64f, .948f, () => Preset(false));
         Button(
@@ -1714,13 +1714,13 @@ public static class ForceDropBuilder
         RefreshTierLimits();
     }
 
-    static void BuildIllegalToggle()
+    static void BuildIllegalToggle(GameObject parent)
     {
         var sample = Hud_Manager.hud_object.GetComponentInChildren<Toggle>(true);
         var row = new GameObject("ForceDropIllegalMode");
         row.AddComponent<RectTransform>();
-        row.transform.SetParent(root.transform, false);
-        Rect(row, .68f, .955f, .98f, .995f);
+        row.transform.SetParent(parent.transform, false);
+        Rect(row, .66f, .955f, .97f, .99f);
         illegalToggle = row.AddComponent<Toggle>();
         var box = new GameObject("Box");
         box.AddComponent<RectTransform>();
@@ -1763,7 +1763,7 @@ public static class ForceDropBuilder
         illegalToggle.targetGraphic = boxImage;
         illegalToggle.graphic = checkImage;
         illegalToggle.SetIsOnWithoutNotify(allowIllegal);
-        Label(row, "Illegal mode", .12f, 0, 1, 1, 15);
+        Label(row, "Allow Illegal Items", .16f, 0, 1, 1, 14);
     }
 
     static void Drop()
