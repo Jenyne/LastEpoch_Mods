@@ -87,6 +87,7 @@ $queueJson = @'
     "location": "Launch -> offline character selection; MelonLoader/Latest.log",
     "checks": [
       "Offline is mandatory while the mod is installed: confirm automatic offline character selection and hidden/blocked online controls. Old Login.Enable_AutoLoginOffline=false or a missing Login section must not bypass this.",
+      "Cold launch and early/repeated manual clicks: completed client Login notification must precede offline dispatch. Check no SystemLoading transition exception; keep Latest.log and Player.log from the same run. Missing startup notification must defer rather than bypass readiness.",
       "Load an offline character, change zones, run an echo and remain playable for 30+ seconds. Switch characters and reload the first.",
       "Confirm build 951f4e01, load the same character that worked on selection 9, fight and switch characters. Keep Latest.log and Player.log. The session observer is removed; no [OfflineGuard] lines are expected."
     ]
