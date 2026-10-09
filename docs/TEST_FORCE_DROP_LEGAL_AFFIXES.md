@@ -1,11 +1,12 @@
 # Force Drop legal affix coverage
 
-Branch: `fix/force-drop-legal-affixes`.
+Branch: `feat/force-drop`. Keep Illegal Mode off for this checklist.
 
-This branch contains the integrity fixes from `fix/force-drop-integrity`, including the Unsated Rage creation and persistence results recorded in [TEST_FORCE_DROP_INTEGRITY.md](TEST_FORCE_DROP_INTEGRITY.md). It changes filtering and the existing selector's slot labels; it does not introduce Illegal Mode or rebuild the HUD. Upstream was checked at `92fb33de`; its change since the runtime code baseline is README-only.
+The combined branch includes the legal filtering and LP fixes from `fix/force-drop-legal-affixes` and the Illegal Mode work. It retains the integrity fixes and earlier Unsated Rage results recorded in [TEST_FORCE_DROP_INTEGRITY.md](TEST_FORCE_DROP_INTEGRITY.md). This checklist covers legal behavior only; the full HUD redesign remains separate.
 
 ## Changes to test
 
+- All ordinary affix and idol enchantment pickers now use the existing wheel/drag scrolling system rather than Previous/Next pages. Legal prefix-only and suffix-only slots use one full-width list; enchantment, sealed and corruption pools retain separate Prefix/Suffix lists. None stays pinned above each list. Search resets scroll positions and only visible rows are pooled. Legal eligibility, duplicate exclusions and family colors are unchanged.
 - Selecting an ordinary affix for a unique clears LP to zero and disables its input and Fixed/Random button. Maximum/Random presets cannot restore LP while the affix remains selected. Clear every ordinary affix to re-enable LP; fixed native unique modifiers alone do not disable it. Creation requests also enforce zero LP on the resulting Legendary item.
 - Normal affix selectors use the complete deduplicated native catalog and shared eligibility rules. Their log lines include choice counts and exclusion counts by reason.
 - Unique equipment uses a matching normal/exalted donor's equipment type and original class restrictions, rather than requiring affixes to roll on the unique-only subtype. All selected transferred affixes must coexist on one donor subtype. Selecting a Mage modifier must not enable an incompatible Rogue modifier.
@@ -20,18 +21,17 @@ This branch contains the integrity fixes from `fix/force-drop-integrity`, includ
 
 ## Install the test build
 
-Close Last Epoch. Run from your checkout after fetching/switching to this branch:
+Close Last Epoch. Fetch and run `scripts/Test-LastEpochBranches.ps1` from `chore/test-queue-runner`, then choose **1**. Entries 1 and 2 install the same current `feat/force-drop` build with different checklists. The older dedicated legal script targets its historical branch.
 
-```powershell
-.\scripts\Test-ForceDropLegalAffixes.ps1 -GamePath "D:\SteamLibrary\steamapps\common\Last Epoch"
-```
-
-The script updates this branch, builds Release, runs the full suite against the just-built DLL and your supplied game assemblies, backs up the installed mod and copies the new DLL only after success. Tracked local changes or a branch that differs from the remote stop installation.
+The queue runner updates the selected branch, builds Release, runs the full suite against the just-built DLL and your supplied game assemblies, backs up the installed mod and copies the new DLL only after success. Tracked local changes or a branch that differs from the remote stop installation.
 
 ## In-game checks
 
 | Selection | Expected result |
 | --- | --- |
+| Legal prefix and suffix slots; mouse wheel, drag and scrollbar | One full-width list containing only that slot's eligible family; reach the last entry and select it. No Previous/Next controls. Smooth drag movement, clipped rows and pinned None. |
+| Legal enchantment, sealed and corruption pickers; search while scrolled, empty results, clear search | Separate Prefix/Suffix lists scroll independently; search resets both positions. None remains available, including zero results. Switching from a full-width picker restores both columns correctly. |
+| Unique with all ordinary/sealed affixes None and no corruption affix | With Corrupted: No, LP input and Fixed/Random are editable; dedicated unique modifiers alone keep them editable. With Corrupted: Yes, LP remains disabled/zero even when every affix is None: native corruption removes LP independently of transferred affixes. Turn corruption off and confirm LP becomes editable again. |
 | Ordinary helmet/body/relic with an original class requirement | Correct class-compatible ordinary affixes; restriction cheats must not change the legal pool. |
 | Generic unique helmet/body/relic | Applicable class-specific transferred affixes are visible; incompatible classes cannot be combined. Choose the class modifier first, then inspect the second prefix. |
 | Unique with LP 4; select one through four ordinary affixes | LP immediately becomes zero; its value and Fixed/Random button are disabled. Maximum/Random leave it disabled. Drop a Legendary with all selected affixes, zero LP and the original unique identity; check save/reload. |
@@ -71,9 +71,9 @@ Retest the uncorrupted Set ring from the latest screenshot first, then the same 
 - Exulis has tiered Corrupted modifiers in its own explicit pool, not fixed `FakeUniqueMod` modifiers. Its dedicated two-modifier path is not added here. Those definitions are not globally hidden from other items' legal corruption pools.
 - Weaver/Heretical subtype classification currently uses the native internal subtype name from the supplied catalog, independently of translated display names. Native `CanRollOn` still checks the actual subtype. New or renamed native subtypes will need classification review.
 - Personal items can have special drop-source/predetermined-modifier rules beyond `CanRollOn`. Base Personal choices retain native compatibility checks; this pass does not certify arbitrary campaign Personal item combinations.
-- Illegal Mode, primordial storage, illegal T8 ordinary affixes and regular sealed affixes on uniques remain outside this change.
+- Illegal Mode, illegal T8 ordinary affixes and regular sealed affixes on uniques remain outside this legal-mode checklist; see [TEST_FORCE_DROP_ILLEGAL_MODE.md](TEST_FORCE_DROP_ILLEGAL_MODE.md).
 
-## Verification performed here
+## Earlier legal-branch verification
 
 - 123 game-independent core regression cases passed, including the five base-item socket regressions, outcome tier holes, actual definition bounds, Rune level thresholds, Set versus Legendary routes, Champion versus Personal routes and ordinary/Weaver/Heretical idol slots.
 - 13 managed adapter fixtures passed for donor subtype/class intersections, the distinction between the two class enums, matching-type Set shards, idol routes and metadata-based fixed pools. These simulate native responses; they are not game execution.
@@ -82,10 +82,13 @@ Retest the uncorrupted Set ring from the latest screenshot first, then the same 
 
 The supplied `Il2CppLE.dll` has unreadable metadata in this environment, so a full game SDK build cannot be repeated here. The user's Windows builds have reached in-game startup at `0805d229` and `33fedcf1`. Remaining native creation/effect/persistence checks require the guarded Windows script and in-game tests above.
 
-The follow-up selector presentation change does not change eligibility or item packing. Its color/grouping/search checks above are pending a Windows build and in-game confirmation.
+## Current legal scrolling follow-up
+
+The selector presentation change does not change eligibility, LP rules or item packing. Formatting and diff checks pass. The game-independent suite reports 1,156 passed and six SDK-dependent skips. The current workspace has no game SDK for a native mod build; scrolling, full-width/split layout transitions and the LP state checks above still require the guarded Windows build and in-game confirmation.
 
 ## Rule references
 
+- [EHG: Corrupted Items](https://support.lastepoch.com/hc/en-us/articles/52977667498267-Corrupted-Items): corruption removes LP independently of added affixes.
 - [EHG: Legendary Items](https://support.lastepoch.com/hc/en-us/articles/46361924310555-Legendary-Items)
 - [EHG: Set crafting and Legendary restrictions](https://forum.lastepoch.com/t/endgame-balance-and-itemization-updates-coming-to-last-epoch-april-17th/75189/1)
 - [EHG: matching-type Set shards and sealing](https://forum.lastepoch.com/t/last-epoch-tombs-of-the-erased-patch-notes/75247/2)

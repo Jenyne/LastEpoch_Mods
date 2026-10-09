@@ -7,6 +7,7 @@ The current Force Drop layout stays in use. Its new themed **Illegal mode** chec
 ## Changes
 
 - Illegal affix pickers split Prefix and Suffix into separate independently scrolling columns (mouse wheel or drag). Either column fills the same slot that opened the picker. None stays pinned above each list; search applies to both columns and resets both scroll positions. Only visible rows are instantiated and reused. Sealed and corruption pickers also use this split without relaxing their legal eligibility when Illegal Mode is off.
+- Legal ordinary prefix/suffix slots now use one full-width scrolling list; legal idol enchantments use the same two-column scrolling system. Switching between these layouts restores widths and scrollbar positions. Legal restrictions and colors remain unchanged.
 - Includes the legal branch's LP correction: ordinary affixes on a unique clear LP to zero and disable its controls; native fixed unique modifiers alone preserve LP.
 - Illegal Mode exposes all defined native affix families in the ordinary and corruption pickers, without item type, subtype, class, prefix/suffix placement or legal outcome-weight filtering. The four ordinary rows become Affix 1–4. Grouping, translated names, green Set affixes, purple corruption exclusives and None-first selection remain. In Illegal Mode, native idol-compatible affixes (including ordinary idol, Weaver and enchantment definitions) use cyan in pickers and selected rows. Colors do not modify the native item tooltip.
 - Illegal ordinary slots can reach T8 when that definition has eight tiers. Runtime logs showed native refresh representing those T8 affixes as Primordial seals; illegal verification now accepts that specific conversion and multiple T8 Primordial affixes. Legal verification retains its single-Primordial restriction. A one-tier modifier stays T1; seven-tier definitions stay capped at T7. Saved T8 is preserved independently of the creation checkbox.
@@ -21,19 +22,7 @@ Illegal means gameplay eligibility is bypassed. It does not promise the game can
 
 ## Install the testing build
 
-Close the game. From the repository in PowerShell:
-
-```powershell
-& {
-    $ErrorActionPreference = "Stop"
-    git fetch origin
-    if ($LASTEXITCODE -ne 0) { throw "Fetch failed" }
-    git switch --detach origin/feat/force-drop-illegal-mode
-    if ($LASTEXITCODE -ne 0) { throw "Branch switch failed" }
-    .\scripts\Test-ForceDropIllegalMode.ps1 `
-        -GamePath "D:\SteamLibrary\steamapps\common\Last Epoch"
-}
-```
+Close Last Epoch. Fetch and run `scripts/Test-LastEpochBranches.ps1` from `chore/test-queue-runner`, then choose **2**. Entries 1 and 2 install the same current `feat/force-drop` build with different checklists. The older dedicated illegal script targets its historical branch.
 
 The script switches/updates the named branch, requires its revision to match origin, builds and runs tests against the fresh DLL, backs up the installed DLL, then installs. A build/test/update failure stops installation.
 
@@ -46,8 +35,8 @@ The script switches/updates the named branch, requires its revision to match ori
 | Primordial seal plus a legal corruption; corruption toggled without an affix | Both modifiers/flags survive where the native game permits them. A changed tier/seal must reject the drop and log details. |
 | Equip Primordial gear, then try a second Primordial item | The game's equip limit remains in effect. This change does not remove that limit. |
 | Illegal Mode: wrong-type affix, conflicting class modifiers, four prefixes or four suffixes | Choices appear in Affix 1–4. Create/equip/tooltip and save/reload preserve the chosen values if native packing supports them. |
-| Illegal Mode: open any ordinary slot, sealed slot and corruption selector | Prefix choices appear on the left, Suffix choices on the right. Next/Previous on one side leave the other side's page unchanged. Selecting either side fills only the slot that opened the picker. None clears it from either column. |
-| Split picker search, clear search, last page, FR → EN → KO and item/category selector | Both columns search together and reset to page 1. Each side stops at its own last page; existing native family colors/grouping remain. Category, rarity and native unique modifier selectors retain their existing layouts. |
+| Illegal Mode: open any ordinary slot, sealed slot and corruption selector | Prefix choices appear on the left, Suffix choices on the right. Wheel/drag/scrollbar movement on one side leaves the other side's position unchanged. Selecting either side fills only the slot that opened the picker. None clears it from either column. |
+| Split picker search, clear search, last entry, FR → EN → KO and item/category selector | Both columns search together and reset to the top. Each side stops at its own last entry; existing native family colors/grouping remain. Category, rarity and native unique modifier selectors retain their existing layouts. |
 | Illegal Mode: four ordinary T8 affixes plus T8 sealed and T8 corruption, using definitions with eight tiers | All six inputs retain T8. Creation/packing must preserve every tier and seal or explicitly reject an unsupported native combination before spawning; confirm save/reload. There is no ordinary T7 gameplay cap in Illegal Mode, but missing native definition tiers are never invented. |
 | Illegal Mode: ordinary T8, one-tier modifier and an arbitrary corruption | Real T8 survives, one-tier modifier stays T1, corruption uses its own seal. Repeat after turning Illegal Mode off and restarting. |
 | Unique with four ordinary affixes, sealed affix and corruption | Native packing preserves every ID/tier/roll/seal or blocks the drop with an explicit error; it must never silently replace another affix. |
@@ -60,7 +49,7 @@ The script switches/updates the named branch, requires its revision to match ori
 
 Send `Latest.log` with the mode, item, modifier names, tiers and seal/corruption selections for any failure. Set bonus activation, Primordial native construction and every new illegal packing combination require game execution; a successful build alone does not confirm them.
 
-## Verification performed here
+## Earlier illegal-branch verification
 
 - Full mod source compiled against .NET 6 references, the project's Harmony 2.3.1.1 and the supplied native game/Unity/TMP assemblies.
 - All 1,162 xUnit cases passed without skips, including the native Harmony target-resolution/source-scanner checks, locale checks, extra fixed modifier packing order/integrity and illegal native T8 normalization regressions.
@@ -81,3 +70,6 @@ The container's `dotnet` CLI cannot initialize its process-information API, so c
 - Illegal Mode: ordinary idol-only, Weaver and enchantment affixes appear cyan in choices and selected rows; ordinary equipment affixes remain gold, Set green and corruption purple unless also idol-compatible. Legal Mode retains its original colors.
 - Check clipping, readable row heights and scrolling at different menu sizes; close/reopen the menu and change scenes to check pooled row rebuilding.
 - Repeat legal LP clearing and unique variant-only LP retention on this combined build. Prior in-game confirmation applies to `5b8199f6`, not these new UI changes.
+- Legal ordinary prefix/suffix slots use one full-width list; legal enchantment, sealed and corruption pools use two columns. Reopen between layouts and check search resets, clipping, pinned None and exact legal eligibility. Corrupted: Yes still disables LP with every affix None; Corrupted: No unlocks LP once every ordinary affix is cleared.
+
+For this legal scrolling follow-up, the game-independent suite reports 1,156 passed with six SDK-dependent skips. Formatting and diff checks pass. Native compilation and in-game UI checks remain pending in the current workspace.

@@ -32,7 +32,10 @@ public static class ForceDropBuilder
         pickerSearch;
     static bool categoryPicker,
         rarityPicker,
-        splitAffixPicker;
+        scrollAffixPicker;
+
+    // Legal prefix/suffix slots use one full-width column; mixed pools use both.
+    static int affixPickerColumn = -1;
     const float AffixRowHeight = 40f;
     static readonly ScrollRect[] columnScrolls = new ScrollRect[2];
     static readonly Button[] columnClear = new Button[2];
@@ -313,7 +316,7 @@ public static class ForceDropBuilder
             ResetAffixScrolls();
             RefreshPicker();
         }
-        if (picker.activeSelf && splitAffixPicker)
+        if (picker.activeSelf && scrollAffixPicker)
             for (int column = 0; column < 2; column++)
                 RefreshAffixScrollRows(column);
         Caption(typeButton, SelectedCategoryName("Choose category"));
@@ -1103,14 +1106,15 @@ public static class ForceDropBuilder
                 + ", excluded="
                 + excluded
         );
+        bool idolEnchantment = LegalContext(slot).IsHereticalIdol && (slot == 1 || slot == 3);
         OpenPicker(
             allowIllegal && slot < 4 ? "Affix " + (slot + 1)
-                : LegalContext(slot).IsHereticalIdol && (slot == 1 || slot == 3)
-                    ? "Idol enchantment"
+                : idolEnchantment ? "Idol enchantment"
                 : slot == 4 ? "Sealed affix"
                 : slot < 2 ? "Prefix"
                 : "Suffix",
-            allowIllegal || slot == 4
+            true,
+            !allowIllegal && slot < 4 && !idolEnchantment ? (slot < 2 ? 0 : 1) : -1
         );
     }
 
@@ -1777,10 +1781,11 @@ public static class ForceDropBuilder
         picker.SetActive(false);
     }
 
-    static void OpenPicker(string title, bool splitAffixes = false)
+    static void OpenPicker(string title, bool scrollAffixes = false, int affixColumn = -1)
     {
         categoryPicker = rarityPicker = false;
-        splitAffixPicker = splitAffixes;
+        scrollAffixPicker = scrollAffixes;
+        affixPickerColumn = affixColumn;
         LocaleRegistry.Apply(pickerTitle, title);
         pickerSearch.SetTextWithoutNotify("");
         lastPickerSearch = "";
@@ -1926,14 +1931,30 @@ public static class ForceDropBuilder
                 || NativeItemNames.Matches(pickerSearch.text, choice.name, choice.aliases)
             )
                 filtered.Add(choice);
-        pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker && !splitAffixPicker);
-        pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker && !splitAffixPicker);
+        pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker && !scrollAffixPicker);
+        pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker && !scrollAffixPicker);
         for (int column = 0; column < 2; column++)
         {
-            columnTitles[column].gameObject.SetActive(splitAffixPicker);
-            columnClear[column].gameObject.SetActive(splitAffixPicker);
-            columnScrolls[column].gameObject.SetActive(splitAffixPicker);
-            columnScrolls[column].verticalScrollbar.gameObject.SetActive(splitAffixPicker);
+            bool visible =
+                scrollAffixPicker && (affixPickerColumn < 0 || affixPickerColumn == column);
+            columnTitles[column].gameObject.SetActive(visible);
+            columnClear[column].gameObject.SetActive(visible);
+            columnScrolls[column].gameObject.SetActive(visible);
+            columnScrolls[column].verticalScrollbar.gameObject.SetActive(visible);
+            if (!visible)
+                continue;
+            float left = affixPickerColumn < 0 && column == 1 ? .51f : .03f;
+            float right = affixPickerColumn < 0 ? left + .46f : .97f;
+            Rect(columnTitles[column].gameObject, left, .74f, right, .795f);
+            Rect(columnClear[column].gameObject, left, .68f, right, .735f);
+            Rect(columnScrolls[column].gameObject, left, .10f, right - .025f, .67f);
+            Rect(
+                columnScrolls[column].verticalScrollbar.gameObject,
+                right - .02f,
+                .10f,
+                right,
+                .67f
+            );
         }
         foreach (var header in pickerHeaders)
             header.gameObject.SetActive(categoryPicker);
@@ -1961,7 +1982,7 @@ public static class ForceDropBuilder
             }
         foreach (var button in pickButtons)
             button.gameObject.SetActive(false);
-        if (splitAffixPicker)
+        if (scrollAffixPicker)
         {
             RefreshAffixColumns();
             return;
@@ -2038,6 +2059,8 @@ public static class ForceDropBuilder
 
         for (int column = 0; column < 2; column++)
         {
+            if (affixPickerColumn >= 0 && affixPickerColumn != column)
+                continue;
             columnTitles[column].text =
                 L(column == 0 ? "Prefix" : "Suffix") + " · " + columnChoices[column].Count;
             columnClear[column].gameObject.SetActive(clear != null);
@@ -2070,6 +2093,8 @@ public static class ForceDropBuilder
     static void RefreshAffixScrollRows(int column)
     {
         var scroll = columnScrolls[column];
+        if (!scroll.gameObject.activeSelf)
+            return;
         var list = columnChoices[column];
         float height = Math.Max(1f, scroll.viewport.rect.height);
         scroll.content.sizeDelta = new Vector2(0, Math.Max(height, list.Count * AffixRowHeight));
