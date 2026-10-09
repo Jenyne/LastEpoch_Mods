@@ -26,11 +26,7 @@ public class Login_OfflineCharacterSelect
 
     public static void Tick()
     {
-        if (
-            modeSwitch.IsNullOrDestroyed()
-            || !modeSwitch.isActiveAndEnabled
-            || !Login_AutoLoginOffline.CanRun()
-        )
+        if (modeSwitch.IsNullOrDestroyed() || !modeSwitch.isActiveAndEnabled)
             return;
 
         try
@@ -88,9 +84,6 @@ public class Login_OfflineCharacterSelect
 
     private static bool AllowSwitch(CharacterSelect selection)
     {
-        if (!Login_AutoLoginOffline.BlockOnlineSelection())
-            return true;
-
         // Preserve a return to offline if an online tab was already selected.
         if (!selection.IsNullOrDestroyed() && selection.isOnlineTabShowing)
             return true;
@@ -145,7 +138,7 @@ public class Login_OfflineCharacterSelect
         [HarmonyPrefix]
         static bool Prefix(bool playOnline)
         {
-            if (!playOnline || !Login_AutoLoginOffline.BlockOnlineSelection())
+            if (!playOnline)
                 return true;
 
             Main.logger_instance?.Msg("[Offline] Blocked online character tab request.");

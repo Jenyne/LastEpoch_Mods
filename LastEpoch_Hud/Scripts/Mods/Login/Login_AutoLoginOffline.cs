@@ -17,20 +17,6 @@ public class Login_AutoLoginOffline
     private static bool watchingTransition;
     private static bool reportedWait;
 
-    public static bool CanRun()
-    {
-        var save = Save_Manager.instance;
-        return !save.IsNullOrDestroyed()
-            && save.initialized
-            && save.data.Login.Enable_AutoLoginOffline;
-    }
-
-    public static bool BlockOnlineSelection()
-    {
-        var save = Save_Manager.instance;
-        return save.IsNullOrDestroyed() || !save.initialized || CanRun();
-    }
-
     public static void Tick()
     {
         try
@@ -53,7 +39,7 @@ public class Login_AutoLoginOffline
             }
 
             // Nothing to search for every frame: the lifecycle hook supplies the panel.
-            if (landingPanel.IsNullOrDestroyed() || !CanRun())
+            if (landingPanel.IsNullOrDestroyed())
                 return;
 
             var panel = landingPanel;
@@ -153,11 +139,8 @@ public class Login_AutoLoginOffline
         static void Prefix()
         {
             attempt.MarkAttempted();
-            if (CanRun())
-            {
-                watchingTransition = true;
-                transitionStarted = Time.realtimeSinceStartup;
-            }
+            watchingTransition = true;
+            transitionStarted = Time.realtimeSinceStartup;
         }
     }
 
@@ -168,7 +151,7 @@ public class Login_AutoLoginOffline
         static bool Prefix()
         {
             // Cover controller/events even if the hidden button is invoked directly.
-            return !BlockOnlineSelection();
+            return false;
         }
     }
 }

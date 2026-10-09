@@ -15,14 +15,6 @@ if (-not $BuildOnly -and (Get-Process -Name 'Last Epoch' -ErrorAction SilentlyCo
     throw 'Close Last Epoch before installing the test DLL.'
 }
 
-$configPath = Join-Path $GamePath 'Mods\LastEpoch_Hud\Save.json'
-if (Test-Path -LiteralPath $configPath) {
-    $config = Get-Content -LiteralPath $configPath -Raw | ConvertFrom-Json
-    if ($config.Login.Enable_AutoLoginOffline -ne $true) {
-        throw "Set Login.Enable_AutoLoginOffline to true in $configPath before testing."
-    }
-}
-
 & dotnet build $project -c Release "-p:LastEpochPath=$GamePath"
 if ($LASTEXITCODE -ne 0) { throw 'Build failed; the installed mod was not changed.' }
 $builtDll = Join-Path $repoRoot 'Build\Release\net6.0\LastEpoch_Hud.dll'
