@@ -58,11 +58,11 @@ $queueJson = @'
     "id": 5,
     "title": "Normal forge T6/T7 / craft options",
     "branch": "feat/advanced-forge-t7",
-    "status": "Open: native locale gate repaired; crafting transaction incomplete",
+    "status": "Open: T5 ceiling; existing-seal guard added for Guaranteed Despair",
     "location": "Items > Crafting",
     "checks": [
       "Enable Craft Affixes to T7 plus Infinite Forging Potential on expendable normal equipment. Keep [ForgeTrace] from selecting a T5 affix. Check T5 -> T6 -> T7 and stopping at T7.",
-      "Test Max Crafted Roll. Slot a real Hope or Despair glyph to test its guarantee; inspect actual FP, seal outcome and material consumption.",
+      "Test Max Crafted Roll. Slot a real Hope or Despair glyph to test its guarantee; inspect actual FP, seal outcome and material consumption. With Guarantee Despair on and Despair slotted, an item with any existing sealed affix must reject the craft with no second seal or item/FP/material changes. Check regular/Primordial/corruption seals, T7 on/off, immediate retry after the first seal and item swaps; an unsealed item must still allow the first seal.",
       "Toggle off, swap items, reopen the forge and restart. Deselect All should leave Infinite FP and the four advanced controls alone.",
       "Record exact forge title, selected affix, no-shard rejection, shard/glyph counts and locale. Native build and the custom transaction remain unconfirmed."
     ]

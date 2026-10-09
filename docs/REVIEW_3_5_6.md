@@ -2,12 +2,12 @@
 
 Updated 2026-10-09. The active queue is **3, 5 and 6**. Item 7 is user-confirmed and done for now; deeper work is deferred.
 
-Published source: #3 [764ea599](https://github.com/Jenyne/LastEpoch_Mods/commit/764ea5995caba8fce375d84ae931a910a71a2c26), #5 [b59281d6](https://github.com/Jenyne/LastEpoch_Mods/commit/b59281d66dcccace92a50e67723965ebcc1ff1b4), #6 [75e23254](https://github.com/Jenyne/LastEpoch_Mods/commit/75e23254a0b0f54b6107f023384592926a58b9cf).
+Published source: #3 [764ea599](https://github.com/Jenyne/LastEpoch_Mods/commit/764ea5995caba8fce375d84ae931a910a71a2c26), #5 [7575671e](https://github.com/Jenyne/LastEpoch_Mods/commit/7575671e5b7626948e19ec95125acc93fcab6492), #6 [75e23254](https://github.com/Jenyne/LastEpoch_Mods/commit/75e23254a0b0f54b6107f023384592926a58b9cf).
 
 | Queue | Source change | Remaining evidence |
 |---|---|---|
 | 3 | Removed all native global-cap writes and obsolete cap-ownership helper/tests. Added once-per-run read-only `[MasteryApi]` method inventory. Existing checkbox/visual hooks remain. Hover implementation unchanged. | Two 7a91 runs end at the 22→45 cap-write boundary without completion; fatal cause is still unproven. User confirms clicking the checkbox no longer crashes on 764ea599; allocation is still not functional. Broader off/on, reopening and restart checks remain pending. A targeted allocation-check patch is still needed. Node requirements work/persist. Hover is on hold. |
-| 5 | Replaces the literal max-tier marker gate with the known native localization key's output from the same check; logs original result/title, flags, item, tier, FP and keys. | Native key/title and item-tracking confirmation. Custom crafting still needs material consumption, complete glyph semantics and tier-definition checks. |
+| 5 | Replaces the literal max-tier marker gate with the known native localization key's output from the same check; logs original result/title, flags, item, tier, FP and keys. Guaranteed Despair rejects any existing sealed affix before craft execution, with an eligibility message. | Native key/title and item-tracking confirmation; existing-seal guard and no-change-on-rejection test. Custom crafting still needs material consumption, complete glyph semantics and tier-definition checks. |
 | 6 | Uses Hud_Manager's live Drop resolver, waits for visible layout, preserves legacy rows, inherits UI layers and handles native toggle/slider/input paths. | Four visible controls, synchronized inputs, persistence and separate natural-rate comparisons. Backend rate calculations are unchanged. |
 
 ## Concrete forge finding

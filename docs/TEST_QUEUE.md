@@ -36,7 +36,7 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 | 1 | `feat/force-drop` | Force Drop / legal + illegal / global item search | Single combined branch; global search/scrolling/cyan and LP regressions await testing |
 | 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Checkbox no longer crashes (user-confirmed); allocation blocked; hover on hold |
 | 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Graphical trees and item retrieval/preview confirmed; equipment view deferred |
-| 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Open: native locale gate repaired; crafting transaction incomplete |
+| 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Open: T5 ceiling; existing-seal guard added for Guaranteed Despair |
 | 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | UI recovery added; native build and runtime confirmation pending |
 | 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Done for now; confirmed working, deeper investigation deferred |
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
@@ -101,6 +101,8 @@ Selection 2 is retired; other test numbers remain unchanged.
 - Record exact forge title, selected affix, no-shard rejection, actual shard/glyph counts and locale. The custom transaction remains incomplete.
 
 [Rejection trace checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/advanced-forge-t7/docs/TEST_FORGE_REJECTION_TRACE.md)
+
+Latest source: `7575671e`. With Guarantee Despair enabled and a real Despair glyph slotted, any existing sealed affix blocks the craft, including explicit Primordial/corruption flags. Rejection happens before native/custom Forge execution. Test immediate second attempts, item swaps and T7 on/off; item/tier/roll/FP/materials must stay unchanged. Switching to an unsealed item retains the first-seal option. Other glyphs and the guarantee-off native path retain native eligibility. This guard needs in-game confirmation; it does not resolve the open T5 ceiling or broader transaction limitations. Existing suite: 51 passed, three SDK-dependent checks skipped.
 
 ## 6. Separate natural drop rate controls
 
