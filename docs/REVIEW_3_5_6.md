@@ -6,7 +6,7 @@ Published source: #3 [764ea599](https://github.com/Jenyne/LastEpoch_Mods/commit/
 
 | Queue | Source change | Remaining evidence |
 |---|---|---|
-| 3 | Removed all native global-cap writes and obsolete cap-ownership helper/tests. Added once-per-run read-only `[MasteryApi]` method inventory. Existing checkbox/visual hooks remain. Hover implementation unchanged. | Two 7a91 runs end at the 22→45 cap-write boundary without completion; fatal cause is still unproven. Crash-isolation candidate needs native testing; beyond-chain allocation may remain blocked until a targeted check patch. Node requirements work/persist. Hover is on hold. |
+| 3 | Removed all native global-cap writes and obsolete cap-ownership helper/tests. Added once-per-run read-only `[MasteryApi]` method inventory. Existing checkbox/visual hooks remain. Hover implementation unchanged. | Two 7a91 runs end at the 22→45 cap-write boundary without completion; fatal cause is still unproven. User confirms clicking the checkbox no longer crashes on 764ea599; allocation is still not functional. Broader off/on, reopening and restart checks remain pending. A targeted allocation-check patch is still needed. Node requirements work/persist. Hover is on hold. |
 | 5 | Replaces the literal max-tier marker gate with the known native localization key's output from the same check; logs original result/title, flags, item, tier, FP and keys. | Native key/title and item-tracking confirmation. Custom crafting still needs material consumption, complete glyph semantics and tier-definition checks. |
 | 6 | Uses Hud_Manager's live Drop resolver, waits for visible layout, preserves legacy rows, inherits UI layers and handles native toggle/slider/input paths. | Four visible controls, synchronized inputs, persistence and separate natural-rate comparisons. Backend rate calculations are unchanged. |
 
@@ -32,6 +32,6 @@ The environment's .NET CLI/MSBuild fails during process-information initializati
 | Advanced Forge | 51 | 3 | 0 |
 | Drop rates | 45 | 3 | 0 |
 
-Skipped checks require game assemblies. These runs cover game-independent logic and repository contracts; they do not compile or verify the new game-dependent hooks. CSharpier checked the new/updated hook implementations; whitespace checks passed throughout. The refreshed runner JSON preserves all 11 selection IDs; only entry 3 changed in this follow-up and installer control flow is byte-for-byte unchanged.
+Skipped checks require game assemblies. These runs cover game-independent logic and repository contracts; they do not compile or verify the new game-dependent hooks. CSharpier checked the new/updated hook implementations; whitespace checks passed throughout. The refreshed runner has 10 entries: Force Drop is selection 1, duplicate selection 2 is retired, and IDs 3–11 remain unchanged. Only Force Drop consolidation and the new user-confirmed #3 checkbox status changed; installer control flow is byte-for-byte unchanged.
 
 The eight obsolete cap-ownership test cases were removed with the global-write strategy; the lower count does not indicate failing tests.

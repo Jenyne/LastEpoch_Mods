@@ -13,24 +13,16 @@ $queueJson = @'
 [
   {
     "id": 1,
-    "title": "Legal Force Drop / affix coverage",
+    "title": "Force Drop / legal + illegal / global item search",
     "branch": "feat/force-drop",
-    "status": "Limited coverage passed; legal scrolling, LP and combined-build regression pending",
+    "status": "Single combined branch; global search/scrolling/cyan and LP regressions await testing",
     "location": "Items > Force Drop",
     "checks": [
+      "Search all items before choosing category/rarity: try seed, partial names, aliases and seed helmet. Choosing a result fills category/rarity/exact item; clearing search returns to that category list. Check base/Unique/Set items, duplicate names, empty results, paging and locale changes, with Illegal mode off/on. Native search UI and actual drop identity are not yet confirmed.",
       "Keep Illegal mode off. Prefix-only/suffix-only slots use full-width scrolling; enchantment/sealed/corruption pools use independent Prefix/Suffix lists. Check wheel/drag/handles, last entries, layout transitions, pinned None and search reset; legal restrictions and green Set/purple corruption colors stay intact.",
       "With Corrupted: No and every ordinary affix None, LP and Fixed/Random must be editable; dedicated unique modifiers alone preserve LP. Adding ordinary affixes clears/disables LP; clearing them unlocks it. Corrupted: Yes independently locks LP at zero even with every affix None. Turn corruption off and confirm unlock; this report is not yet confirmed.",
       "Test ordinary equipment with Set + Champion + two suffixes, then sealed + corruption; verify item identity, set effects and save/reload.",
-      "Test Unsated Rage, Withstand the Elements and idols. One-tier affixes should clamp rather than fail. Report missing choices with item type and affix name."
-    ]
-  },
-  {
-    "id": 2,
-    "title": "Illegal Force Drop / Primordial T8",
-    "branch": "feat/force-drop",
-    "status": "T8/extra Rage persistence confirmed on 5b8199f6; new scroll/cyan UI awaits testing",
-    "location": "Items > Force Drop > Illegal mode",
-    "checks": [
+      "Test Unsated Rage, Withstand the Elements and idols. One-tier affixes should clamp rather than fail. Report missing choices with item type and affix name.",
       "Check mode switching clears selections. Illegal picker has independently scrolling Prefix/Suffix columns and scrollbar handles; either side edits the opened slot. None stays pinned. Search resets both scroll positions. Check cyan idol affixes in choices and selected rows.",
       "Test T8 in all four ordinary rows, the Primordial sealed row and corruption using real eight-tier definitions. Retest legal T8 Primordial with Illegal mode off; one-tier definitions stay T1.",
       "Test a unique with Set membership: unique name remains, correct set piece counting and actual set bonus. Check Unsated Rage/Withstand special modifiers.",
@@ -41,10 +33,10 @@ $queueJson = @'
     "id": 3,
     "title": "Mastery chains / combat ground-item hover",
     "branch": "fix/mastery-lock-ground-tooltips",
-    "status": "Open: mastery cap-write boundary removed; allocation pending; hover on hold",
+    "status": "Checkbox no longer crashes (user-confirmed); allocation blocked; hover on hold",
     "location": "Skills > Unlock Other Mastery Trees",
     "checks": [
-      "Remove Node Requirements is confirmed working/persistent; leave it off. Latest candidate 764ea599 removes the native global-cap write after two runs stopped at the 22->45 write boundary. Toggle Unlock Other Mastery Trees with the passive tree closed, then open; test off/on, page changes and restart. Crash prevention remains unconfirmed.",
+      "User confirms 764ea599 no longer crashes when clicking Unlock Other Mastery Trees; the option is still not functional for allocation. Keep Remove Node Requirements off (it works/persists). Retest off/on, panel closed/open, page changes and restart before extending crash confirmation beyond the reported checkbox click.",
       "The global cap stays unchanged. This is a crash-isolation candidate, not a completed allocation bypass. Try beyond-chain nodes with adequate prerequisites and points, and report whether a real point is spent. Check selected mastery, innate bonus, point costs and rank caps.",
       "Keep [MasteryTrace] toggle, Visual unlock active, click/spend lines and the once-per-run [MasteryApi] method signatures. If it crashes again, keep the matching MelonLoader log and native crash stack.",
       "Hover investigation is on hold at the user's request. Existing hover implementation is unchanged; no F9 test is requested in this pass."

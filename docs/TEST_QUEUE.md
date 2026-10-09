@@ -33,9 +33,8 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 
 | # | Branch | Main checks | Status |
 |---|---|---|---|
-| 1 | `feat/force-drop` | Legal Force Drop / affix coverage | Limited coverage passed; legal scrolling, LP and combined-build regression pending |
-| 2 | `feat/force-drop` | Illegal Force Drop / Primordial T8 | T8/extra Rage persistence confirmed on 5b8199f6; new scroll/cyan UI awaits testing |
-| 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Open: mastery cap-write boundary removed; allocation pending; hover on hold |
+| 1 | `feat/force-drop` | Force Drop / legal + illegal / global item search | Single combined branch; global search/scrolling/cyan and LP regressions await testing |
+| 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Checkbox no longer crashes (user-confirmed); allocation blocked; hover on hold |
 | 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Graphical trees and item retrieval/preview confirmed; equipment view deferred |
 | 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Open: native locale gate repaired; crafting transaction incomplete |
 | 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | UI recovery added; native build and runtime confirmation pending |
@@ -45,38 +44,35 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 | 10 | `feat/gold-favourites-session-stats` | Fixed gold, favourite waypoints, XP/Favour/Amber counters | Implemented; native build and gameplay pending |
 | 11 | `feat/travel-anywhere` | Non-waypoint map menus, right-click, scene picker and favourites | Restoration candidate; current-game build and gameplay pending |
 
-## 1. Legal Force Drop / affix coverage
+## 1. Force Drop / legal + illegal / global item search
 
-**Where:** Items > Force Drop
-**Branch:** `feat/force-drop`
+**Where:** Items > Force Drop (Illegal mode toggles both workflows)
+**Branch:** `feat/force-drop` at `2c04bdd0`
 
-- Keep Illegal mode off. Test full-width scrolling in legal prefix/suffix slots and split scrolling in enchantment/sealed/corruption pools. Check wheel/drag/handles, last entries, layout transitions, pinned None and search reset. Legal eligibility, grouped families and green Set/purple corruption colors stay intact.
-- With Corrupted: No and every ordinary affix None, LP and Fixed/Random should be editable; dedicated variant selectors alone preserve LP. Adding ordinary affixes clears/disables LP; clearing them unlocks it. Corrupted: Yes independently removes LP even with every affix None. Test turning corruption off to confirm unlock; the screenshot alone did not establish a broken affix check.
+Selection 2 is retired; other test numbers remain unchanged.
+
+- Search all items before choosing category/rarity: try seed, partial names, aliases and seed helmet. Choosing a result fills category/rarity/exact item; clearing search returns to that category list. Check base/Unique/Set items, duplicate names, empty results, paging and locale changes, with Illegal mode off/on. Native search UI and actual drop identity are not yet confirmed.
+- Keep Illegal mode off. Prefix-only/suffix-only slots use full-width scrolling; enchantment/sealed/corruption pools use independent Prefix/Suffix lists. Check wheel/drag/handles, last entries, layout transitions, pinned None and search reset; legal restrictions and green Set/purple corruption colors stay intact.
+- With Corrupted: No and every ordinary affix None, LP and Fixed/Random must be editable; dedicated unique modifiers alone preserve LP. Adding ordinary affixes clears/disables LP; clearing them unlocks it. Corrupted: Yes independently locks LP at zero even with every affix None. Turn corruption off and confirm unlock; this report is not yet confirmed.
 - Test ordinary equipment with Set + Champion + two suffixes, then sealed + corruption; verify item identity, set effects and save/reload.
 - Test Unsated Rage, Withstand the Elements and idols. One-tier affixes should clamp rather than fail. Report missing choices with item type and affix name.
-
-[Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/force-drop/docs/TEST_FORCE_DROP_LEGAL_AFFIXES.md)
-
-## 2. Illegal Force Drop / Primordial T8
-
-**Where:** Items > Force Drop > Illegal mode
-**Branch:** `feat/force-drop`
-
-- Check mode switching clears selections. Prefix/Suffix columns scroll independently with wheel/drag and scrollbar handles; either side edits the opened slot, None remains pinned above each list and search resets both scroll positions. Check cyan idol affixes in choices and selected rows.
+- Check mode switching clears selections. Illegal picker has independently scrolling Prefix/Suffix columns and scrollbar handles; either side edits the opened slot. None stays pinned. Search resets both scroll positions. Check cyan idol affixes in choices and selected rows.
 - Test T8 in all four ordinary rows, the Primordial sealed row and corruption using real eight-tier definitions. Retest legal T8 Primordial with Illegal mode off; one-tier definitions stay T1.
 - Test a unique with Set membership: unique name remains, correct set piece counting and actual set bonus. Check Unsated Rage/Withstand special modifiers.
 - Test four affixes + sealed + corruption, then equip/stats and save/reload. Record rejected combinations exactly.
 
-[Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/force-drop/docs/TEST_FORCE_DROP_ILLEGAL_MODE.md)
+[Legal and global search checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/force-drop/docs/TEST_FORCE_DROP_LEGAL_AFFIXES.md)
+
+[Illegal checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/force-drop/docs/TEST_FORCE_DROP_ILLEGAL_MODE.md)
 
 ## 3. Mastery chains / combat ground-item hover
 
 **Where:** Skills > Unlock Other Mastery Trees
 **Branch:** `fix/mastery-lock-ground-tooltips`
 
-- Remove Node Requirements is confirmed working/persistent; leave it off. Latest candidate 764ea599 removes the native global-cap write after two runs stopped at the 22->45 write boundary. Toggle Unlock Other Mastery Trees with the passive tree closed, then open; test off/on, page changes and restart. Crash prevention remains unconfirmed.
+- User confirms 764ea599 no longer crashes when clicking Unlock Other Mastery Trees; the option is still not functional for allocation. Keep Remove Node Requirements off (it works/persists). Retest off/on, panel closed/open, page changes and restart before extending crash confirmation beyond the reported checkbox click.
 - The global cap stays unchanged. This is a crash-isolation candidate, not a completed allocation bypass. Try beyond-chain nodes with adequate prerequisites and points, and report whether a real point is spent. Check selected mastery, innate bonus, point costs and rank caps.
-- Keep `[MasteryTrace]` toggle, Visual unlock active, click/spend lines and the once-per-run `[MasteryApi]` method signatures. If it crashes again, keep the matching MelonLoader log and native crash stack.
+- Keep [MasteryTrace] toggle, Visual unlock active, click/spend lines and the once-per-run [MasteryApi] method signatures. If it crashes again, keep the matching MelonLoader log and native crash stack.
 - Hover investigation is on hold at the user's request. Existing hover implementation is unchanged; no F9 test is requested in this pass.
 
 [Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/fix/mastery-lock-ground-tooltips/docs/TEST_MASTERY_LOCK_AND_TOOLTIPS.md)
@@ -196,7 +192,7 @@ Advanced Forge and independent drop rates still require compilation/runtime conf
 
 Offline diagnostics includes the latest auto-offline startup and online-switch UI changes, so a separate startup-only test is not required in this queue. It is an observer build, not an implemented comprehensive runtime permission guard.
 
-Legal and Illegal Force Drop now share `feat/force-drop` at `6155a1dc`. Both menu entries install the same combined DLL, with different checks. The earlier legal/illegal branches remain historical checkpoints. Keep the current Force Drop UI; a full UI redesign is deferred.
+Legal and Illegal Force Drop now use only selection 1 and `feat/force-drop` at `2c04bdd0`. Selection 2 is removed; both earlier histories are preserved in the combined branch. Global search now fills the category, rarity and exact native item when selected. Keep the current Force Drop UI; a full UI redesign is deferred.
 
 Prophecy reward multiplication is confirmed working and persistent on `fix/prophecy-reward-trigger` at `cb638c70`. The old `feat/prophecy-reward-multiplier` branch is a crash-isolation checkpoint, not the working build. Prophecy currently has no numbered runner entry; track it in [DEV_TODO.md](DEV_TODO.md). Large multipliers can lag; UI relocation is deferred.
 
@@ -214,11 +210,11 @@ Locale installation relies on the repository's successful locale tests and copie
 
 Current development priorities and remaining work are tracked in [DEV_TODO.md](DEV_TODO.md).
 
-- Force Drop legal and illegal histories are consolidated in `feat/force-drop`, commit `6155a1dc`. Entries 1 and 2 both install this branch.
+- Force Drop legal/illegal histories and global search are consolidated in `feat/force-drop`, commit `2c04bdd0`. Selection 1 is the single build; selection 2 is retired. Search matches aliases/translated names, fills category/rarity/exact item and restores the filtered list when cleared. 1,164 tests passed; six SDK-dependent checks skipped; native/runtime confirmation remains pending.
 - On `5b8199f6`, screenshots showed four ordinary T8 affixes, seals/corruption, retained item identity and additional distinct Rage modifiers. Nyk confirmed persistence. Individual gameplay effects and broader legal-mode regression remain open.
 - The combined build adds cyan idol affixes in Illegal Mode, independent Prefix/Suffix scrolling and full-width legal prefix/suffix scrolling, with pinned None and scrollbar handles. These new UI changes await in-game confirmation; earlier persistence confirmation does not certify this build.
 - Legal Force Drop had limited successful coverage tests. The LP correction is included in the combined branch but still needs a final regression: transferred ordinary affixes consume/disable LP; clearing them re-enables LP; dedicated ring/glove modifiers alone preserve it.
-- Build 3: Remove Node Requirements works/persists. Two 7a91 runs stop immediately after requesting the native cap write 22→45. Published `764ea599` removes that write and logs read-only allocation-check signatures. Crash prevention is unconfirmed; beyond-chain allocation may still be blocked. Hover is on hold. 999 core/source tests passed; six SDK checks skipped. Native compilation/runtime remain pending.
+- Build 3: Remove Node Requirements works/persists. Two 7a91 runs stop immediately after requesting the native cap write 22→45. Published `764ea599` removes that write and logs read-only allocation-check signatures. User confirms the mastery checkbox no longer crashes on this candidate; allocation is still not functional. Broader reopen/restart behavior needs checking. Hover is on hold. 999 core/source tests passed; six SDK checks skipped. Native compilation/runtime remain pending.
 - Build 4 graphical trees are much better; item retrieval/preview is confirmed. Equipment presentation improvements are deferred.
 - Build 5 failed at runtime: normal crafting still stops at T5. The missing `Force Crafted Affix Roll` locale key is fixed; it was not the runtime ceiling fix.
 - Build 6 has no visible Natural Drop Rates sliders. Rate behavior and persistence remain unconfirmed.
