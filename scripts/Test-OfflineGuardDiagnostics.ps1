@@ -8,8 +8,7 @@ $ErrorActionPreference = 'Stop'
 # Reuse the startup branch's checked build, closed-game check, and DLL backup/install.
 & (Join-Path $PSScriptRoot 'Test-AutoOfflineStartup.ps1') @PSBoundParameters
 if (-not $BuildOnly) {
-    Write-Host 'Guard diagnostics are enabled independently of profiling settings.'
-    Write-Host 'This build observes signals; gameplay mutation protection is not installed yet.'
-    Write-Host 'Test offline character loading, zone changes, echoes, and switching characters.'
-    Write-Host 'Look for [OfflineGuard] messages in MelonLoader\Latest.log and keep the full log.'
+    Write-Host 'Startup-only isolation candidate: session observer and its native hooks are removed.'
+    Write-Host 'Test character entry, zone changes, combat, and switching characters.'
+    Write-Host 'Keep [Offline] messages and complete Latest.log / Player.log. No [OfflineGuard] messages are expected.'
 }

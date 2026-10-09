@@ -79,10 +79,6 @@
       <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\Il2CppLE.Core.dll</HintPath>
       <Private>False</Private>
     </Reference>
-    <Reference Include="LE.Networking.Core">
-      <HintPath>$(LastEpochPath)\MelonLoader\Il2CppAssemblies\Il2CppLE.Networking.Core.dll</HintPath>
-      <Private>False</Private>
-    </Reference>
     <Reference Include="MelonLoader">
       <HintPath>$(LastEpochPath)\MelonLoader\net6\MelonLoader.dll</HintPath>
       <Private>False</Private>
