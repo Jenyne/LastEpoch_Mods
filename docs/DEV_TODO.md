@@ -86,3 +86,5 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 - QoL branch cleanup: `feat/gold-favourites-session-stats` is fully merged into `feat/travel-anywhere` and retired from the active queue. Leave its remote ref as a historical reference; future QoL/travel changes go on the combined branch.
 
 - Mandatory-offline revision `ebbbfd94`: removed saved Login toggle and conditional online blocks; helper no longer requires setting a flag. 1,005 core tests passed and six SDK checks skipped; CSharpier passed. Native build and in-game regression remain pending. Upstream PR blurb: [PR_OFFLINE.md](https://github.com/Jenyne/LastEpoch_Mods/blob/test/offline-guard-diagnostics/docs/PR_OFFLINE.md).
+
+- Follow-up user retest after the mandatory-offline change: entered one character, backed out and entered another successfully. No crash reported. Reported runtime outcome recorded separately from exact commit/log evidence; old false/missing config and combat/echo endurance remain unconfirmed. Subsequent offline commit `d9b85f74` updates documentation only; runtime source remains `ebbbfd94`.
