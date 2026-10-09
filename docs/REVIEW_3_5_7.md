@@ -1,5 +1,7 @@
 # Review of queue items 3, 5 and 7
 
+Historical review. The user corrected the active selection to **3, 5 and 6** and marked #7 done for now. See [current follow-up](REVIEW_3_5_6.md). The #7 notes below are deferred; no #7 changes were made in this pass.
+
 Reviewed 2026-10-08. This is source investigation, not a new runtime-tested fix. No gameplay patches changed in this review. Current game reference assemblies are no longer in the recovered workspace, so new native patch signatures and in-game outcomes cannot be verified here.
 
 | Item | Reviewed branch / commit | Outcome |
@@ -14,7 +16,7 @@ Source: `LastEpoch_Hud/Scripts/Mods/Items/Items_AdvancedForge.cs` on the reviewe
 
 ### Concrete defects and gaps
 
-- `ForgeCapability.Postfix` requires `__0 == Craft_Locales.affix_is_maxed` before overriding the game's T5 rejection. `affix_is_maxed` is initialized to literal `"affix_maxed"`. The active source contains no assignment refreshing it from native localization; the declared key dates to game 1.3.1.1. A translated/native message that differs from that placeholder will never enter this override. This is a concrete defect and a plausible explanation for the failed button, not proof of the exact runtime rejection text.
+- At the reviewed commit, `ForgeCapability.Postfix` required `__0 == Craft_Locales.affix_is_maxed` before overriding the game's T5 rejection. This is the literal `"affix_maxed"`. A follow-up found that `LocalizationOverride.RegisterAll` has no active caller, so its marker resolver is never registered on this branch. The known native key's text is now observed within each capability check. The exact runtime rejection/key still needs confirmation.
 - The cached item is populated only by `OnMainItemChange` and a `OneItemContainer` cast. There is no fallback to the currently slotted item when enabling the option. Confirm this cache is populated and corresponds to the live forge item before interpreting a failed capability override.
 - The custom T5/T6 `Forge.Prefix` mutates the affix and returns false, skipping native `Forge`. It has no visible shard/glyph consumption call or replacement for the native completion transaction. A separate hook could conceivably consume resources, but this patch itself does not establish that behavior.
 - Chaos and Envy are treated as ordinary roll-and-tier upgrades in the new code. The historical `Craft_MaxTier` implementation had explicit Chaos affix replacement and Envy subtype logic. The new path also falls through to a normal upgrade for unguaranteed Despair rather than preserving its native seal behavior.

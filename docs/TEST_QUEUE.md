@@ -35,11 +35,11 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 |---|---|---|---|
 | 1 | `feat/force-drop` | Legal Force Drop / affix coverage | Limited coverage passed; final LP and combined-build regression pending |
 | 2 | `feat/force-drop` | Illegal Force Drop / Primordial T8 | T8/extra Rage persistence confirmed on 5b8199f6; new scroll/cyan UI awaits testing |
-| 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Failed: mastery chain and combat hover remain blocked |
+| 3 | `fix/mastery-lock-ground-tooltips` | Mastery chains / combat ground-item hover | Open: allocation and F9 hover traces added; runtime pending |
 | 4 | `feat/maxroll-tree-preview` | Maxroll graphical passives / skills preview | Graphical trees and item retrieval/preview confirmed; equipment view deferred |
-| 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Failed: crafting still stops at T5 |
-| 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | Failed: Natural Drop Rates UI missing; behavior untested |
-| 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Confirmed working, including quieter logging |
+| 5 | `feat/advanced-forge-t7` | Normal forge T6/T7 / craft options | Open: native locale gate repaired; crafting transaction incomplete |
+| 6 | `feat/independent-drop-rates` | Separate natural drop rate controls | UI recovery added; native build and runtime confirmation pending |
+| 7 | `test/offline-guard-diagnostics` | Offline startup / session diagnostics | Done for now; confirmed working, deeper investigation deferred |
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
 | 9 | `master` | Current main baseline | Baseline/control build |
 
@@ -74,8 +74,11 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 - Leave Remove Node Requirements off. Enable Unlock Other Mastery Trees; allocate beyond the chain in both other mastery trees.
 - Normal prerequisites, point costs and rank caps should still apply. Test turning the option off, tree page changes and restart persistence.
 - Hover dropped items during combat/minion attacks with the damage meter hidden, visible but stopped, and recording. Test meter controls/controller casting too.
+- Keep `[MasteryTrace]` click/spend lines. Press F9 over the same ground item idle and in combat; repeat meter states and annotate the failed `[HoverTrace]` snapshot.
 
 [Full branch checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/fix/mastery-lock-ground-tooltips/docs/TEST_MASTERY_LOCK_AND_TOOLTIPS.md)
+
+[Trace checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/fix/mastery-lock-ground-tooltips/docs/TEST_MASTERY_HOVER_TRACES.md)
 
 ## 4. Maxroll graphical passives / skills preview
 
@@ -93,9 +96,12 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 **Where:** Items > Crafting
 **Branch:** `feat/advanced-forge-t7`
 
-- Enable Craft Affixes to T7 plus Infinite Forging Potential. Use a normal T5 affix and upgrade T5 -> T6 -> T7. T7 must stop; no ordinary T8 crafting.
+- Enable Craft Affixes to T7 plus Infinite Forging Potential on expendable normal equipment. Keep `[ForgeTrace]` when selecting T5; check T5 -> T6 -> T7 and stopping at T7.
 - Test Max Crafted Roll. Slot a real Hope or Despair glyph to test its guarantee; inspect actual FP, seal outcome and material consumption.
 - Toggle off, swap items, reopen the forge and restart. Deselect All should leave Infinite FP and the four advanced controls alone.
+- Record exact forge title, selected affix, no-shard rejection, actual shard/glyph counts and locale. The custom transaction remains incomplete.
+
+[Rejection trace checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/advanced-forge-t7/docs/TEST_FORGE_REJECTION_TRACE.md)
 
 ## 6. Separate natural drop rate controls
 
@@ -104,9 +110,13 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 
 - Check separate Unique, Set, Exalted Affix and T7 Affix rows; 100% is normal, 1000% is 10x, not a guaranteed final chance.
 - Test each alone over enough ordinary drops: all off/100%, then 1000%, then 50%/0%. Exclude forced/guaranteed rewards from comparisons.
-- Test toggling off, changing zones, slider/input synchronization and restart persistence. Save the first [DropRates] line plus errors.
+- Enable each row, drag and type 0, 50, 100 and 1000; click outside the input. Check slider/input agreement, legacy rows, close/reopen and restart. Save the bind confirmation and `[DropRates]` baseline lines.
+
+[UI recovery checklist](https://github.com/Jenyne/LastEpoch_Mods/blob/feat/independent-drop-rates/docs/TEST_DROP_RATE_UI_RECOVERY.md)
 
 ## 7. Offline startup / session diagnostics
+
+Done for now at the user's request. The following checklist is retained for optional regression; deeper investigation is deferred.
 
 **Where:** Launch -> offline character selection; MelonLoader/Latest.log
 **Branch:** `test/offline-guard-diagnostics`
@@ -186,3 +196,9 @@ Current development priorities and remaining work are tracked in [DEV_TODO.md](D
 ### Validation boundary
 
 The initial scroll/cyan implementation compiled against the recovered native references, passed 1,162 tests with zero skipped and passed formatting. After the workspace reset, the same changes were reconstructed and published with new commit IDs; formatting was rechecked across 408 C# files. Native references were no longer available to rerun that build. No unit-test or formatting result is treated as in-game confirmation.
+
+## Follow-up — 2026-10-09
+
+Active work is #3, #5 and #6. #7 is done for now and deferred. See [current source changes and test order](REVIEW_3_5_6.md). The previous failed runtime reports remain the latest in-game evidence; follow-up source changes are awaiting installed-SDK compilation and runtime checks.
+
+Published follow-up source: #3 `6e835e85`, #5 `b59281d6`, #6 `75e23254`. Fetch the runner branch and copy the updated script to TEMP again to get the new statuses and checklists.

@@ -40,12 +40,13 @@ $queueJson = @'
     "id": 3,
     "title": "Mastery chains / combat ground-item hover",
     "branch": "fix/mastery-lock-ground-tooltips",
-    "status": "Failed: mastery chain and combat hover remain blocked",
+    "status": "Open: allocation and F9 hover traces added; runtime pending",
     "location": "Skills > Unlock Other Mastery Trees",
     "checks": [
       "Leave Remove Node Requirements off. Enable Unlock Other Mastery Trees; allocate beyond the chain in both other mastery trees.",
       "Normal prerequisites, point costs and rank caps should still apply. Test turning the option off, tree page changes and restart persistence.",
-      "Hover dropped items during combat/minion attacks with the damage meter hidden, visible but stopped, and recording. Test meter controls/controller casting too."
+      "Hover dropped items during combat/minion attacks with the damage meter hidden, visible but stopped, and recording. Test meter controls/controller casting too.",
+      "Keep [MasteryTrace] click/spend lines. Press F9 over the same ground item idle and in combat; repeat meter hidden/visible/stopped/recording and label the failed [HoverTrace] snapshot."
     ]
   },
   {
@@ -64,31 +65,32 @@ $queueJson = @'
     "id": 5,
     "title": "Normal forge T6/T7 / craft options",
     "branch": "feat/advanced-forge-t7",
-    "status": "Failed: crafting still stops at T5",
+    "status": "Open: native locale gate repaired; crafting transaction incomplete",
     "location": "Items > Crafting",
     "checks": [
-      "Enable Craft Affixes to T7 plus Infinite Forging Potential. Use a normal T5 affix and upgrade T5 -> T6 -> T7. T7 must stop; no ordinary T8 crafting.",
+      "Enable Craft Affixes to T7 plus Infinite Forging Potential on expendable normal equipment. Keep [ForgeTrace] from selecting a T5 affix. Check T5 -> T6 -> T7 and stopping at T7.",
       "Test Max Crafted Roll. Slot a real Hope or Despair glyph to test its guarantee; inspect actual FP, seal outcome and material consumption.",
-      "Toggle off, swap items, reopen the forge and restart. Deselect All should leave Infinite FP and the four advanced controls alone."
+      "Toggle off, swap items, reopen the forge and restart. Deselect All should leave Infinite FP and the four advanced controls alone.",
+      "Record exact forge title, selected affix, no-shard rejection, shard/glyph counts and locale. Native build and the custom transaction remain unconfirmed."
     ]
   },
   {
     "id": 6,
     "title": "Separate natural drop rate controls",
     "branch": "feat/independent-drop-rates",
-    "status": "Failed: Natural Drop Rates UI missing; behavior untested",
+    "status": "UI recovery added; native build and runtime confirmation pending",
     "location": "Items > Drop > Natural Drop Rates",
     "checks": [
       "Check separate Unique, Set, Exalted Affix and T7 Affix rows; 100% is normal, 1000% is 10x, not a guaranteed final chance.",
       "Test each alone over enough ordinary drops: all off/100%, then 1000%, then 50%/0%. Exclude forced/guaranteed rewards from comparisons.",
-      "Test toggling off, changing zones, slider/input synchronization and restart persistence. Save the first [DropRates] line plus errors."
+      "Enable each row, drag and type 0, 50, 100 and 1000; click outside the input. Check slider/input agreement, legacy rows, close/reopen and restart. Save the bind confirmation and [DropRates] baseline lines."
     ]
   },
   {
     "id": 7,
     "title": "Offline startup / session diagnostics",
     "branch": "test/offline-guard-diagnostics",
-    "status": "Confirmed working, including quieter logging",
+    "status": "Done for now; confirmed working, deeper investigation deferred",
     "location": "Launch -> offline character selection; MelonLoader/Latest.log",
     "checks": [
       "Login.Enable_AutoLoginOffline must be true. Confirm automatic offline character selection and that its online switch is hidden.",

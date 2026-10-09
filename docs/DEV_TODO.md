@@ -1,6 +1,6 @@
 # Last Epoch development todo
 
-Updated 2026-10-08 (America/Edmonton). Repository: `Jenyne/LastEpoch_Mods`; upstream: `Syncingoutt/LastEpoch_Mods`.
+Updated 2026-10-09 (UTC). Repository: `Jenyne/LastEpoch_Mods`; upstream: `Syncingoutt/LastEpoch_Mods`.
 
 Keep changes on separate topic branches. Force Drop legal and illegal work is now one topic: `feat/force-drop`. Preserve the current Force Drop layout until the planned full UI redesign. Runtime confirmation and compilation/unit-test results are separate evidence.
 
@@ -9,20 +9,20 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 | Queue | Topic / branch | Current status | Remaining work |
 |---|---|---|---|
 | 1 + 2 | Force Drop — `feat/force-drop` (`4585e880`) | Legal/illegal histories combined and published. Four ordinary T8s, seals/corruption, extra distinct Rage modifiers and persistence confirmed on earlier `5b8199f6`. New scrolling/cyan UI awaits testing. | Test independent scrolling, scrollbar handles, pinned None, search reset, row clipping and menu rebuilding. Check cyan ordinary idol/Weaver/enchantment affixes in choices and selected rows. Retest legal restrictions and LP clearing/re-enabling, including dedicated modifier-only LP retention. Verify individual gameplay effects. |
-| 3 | Mastery / ground tooltips — `fix/mastery-lock-ground-tooltips` | Failed: secondary mastery locked; ground-item hover blocked during combat. Mod issue confirmed by comparison without mod. | Trace the actual passive-spend restriction: current unlock patches affect limits/visuals but not allocation. Trace the first UI raycast hit during combat with the meter hidden/visible; its root-listener fix was insufficient. See [review](REVIEW_3_5_7.md). |
+| 3 | Mastery / ground tooltips — `fix/mastery-lock-ground-tooltips` (`6e835e85`) | Runtime failures remain open. Bounded mastery click/spend traces and manual F9 hover snapshots added. | Compile on the installed SDK. Leave Remove Node Requirements off and capture `[MasteryTrace]`; press F9 over the same loot idle/in combat with the meter hidden/visible. Use the native rejection/raycast evidence for the next fix. See [follow-up](REVIEW_3_5_6.md). |
 | 4 | Maxroll preview — `feat/maxroll-tree-preview` | Graphical trees improved; item retrieval/preview confirmed. | Equipment presentation improvements deferred. Keep existing preview functionality in regression checks. |
-| 5 | Advanced Forge — `feat/advanced-forge-t7` | Failed: normal crafting still stops at T5. Missing locale key fixed. | Fix the stale `affix_maxed` text gate; validate live item tracking and the native rejection reason. Preserve shard/glyph consumption and Chaos/Envy behavior when replacing the high-tier Forge path. See [review](REVIEW_3_5_7.md). |
-| 6 | Drop rates — `feat/independent-drop-rates` | UI failure: sliders missing. Rate behavior/persistence unconfirmed. | Restore the Natural Drop Rates controls, then measure independent Unique/Set/Exalted/T7 behavior and persistence. |
-| 7 | Offline diagnostics — `test/offline-guard-diagnostics` | Confirmed working; spam removed, one confirmation retained. | Review the session-end epoch/logging mismatch; preserve one confirmation per load. Comprehensive offline-only mutation enforcement remains a separate task. See [review](REVIEW_3_5_7.md). |
+| 5 | Advanced Forge — `feat/advanced-forge-t7` (`b59281d6`) | Native max-tier label matching repaired; bounded rejection trace added. In-game T5 ceiling remains unconfirmed. | Inspect `[ForgeTrace]`, cached item and native keys. Complete material consumption, glyph semantics and definition-backed tier checks before closing the crafting issue. See [follow-up](REVIEW_3_5_6.md). |
+| 6 | Drop rates — `feat/independent-drop-rates` (`75e23254`) | UI recovery implemented through the live resolver, deferred layout and native input hooks. Runtime behavior/persistence unconfirmed. | Compile and confirm four rows, legacy layout, slider/input synchronization and restart; then measure independent Unique/Set/Exalted/T7 behavior. See [follow-up](REVIEW_3_5_6.md). |
+| 7 | Offline diagnostics — `test/offline-guard-diagnostics` | Done for now: confirmed working; spam removed, one confirmation retained. | Deferred at the user's request. No further #7 changes in this pass. |
 | 8 | Idol rerolling — `feat/idol-reroll-misc` | Confirmed working. | Optional restart/locale regression; no immediate fix. |
 | — | Prophecy — `fix/prophecy-reward-trigger` (`cb638c70`) | Confirmed working and persistent. | Large multipliers can lag. UI relocation deferred until redesign. Old multiplier branch is an isolation checkpoint. |
 | 9 | `master` baseline | Control build. | Use for comparisons; topic-branch confirmation does not mean integration into main or upstream. |
 
 ## Next development order
 
-1. Advanced Forge: resolve the native T5 crafting ceiling (#5).
-2. Mastery and combat ground-item tooltips: diagnose and fix both runtime failures (#3).
-3. Natural Drop Rates: restore missing UI, then test behavior (#6).
+1. Native-build and runtime-check the Drop Rates UI recovery (#6).
+2. Use the new rejection traces to target the T5 crafting ceiling and complete the craft transaction (#5).
+3. Use allocation and F9 hover evidence to resolve both runtime failures (#3).
 4. In parallel with those priorities, obtain in-game results for the combined Force Drop UI and legal LP regression (#1/#2). Do not mark the new UI confirmed from the earlier persistence report.
 
 ## Backlog and deferred work
@@ -31,7 +31,7 @@ Keep changes on separate topic branches. Force Drop legal and illegal work is no
 - Full Force Drop UI redesign: deferred; only the requested scrolling and color changes are in the current combined branch.
 - Maxroll equipment presentation: deferred.
 - Prophecy UI relocation: deferred.
-- Any comprehensive offline runtime guard beyond the confirmed diagnostic observer remains separate follow-up work; do not treat diagnostics as enforcement.
+- #7 is done for now; any deeper offline investigation is deferred. No offline-diagnostics patches changed in this pass.
 
 ## Testing and evidence
 
