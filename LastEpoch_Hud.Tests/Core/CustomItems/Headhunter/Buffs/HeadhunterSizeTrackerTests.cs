@@ -129,6 +129,22 @@ public sealed class HeadhunterSizeTrackerTests
         Assert.Equal(HeadhunterSizeAction.RestoreThenRescale, tracker.Next(7, 1.04f, true));
     }
 
+    [Fact]
+    public void Next_SwitchModelAndBack_RestoreThenRescaleEachTime()
+    {
+        var tracker = new HeadhunterSizeTracker();
+
+        HeadhunterSizeAction first = tracker.Next(7, 1.06f, true);
+        HeadhunterSizeAction toForm = tracker.Next(8, 1.06f, true);
+        HeadhunterSizeAction toBase = tracker.Next(7, 1.06f, true);
+        HeadhunterSizeAction steady = tracker.Next(7, 1.06f, true);
+
+        Assert.Equal(HeadhunterSizeAction.Rescale, first);
+        Assert.Equal(HeadhunterSizeAction.RestoreThenRescale, toForm);
+        Assert.Equal(HeadhunterSizeAction.RestoreThenRescale, toBase);
+        Assert.Equal(HeadhunterSizeAction.None, steady);
+    }
+
     private static HeadhunterSizeTracker Applied()
     {
         var tracker = new HeadhunterSizeTracker();

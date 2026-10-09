@@ -1,7 +1,5 @@
 using System.Collections.Generic;
 using Il2Cpp;
-using Il2CppLE.AssetBundles;
-using Il2CppLE.AssetManagement;
 using LastEpoch_Hud.Scripts.Core.CustomItems;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter;
 using UnityEngine;
@@ -13,41 +11,68 @@ namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Bar;
 internal static class HeadhunterBuffIcons
 {
     private static readonly Dictionary<HeadhunterStatKey, Sprite> _sprites = new();
-    private static readonly Dictionary<HeadhunterStatKey, LoadRef<Sprite>> _loadRefs = new();
 
-    public static Sprite For(int statId, int tags)
+    /// <summary>Icon for a stat. isFinal is false while a placeholder stands in for a pending load.</summary>
+    public static Sprite For(int statId, int tags, out bool isFinal)
     {
         var key = new HeadhunterStatKey(statId, tags);
         if (_sprites.TryGetValue(key, out Sprite cached) && !cached.IsNullOrDestroyed())
         {
+            isFinal = true;
             return cached;
         }
 
-        Sprite sprite = Resolve(statId, tags);
-        _sprites[key] = sprite;
+        Sprite sprite = Resolve(key, out isFinal);
+        if (isFinal)
+        {
+            _sprites[key] = sprite;
+        }
+
         return sprite;
     }
 
-    private static Sprite Resolve(int statId, int tags)
+    private static Sprite Resolve(HeadhunterStatKey key, out bool isFinal)
     {
-        if (tags != 0)
+        if (key.Tags != 0)
         {
-            Sprite tagged = FromGameStatIcons(statId, tags);
-            return tagged.IsNullOrDestroyed() ? For(statId, 0) : tagged;
+            return ResolveTagged(key, out isFinal);
         }
 
-        Sprite sprite = FromBundle(statId);
+        Sprite sprite = FromBundle(key.StatId);
         if (!sprite.IsNullOrDestroyed())
         {
+            isFinal = true;
             return sprite;
         }
 
-        sprite = FromGameStatIcons(statId, 0);
+        sprite = HeadhunterIconLoads.Poll(key, out bool settled);
         if (!sprite.IsNullOrDestroyed())
         {
+            isFinal = true;
             return sprite;
         }
 
+        sprite = ItemIcon();
+        isFinal = settled && !sprite.IsNullOrDestroyed();
+        return sprite;
+    }
+
+    private static Sprite ResolveTagged(HeadhunterStatKey key, out bool isFinal)
+    {
+        Sprite tagged = HeadhunterIconLoads.Poll(key, out bool settled);
+        if (!tagged.IsNullOrDestroyed())
+        {
+            isFinal = true;
+            return tagged;
+        }
+
+        Sprite fallback = For(key.StatId, 0, out bool fallbackFinal);
+        isFinal = settled && fallbackFinal;
+        return fallback;
+    }
+
+    private static Sprite ItemIcon()
+    {
         int index = CustomUniqueLookup.IndexOf(CustomUniqueSpecs.Headhunter.UniqueId);
         return CustomItemIcons.Get(index);
     }
@@ -68,35 +93,6 @@ internal static class HeadhunterBuffIcons
         }
 
         return Protect(image.sprite);
-    }
-
-    private static Sprite FromGameStatIcons(int statId, int tags)
-    {
-        if (!GlobalAssets.NodeTooltipIconListAvailable)
-        {
-            return null;
-        }
-
-        if (!NodeTooltipIconList.hasSpriteForPropertyAndTags((ushort)statId, (AT)tags))
-        {
-            return null;
-        }
-
-        SoftRef<Sprite> softRef = NodeTooltipIconList.getSprite((ushort)statId, (AT)tags);
-        if (softRef == null || !softRef)
-        {
-            return null;
-        }
-
-        LoadRef<Sprite> loadRef = SoftRefExtensions.CreateLoadRef(softRef, "LastEpoch_Hud", 0);
-        if (loadRef == null)
-        {
-            return null;
-        }
-
-        loadRef.BlockForLoad();
-        _loadRefs[new HeadhunterStatKey(statId, tags)] = loadRef;
-        return loadRef.AssetOrNull;
     }
 
     private static Sprite Protect(Sprite sprite)
