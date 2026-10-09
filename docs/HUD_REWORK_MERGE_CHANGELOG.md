@@ -51,3 +51,5 @@ Regress Force Drop search/category autofill, legal/illegal affixes, cyan styling
 For mandatory offline, test the old false flag and missing Login section, controller online actions, two character entries, combat and echoes. The successful observer-free predecessor retest is evidence for that predecessor, not proof of this new revision or the integrated HUD.
 
 Follow-up source for combined travel/QoL: `811f6bed` replaces unsafe dungeon-lobby presets with campaign approaches and redirects/blocks legacy dungeon favourites. Carry this correction into the HUD port; `f53998db` remains the head used for the original dry-merge comparison. New native/in-game confirmation is pending.
+
+Latest travel/QoL correction: `7e257fc4` supersedes the campaign approach fallback. Dungeon favourites must target the dungeon entrance waypoint itself, through its native UIWaypoint handler. Preserve this adapter and the generic/additive dungeon-room exclusions during the HUD port. Native testing of all three entrances remains pending.

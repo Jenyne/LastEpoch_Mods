@@ -41,7 +41,7 @@ Both paths have the defaults shown above. Override `-RepoPath` / `-GamePath` if 
 | 7 | `test/offline-guard-diagnostics` | Manual offline-only startup | fd79f606 manual-selection correction; native retest pending |
 | 8 | `feat/idol-reroll-misc` | Idol rerolling regression (already confirmed) | Confirmed working; optional restart/locale regression |
 | 9 | `master` | Current main baseline | Baseline/control build |
-| 11 | `feat/travel-anywhere` | Combined gold, key teleports, counters and map travel | Map travel confirmed; picker removed / busy guard fix pending retest |
+| 11 | `feat/travel-anywhere` | Combined gold, key teleports, counters and map travel | 7e257fc4 dungeon entrance waypoint correction pending runtime retest |
 
 ## 1. Force Drop / legal + illegal / global item search
 
@@ -251,3 +251,7 @@ Sync’s Player log confirms a CharacterSelect request during SystemLoading. Thi
 ## Manual offline selection — selection 7 (`fd79f606`)
 
 Supersedes the startup race candidate `9b888a1b`: its listener never confirmed Login and blocked manual clicks. Automatic selection and the readiness listener/gate are removed. Click the normal Play Offline button; online actions remain hidden/blocked unconditionally. Retest mouse/controller selection, two characters, combat and echoes. Sync must apply this correction to the HUD build separately. 999 core checks passed, six native-SDK checks skipped; formatting passed. Native compilation/runtime pending.
+
+## Dungeon entrance waypoints — selection 11 (`7e257fc4`)
+
+Supersedes the campaign approach targets from `811f6bed`: user wants the dungeon waypoint itself. Presets resolve the known Dun1Q10/Dun2Q10/Dun3Q10 entrance waypoints and invoke their native map handler; generic/additive dungeon loading remains blocked. Test all three with Travel Anywhere off/on, arrival movement/camera, ordinary key/tier entry, saved entrance favourites, locks and persistence. Retain Latest.log and Player.log if a transition hangs. This dispatch change is not yet a proven fix for the earlier native hang. 1,107 core checks passed, six native-SDK checks skipped; formatting passed. Native build/runtime pending.
