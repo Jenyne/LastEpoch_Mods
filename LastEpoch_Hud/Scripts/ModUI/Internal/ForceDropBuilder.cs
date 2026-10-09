@@ -192,6 +192,9 @@ public static class ForceDropBuilder
         public int group;
         public string name;
         public string aliases;
+
+        // Five-bit class compatibility mask for affix choices; -1 for other choices.
+        public int classMask = -1;
         public Action select;
         public ForceDropAffixFamily affixFamily;
         public bool champion;
@@ -1223,6 +1226,7 @@ public static class ForceDropBuilder
                                 : a.specialAffixType.ToString()
                             ),
                 aliases = NativeItemNames.AffixAliases(a) + "\n" + a.specialAffixType,
+                classMask = AffixClassMask(a),
                 affixFamily = ForceDropLegalAffixes.Family(a),
                 champion = context.IsChampion(a),
                 suffix = a.type == AffixList.AffixType.SUFFIX,
@@ -1235,6 +1239,76 @@ public static class ForceDropBuilder
             }
         );
         return "";
+    }
+
+    static readonly string[] affixClasses = { "Acolyte", "Mage", "Primalist", "Rogue", "Sentinel" };
+
+    // Probe native compatibility for each class; never infer it from translated names.
+    static int AffixClassMask(AffixList.Affix affix)
+    {
+        int mask = 0;
+        for (int i = 0; i < affixClasses.Length; i++)
+        {
+            if (!Enum.TryParse(affixClasses[i], true, out ItemList.ClassRequirement requirement))
+                continue;
+            try
+            {
+                if (affix.CanRollOn(FD.item_type, FD.item_subtype, requirement))
+                    mask |= 1 << i;
+            }
+            catch (Exception) { }
+        }
+        return mask;
+    }
+
+    static bool MatchesPickerSearch(Choice choice, string query)
+    {
+        if (choice.id < 0)
+            return true;
+        // Non-affix pickers keep the existing plain-text search.
+        if (choice.classMask < 0)
+            return NativeItemNames.Matches(query, choice.name, choice.aliases);
+        var terms = new List<string>();
+        int includeMask = 0,
+            excludeMask = 0;
+        foreach (
+            string word in (query ?? "").Split(
+                new[] { ' ', '\t' },
+                StringSplitOptions.RemoveEmptyEntries
+            )
+        )
+        {
+            string token = word.ToLowerInvariant();
+            if (token == "class:all")
+                continue;
+            bool exclude = token.StartsWith("-", StringComparison.Ordinal);
+            string cls = exclude ? token.Substring(1) : token;
+            if (cls.StartsWith("class:", StringComparison.Ordinal))
+                cls = cls.Substring(6);
+            int index = Array.FindIndex(
+                affixClasses,
+                name => string.Equals(name, cls, StringComparison.OrdinalIgnoreCase)
+            );
+            if (index >= 0)
+            {
+                if (exclude)
+                    excludeMask |= 1 << index;
+                else
+                    includeMask |= 1 << index;
+            }
+            else
+                terms.Add(word);
+        }
+        bool generic = choice.classMask == 31;
+        if (includeMask != 0 && !generic && (choice.classMask & includeMask) == 0)
+            return false;
+        if (!generic && (choice.classMask & excludeMask) != 0)
+            return false;
+        return NativeItemNames.Matches(
+            string.Join(" ", terms.ToArray()),
+            choice.name,
+            choice.aliases
+        );
     }
 
     static AffixList.Affix FindAffix(int id) => ForceDropCatalog.Find(id);
@@ -1973,10 +2047,7 @@ public static class ForceDropBuilder
         filtered.Clear();
         visiblePicks.Clear();
         foreach (var choice in choices)
-            if (
-                choice.id < 0
-                || NativeItemNames.Matches(pickerSearch.text, choice.name, choice.aliases)
-            )
+            if (MatchesPickerSearch(choice, pickerSearch.text))
                 filtered.Add(choice);
         pickerPrevious.gameObject.SetActive(!categoryPicker && !rarityPicker && !scrollAffixPicker);
         pickerNext.gameObject.SetActive(!categoryPicker && !rarityPicker && !scrollAffixPicker);
