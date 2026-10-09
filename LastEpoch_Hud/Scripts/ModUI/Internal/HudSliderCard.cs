@@ -71,8 +71,14 @@ internal sealed class HudSliderCard
 
         var card = Node(root, "Card");
         Stretch(card.GetComponent<RectTransform>());
-        card.GetComponent<RectTransform>().offsetMin = new Vector2(HudTheme.CardHorizontalInset, 0f);
-        card.GetComponent<RectTransform>().offsetMax = new Vector2(-HudTheme.CardHorizontalInset, 0f);
+        card.GetComponent<RectTransform>().offsetMin = new Vector2(
+            HudTheme.CardHorizontalInset,
+            0f
+        );
+        card.GetComponent<RectTransform>().offsetMax = new Vector2(
+            -HudTheme.CardHorizontalInset,
+            0f
+        );
         var cardImage = card.AddComponent<Image>();
         cardImage.color = HudTheme.Surface;
         var cardOutline = card.AddComponent<Outline>();
@@ -80,12 +86,7 @@ internal sealed class HudSliderCard
         cardOutline.effectDistance = new Vector2(HudTheme.BorderWidth, -HudTheme.BorderWidth);
         cardOutline.useGraphicAlpha = false;
 
-        var titleText = TextNode(
-            card,
-            "Title",
-            title,
-            HudTheme.SliderCardTitleFontSize
-        );
+        var titleText = TextNode(card, "Title", title, HudTheme.SliderCardTitleFontSize);
         var titleRect = titleText.GetComponent<RectTransform>();
         titleRect.anchorMin = new Vector2(0f, 1f);
         titleRect.anchorMax = new Vector2(1f, 1f);
@@ -208,10 +209,7 @@ internal sealed class HudSliderCard
         labelRect.anchorMax = new Vector2(1f, 1f);
         labelRect.pivot = new Vector2(0f, 1f);
         labelRect.offsetMin = new Vector2(4f, -38f);
-        labelRect.offsetMax = new Vector2(
-            definition.ReadEnabled == null ? -150f : -200f,
-            -4f
-        );
+        labelRect.offsetMax = new Vector2(definition.ReadEnabled == null ? -150f : -200f, -4f);
         label.alignment = TextAnchor.MiddleLeft;
 
         var slider = BuildSlider(rowObject, definition);
@@ -235,18 +233,19 @@ internal sealed class HudSliderCard
         SliderHook.Register(slider, value => SliderChanged(row, value));
         if (!toggle.IsNullOrDestroyed())
         {
-            ToggleHook.Register(toggle, enabled =>
-            {
-                if (!refreshing)
-                    row.Definition.WriteEnabled?.Invoke(enabled);
-            });
+            ToggleHook.Register(
+                toggle,
+                enabled =>
+                {
+                    if (!refreshing)
+                        row.Definition.WriteEnabled?.Invoke(enabled);
+                }
+            );
         }
         if (!input.IsNullOrDestroyed())
         {
             input.onEndEdit = new TMP_InputField.SubmitEvent();
-            input.onEndEdit.AddListener(
-                (UnityAction<string>)(text => CommitInput(row, text))
-            );
+            input.onEndEdit.AddListener((UnityAction<string>)(text => CommitInput(row, text)));
         }
     }
 
@@ -308,10 +307,7 @@ internal sealed class HudSliderCard
         handleRect.anchorMin = new Vector2(0f, 0.5f);
         handleRect.anchorMax = new Vector2(0f, 0.5f);
         handleRect.pivot = new Vector2(0.5f, 0.5f);
-        handleRect.sizeDelta = new Vector2(
-            HudTheme.SliderHandleSize,
-            HudTheme.SliderHandleSize
-        );
+        handleRect.sizeDelta = new Vector2(HudTheme.SliderHandleSize, HudTheme.SliderHandleSize);
         var handleImage = handle.AddComponent<Image>();
         handleImage.color = HudTheme.ControlHandle;
         if (!handleSprite.IsNullOrDestroyed())
@@ -374,7 +370,11 @@ internal sealed class HudSliderCard
             return null;
         }
 
-        var clone = UnityEngine.Object.Instantiate(inputTemplate.gameObject, parent.transform, false);
+        var clone = UnityEngine.Object.Instantiate(
+            inputTemplate.gameObject,
+            parent.transform,
+            false
+        );
         clone.name = "ValueInput";
         var input = clone.GetComponent<TMP_InputField>();
         var rect = clone.GetComponent<RectTransform>();
@@ -461,11 +461,7 @@ internal sealed class HudSliderCard
         if (row == null || row.Slider.IsNullOrDestroyed())
             return;
         if (TryParse(text, out float value))
-            row.Slider.value = Mathf.Clamp(
-                value,
-                row.Definition.Minimum,
-                row.Definition.Maximum
-            );
+            row.Slider.value = Mathf.Clamp(value, row.Definition.Minimum, row.Definition.Maximum);
         SetInputText(row, row.Slider.value);
     }
 
@@ -483,9 +479,10 @@ internal sealed class HudSliderCard
     {
         if (row.Input.IsNullOrDestroyed() || row.Input.isFocused)
             return;
-        string number = Mathf.Abs(value - Mathf.Round(value)) < 0.001f
-            ? Mathf.Round(value).ToString("0", CultureInfo.InvariantCulture)
-            : value.ToString("0.##", CultureInfo.InvariantCulture);
+        string number =
+            Mathf.Abs(value - Mathf.Round(value)) < 0.001f
+                ? Mathf.Round(value).ToString("0", CultureInfo.InvariantCulture)
+                : value.ToString("0.##", CultureInfo.InvariantCulture);
         row.Input.SetTextWithoutNotify(number + row.Definition.Unit);
     }
 

@@ -223,14 +223,22 @@ internal sealed class HudFormPage
         var bodyFitter = body.AddComponent<ContentSizeFitter>();
         bodyFitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
         bodyFitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-        var card = new Card { Root = cardObject, Body = body, Indicator = indicator };
-        ButtonHook.Register(headerButton, new Action(() =>
+        var card = new Card
         {
-            card.Expanded = !card.Expanded;
-            card.Body.SetActive(card.Expanded);
-            card.Indicator.text = card.Expanded ? "-" : "+";
-            LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
-        }));
+            Root = cardObject,
+            Body = body,
+            Indicator = indicator,
+        };
+        ButtonHook.Register(
+            headerButton,
+            new Action(() =>
+            {
+                card.Expanded = !card.Expanded;
+                card.Body.SetActive(card.Expanded);
+                card.Indicator.text = card.Expanded ? "-" : "+";
+                LayoutRebuilder.ForceRebuildLayoutImmediate(contentRect);
+            })
+        );
         return card;
     }
 
@@ -339,13 +347,7 @@ internal sealed class HudFormPage
         keybinds.Add(new KeybindBinding { Display = display, Setting = setting });
     }
 
-    public Toggle AddToggle(
-        Card card,
-        string id,
-        string label,
-        Func<bool> read,
-        Action<bool> write
-    )
+    public Toggle AddToggle(Card card, string id, string label, Func<bool> read, Action<bool> write)
     {
         var row = Row(card, "Toggle_" + id, HudTheme.RowHeight);
         var labelText = TextNode(row, "Label", label, HudTheme.BodyFontSize);
@@ -379,11 +381,14 @@ internal sealed class HudFormPage
         toggle.targetGraphic = boxImage;
         toggle.graphic = checkImage;
         toggle.colors = HudTheme.ButtonColors(HudTheme.ControlBox, HudTheme.SurfaceHover);
-        ToggleHook.Register(toggle, value =>
-        {
-            if (!refreshing)
-                write?.Invoke(value);
-        });
+        ToggleHook.Register(
+            toggle,
+            value =>
+            {
+                if (!refreshing)
+                    write?.Invoke(value);
+            }
+        );
         toggles.Add(new ToggleBinding { Control = toggle, Read = read });
         return toggle;
     }
@@ -493,11 +498,14 @@ internal sealed class HudFormPage
             toggle.targetGraphic = boxImage;
             toggle.graphic = checkImage;
             toggle.colors = HudTheme.ButtonColors(HudTheme.ControlBox, HudTheme.SurfaceHover);
-            ToggleHook.Register(toggle, value =>
-            {
-                if (!refreshing)
-                    writeEnabled?.Invoke(value);
-            });
+            ToggleHook.Register(
+                toggle,
+                value =>
+                {
+                    if (!refreshing)
+                        writeEnabled?.Invoke(value);
+                }
+            );
             toggles.Add(new ToggleBinding { Control = toggle, Read = readEnabled });
         }
 
@@ -580,11 +588,7 @@ internal sealed class HudFormPage
         if (control.IsNullOrDestroyed() || control.transform.parent == null || read == null)
             return;
         visibility.Add(
-            new VisibilityBinding
-            {
-                Root = control.transform.parent.gameObject,
-                Read = read,
-            }
+            new VisibilityBinding { Root = control.transform.parent.gameObject, Read = read }
         );
     }
 
@@ -653,7 +657,12 @@ internal sealed class HudFormPage
             })
         );
         dropdowns.Add(
-            new DropdownBinding { Control = dropdown, Source = source, Read = read }
+            new DropdownBinding
+            {
+                Control = dropdown,
+                Source = source,
+                Read = read,
+            }
         );
         return dropdown;
     }
@@ -752,7 +761,11 @@ internal sealed class HudFormPage
     {
         if (inputTemplate.IsNullOrDestroyed())
             return null;
-        var clone = UnityEngine.Object.Instantiate(inputTemplate.gameObject, parent.transform, false);
+        var clone = UnityEngine.Object.Instantiate(
+            inputTemplate.gameObject,
+            parent.transform,
+            false
+        );
         clone.name = "ValueInput";
         var input = clone.GetComponent<TMP_InputField>();
         var rect = clone.GetComponent<RectTransform>();
@@ -892,9 +905,10 @@ internal sealed class HudFormPage
     {
         if (binding.Input.IsNullOrDestroyed() || binding.Input.isFocused)
             return;
-        string number = Mathf.Abs(value - Mathf.Round(value)) < 0.001f
-            ? Mathf.Round(value).ToString("0", CultureInfo.InvariantCulture)
-            : value.ToString("0.##", CultureInfo.InvariantCulture);
+        string number =
+            Mathf.Abs(value - Mathf.Round(value)) < 0.001f
+                ? Mathf.Round(value).ToString("0", CultureInfo.InvariantCulture)
+                : value.ToString("0.##", CultureInfo.InvariantCulture);
         binding.Input.SetTextWithoutNotify(number + binding.Unit);
     }
 

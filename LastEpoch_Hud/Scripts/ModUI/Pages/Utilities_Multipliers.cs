@@ -62,7 +62,8 @@ internal static class Utilities_Multipliers
                     () => Save_Manager.instance.data.Character.Cheats.FavorMultiplier,
                     (enabled, value) =>
                     {
-                        Save_Manager.instance.data.Character.Cheats.Enable_FavorMultiplier = enabled;
+                        Save_Manager.instance.data.Character.Cheats.Enable_FavorMultiplier =
+                            enabled;
                         Save_Manager.instance.data.Character.Cheats.FavorMultiplier = value;
                     }
                 ),
@@ -178,8 +179,8 @@ internal static class Utilities_Multipliers
             {
                 if (Save_Manager.instance.IsNullOrDestroyed())
                     return;
-                Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier =
-                    (uint)Mathf.Clamp(Mathf.RoundToInt(value), 0, 255);
+                Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier = (uint)
+                    Mathf.Clamp(Mathf.RoundToInt(value), 0, 255);
             },
             ReadEnabled = () =>
                 !Save_Manager.instance.IsNullOrDestroyed()

@@ -44,10 +44,7 @@ internal static class CharacterActionControls
                 continue;
             var parent = button.transform.parent;
             button.gameObject.SetActive(false);
-            if (
-                !parent.IsNullOrDestroyed()
-                && parent.gameObject.name == "CharacterCurrencyActions"
-            )
+            if (!parent.IsNullOrDestroyed() && parent.gameObject.name == "CharacterCurrencyActions")
                 parent.gameObject.SetActive(false);
         }
     }

@@ -82,8 +82,7 @@ internal static class Utilities_Character
             "WeaponRestrictions",
             "Ignore Weapon Restrictions",
             () =>
-                HasSave()
-                && Save_Manager.instance.data.Character.Cheats.Enable_TwoHandedWithShield,
+                HasSave() && Save_Manager.instance.data.Character.Cheats.Enable_TwoHandedWithShield,
             value =>
             {
                 if (HasSave())
@@ -116,9 +115,7 @@ internal static class Utilities_Character
             card,
             "ChannelRegen",
             "Mana Regeneration While Channeling",
-            () =>
-                HasSave()
-                && Save_Manager.instance.data.Skills.Enable_NoManaRegenWhileChanneling,
+            () => HasSave() && Save_Manager.instance.data.Skills.Enable_NoManaRegenWhileChanneling,
             value =>
             {
                 if (HasSave())
@@ -201,8 +198,9 @@ internal static class Utilities_Character
                 bool enabled = value > 0.0001f;
                 Save_Manager.instance.data.Skills.Enable_PassivePointMultiplier = enabled;
                 if (enabled)
-                    Save_Manager.instance.data.Skills.PassivePointMultiplier =
-                        SettingRow.Clamp(value);
+                    Save_Manager.instance.data.Skills.PassivePointMultiplier = SettingRow.Clamp(
+                        value
+                    );
                 Mods.Skills.Passives_Points.Sync();
             }
         );
@@ -248,7 +246,9 @@ internal static class Utilities_Character
                 bool enabled = value > 0.0001f;
                 Save_Manager.instance.data.Skills.Enable_SkillLevelMultiplier = enabled;
                 if (enabled)
-                    Save_Manager.instance.data.Skills.SkillLevelMultiplier = SettingRow.Clamp(value);
+                    Save_Manager.instance.data.Skills.SkillLevelMultiplier = SettingRow.Clamp(
+                        value
+                    );
                 Mods.Skills.Skills_Level.Sync();
             }
         );
@@ -300,8 +300,9 @@ internal static class Utilities_Character
                 bool enabled = value > 0.0001f;
                 Save_Manager.instance.data.Factions.TheWoven.Enable_PointMultiplier = enabled;
                 if (enabled)
-                    Save_Manager.instance.data.Factions.TheWoven.PointMultiplier =
-                        SettingRow.Clamp(value);
+                    Save_Manager.instance.data.Factions.TheWoven.PointMultiplier = SettingRow.Clamp(
+                        value
+                    );
                 Mods.Factions.TheWoven.Faction_Woven_TreePoints.ApplyToPlayer();
             }
         );
@@ -341,8 +342,7 @@ internal static class Utilities_Character
             card,
             "Died",
             "Died",
-            () =>
-                !Refs_Manager.player_data.IsNullOrDestroyed() && Refs_Manager.player_data.Died,
+            () => !Refs_Manager.player_data.IsNullOrDestroyed() && Refs_Manager.player_data.Died,
             value =>
             {
                 if (!Refs_Manager.player_data.IsNullOrDestroyed())
@@ -358,9 +358,7 @@ internal static class Utilities_Character
             255f,
             true,
             () =>
-                Refs_Manager.player_data.IsNullOrDestroyed()
-                    ? 0f
-                    : Refs_Manager.player_data.Deaths,
+                Refs_Manager.player_data.IsNullOrDestroyed() ? 0f : Refs_Manager.player_data.Deaths,
             value =>
             {
                 if (!Refs_Manager.player_data.IsNullOrDestroyed())
@@ -485,9 +483,7 @@ internal static class Utilities_Character
         factionSelection = dropdownSource.IsNullOrDestroyed() ? 0 : dropdownSource.value;
         factionFavor = favorSource.IsNullOrDestroyed() ? 0f : favorSource.value;
         factionRank = rankSource.IsNullOrDestroyed() ? 0f : rankSource.value;
-        factionReputation = reputationSource.IsNullOrDestroyed()
-            ? 0f
-            : reputationSource.value;
+        factionReputation = reputationSource.IsNullOrDestroyed() ? 0f : reputationSource.value;
 
         var card = page.AddCard("Factions", "Factions");
         var dropdown = page.AddDropdown(
@@ -575,8 +571,7 @@ internal static class Utilities_Character
     private static void RefreshClassOptions()
     {
         if (
-            classSource.IsNullOrDestroyed()
-            || Refs_Manager.character_class_list.IsNullOrDestroyed()
+            classSource.IsNullOrDestroyed() || Refs_Manager.character_class_list.IsNullOrDestroyed()
         )
         {
             return;

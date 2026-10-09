@@ -37,12 +37,7 @@ internal sealed class HudPageDefinition
     public readonly HudArea[] Areas;
     public readonly HudPanelUse[] Panels;
 
-    public HudPageDefinition(
-        string id,
-        string label,
-        HudArea[] areas,
-        params HudPanelUse[] panels
-    )
+    public HudPageDefinition(string id, string label, HudArea[] areas, params HudPanelUse[] panels)
     {
         Id = id;
         Label = label;
@@ -156,11 +151,7 @@ internal static class HudNavigation
         "PassivePoints",
     };
 
-    private static readonly string[] RequirementsChildren =
-    {
-        "Title_Req",
-        "Items_Req_Content",
-    };
+    private static readonly string[] RequirementsChildren = { "Title_Req", "Items_Req_Content" };
 
     public static readonly HudSectionDefinition[] Sections =
     {
@@ -172,109 +163,46 @@ internal static class HudNavigation
                 "character.main",
                 "Character",
                 new[] { HudArea.Character, HudArea.Items, HudArea.Skills },
-                new HudPanelUse(
-                    HudPanelIds.CharacterCheats,
-                    CharacterRows,
-                    title: "Character"
-                ),
-                new HudPanelUse(
-                    HudPanelIds.SkillsGeneral,
-                    CharacterSkillRows,
-                    title: "Skills"
-                ),
+                new HudPanelUse(HudPanelIds.CharacterCheats, CharacterRows, title: "Character"),
+                new HudPanelUse(HudPanelIds.SkillsGeneral, CharacterSkillRows, title: "Skills"),
                 new HudPanelUse(HudPanelIds.CharacterFactions),
-                new HudPanelUse(
-                    HudPanelIds.ItemsUtility,
-                    visibleChildren: RequirementsChildren
-                )
+                new HudPanelUse(HudPanelIds.ItemsUtility, visibleChildren: RequirementsChildren)
             ),
-            new HudPageDefinition(
-                "character.multipliers",
-                "Multipliers",
-                new HudArea[0]
-            ),
-            new HudPageDefinition(
-                "character.currency",
-                "Currency",
-                new HudArea[0]
-            ),
-            new HudPageDefinition(
-                "character.buffs",
-                "Buffs",
-                new HudArea[0]
-            ),
+            new HudPageDefinition("character.multipliers", "Multipliers", new HudArea[0]),
+            new HudPageDefinition("character.currency", "Currency", new HudArea[0]),
+            new HudPageDefinition("character.buffs", "Buffs", new HudArea[0]),
             new HudPageDefinition("character.qol", "QOL", new HudArea[0])
         ),
         new(
             "items",
             "Items",
             true,
-            new HudPageDefinition(
-                "items.drop",
-                "Drop",
-                new HudArea[0]
-            ),
+            new HudPageDefinition("items.drop", "Drop", new HudArea[0]),
             new HudPageDefinition(
                 "items.force-drop",
                 "Force Drop",
                 new[] { HudArea.ForceDrop },
                 new HudPanelUse(HudPanelIds.ForceDrop)
             ),
-            new HudPageDefinition(
-                "items.crafting",
-                "Crafting Slot",
-                new HudArea[0]
-            )
+            new HudPageDefinition("items.crafting", "Crafting Slot", new HudArea[0])
         ),
         new(
             "world",
             "World",
             true,
-            new HudPageDefinition(
-                "world.difficulty",
-                "Difficulty",
-                new HudArea[0]
-            ),
-            new HudPageDefinition(
-                "world.monoliths",
-                "Monoliths",
-                new HudArea[0]
-            ),
-            new HudPageDefinition(
-                "world.misc",
-                "Misc",
-                new HudArea[0]
-            ),
-            new HudPageDefinition(
-                "world.camera",
-                "Camera",
-                new HudArea[0]
-            )
+            new HudPageDefinition("world.difficulty", "Difficulty", new HudArea[0]),
+            new HudPageDefinition("world.monoliths", "Monoliths", new HudArea[0]),
+            new HudPageDefinition("world.misc", "Misc", new HudArea[0]),
+            new HudPageDefinition("world.camera", "Camera", new HudArea[0])
         ),
         new(
             "skills",
             "Skills",
             true,
-            new HudPageDefinition(
-                "skills.minions",
-                "Minions",
-                new HudArea[0]
-            ),
-            new HudPageDefinition(
-                "skills.companions",
-                "Companions",
-                new HudArea[0]
-            ),
-            new HudPageDefinition(
-                "skills.summon",
-                "Summon",
-                new HudArea[0]
-            ),
-            new HudPageDefinition(
-                "skills.qol",
-                "QOL",
-                new HudArea[0]
-            )
+            new HudPageDefinition("skills.minions", "Minions", new HudArea[0]),
+            new HudPageDefinition("skills.companions", "Companions", new HudArea[0]),
+            new HudPageDefinition("skills.summon", "Summon", new HudArea[0]),
+            new HudPageDefinition("skills.qol", "QOL", new HudArea[0])
         ),
     };
 }

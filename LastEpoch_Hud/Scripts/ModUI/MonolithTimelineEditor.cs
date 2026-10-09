@@ -366,10 +366,7 @@ internal static class MonolithTimelineEditor
             oldOutline.enabled = false;
         HudStyler.AddPrimaryBorder(button.gameObject);
         button.targetGraphic = image;
-        button.colors = HudTheme.ActionButtonColors(
-            HudTheme.Surface,
-            HudTheme.Selection
-        );
+        button.colors = HudTheme.ActionButtonColors(HudTheme.Surface, HudTheme.Selection);
         foreach (var text in button.GetComponentsInChildren<Text>(true))
             text.color = HudTheme.TextPrimary;
         foreach (var text in button.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
@@ -420,10 +417,8 @@ internal static class MonolithTimelineEditor
         {
             input.textComponent.color = HudTheme.TextPrimary;
             input.textComponent.fontSize = HudTheme.ValueFontSize;
-            input.textComponent.horizontalAlignment =
-                Il2CppTMPro.HorizontalAlignmentOptions.Right;
-            input.textComponent.verticalAlignment =
-                Il2CppTMPro.VerticalAlignmentOptions.Middle;
+            input.textComponent.horizontalAlignment = Il2CppTMPro.HorizontalAlignmentOptions.Right;
+            input.textComponent.verticalAlignment = Il2CppTMPro.VerticalAlignmentOptions.Middle;
         }
     }
 

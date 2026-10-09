@@ -43,7 +43,8 @@ internal static class Utilities_Buffs
                     {
                         Save_Manager.instance.data.Character.PermanentBuffs.Enable_Damage_Buff =
                             enabled;
-                        Save_Manager.instance.data.Character.PermanentBuffs.Damage_Buff_Value = value;
+                        Save_Manager.instance.data.Character.PermanentBuffs.Damage_Buff_Value =
+                            value;
                     }
                 ),
                 Scaled(
@@ -54,7 +55,8 @@ internal static class Utilities_Buffs
                     () => Save_Manager.instance.data.Character.PermanentBuffs.AoE_Buff_Value,
                     (enabled, value) =>
                     {
-                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_AoE_Buff = enabled;
+                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_AoE_Buff =
+                            enabled;
                         Save_Manager.instance.data.Character.PermanentBuffs.AoE_Buff_Value = value;
                     }
                 ),
@@ -62,12 +64,18 @@ internal static class Utilities_Buffs
                     "AttackSpeed",
                     "Attack Speed",
                     10f,
-                    () => Save_Manager.instance.data.Character.PermanentBuffs.Enable_AttackSpeed_Buff,
-                    () => Save_Manager.instance.data.Character.PermanentBuffs.AttackSpeed_Buff_Value,
+                    () =>
+                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_AttackSpeed_Buff,
+                    () =>
+                        Save_Manager.instance.data.Character.PermanentBuffs.AttackSpeed_Buff_Value,
                     (enabled, value) =>
                     {
-                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_AttackSpeed_Buff =
-                            enabled;
+                        Save_Manager
+                            .instance
+                            .data
+                            .Character
+                            .PermanentBuffs
+                            .Enable_AttackSpeed_Buff = enabled;
                         Save_Manager.instance.data.Character.PermanentBuffs.AttackSpeed_Buff_Value =
                             value;
                     }
@@ -125,12 +133,18 @@ internal static class Utilities_Buffs
                     "HealthRegen",
                     "Health Regeneration",
                     10f,
-                    () => Save_Manager.instance.data.Character.PermanentBuffs.Enable_HealthRegen_Buff,
-                    () => Save_Manager.instance.data.Character.PermanentBuffs.HealthRegen_Buff_Value,
+                    () =>
+                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_HealthRegen_Buff,
+                    () =>
+                        Save_Manager.instance.data.Character.PermanentBuffs.HealthRegen_Buff_Value,
                     (enabled, value) =>
                     {
-                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_HealthRegen_Buff =
-                            enabled;
+                        Save_Manager
+                            .instance
+                            .data
+                            .Character
+                            .PermanentBuffs
+                            .Enable_HealthRegen_Buff = enabled;
                         Save_Manager.instance.data.Character.PermanentBuffs.HealthRegen_Buff_Value =
                             value;
                     }
@@ -156,7 +170,8 @@ internal static class Utilities_Buffs
                     () => Save_Manager.instance.data.Character.PermanentBuffs.Str_Buff_Value,
                     (enabled, value) =>
                     {
-                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_Str_Buff = enabled;
+                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_Str_Buff =
+                            enabled;
                         Save_Manager.instance.data.Character.PermanentBuffs.Str_Buff_Value = value;
                     }
                 ),
@@ -167,7 +182,8 @@ internal static class Utilities_Buffs
                     () => Save_Manager.instance.data.Character.PermanentBuffs.Int_Buff_Value,
                     (enabled, value) =>
                     {
-                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_Int_Buff = enabled;
+                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_Int_Buff =
+                            enabled;
                         Save_Manager.instance.data.Character.PermanentBuffs.Int_Buff_Value = value;
                     }
                 ),
@@ -178,7 +194,8 @@ internal static class Utilities_Buffs
                     () => Save_Manager.instance.data.Character.PermanentBuffs.Dex_Buff_Value,
                     (enabled, value) =>
                     {
-                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_Dex_Buff = enabled;
+                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_Dex_Buff =
+                            enabled;
                         Save_Manager.instance.data.Character.PermanentBuffs.Dex_Buff_Value = value;
                     }
                 ),
@@ -189,7 +206,8 @@ internal static class Utilities_Buffs
                     () => Save_Manager.instance.data.Character.PermanentBuffs.Vit_Buff_Value,
                     (enabled, value) =>
                     {
-                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_Vit_Buff = enabled;
+                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_Vit_Buff =
+                            enabled;
                         Save_Manager.instance.data.Character.PermanentBuffs.Vit_Buff_Value = value;
                     }
                 ),
@@ -200,7 +218,8 @@ internal static class Utilities_Buffs
                     () => Save_Manager.instance.data.Character.PermanentBuffs.Att_Buff_Value,
                     (enabled, value) =>
                     {
-                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_Att_Buff = enabled;
+                        Save_Manager.instance.data.Character.PermanentBuffs.Enable_Att_Buff =
+                            enabled;
                         Save_Manager.instance.data.Character.PermanentBuffs.Att_Buff_Value = value;
                     }
                 ),
@@ -289,13 +308,7 @@ internal static class Utilities_Buffs
             "CriticalChance",
             "Critical Chance",
             96f,
-            () =>
-                Save_Manager
-                    .instance
-                    .data
-                    .Character
-                    .PermanentBuffs
-                    .Enable_CriticalChance_Buff,
+            () => Save_Manager.instance.data.Character.PermanentBuffs.Enable_CriticalChance_Buff,
             () =>
             {
                 float raw = Save_Manager
@@ -308,22 +321,10 @@ internal static class Utilities_Buffs
             },
             (enabled, percentage) =>
             {
-                Save_Manager
-                    .instance
-                    .data
-                    .Character
-                    .PermanentBuffs
-                    .Enable_CriticalChance_Buff = enabled;
-                Save_Manager
-                    .instance
-                    .data
-                    .Character
-                    .PermanentBuffs
-                    .CriticalChance_Buff_Value = Mathf.Clamp(
-                    (percentage - 1f) / 100f,
-                    0f,
-                    0.95f
-                );
+                Save_Manager.instance.data.Character.PermanentBuffs.Enable_CriticalChance_Buff =
+                    enabled;
+                Save_Manager.instance.data.Character.PermanentBuffs.CriticalChance_Buff_Value =
+                    Mathf.Clamp((percentage - 1f) / 100f, 0f, 0.95f);
             }
         );
     }

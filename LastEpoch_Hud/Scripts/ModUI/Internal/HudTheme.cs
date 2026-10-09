@@ -11,9 +11,20 @@ public static class HudTheme
 {
     private readonly struct Palette
     {
-        public readonly Color Backdrop, Background, Surface, Hover, Pressed, Selection;
-        public readonly Color Accent, AccentSoft, AccentMuted, CardDivider;
-        public readonly Color Text, TextMuted, Handle, Disabled;
+        public readonly Color Backdrop,
+            Background,
+            Surface,
+            Hover,
+            Pressed,
+            Selection;
+        public readonly Color Accent,
+            AccentSoft,
+            AccentMuted,
+            CardDivider;
+        public readonly Color Text,
+            TextMuted,
+            Handle,
+            Disabled;
 
         public Palette(
             Color backdrop,
@@ -51,7 +62,10 @@ public static class HudTheme
 
     private readonly struct LegacyFontMetrics
     {
-        public readonly int Size, Minimum, Maximum;
+        public readonly int Size,
+            Minimum,
+            Maximum;
+
         public LegacyFontMetrics(Text text)
         {
             Size = text.fontSize;
@@ -62,7 +76,10 @@ public static class HudTheme
 
     private readonly struct TmpFontMetrics
     {
-        public readonly float Size, Minimum, Maximum;
+        public readonly float Size,
+            Minimum,
+            Maximum;
+
         public TmpFontMetrics(TMP_Text text)
         {
             Size = text.fontSize;
@@ -73,12 +90,12 @@ public static class HudTheme
 
     private static readonly Palette DarkPalette = new(
         Rgba(0, 0, 0, 166),
-        Rgba(21, 21, 21, 255),       // #151515 main background
-        Rgba(14, 14, 16, 255),       // #0E0E10 cards and controls
+        Rgba(21, 21, 21, 255), // #151515 main background
+        Rgba(14, 14, 16, 255), // #0E0E10 cards and controls
         Rgba(35, 35, 39, 255),
         Rgba(52, 43, 34, 255),
-        Rgba(40, 40, 44, 255),       // selected items are visibly lighter
-        Rgba(213, 180, 122, 255),    // #D5B47A
+        Rgba(40, 40, 44, 255), // selected items are visibly lighter
+        Rgba(213, 180, 122, 255), // #D5B47A
         Rgba(213, 180, 122, 166),
         Rgba(213, 180, 122, 205),
         Rgba(255, 255, 255, 102),
@@ -278,7 +295,8 @@ public static class HudTheme
         foreach (var selectable in root.GetComponentsInChildren<Selectable>(true))
         {
             Color normal = selectable.colors.normalColor;
-            bool themed = selectable is Slider
+            bool themed =
+                selectable is Slider
                 || Same(normal, Current.Surface)
                 || Same(normal, Current.Background)
                 || Same(normal, Current.Selection)
@@ -316,20 +334,34 @@ public static class HudTheme
 
     private static Color Map(Color value, Palette from, Palette to)
     {
-        if (Same(value, from.Backdrop)) return to.Backdrop;
-        if (Same(value, from.Background)) return to.Background;
-        if (Same(value, from.Surface)) return to.Surface;
-        if (Same(value, from.Hover)) return to.Hover;
-        if (Same(value, from.Pressed)) return to.Pressed;
-        if (Same(value, from.Selection)) return to.Selection;
-        if (Same(value, from.Accent)) return to.Accent;
-        if (Same(value, from.AccentSoft)) return to.AccentSoft;
-        if (Same(value, from.AccentMuted)) return to.AccentMuted;
-        if (Same(value, from.CardDivider)) return to.CardDivider;
-        if (Same(value, from.Text)) return to.Text;
-        if (Same(value, from.TextMuted)) return to.TextMuted;
-        if (Same(value, from.Handle)) return to.Handle;
-        if (Same(value, from.Disabled)) return to.Disabled;
+        if (Same(value, from.Backdrop))
+            return to.Backdrop;
+        if (Same(value, from.Background))
+            return to.Background;
+        if (Same(value, from.Surface))
+            return to.Surface;
+        if (Same(value, from.Hover))
+            return to.Hover;
+        if (Same(value, from.Pressed))
+            return to.Pressed;
+        if (Same(value, from.Selection))
+            return to.Selection;
+        if (Same(value, from.Accent))
+            return to.Accent;
+        if (Same(value, from.AccentSoft))
+            return to.AccentSoft;
+        if (Same(value, from.AccentMuted))
+            return to.AccentMuted;
+        if (Same(value, from.CardDivider))
+            return to.CardDivider;
+        if (Same(value, from.Text))
+            return to.Text;
+        if (Same(value, from.TextMuted))
+            return to.TextMuted;
+        if (Same(value, from.Handle))
+            return to.Handle;
+        if (Same(value, from.Disabled))
+            return to.Disabled;
         return value;
     }
 
@@ -347,15 +379,46 @@ internal static class HudStyler
     // Selectable color transitions tint their target Graphic, which makes an
     // Outline attached to that same Graphic look muted. Independent edge
     // images retain the exact primary color in every interaction state.
-    public static void AddPrimaryBorder(GameObject target, float thickness = HudTheme.ControlBorderWidth)
+    public static void AddPrimaryBorder(
+        GameObject target,
+        float thickness = HudTheme.ControlBorderWidth
+    )
     {
         if (target.IsNullOrDestroyed())
             return;
         float half = thickness * 0.5f;
-        AddBorderEdge(target, "LEHUD_BorderTop", new Vector2(0f, 1f), Vector2.one, new Vector2(0f, -half), new Vector2(0f, thickness));
-        AddBorderEdge(target, "LEHUD_BorderBottom", Vector2.zero, new Vector2(1f, 0f), new Vector2(0f, half), new Vector2(0f, thickness));
-        AddBorderEdge(target, "LEHUD_BorderLeft", Vector2.zero, new Vector2(0f, 1f), new Vector2(half, 0f), new Vector2(thickness, 0f));
-        AddBorderEdge(target, "LEHUD_BorderRight", new Vector2(1f, 0f), Vector2.one, new Vector2(-half, 0f), new Vector2(thickness, 0f));
+        AddBorderEdge(
+            target,
+            "LEHUD_BorderTop",
+            new Vector2(0f, 1f),
+            Vector2.one,
+            new Vector2(0f, -half),
+            new Vector2(0f, thickness)
+        );
+        AddBorderEdge(
+            target,
+            "LEHUD_BorderBottom",
+            Vector2.zero,
+            new Vector2(1f, 0f),
+            new Vector2(0f, half),
+            new Vector2(0f, thickness)
+        );
+        AddBorderEdge(
+            target,
+            "LEHUD_BorderLeft",
+            Vector2.zero,
+            new Vector2(0f, 1f),
+            new Vector2(half, 0f),
+            new Vector2(thickness, 0f)
+        );
+        AddBorderEdge(
+            target,
+            "LEHUD_BorderRight",
+            new Vector2(1f, 0f),
+            Vector2.one,
+            new Vector2(-half, 0f),
+            new Vector2(thickness, 0f)
+        );
     }
 
     private static void AddBorderEdge(
@@ -490,7 +553,9 @@ internal static class HudStyler
         if (slider.IsNullOrDestroyed())
             return;
         var background = Prefab.Child(slider.gameObject, "Background");
-        var backgroundImage = background.IsNullOrDestroyed() ? null : background.GetComponent<Image>();
+        var backgroundImage = background.IsNullOrDestroyed()
+            ? null
+            : background.GetComponent<Image>();
         if (!backgroundImage.IsNullOrDestroyed())
             backgroundImage.color = HudTheme.ControlTrack;
         if (!slider.fillRect.IsNullOrDestroyed())

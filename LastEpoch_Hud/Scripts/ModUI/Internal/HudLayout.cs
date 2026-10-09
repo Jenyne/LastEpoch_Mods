@@ -189,7 +189,10 @@ public static class HudLayout
                     continue;
                 foreach (var child in container.Children)
                 {
-                    if (!child.activeSelf || child.name.StartsWith("Border", StringComparison.Ordinal))
+                    if (
+                        !child.activeSelf
+                        || child.name.StartsWith("Border", StringComparison.Ordinal)
+                    )
                         continue;
                     var element = child.GetComponent<LayoutElement>();
                     height += element.IsNullOrDestroyed()
@@ -383,10 +386,7 @@ public static class HudLayout
         HudStyler.AddPrimaryBorder(settingsObject, 1f);
         var settingsButton = settingsObject.AddComponent<Button>();
         settingsButton.targetGraphic = settingsImage;
-        settingsButton.colors = HudTheme.ButtonColors(
-            HudTheme.Surface,
-            HudTheme.Selection
-        );
+        settingsButton.colors = HudTheme.ButtonColors(HudTheme.Surface, HudTheme.Selection);
         ButtonHook.Register(settingsButton, ToggleSettings);
         var settingsIcon = TextNode(settingsObject, "Label", "⚙", 27);
         Stretch(settingsIcon.GetComponent<RectTransform>());
@@ -440,7 +440,12 @@ public static class HudLayout
         dividerImage.color = HudTheme.CardDivider;
         dividerImage.raycastTarget = false;
 
-        var fontLabel = TextNode(settingsPanel, "FontSizeLabel", "Font Size", HudTheme.BodyFontSize);
+        var fontLabel = TextNode(
+            settingsPanel,
+            "FontSizeLabel",
+            "Font Size",
+            HudTheme.BodyFontSize
+        );
         var fontLabelRect = fontLabel.GetComponent<RectTransform>();
         fontLabelRect.anchorMin = new Vector2(0f, 1f);
         fontLabelRect.anchorMax = new Vector2(1f, 1f);
@@ -465,12 +470,7 @@ public static class HudLayout
 
         settingsFontSlider = BuildSettingsSlider(settingsPanel);
 
-        var modeLabel = TextNode(
-            settingsPanel,
-            "ModeLabel",
-            "Appearance",
-            HudTheme.BodyFontSize
-        );
+        var modeLabel = TextNode(settingsPanel, "ModeLabel", "Appearance", HudTheme.BodyFontSize);
         var modeRect = modeLabel.GetComponent<RectTransform>();
         modeRect.anchorMin = new Vector2(0f, 1f);
         modeRect.anchorMax = new Vector2(1f, 1f);
@@ -522,10 +522,7 @@ public static class HudLayout
         handleRect.anchorMin = new Vector2(0f, 0.5f);
         handleRect.anchorMax = new Vector2(0f, 0.5f);
         handleRect.pivot = new Vector2(0.5f, 0.5f);
-        handleRect.sizeDelta = new Vector2(
-            HudTheme.SliderHandleSize,
-            HudTheme.SliderHandleSize
-        );
+        handleRect.sizeDelta = new Vector2(HudTheme.SliderHandleSize, HudTheme.SliderHandleSize);
         var handleImage = handle.AddComponent<Image>();
         handleImage.color = HudTheme.ControlHandle;
 
@@ -536,20 +533,20 @@ public static class HudLayout
         slider.handleRect = handleRect;
         slider.targetGraphic = handleImage;
         slider.value = Mathf.Round(HudTheme.FontScale * 100f);
-        slider.colors = HudTheme.ButtonColors(
-            HudTheme.ControlHandle,
-            HudTheme.ControlHandle
-        );
-        SliderHook.Register(slider, value =>
-        {
-            float rounded = Mathf.Round(value / 5f) * 5f;
-            if (Mathf.Abs(slider.value - rounded) > 0.01f)
+        slider.colors = HudTheme.ButtonColors(HudTheme.ControlHandle, HudTheme.ControlHandle);
+        SliderHook.Register(
+            slider,
+            value =>
             {
-                slider.SetValueWithoutNotify(rounded);
+                float rounded = Mathf.Round(value / 5f) * 5f;
+                if (Mathf.Abs(slider.value - rounded) > 0.01f)
+                {
+                    slider.SetValueWithoutNotify(rounded);
+                }
+                HudTheme.SetFontScale(window, rounded / 100f);
+                RefreshSettingsControls();
             }
-            HudTheme.SetFontScale(window, rounded / 100f);
-            RefreshSettingsControls();
-        });
+        );
         return slider;
     }
 
@@ -797,7 +794,8 @@ public static class HudLayout
                 pageButtons[page.Id] = new NavigationButton
                 {
                     Button = pageButton,
-                    Background = Prefab.Child(pageButton.gameObject, "ButtonSurface")
+                    Background = Prefab
+                        .Child(pageButton.gameObject, "ButtonSurface")
                         .GetComponent<Image>(),
                     Accent = accent,
                 };
@@ -901,10 +899,7 @@ public static class HudLayout
         dividerRect.anchorMin = Vector2.zero;
         dividerRect.anchorMax = new Vector2(1f, 0f);
         dividerRect.pivot = new Vector2(0.5f, 0f);
-        dividerRect.offsetMin = new Vector2(
-            child ? HudTheme.NavigationIndent - 10f : 0f,
-            0f
-        );
+        dividerRect.offsetMin = new Vector2(child ? HudTheme.NavigationIndent - 10f : 0f, 0f);
         dividerRect.offsetMax = Vector2.zero;
         dividerRect.sizeDelta = new Vector2(dividerRect.sizeDelta.x, HudTheme.BorderWidth);
         var dividerImage = divider.AddComponent<Image>();
@@ -1083,9 +1078,7 @@ public static class HudLayout
 
         // Until each page body is rebuilt, show one intact legacy content page
         // behind the new navigation instead of overlapping several old layouts.
-        SetLegacyAreas(
-            page.Areas.Length > 0 ? new[] { page.Areas[0] } : Array.Empty<HudArea>()
-        );
+        SetLegacyAreas(page.Areas.Length > 0 ? new[] { page.Areas[0] } : Array.Empty<HudArea>());
         SetSelected(page.Id);
         activePage = page;
     }
@@ -1149,8 +1142,7 @@ public static class HudLayout
                 removedPreviousRow = true;
             }
             else if (
-                removedPreviousRow
-                && child.name.StartsWith("Border", StringComparison.Ordinal)
+                removedPreviousRow && child.name.StartsWith("Border", StringComparison.Ordinal)
             )
             {
                 child.SetActive(false);

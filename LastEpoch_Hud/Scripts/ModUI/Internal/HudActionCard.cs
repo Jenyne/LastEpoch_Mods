@@ -42,8 +42,14 @@ internal sealed class HudActionCard
 
         var card = Node(root, "Card");
         Stretch(card.GetComponent<RectTransform>());
-        card.GetComponent<RectTransform>().offsetMin = new Vector2(HudTheme.CardHorizontalInset, 0f);
-        card.GetComponent<RectTransform>().offsetMax = new Vector2(-HudTheme.CardHorizontalInset, 0f);
+        card.GetComponent<RectTransform>().offsetMin = new Vector2(
+            HudTheme.CardHorizontalInset,
+            0f
+        );
+        card.GetComponent<RectTransform>().offsetMax = new Vector2(
+            -HudTheme.CardHorizontalInset,
+            0f
+        );
         var cardImage = card.AddComponent<Image>();
         cardImage.color = HudTheme.Surface;
         var cardOutline = card.AddComponent<Outline>();
@@ -51,12 +57,7 @@ internal sealed class HudActionCard
         cardOutline.effectDistance = new Vector2(HudTheme.BorderWidth, -HudTheme.BorderWidth);
         cardOutline.useGraphicAlpha = false;
 
-        var titleText = TextNode(
-            card,
-            "Title",
-            title,
-            HudTheme.SliderCardTitleFontSize
-        );
+        var titleText = TextNode(card, "Title", title, HudTheme.SliderCardTitleFontSize);
         var titleRect = titleText.GetComponent<RectTransform>();
         titleRect.anchorMin = new Vector2(0f, 1f);
         titleRect.anchorMax = new Vector2(1f, 1f);
@@ -139,12 +140,7 @@ internal sealed class HudActionCard
         button.colors = HudTheme.ActionButtonColors(HudTheme.Surface, HudTheme.Selection);
         Prefab.BindButton(button, definition.Click);
 
-        var label = TextNode(
-            buttonObject,
-            "Label",
-            definition.Label,
-            HudTheme.BodyFontSize
-        );
+        var label = TextNode(buttonObject, "Label", definition.Label, HudTheme.BodyFontSize);
         Stretch(label.GetComponent<RectTransform>());
         label.alignment = TextAnchor.MiddleCenter;
         label.color = HudTheme.TextPrimary;

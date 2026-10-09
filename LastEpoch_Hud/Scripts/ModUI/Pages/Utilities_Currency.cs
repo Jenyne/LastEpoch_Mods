@@ -54,9 +54,11 @@ internal static class Utilities_Currency
 
     public static void Hide() => page?.Hide();
 
-    private static HudActionCard.Definition Action(
-        string id,
-        string label,
-        System.Action click
-    ) => new() { Id = id, Label = label, Click = click };
+    private static HudActionCard.Definition Action(string id, string label, System.Action click) =>
+        new()
+        {
+            Id = id,
+            Label = label,
+            Click = click,
+        };
 }
