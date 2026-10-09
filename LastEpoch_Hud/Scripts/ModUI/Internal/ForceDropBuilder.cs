@@ -108,7 +108,7 @@ public static class ForceDropBuilder
         metadataLogged;
     static float nextCorruptionCheck;
     static string result = "";
-    static Toggle illegalToggle;
+    static Button illegalModeButton;
     static int RouteMaximum => allowIllegal ? 8 : 7;
     public static bool IsReady => !root.IsNullOrDestroyed();
 
@@ -303,8 +303,6 @@ public static class ForceDropBuilder
         }
         if (!IsReady)
             return false;
-        if (!illegalToggle.IsNullOrDestroyed() && illegalToggle.isOn != allowIllegal)
-            ChangeMode(illegalToggle.isOn);
         RefreshNativeLocale();
         RefreshTierLimits();
         foreach (var n in numbers)
@@ -553,16 +551,14 @@ public static class ForceDropBuilder
             }
         );
         Label(middle, "Customize", .03f, .955f, .55f, .99f, 18);
-        // Render the mode toggle above the panels, aligned with Customize header.
-        BuildIllegalToggle(root);
-        Button(middle, "Random", .03f, .905f, .32f, .948f, () => Preset(true));
-        Button(middle, "Maximum", .35f, .905f, .64f, .948f, () => Preset(false));
+        Button(middle, "Random", .03f, .905f, .245f, .948f, () => Preset(true));
+        Button(middle, "Maximum", .27f, .905f, .485f, .948f, () => Preset(false));
         Button(
             middle,
             "Custom",
-            .67f,
+.51f,
             .905f,
-            .97f,
+            .725f,
             .948f,
             () =>
             {
@@ -571,6 +567,16 @@ public static class ForceDropBuilder
                 RefreshModes();
             }
         );
+        illegalModeButton = Button(
+            middle,
+            "Illegal: Off",
+            .75f,
+            .905f,
+            .97f,
+            .948f,
+            () => ChangeMode(!allowIllegal)
+        );
+        RefreshIllegalButton();
         basePage = Panel(middle, "Base properties", .02f, .735f, .98f, .895f);
         forging = NumericGrid(basePage, "Forging potential", 0, 1, 0, 255, 100, false);
         for (int i = 0; i < 3; i++)
@@ -1713,67 +1719,19 @@ public static class ForceDropBuilder
         if (!picker.IsNullOrDestroyed())
             picker.SetActive(false);
         RefreshTierLimits();
+        RefreshIllegalButton();
     }
 
-    static void BuildIllegalToggle(GameObject parent)
+    static void RefreshIllegalButton()
     {
-        var sample = Hud_Manager.hud_object.GetComponentInChildren<Toggle>(true);
-        var row = new GameObject("ForceDropIllegalMode");
-        row.AddComponent<RectTransform>();
-        row.transform.SetParent(parent.transform, false);
-        // Customize occupies x=.30-.73 and y=.02-.945 of root. Keep this
-        // overlay at root level so it is not clipped or hidden by nested panels.
-        Rect(row, .586f, .902f, .718f, .938f);
-        var background = row.AddComponent<Image>();
-        background.color = new Color(.13f, .14f, .17f, .95f);
-        var border = row.AddComponent<Outline>();
-        border.effectColor = new Color(gold.r, gold.g, gold.b, .65f);
-        border.effectDistance = new Vector2(1f, -1f);
-        illegalToggle = row.AddComponent<Toggle>();
-        var box = new GameObject("Box");
-        box.AddComponent<RectTransform>();
-        box.transform.SetParent(row.transform, false);
-        var boxImage = box.AddComponent<Image>();
-        var rect = box.GetComponent<RectTransform>();
-        rect.anchorMin = rect.anchorMax = new Vector2(0, .5f);
-        rect.pivot = new Vector2(0, .5f);
-        rect.sizeDelta = new Vector2(18, 18);
-        boxImage.color = new Color(.58f, .45f, .20f);
-        var check = new GameObject("Check");
-        check.AddComponent<RectTransform>();
-        check.transform.SetParent(box.transform, false);
-        Rect(check, .2f, .2f, .8f, .8f);
-        var checkImage = check.AddComponent<Image>();
-        checkImage.color = gold;
-        if (!sample.IsNullOrDestroyed())
-        {
-            var sourceBox = sample.targetGraphic.IsNullOrDestroyed()
-                ? null
-                : sample.targetGraphic.GetComponent<Image>();
-            var sourceCheck = sample.graphic.IsNullOrDestroyed()
-                ? null
-                : sample.graphic.GetComponent<Image>();
-            if (!sourceBox.IsNullOrDestroyed())
-            {
-                boxImage.sprite = sourceBox.sprite;
-                boxImage.type = sourceBox.type;
-                boxImage.color = sourceBox.color;
-            }
-            if (!sourceCheck.IsNullOrDestroyed())
-            {
-                checkImage.sprite = sourceCheck.sprite;
-                checkImage.type = sourceCheck.type;
-                checkImage.color = sourceCheck.color;
-            }
-            illegalToggle.colors = sample.colors;
-            illegalToggle.transition = sample.transition;
-        }
-        illegalToggle.targetGraphic = boxImage;
-        illegalToggle.graphic = checkImage;
-        illegalToggle.SetIsOnWithoutNotify(allowIllegal);
-        var label = Label(row, "Allow Illegal Items", .16f, .05f, .98f, .95f, 12);
-        label.alignment = TextAnchor.MiddleLeft;
-        label.horizontalOverflow = HorizontalWrapMode.Overflow;
+        if (illegalModeButton.IsNullOrDestroyed())
+            return;
+        Caption(illegalModeButton, allowIllegal ? "Illegal: On" : "Illegal: Off");
+        var background = illegalModeButton.GetComponent<Image>();
+        if (!background.IsNullOrDestroyed())
+            background.color = allowIllegal
+                ? new Color(.42f, .27f, .12f, 1f)
+                : dark;
     }
 
     static void Drop()
