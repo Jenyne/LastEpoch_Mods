@@ -6,8 +6,11 @@ using Data = LastEpoch_Hud.Scripts.Hud_Manager.Content.Character.Data;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-// The bundled HUD uses manually positioned RectTransforms, not layout groups.
-// Give every moved control new anchors instead of retaining its old viewport geometry.
+/// <summary>
+/// The bundled HUD uses manually positioned RectTransforms, not layout groups.
+/// Give every moved control new anchors instead of retaining its old viewport geometry.
+/// Build runs once per root; after the HUD (and root) is destroyed it rebuilds and clears the button and accent lists.
+/// </summary>
 internal static class MonolithTimelineEditor
 {
     const float EditorHeight = 500f;

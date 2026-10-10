@@ -5,6 +5,7 @@ using LastEpoch_Hud.Scripts.Core.ModUI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Shell;
 
+/// <summary>Search page index. Page index per HUD; cleared on HUD re-bind (HudLayout.Initialize calls Reset).</summary>
 internal static class HudSearch
 {
     private static readonly Dictionary<HudPageId, IHudSearchPage> _pages = new();

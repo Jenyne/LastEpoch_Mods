@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
+/// <summary>Skills &gt; Summon HUD page. State resets on HUD re-bind (Build).</summary>
 internal static class SkillsSummonPage
 {
     private static HudFormPage page;

@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
+/// <summary>Skills &gt; Companions HUD page. State resets on HUD re-bind (Build).</summary>
 internal static class SkillsCompanionsPage
 {
     private static HudFormPage page;

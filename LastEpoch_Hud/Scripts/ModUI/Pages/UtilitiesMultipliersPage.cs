@@ -5,8 +5,11 @@ using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-// Save bindings for Utilities > Multipliers. The shared HudSliderCard owns all
-// visuals and interaction; these definitions preserve the original raw x values.
+/// <summary>
+/// Save bindings for Utilities &gt; Multipliers. The shared HudSliderCard owns all
+/// visuals and interaction; these definitions preserve the original raw x values.
+/// State resets on HUD re-bind (Build).
+/// </summary>
 internal static class UtilitiesMultipliersPage
 {
     private static HudSliderCard page;

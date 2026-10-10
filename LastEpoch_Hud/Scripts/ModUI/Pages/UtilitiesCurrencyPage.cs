@@ -5,6 +5,7 @@ using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
+/// <summary>Utilities &gt; Currency HUD page. State resets on HUD re-bind (Build).</summary>
 internal static class UtilitiesCurrencyPage
 {
     private static HudActionCard page;

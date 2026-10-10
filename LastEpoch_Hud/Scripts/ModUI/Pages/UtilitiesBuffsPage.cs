@@ -5,8 +5,11 @@ using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-// Save bindings for Utilities > Buffs. Values are shown in the same percentage
-// units as the legacy labels while retaining every original raw slider range.
+/// <summary>
+/// Save bindings for Utilities &gt; Buffs. Values are shown in the same percentage
+/// units as the legacy labels while retaining every original raw slider range.
+/// State resets on HUD re-bind (Build).
+/// </summary>
 internal static class UtilitiesBuffsPage
 {
     private static HudSliderCard page;

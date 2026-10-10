@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
+/// <summary>World &gt; Monoliths HUD page. Page and Timelines card reset on HUD re-bind (Build).</summary>
 internal static class WorldMonolithsPage
 {
     private static HudFormPage page;

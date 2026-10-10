@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Shell;
 
-/// <summary>Visual tokens, palettes and saved theme preferences for the HUD.</summary>
+/// <summary>Visual tokens, palettes and saved theme preferences for the HUD. Preferences load from PlayerPrefs once per game session (LoadPreferences); setters update memory and PlayerPrefs; never reset on HUD re-bind.</summary>
 public static class HudTheme
 {
     private readonly struct Palette

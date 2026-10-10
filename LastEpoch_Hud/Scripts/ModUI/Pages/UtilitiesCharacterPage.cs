@@ -6,8 +6,11 @@ using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-// Utilities > Character. The legacy Character, Skills, Data, Blessings, and
-// Factions controls are represented here without changing their game logic.
+/// <summary>
+/// Utilities &gt; Character. The legacy Character, Skills, Data, Blessings, and
+/// Factions controls are represented here without changing their game logic.
+/// Page, class source and faction inputs re-seed from the legacy controls on HUD re-bind (Build).
+/// </summary>
 internal static class UtilitiesCharacterPage
 {
     private static HudFormPage _page;

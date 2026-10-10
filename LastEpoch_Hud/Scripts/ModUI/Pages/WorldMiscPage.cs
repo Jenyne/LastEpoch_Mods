@@ -6,6 +6,7 @@ using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
+/// <summary>World &gt; Misc HUD page. Page, session totals label and pause button reset on HUD re-bind (Build).</summary>
 internal static class WorldMiscPage
 {
     private static HudFormPage page;

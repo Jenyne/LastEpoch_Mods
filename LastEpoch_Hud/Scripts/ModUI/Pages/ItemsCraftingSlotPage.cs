@@ -6,8 +6,11 @@ using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-// Items > Crafting Slot. Every override has an explicit checkbox; slider zero is
-// therefore a valid value and never doubles as an enabled/disabled sentinel.
+/// <summary>
+/// Items &gt; Crafting Slot. Every override has an explicit checkbox; slider zero is
+/// therefore a valid value and never doubles as an enabled/disabled sentinel.
+/// State resets on HUD re-bind (Build).
+/// </summary>
 internal static class ItemsCraftingSlotPage
 {
     private static HudFormPage page;

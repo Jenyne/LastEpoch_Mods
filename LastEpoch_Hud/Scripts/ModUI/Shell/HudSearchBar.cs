@@ -9,6 +9,7 @@ using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Shell;
 
+/// <summary>Search bar. Input, results and match lists are replaced/cleared in Build on HUD re-bind; Clear empties matches.</summary>
 internal static class HudSearchBar
 {
     private const int ResultLimit = 8;

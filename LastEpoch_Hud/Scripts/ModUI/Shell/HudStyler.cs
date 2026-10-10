@@ -6,7 +6,7 @@ using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Shell;
 
-/// <summary>Applies HudTheme tokens to runtime-built HUD controls.</summary>
+/// <summary>Applies HudTheme tokens to runtime-built HUD controls. Font baselines clear on HUD re-bind (ResetFontBaselines).</summary>
 internal static class HudStyler
 {
     private static readonly Dictionary<int, LegacyFontMetrics> _legacyFontSizes = new();

@@ -6,6 +6,7 @@ using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
+/// <summary>World &gt; Camera HUD page. State resets on HUD re-bind (Build).</summary>
 internal static class WorldCameraPage
 {
     private static HudFormPage page;
