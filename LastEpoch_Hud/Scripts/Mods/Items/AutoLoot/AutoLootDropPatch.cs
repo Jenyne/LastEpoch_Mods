@@ -13,7 +13,10 @@ public class AutoLootDropPatch
     [HarmonyPrefix]
     private static bool Prefix(Actor __0, ItemData __1)
     {
-        AutoLootSettings settings = ReadSettings();
+        AutoLootSettings settings = AutoLootRules.ForOrigin(
+            ReadSettings(),
+            ModItemDrop.CurrentOrigin
+        );
         if (!settings.AnyEnabled)
         {
             return true;

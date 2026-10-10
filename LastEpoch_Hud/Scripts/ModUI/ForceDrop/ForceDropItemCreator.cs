@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.ForceDrop;
 using LastEpoch_Hud.Scripts.Mods.Items;
+using LastEpoch_Hud.Scripts.Mods.Items.AutoLoot;
 
 namespace LastEpoch_Hud.Scripts.ModUI.ForceDrop;
 
@@ -17,11 +18,11 @@ public static class ForceDropItemCreator
         )
             throw new InvalidOperationException("Enter the game before dropping items.");
         var item = Create(request);
-        Refs_Manager.ground_item_manager.dropItemForPlayer(
+        ModItemDrop.Drop(
+            Refs_Manager.ground_item_manager,
             Refs_Manager.player_actor,
             item.TryCast<ItemData>(),
-            Refs_Manager.player_actor.position(),
-            false
+            Refs_Manager.player_actor.position()
         );
     }
 

@@ -138,4 +138,92 @@ public sealed class AutoLootRulesTests
         Assert.Equal(default(FilterLootPlan), plan);
         Assert.True(plan.IsEmpty);
     }
+
+    [Fact]
+    public void ForOrigin_Mod_DropsSellAndShatter()
+    {
+        Assert.Equal(
+            new AutoLootSettings(true, true, true, true, false, false),
+            AutoLootRules.ForOrigin(_allOn, DropOrigin.Mod)
+        );
+    }
+
+    [Theory]
+    [InlineData(true, false, false, false)]
+    [InlineData(false, true, false, false)]
+    [InlineData(false, false, true, false)]
+    [InlineData(false, false, false, true)]
+    public void ForOrigin_Mod_KeepsPickupToggles(
+        bool keys,
+        bool echoes,
+        bool materials,
+        bool pickUp
+    )
+    {
+        var settings = new AutoLootSettings(keys, echoes, materials, pickUp, false, false);
+        Assert.Equal(settings, AutoLootRules.ForOrigin(settings, DropOrigin.Mod));
+    }
+
+    [Theory]
+    [InlineData(true, true, true, true, true, true)]
+    [InlineData(false, false, false, false, false, false)]
+    [InlineData(false, false, false, false, true, true)]
+    public void ForOrigin_Game_Unchanged(
+        bool keys,
+        bool echoes,
+        bool materials,
+        bool pickUp,
+        bool sell,
+        bool shatter
+    )
+    {
+        var settings = new AutoLootSettings(keys, echoes, materials, pickUp, sell, shatter);
+        Assert.Equal(settings, AutoLootRules.ForOrigin(settings, DropOrigin.Game));
+    }
+
+    [Theory]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(true, true)]
+    public void ForOrigin_ModSellShatterOnly_NotAnyEnabled(bool sell, bool shatter)
+    {
+        var settings = new AutoLootSettings(false, false, false, false, sell, shatter);
+        Assert.False(AutoLootRules.ForOrigin(settings, DropOrigin.Mod).AnyEnabled);
+    }
+
+    [Fact]
+    public void ForFilter_ModHidden_Nothing()
+    {
+        FilterLootPlan plan = AutoLootRules.ForFilter(
+            LootVisibility.Hidden,
+            AutoLootRules.ForOrigin(_allOn, DropOrigin.Mod)
+        );
+        Assert.True(plan.IsEmpty);
+    }
+
+    [Fact]
+    public void ForFilter_ModShown_PickUp()
+    {
+        Assert.Equal(
+            new FilterLootPlan(true, false, false),
+            AutoLootRules.ForFilter(
+                LootVisibility.Shown,
+                AutoLootRules.ForOrigin(_allOn, DropOrigin.Mod)
+            )
+        );
+    }
+
+    [Theory]
+    [InlineData(LootKind.Other)]
+    [InlineData(LootKind.Key)]
+    [InlineData(LootKind.WovenEcho)]
+    [InlineData(LootKind.Material)]
+    [InlineData(LootKind.Gear)]
+    public void Route_ModOrigin_SameAsGame(LootKind kind)
+    {
+        Assert.Equal(
+            AutoLootRules.Route(kind, _allOn),
+            AutoLootRules.Route(kind, AutoLootRules.ForOrigin(_allOn, DropOrigin.Mod))
+        );
+    }
 }

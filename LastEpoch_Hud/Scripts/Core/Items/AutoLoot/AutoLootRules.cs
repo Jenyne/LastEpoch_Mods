@@ -29,6 +29,20 @@ public static class AutoLootRules
         };
     }
 
+    public static AutoLootSettings ForOrigin(AutoLootSettings settings, DropOrigin origin)
+    {
+        if (origin == DropOrigin.Game)
+        {
+            return settings;
+        }
+
+        return settings with
+        {
+            SellFromFilter = false,
+            ShatterFromFilter = false,
+        };
+    }
+
     private static LootRoute DirectRoute(bool enabled)
     {
         return enabled ? LootRoute.PickUp : LootRoute.Ignore;

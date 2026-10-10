@@ -1,4 +1,5 @@
 ﻿using Il2Cpp;
+using LastEpoch_Hud.Scripts.Mods.Items.AutoLoot;
 
 namespace LastEpoch_Hud.Scripts.Mods.Character;
 
@@ -81,7 +82,7 @@ public class Character_Materials
             && (!Refs_Manager.player_actor.IsNullOrDestroyed())
         )
         {
-            ItemDataUnpacked item = new ItemDataUnpacked
+            var item = new ItemDataUnpacked
             {
                 LvlReq = 0,
                 classReq = ItemList.ClassRequirement.Any,
@@ -95,11 +96,11 @@ public class Character_Materials
             ItemData final_item = item.TryCast<ItemData>();
             for (int i = 0; i < quantity; i++)
             {
-                Refs_Manager.ground_item_manager.dropItemForPlayer(
+                ModItemDrop.Drop(
+                    Refs_Manager.ground_item_manager,
                     Refs_Manager.player_actor,
                     final_item,
-                    Refs_Manager.player_actor.position(),
-                    false
+                    Refs_Manager.player_actor.position()
                 );
             }
         }

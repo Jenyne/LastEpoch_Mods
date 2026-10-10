@@ -15,7 +15,7 @@ public static class LootFilterMatch
 {
     private const int ArgCount = 9;
 
-    private static readonly IntPtr _matchMethod = Resolve_matchMethod();
+    private static readonly IntPtr _matchMethod = ResolveMatchMethod();
 
     public static unsafe bool TryMatch(
         ItemFilter filter,
@@ -66,7 +66,7 @@ public static class LootFilterMatch
         return true;
     }
 
-    private static IntPtr Resolve_matchMethod()
+    private static IntPtr ResolveMatchMethod()
     {
         MethodInfo method = typeof(ItemFilter).GetMethod(
             nameof(ItemFilter.Match),
