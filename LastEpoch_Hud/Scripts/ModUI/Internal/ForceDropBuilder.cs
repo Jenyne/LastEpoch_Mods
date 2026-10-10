@@ -2369,7 +2369,7 @@ public static class ForceDropBuilder
         var go = Panel(parent, "Button", x0, y0, x1, y1);
         var button = go.AddComponent<Button>();
         button.targetGraphic = go.GetComponent<Image>();
-        button.targetGraphic.color = Color.white;
+        button.targetGraphic.color = HudTheme.SelectableTint;
         button.colors = HudTheme.ActionButtonColors(HudTheme.Surface, HudTheme.Surface);
         var label = Label(go, text, .025f, .04f, .975f, .96f);
         label.alignment = TextAnchor.MiddleLeft;
@@ -2391,7 +2391,7 @@ public static class ForceDropBuilder
             return;
         var image = button.GetComponent<Image>();
         if (!image.IsNullOrDestroyed())
-            image.color = Color.white;
+            image.color = HudTheme.SelectableTint;
         button.colors = HudTheme.ActionButtonColors(
             selected ? HudTheme.Selection : HudTheme.Surface,
             selected ? HudTheme.Selection : HudTheme.Surface

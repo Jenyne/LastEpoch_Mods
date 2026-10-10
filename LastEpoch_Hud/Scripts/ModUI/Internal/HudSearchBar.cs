@@ -84,7 +84,7 @@ internal static class HudSearchBar
         {
             inputImage.sprite = null;
             inputImage.type = Image.Type.Simple;
-            inputImage.color = Color.clear;
+            inputImage.color = HudTheme.Transparent;
         }
         foreach (var outline in clone.GetComponents<Outline>())
             outline.enabled = false;
@@ -144,10 +144,10 @@ internal static class HudSearchBar
         searchRect.pivot = new Vector2(1f, 0.5f);
         searchRect.sizeDelta = new Vector2(HudTheme.SearchButtonWidth, 0f);
         var searchImage = searchObject.AddComponent<Image>();
-        searchImage.color = Color.clear;
+        searchImage.color = HudTheme.Transparent;
         var searchButton = searchObject.AddComponent<Button>();
         searchButton.targetGraphic = searchImage;
-        searchButton.colors = HudTheme.ButtonColors(Color.clear, HudTheme.Selection);
+        searchButton.colors = HudTheme.ButtonColors(HudTheme.Transparent, HudTheme.Selection);
         ButtonHook.Register(searchButton, () => Submit(input?.text));
         var searchLabel = TextNode(searchObject, "Label", "Search", HudTheme.ValueFontSize);
         Stretch(searchLabel.GetComponent<RectTransform>());
@@ -374,34 +374,11 @@ internal static class HudSearchBar
         return sprite;
     }
 
-    private static GameObject Node(GameObject parent, string name)
-    {
-        var node = new GameObject(name);
-        node.layer = parent.layer;
-        node.AddComponent<RectTransform>().SetParent(parent.transform, false);
-        return node;
-    }
+    private static GameObject Node(GameObject parent, string name) =>
+        HudElements.Node(parent, name);
 
-    private static Text TextNode(GameObject parent, string name, string caption, int size)
-    {
-        var node = Node(parent, name);
-        var text = node.AddComponent<Text>();
-        text.font = font;
-        text.fontSize = size;
-        text.fontStyle = FontStyle.Normal;
-        text.color = HudTheme.TextPrimary;
-        text.horizontalOverflow = HorizontalWrapMode.Overflow;
-        text.verticalOverflow = VerticalWrapMode.Truncate;
-        text.raycastTarget = false;
-        text.text = caption;
-        return text;
-    }
+    private static Text TextNode(GameObject parent, string name, string caption, int size) =>
+        HudElements.Text(parent, name, caption, font, size, localize: false);
 
-    private static void Stretch(RectTransform rect)
-    {
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-    }
+    private static void Stretch(RectTransform rect) => HudElements.Stretch(rect);
 }

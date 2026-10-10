@@ -1,52 +1,50 @@
 using System;
 using System.Collections.Generic;
+using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI;
 
-internal enum HudArea
-{
-    Character,
-    Items,
-    World,
-    Skills,
-    ForceDrop,
-}
-
-internal sealed class HudPanelUse
-{
-    public readonly string Panel;
-    public readonly string[] VisibleRows;
-    public readonly string[] VisibleChildren;
-    public readonly string Title;
-
-    public HudPanelUse(
-        string panel,
-        string[] visibleRows = null,
-        string[] visibleChildren = null,
-        string title = null
-    )
-    {
-        Panel = panel;
-        VisibleRows = visibleRows;
-        VisibleChildren = visibleChildren;
-        Title = title;
-    }
-}
-
+// A page's navigation metadata and runtime lifecycle live together here. Adding a
+// page should require one entry, not another branch in HudLayout and a separate
+// search-routing table.
 internal sealed class HudPageDefinition
 {
+    private readonly Action<GameObject, GameObject, Font> build;
+    private readonly Action show;
+    private readonly Action hide;
+    private readonly Action refresh;
+
     public readonly string Id;
     public readonly string Label;
-    public readonly HudArea[] Areas;
-    public readonly HudPanelUse[] Panels;
+    public readonly string SearchRootName;
 
-    public HudPageDefinition(string id, string label, HudArea[] areas, params HudPanelUse[] panels)
+    public HudPageDefinition(
+        string id,
+        string label,
+        string searchRootName,
+        Action<GameObject, GameObject, Font> build,
+        Action show,
+        Action hide,
+        Action refresh = null
+    )
     {
         Id = id;
         Label = label;
-        Areas = areas;
-        Panels = panels;
+        SearchRootName = searchRootName;
+        this.build = build;
+        this.show = show;
+        this.hide = hide;
+        this.refresh = refresh;
     }
+
+    public void Build(GameObject parent, GameObject hud, Font font) =>
+        build?.Invoke(parent, hud, font);
+
+    public void Show() => show?.Invoke();
+
+    public void Hide() => hide?.Invoke();
+
+    public void Refresh() => refresh?.Invoke();
 }
 
 internal sealed class HudSectionDefinition
@@ -70,161 +68,193 @@ internal sealed class HudSectionDefinition
     }
 }
 
-internal static class HudPanelIds
-{
-    public const string CharacterCheats = "character.cheats";
-    public const string CharacterData = "character.data";
-    public const string CharacterFactions = "character.factions";
-    public const string CharacterBuffs = "character.buffs";
-    public const string ItemsDrop = "items.drop";
-    public const string ItemsUtility = "items.utility";
-    public const string ItemsCrafting = "items.crafting";
-    public const string Camera = "world.camera";
-    public const string WorldMisc = "world.misc";
-    public const string Difficulty = "world.difficulty";
-    public const string Monoliths = "world.monoliths";
-    public const string SkillsGeneral = "skills.general";
-    public const string Companions = "skills.companions";
-    public const string Minions = "skills.minions";
-    public const string ForceDrop = "force-drop";
-}
-
-internal sealed class HudPanelSource
-{
-    public readonly string Id;
-    public readonly string Path;
-
-    public HudPanelSource(string id, string path)
-    {
-        Id = id;
-        Path = path;
-    }
-}
-
 internal static class HudNavigation
 {
-    private static readonly Dictionary<string, string> SearchPageIds = new(StringComparer.Ordinal)
-    {
-        ["Utilities_Character"] = "character.main",
-        ["Utilities_Multipliers"] = "character.multipliers",
-        ["Utilities_Currency"] = "character.currency",
-        ["Utilities_Buffs"] = "character.buffs",
-        ["Utilities_QOL"] = "character.qol",
-        ["Items_Drop"] = "items.drop",
-        ["Items_CraftingSlot"] = "items.crafting",
-        ["World_Difficulty"] = "world.difficulty",
-        ["World_Monoliths"] = "world.monoliths",
-        ["World_Misc"] = "world.misc",
-        ["World_Camera"] = "world.camera",
-        ["Skills_Minions"] = "skills.minions",
-        ["Skills_Companions"] = "skills.companions",
-        ["Skills_Summon"] = "skills.summon",
-        ["Skills_QOL"] = "skills.qol",
-    };
-
-    // Paths are relative to Hud/Content. Keeping them beside the page definitions
-    // makes this file the only map between legacy prefab names and the new UI.
-    public static readonly HudPanelSource[] PanelSources =
-    {
-        new(HudPanelIds.CharacterCheats, "Character_Content/Character_Cheats"),
-        new(HudPanelIds.CharacterData, "Character_Content/Character_Data"),
-        new(HudPanelIds.CharacterFactions, "Character_Content/Character_Factions"),
-        new(HudPanelIds.CharacterBuffs, "Character_Content/Character_Buffs"),
-        new(HudPanelIds.ItemsDrop, "Items_Content/Items_Drop"),
-        new(HudPanelIds.ItemsUtility, "Items_Content/Items_Pickup"),
-        new(HudPanelIds.ItemsCrafting, "Items_Content/Items_Craft"),
-        new(HudPanelIds.Camera, "Scenes_Content/Camera"),
-        new(HudPanelIds.WorldMisc, "Scenes_Content/Center"),
-        new(HudPanelIds.Difficulty, "Scenes_Content/Difficulty"),
-        new(HudPanelIds.Monoliths, "Scenes_Content/Monoliths"),
-        new(HudPanelIds.SkillsGeneral, "Skill_Tree_Content/Left"),
-        new(HudPanelIds.Companions, "Skill_Tree_Content/Center"),
-        new(HudPanelIds.Minions, "Skill_Tree_Content/Right"),
-        new(HudPanelIds.ForceDrop, "Old_ForceDrop_Content"),
-    };
-
-    private static readonly string[] CharacterRows =
-    {
-        "GodMode",
-        "ForceLowLife",
-        "AllowChoosingBlessings",
-        "UnlockAllIdolsSlots",
-        "AutoPotions",
-        "TwoHandeWithShield",
-        "WaypointsUnlock",
-        "Btn_Character_Cheats_LevelOnce",
-        "Btn_Character_Cheats_LevelToMax",
-        "Btn_Character_Cheats_CompleteQuest",
-        "Btn_Character_Cheats_Masterie",
-        "Btn_Character_Cheats_DicoverAllBlessings",
-    };
-
-    private static readonly string[] CharacterSkillRows =
-    {
-        "RemoveManaCost",
-        "RemoveChannelCost",
-        "ManaRegenWhenChanneling",
-        "DontStopWhenOOM",
-        "NoCooldown",
-        "UnlockAllSkills",
-        "RemoveNodeRequirements",
-        "SpecializationSlots",
-        "SkillLevel",
-        "PassivePoints",
-    };
-
-    private static readonly string[] RequirementsChildren = { "Title_Req", "Items_Req_Content" };
-
     public static readonly HudSectionDefinition[] Sections =
     {
         new(
             "character",
             "Utilities",
             true,
-            new HudPageDefinition(
+            Page(
                 "character.main",
                 "Character",
-                new[] { HudArea.Character, HudArea.Items, HudArea.Skills },
-                new HudPanelUse(HudPanelIds.CharacterCheats, CharacterRows, title: "Character"),
-                new HudPanelUse(HudPanelIds.SkillsGeneral, CharacterSkillRows, title: "Skills"),
-                new HudPanelUse(HudPanelIds.CharacterFactions),
-                new HudPanelUse(HudPanelIds.ItemsUtility, visibleChildren: RequirementsChildren)
+                "Utilities_Character",
+                Utilities_Character.Build,
+                Utilities_Character.Show,
+                Utilities_Character.Hide,
+                Utilities_Character.Refresh
             ),
-            new HudPageDefinition("character.multipliers", "Multipliers", new HudArea[0]),
-            new HudPageDefinition("character.currency", "Currency", new HudArea[0]),
-            new HudPageDefinition("character.buffs", "Buffs", new HudArea[0]),
-            new HudPageDefinition("character.qol", "QOL", new HudArea[0])
+            Page(
+                "character.multipliers",
+                "Multipliers",
+                "Utilities_Multipliers",
+                Utilities_Multipliers.Build,
+                Utilities_Multipliers.Show,
+                Utilities_Multipliers.Hide
+            ),
+            Page(
+                "character.currency",
+                "Currency",
+                "Utilities_Currency",
+                (parent, _, font) => Utilities_Currency.Build(parent, font),
+                Utilities_Currency.Show,
+                Utilities_Currency.Hide
+            ),
+            Page(
+                "character.buffs",
+                "Buffs",
+                "Utilities_Buffs",
+                Utilities_Buffs.Build,
+                Utilities_Buffs.Show,
+                Utilities_Buffs.Hide
+            ),
+            Page(
+                "character.qol",
+                "QOL",
+                "Utilities_QOL",
+                Utilities_QOL.Build,
+                Utilities_QOL.Show,
+                Utilities_QOL.Hide,
+                Utilities_QOL.Refresh
+            )
         ),
         new(
             "items",
             "Items",
             true,
-            new HudPageDefinition("items.drop", "Drop", new HudArea[0]),
-            new HudPageDefinition("items.force-drop", "Force Drop", new HudArea[0]),
-            new HudPageDefinition("items.crafting", "Crafting Slot", new HudArea[0])
+            Page(
+                "items.drop",
+                "Drop",
+                "Items_Drop",
+                Items_Drop.Build,
+                Items_Drop.Show,
+                Items_Drop.Hide,
+                Items_Drop.Refresh
+            ),
+            // Force Drop deliberately stays outside search until its separate UI
+            // rewrite is complete. Its legacy body is still managed by this page.
+            Page(
+                "items.force-drop",
+                "Force Drop",
+                null,
+                null,
+                Items_ForceDrop.Show,
+                Items_ForceDrop.Hide
+            ),
+            Page(
+                "items.crafting",
+                "Crafting Slot",
+                "Items_CraftingSlot",
+                Items_CraftingSlot.Build,
+                Items_CraftingSlot.Show,
+                Items_CraftingSlot.Hide,
+                Items_CraftingSlot.Refresh
+            )
         ),
         new(
             "world",
             "World",
             true,
-            new HudPageDefinition("world.difficulty", "Difficulty", new HudArea[0]),
-            new HudPageDefinition("world.monoliths", "Monoliths", new HudArea[0]),
-            new HudPageDefinition("world.misc", "Misc", new HudArea[0]),
-            new HudPageDefinition("world.camera", "Camera", new HudArea[0])
+            Page(
+                "world.difficulty",
+                "Difficulty",
+                "World_Difficulty",
+                World_Difficulty.Build,
+                World_Difficulty.Show,
+                World_Difficulty.Hide,
+                World_Difficulty.Refresh
+            ),
+            Page(
+                "world.monoliths",
+                "Monoliths",
+                "World_Monoliths",
+                World_Monoliths.Build,
+                World_Monoliths.Show,
+                World_Monoliths.Hide,
+                World_Monoliths.Refresh
+            ),
+            Page(
+                "world.misc",
+                "Misc",
+                "World_Misc",
+                World_Misc.Build,
+                World_Misc.Show,
+                World_Misc.Hide,
+                World_Misc.Refresh
+            ),
+            Page(
+                "world.camera",
+                "Camera",
+                "World_Camera",
+                World_Camera.Build,
+                World_Camera.Show,
+                World_Camera.Hide,
+                World_Camera.Refresh
+            )
         ),
         new(
             "skills",
             "Skills",
             true,
-            new HudPageDefinition("skills.minions", "Minions", new HudArea[0]),
-            new HudPageDefinition("skills.companions", "Companions", new HudArea[0]),
-            new HudPageDefinition("skills.summon", "Summon", new HudArea[0]),
-            new HudPageDefinition("skills.qol", "QOL", new HudArea[0])
+            Page(
+                "skills.minions",
+                "Minions",
+                "Skills_Minions",
+                Skills_Minions.Build,
+                Skills_Minions.Show,
+                Skills_Minions.Hide,
+                Skills_Minions.Refresh
+            ),
+            Page(
+                "skills.companions",
+                "Companions",
+                "Skills_Companions",
+                Skills_Companions.Build,
+                Skills_Companions.Show,
+                Skills_Companions.Hide,
+                Skills_Companions.Refresh
+            ),
+            Page(
+                "skills.summon",
+                "Summon",
+                "Skills_Summon",
+                Skills_Summon.Build,
+                Skills_Summon.Show,
+                Skills_Summon.Hide,
+                Skills_Summon.Refresh
+            ),
+            Page(
+                "skills.qol",
+                "QOL",
+                "Skills_QOL",
+                Skills_QOL.Build,
+                Skills_QOL.Show,
+                Skills_QOL.Hide,
+                Skills_QOL.Refresh
+            )
         ),
     };
 
-    public static string SearchPageId(string rootName) =>
-        rootName != null && SearchPageIds.TryGetValue(rootName, out string pageId) ? pageId : null;
+    public static IEnumerable<HudPageDefinition> Pages
+    {
+        get
+        {
+            foreach (var section in Sections)
+            foreach (var page in section.Pages)
+                yield return page;
+        }
+    }
+
+    public static string SearchPageId(string rootName)
+    {
+        if (string.IsNullOrEmpty(rootName))
+            return null;
+        foreach (var page in Pages)
+            if (string.Equals(page.SearchRootName, rootName, StringComparison.Ordinal))
+                return page.Id;
+        return null;
+    }
 
     public static bool TryGetPage(
         string pageId,
@@ -244,4 +274,47 @@ internal static class HudNavigation
         page = null;
         return false;
     }
+
+    public static bool TryValidate(out string error)
+    {
+        var sectionIds = new HashSet<string>(StringComparer.Ordinal);
+        var pageIds = new HashSet<string>(StringComparer.Ordinal);
+        var searchRoots = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var section in Sections)
+        {
+            if (string.IsNullOrWhiteSpace(section.Id) || !sectionIds.Add(section.Id))
+            {
+                error = "Missing or duplicate HUD section id: " + section.Id;
+                return false;
+            }
+            foreach (var page in section.Pages)
+            {
+                if (string.IsNullOrWhiteSpace(page.Id) || !pageIds.Add(page.Id))
+                {
+                    error = "Missing or duplicate HUD page id: " + page.Id;
+                    return false;
+                }
+                if (
+                    !string.IsNullOrEmpty(page.SearchRootName)
+                    && !searchRoots.Add(page.SearchRootName)
+                )
+                {
+                    error = "Duplicate HUD search root: " + page.SearchRootName;
+                    return false;
+                }
+            }
+        }
+        error = null;
+        return true;
+    }
+
+    private static HudPageDefinition Page(
+        string id,
+        string label,
+        string searchRootName,
+        Action<GameObject, GameObject, Font> build,
+        Action show,
+        Action hide,
+        Action refresh = null
+    ) => new(id, label, searchRootName, build, show, hide, refresh);
 }
