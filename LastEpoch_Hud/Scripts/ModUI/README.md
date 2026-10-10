@@ -10,20 +10,23 @@ intact. The visible pages are runtime-built views over those bindings.
 
 Presentation has one owner for each concern:
 
-- `Internal/HudTheme.cs` is the CSS-like source of truth for dark/light palettes, semantic colors,
-  typography, spacing, dimensions, borders, and selectable states.
-- `Internal/HudStyler.cs` applies those tokens consistently to runtime and legacy controls.
+- `Internal/HudTheme.cs` holds the tokens, palettes, and saved theme preferences: dark/light
+  palettes, semantic colors, typography, spacing, dimensions, borders, and selectable states.
+- `Internal/HudStyler.cs` applies theme tokens to runtime-built controls, including font scaling.
 - `Internal/HudElements.cs` owns the primitive construction rules shared by runtime-built controls.
 - `Internal/HudNavigation.cs` is the page catalog. A page's sidebar position, search root, build,
-  show, hide, and refresh lifecycle are declared together in one entry.
+  show, hide, and refresh lifecycle are declared together in one entry. Moving a page means editing
+  its catalog entry; renaming one also needs a new label key in `Locales/base.json` and `en.json`,
+  because sidebar labels go through `LocaleRegistry`.
 - `Internal/HudLayout.cs` owns only shared shell behavior: window, header, sidebar, settings,
   selection, and page activation.
 - `Pages/` owns page content and maps bound settings to reusable cards and form controls.
 - `Internal/HudFormPage.cs`, `HudSliderCard.cs`, and `HudActionCard.cs` are the reusable view
   components used by pages.
 
-Force Drop is the sole presentation exception: its page catalog entry intentionally has no runtime
-builder or search root because its separately maintained legacy body is still shown in place.
+Force Drop is the sole presentation exception: its catalog entry has no builder and no search root.
+`Items_ForceDrop` shows the original content root, `ForceDropBuilder` (ticked from `Hud_Manager`)
+builds its runtime view over those prefab controls, and the page stays out of global search.
 
 When adding a page, add one catalog entry to `HudNavigation.Sections` and put its content in
 `Pages/`. Visual values belong in `HudTheme`, not page files. Reusable object creation belongs in
@@ -331,8 +334,8 @@ ModUI/
     World_*.cs             Difficulty, monoliths, misc, and camera
     Skills_*.cs            Minions, companions, summon, and QOL
   Internal/              Shared framework and presentation internals
-    HudTheme.cs             Visual tokens, palettes, font scaling, and state colors
-    HudStyler.cs            Applies theme tokens to runtime and legacy components
+    HudTheme.cs             Visual tokens, palettes, and saved theme preferences
+    HudStyler.cs            Applies theme tokens to runtime-built controls and font scaling
     HudElements.cs          Runtime object/text/layout construction primitives
     HudNavigation.cs        Sidebar hierarchy plus page/search lifecycle catalog
     HudLayout.cs            Window, header, sidebar, settings, and page activation
@@ -362,7 +365,7 @@ ModUI/
 |---|---|
 | Change a HUD color, size, spacing, or control state | `Internal/HudTheme.cs` |
 | Add a visible sidebar page | Add its view under `Pages/` and one lifecycle entry in `HudNavigation.Sections` |
-| Move or rename a sidebar page | Edit its single `HudNavigation.Sections` entry |
+| Move or rename a sidebar page | Edit its single `HudNavigation.Sections` entry; a rename also needs a new label key in `base.json` + `en.json` |
 | Add a toggle/slider/range | `ModSettings.cs` -- one line: `Group.Bool/Float/Range(...)` |
 | Add a dropdown | `ModSettings.cs` -- `Group.Dropdown("Key")`, optionally with `options:` |
 | Populate dropdown at runtime | `.SetOptions(string[])` from feature code when game data loads |

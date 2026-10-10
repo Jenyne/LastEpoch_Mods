@@ -47,13 +47,8 @@ public static class HudLayout
         HudSearch.Reset();
         activePage = null;
         HudTheme.LoadPreferences();
-        HudTheme.ResetFontBaselines();
+        HudStyler.ResetFontBaselines();
         font = FindFont(hud);
-        if (!HudNavigation.TryValidate(out string navigationError))
-        {
-            Main.logger_instance?.Error("HudLayout: " + navigationError);
-            return;
-        }
 
         var content = Prefab.Child(hud, "Content");
         var menu = Prefab.Child(hud, "Menu");
@@ -75,8 +70,8 @@ public static class HudLayout
         var defaultPage = HudNavigation.Sections[0].Pages[0];
         ExpandSection(HudNavigation.Sections[0].Id, true);
         ActivateNavigationOnly(defaultPage);
-        HudTheme.NormalizeSelectableGraphics(window);
-        HudTheme.ApplyFontScale(window);
+        HudStyler.NormalizeSelectableGraphics(window);
+        HudStyler.ApplyFontScale(window);
         RefreshSettingsControls();
         Main.logger_instance?.Msg("HudLayout: replacement navigation initialized");
     }
@@ -317,7 +312,8 @@ public static class HudLayout
                 {
                     slider.SetValueWithoutNotify(rounded);
                 }
-                HudTheme.SetFontScale(window, rounded / 100f);
+                HudTheme.SetFontScale(rounded / 100f);
+                HudStyler.ApplyFontScale(window);
                 RefreshSettingsControls();
             }
         );
@@ -369,6 +365,7 @@ public static class HudLayout
     private static void SetLightMode(bool enabled)
     {
         HudTheme.SetLightMode(window, enabled);
+        HudStyler.NormalizeSelectableGraphics(window);
         if (activePage != null)
             SetSelected(activePage.Id);
         MonolithTimelineEditor.RefreshSelection();

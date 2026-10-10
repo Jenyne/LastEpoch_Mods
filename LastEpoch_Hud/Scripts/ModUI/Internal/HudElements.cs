@@ -3,8 +3,7 @@ using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI;
 
-// Shared construction primitives for runtime-built HUD controls. Component-level
-// styles stay in HudTheme/HudStyler; this class keeps object creation consistent.
+/// <summary>Shared construction primitives for runtime-built HUD controls.</summary>
 internal static class HudElements
 {
     public static GameObject Node(GameObject parent, string name)

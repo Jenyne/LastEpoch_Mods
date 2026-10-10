@@ -5,6 +5,14 @@ using LastEpoch_Hud.Scripts.Core.ModUI;
 
 namespace LastEpoch_Hud.Scripts.ModUI;
 
+internal interface IHudSearchPage
+{
+    string PageId { get; }
+    IReadOnlyList<HudSearchEntry> SearchEntries { get; }
+    void ApplySearch(string query);
+    void ClearSearch();
+}
+
 internal sealed class HudSearchEntry
 {
     public string Card { get; init; }
@@ -27,29 +35,17 @@ internal sealed class HudSearchMatch
             : Section + "  ›  " + Tab + "  ›  " + Card;
 }
 
-internal interface IHudSearchPage
-{
-    string PageId { get; }
-    IReadOnlyList<HudSearchEntry> SearchEntries { get; }
-    void ApplySearch(string query);
-    void ClearSearch();
-}
-
 internal static class HudSearch
 {
-    private static readonly Dictionary<string, IHudSearchPage> Pages = new(StringComparer.Ordinal);
+    private static readonly Dictionary<string, IHudSearchPage> _pages = new(StringComparer.Ordinal);
 
-    public static void Reset() => Pages.Clear();
+    public static void Reset() => _pages.Clear();
 
     public static void Register(IHudSearchPage page)
     {
         if (page == null || string.IsNullOrWhiteSpace(page.PageId))
             return;
-        // ForceDrop intentionally has no searchable page mapping, but keep this
-        // guard so a future renderer cannot accidentally add it to global search.
-        if (string.Equals(page.PageId, "items.force-drop", StringComparison.Ordinal))
-            return;
-        Pages[page.PageId] = page;
+        _pages[page.PageId] = page;
     }
 
     public static IReadOnlyList<HudSearchMatch> Find(string query)
@@ -58,7 +54,7 @@ internal static class HudSearch
             return Array.Empty<HudSearchMatch>();
 
         var matches = new List<HudSearchMatch>();
-        foreach (var pair in Pages)
+        foreach (KeyValuePair<string, IHudSearchPage> pair in _pages)
         {
             if (!HudNavigation.TryGetPage(pair.Key, out var section, out var page))
                 continue;
@@ -99,7 +95,9 @@ internal static class HudSearch
 
     public static void ClearAll()
     {
-        foreach (var page in Pages.Values)
+        foreach (IHudSearchPage page in _pages.Values)
+        {
             page.ClearSearch();
+        }
     }
 }

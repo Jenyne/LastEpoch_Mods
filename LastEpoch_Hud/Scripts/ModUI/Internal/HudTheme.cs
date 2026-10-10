@@ -1,12 +1,10 @@
-using System.Collections.Generic;
 using Il2CppTMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI;
 
-// Single source of truth for the HUD's visual language. Runtime-built chrome and
-// legacy prefab controls both consume these tokens so the look can be tuned here.
+/// <summary>Visual tokens, palettes and saved theme preferences for the HUD.</summary>
 public static class HudTheme
 {
     private readonly struct Palette
@@ -69,34 +67,6 @@ public static class HudTheme
         }
     }
 
-    private readonly struct LegacyFontMetrics
-    {
-        public readonly int Size,
-            Minimum,
-            Maximum;
-
-        public LegacyFontMetrics(Text text)
-        {
-            Size = text.fontSize;
-            Minimum = text.resizeTextMinSize;
-            Maximum = text.resizeTextMaxSize;
-        }
-    }
-
-    private readonly struct TmpFontMetrics
-    {
-        public readonly float Size,
-            Minimum,
-            Maximum;
-
-        public TmpFontMetrics(TMP_Text text)
-        {
-            Size = text.fontSize;
-            Minimum = text.fontSizeMin;
-            Maximum = text.fontSizeMax;
-        }
-    }
-
     private static readonly Palette DarkPalette = new(
         Rgba(0, 0, 0, 166),
         Rgba(21, 21, 21, 255), // #151515 main background
@@ -137,8 +107,6 @@ public static class HudTheme
         new Color(.04f, .45f, .58f)
     );
 
-    private static readonly Dictionary<int, LegacyFontMetrics> LegacyFontSizes = new();
-    private static readonly Dictionary<int, TmpFontMetrics> TmpFontSizes = new();
     private static bool preferencesLoaded;
     private static bool lightMode;
     private static float fontScale = 1f;
@@ -161,7 +129,6 @@ public static class HudTheme
     public static Color AccentSoft => Current.AccentSoft;
     public static Color AccentMuted => Current.AccentMuted;
     public static Color Border => Current.Accent;
-    public static Color Divider => Current.Accent;
     public static Color CardDivider => Current.CardDivider;
     public static Color TextPrimary => Current.Text;
     public static Color TextSecondary => Current.Text;
@@ -195,10 +162,7 @@ public static class HudTheme
     public const float SectionHeight = 52f;
     public const float PageHeight = 44f;
     public const float NavigationIndent = 44f;
-    public const float CardTitleHeight = 54f;
     public const float RowHeight = 46f;
-    public const float SliderRowHeight = 74f;
-    public const float ButtonRowHeight = 44f;
     public const float ToggleSize = 22f;
     public const float SliderCardPadding = 34f;
     public const float SliderCardRowHeight = 82f;
@@ -265,78 +229,25 @@ public static class HudTheme
         Palette previous = Current;
         lightMode = enabled;
         ApplyPalette(root, previous, Current);
-        NormalizeSelectableGraphics(root);
         PlayerPrefs.SetInt("LEHUD.LightMode", enabled ? 1 : 0);
         PlayerPrefs.Save();
     }
 
-    public static void SetFontScale(GameObject root, float scale)
+    public static void SetFontScale(float scale)
     {
         LoadPreferences();
         fontScale = Mathf.Clamp(Mathf.Round(scale * 20f) / 20f, 0.8f, 1.4f);
-        ApplyFontScale(root);
         PlayerPrefs.SetFloat("LEHUD.FontScale", fontScale);
         PlayerPrefs.Save();
     }
 
-    public static void ApplyFontScale(GameObject root)
-    {
-        if (root.IsNullOrDestroyed())
-            return;
-        foreach (var text in root.GetComponentsInChildren<Text>(true))
-        {
-            int id = text.GetInstanceID();
-            if (!LegacyFontSizes.TryGetValue(id, out var baseline))
-            {
-                baseline = new LegacyFontMetrics(text);
-                LegacyFontSizes[id] = baseline;
-            }
-            text.fontSize = Mathf.Max(8, Mathf.RoundToInt(baseline.Size * fontScale));
-            text.resizeTextMinSize = Mathf.Max(8, Mathf.RoundToInt(baseline.Minimum * fontScale));
-            text.resizeTextMaxSize = Mathf.Max(8, Mathf.RoundToInt(baseline.Maximum * fontScale));
-        }
-        foreach (var text in root.GetComponentsInChildren<TMP_Text>(true))
-        {
-            int id = text.GetInstanceID();
-            if (!TmpFontSizes.TryGetValue(id, out var baseline))
-            {
-                baseline = new TmpFontMetrics(text);
-                TmpFontSizes[id] = baseline;
-            }
-            text.fontSize = Mathf.Max(8f, baseline.Size * fontScale);
-            text.fontSizeMin = Mathf.Max(8f, baseline.Minimum * fontScale);
-            text.fontSizeMax = Mathf.Max(8f, baseline.Maximum * fontScale);
-        }
-        Canvas.ForceUpdateCanvases();
-    }
-
-    public static void ResetFontBaselines()
-    {
-        LegacyFontSizes.Clear();
-        TmpFontSizes.Clear();
-    }
-
-    // ColorBlock values are the final visual colors. Keeping a tinted base
-    // Graphic would multiply the two colors and make #0E0E10 appear black.
-    public static void NormalizeSelectableGraphics(GameObject root)
-    {
-        if (root.IsNullOrDestroyed())
-            return;
-        foreach (var selectable in root.GetComponentsInChildren<Selectable>(true))
-        {
-            Color normal = selectable.colors.normalColor;
-            bool themed =
-                selectable is Slider
-                || Same(normal, Current.Surface)
-                || Same(normal, Current.Background)
-                || Same(normal, Current.Selection)
-                || Same(normal, Current.Hover)
-                || Same(normal, Current.Accent)
-                || Same(normal, Current.AccentMuted);
-            if (themed && !selectable.targetGraphic.IsNullOrDestroyed())
-                selectable.targetGraphic.color = SelectableTint;
-        }
-    }
+    public static bool IsThemedSelectableColor(Color normal) =>
+        Same(normal, Current.Surface)
+        || Same(normal, Current.Background)
+        || Same(normal, Current.Selection)
+        || Same(normal, Current.Hover)
+        || Same(normal, Current.Accent)
+        || Same(normal, Current.AccentMuted);
 
     private static void ApplyPalette(GameObject root, Palette from, Palette to)
     {

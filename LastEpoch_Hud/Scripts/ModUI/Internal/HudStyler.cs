@@ -1,12 +1,16 @@
+using System.Collections.Generic;
 using Il2CppTMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI;
 
-// Applies the semantic tokens from HudTheme to runtime and legacy controls.
+/// <summary>Applies HudTheme tokens to runtime-built HUD controls.</summary>
 internal static class HudStyler
 {
+    private static readonly Dictionary<int, LegacyFontMetrics> _legacyFontSizes = new();
+    private static readonly Dictionary<int, TmpFontMetrics> _tmpFontSizes = new();
+
     // Selectable color transitions tint their target Graphic, which makes an
     // Outline attached to that same Graphic look muted. Independent edge
     // images retain the exact primary color in every interaction state.
@@ -16,7 +20,9 @@ internal static class HudStyler
     )
     {
         if (target.IsNullOrDestroyed())
+        {
             return;
+        }
         float half = thickness * 0.5f;
         AddBorderEdge(
             target,
@@ -52,6 +58,143 @@ internal static class HudStyler
         );
     }
 
+    public static void ApplySlider(Slider slider)
+    {
+        if (slider.IsNullOrDestroyed())
+        {
+            return;
+        }
+        GameObject background = Prefab.Child(slider.gameObject, "Background");
+        Image backgroundImage = background.IsNullOrDestroyed()
+            ? null
+            : background.GetComponent<Image>();
+        if (!backgroundImage.IsNullOrDestroyed())
+        {
+            backgroundImage.color = HudTheme.ControlTrack;
+        }
+        if (!slider.fillRect.IsNullOrDestroyed())
+        {
+            Image fill = slider.fillRect.GetComponent<Image>();
+            if (!fill.IsNullOrDestroyed())
+            {
+                fill.color = HudTheme.Accent;
+            }
+        }
+        if (!slider.targetGraphic.IsNullOrDestroyed())
+        {
+            slider.targetGraphic.color = HudTheme.ControlHandle;
+        }
+    }
+
+    public static void ApplyDropdown(Dropdown dropdown)
+    {
+        if (dropdown.IsNullOrDestroyed())
+        {
+            return;
+        }
+        Image image = dropdown.GetComponent<Image>();
+        if (!image.IsNullOrDestroyed())
+        {
+            image.color = HudTheme.SurfaceRaised;
+        }
+        dropdown.colors = HudTheme.ButtonColors(HudTheme.SurfaceRaised, HudTheme.Selection);
+        if (!dropdown.template.IsNullOrDestroyed())
+        {
+            foreach (Image childImage in dropdown.template.GetComponentsInChildren<Image>(true))
+            {
+                string name = childImage.gameObject.name;
+                if (name.Contains("Checkmark", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    childImage.color = HudTheme.Accent;
+                }
+                else if (name.Contains("Handle", System.StringComparison.OrdinalIgnoreCase))
+                {
+                    childImage.color = HudTheme.AccentMuted;
+                }
+                else
+                {
+                    childImage.color = HudTheme.ControlBox;
+                }
+            }
+            foreach (Toggle option in dropdown.template.GetComponentsInChildren<Toggle>(true))
+            {
+                if (!option.targetGraphic.IsNullOrDestroyed())
+                {
+                    option.targetGraphic.color = HudTheme.ControlBox;
+                }
+                if (!option.graphic.IsNullOrDestroyed())
+                {
+                    option.graphic.color = HudTheme.Accent;
+                }
+                option.colors = HudTheme.ButtonColors(HudTheme.ControlBox, HudTheme.SurfaceHover);
+            }
+            foreach (Text optionText in dropdown.template.GetComponentsInChildren<Text>(true))
+            {
+                optionText.color = HudTheme.TextPrimary;
+            }
+        }
+    }
+
+    public static void ApplyFontScale(GameObject root)
+    {
+        if (root.IsNullOrDestroyed())
+        {
+            return;
+        }
+        float fontScale = HudTheme.FontScale;
+        foreach (Text text in root.GetComponentsInChildren<Text>(true))
+        {
+            int id = text.GetInstanceID();
+            if (!_legacyFontSizes.TryGetValue(id, out LegacyFontMetrics baseline))
+            {
+                baseline = new LegacyFontMetrics(text);
+                _legacyFontSizes[id] = baseline;
+            }
+            text.fontSize = Mathf.Max(8, Mathf.RoundToInt(baseline.Size * fontScale));
+            text.resizeTextMinSize = Mathf.Max(8, Mathf.RoundToInt(baseline.Minimum * fontScale));
+            text.resizeTextMaxSize = Mathf.Max(8, Mathf.RoundToInt(baseline.Maximum * fontScale));
+        }
+        foreach (TMP_Text text in root.GetComponentsInChildren<TMP_Text>(true))
+        {
+            int id = text.GetInstanceID();
+            if (!_tmpFontSizes.TryGetValue(id, out TmpFontMetrics baseline))
+            {
+                baseline = new TmpFontMetrics(text);
+                _tmpFontSizes[id] = baseline;
+            }
+            text.fontSize = Mathf.Max(8f, baseline.Size * fontScale);
+            text.fontSizeMin = Mathf.Max(8f, baseline.Minimum * fontScale);
+            text.fontSizeMax = Mathf.Max(8f, baseline.Maximum * fontScale);
+        }
+        Canvas.ForceUpdateCanvases();
+    }
+
+    public static void ResetFontBaselines()
+    {
+        _legacyFontSizes.Clear();
+        _tmpFontSizes.Clear();
+    }
+
+    // ColorBlock values are the final visual colors. Keeping a tinted base
+    // Graphic would multiply the two colors and make #0E0E10 appear black.
+    public static void NormalizeSelectableGraphics(GameObject root)
+    {
+        if (root.IsNullOrDestroyed())
+        {
+            return;
+        }
+        foreach (Selectable selectable in root.GetComponentsInChildren<Selectable>(true))
+        {
+            bool themed =
+                selectable is Slider
+                || HudTheme.IsThemedSelectableColor(selectable.colors.normalColor);
+            if (themed && !selectable.targetGraphic.IsNullOrDestroyed())
+            {
+                selectable.targetGraphic.color = HudTheme.SelectableTint;
+            }
+        }
+    }
+
     private static void AddBorderEdge(
         GameObject target,
         string name,
@@ -61,414 +204,53 @@ internal static class HudStyler
         Vector2 sizeDelta
     )
     {
-        var edge = Prefab.Child(target, name);
+        GameObject edge = Prefab.Child(target, name);
         if (edge.IsNullOrDestroyed())
         {
             edge = new GameObject(name);
             edge.layer = target.layer;
             edge.AddComponent<RectTransform>().SetParent(target.transform, false);
-            var image = edge.AddComponent<Image>();
+            Image image = edge.AddComponent<Image>();
             image.color = HudTheme.Border;
             image.raycastTarget = false;
         }
-        var rect = edge.GetComponent<RectTransform>();
+        RectTransform rect = edge.GetComponent<RectTransform>();
         rect.anchorMin = anchorMin;
         rect.anchorMax = anchorMax;
         rect.pivot = new Vector2(0.5f, 0.5f);
         rect.anchoredPosition = anchoredPosition;
         rect.sizeDelta = sizeDelta;
-        var edgeImage = edge.GetComponent<Image>();
+        Image edgeImage = edge.GetComponent<Image>();
         edgeImage.color = HudTheme.Border;
         edgeImage.raycastTarget = false;
         edge.transform.SetAsLastSibling();
     }
 
-    public static void ApplyPanel(GameObject panel)
+    private readonly struct LegacyFontMetrics
     {
-        if (panel.IsNullOrDestroyed())
-            return;
+        public readonly int Size,
+            Minimum,
+            Maximum;
 
-        var background = panel.GetComponent<Image>();
-        if (background.IsNullOrDestroyed())
-            background = panel.AddComponent<Image>();
-        background.color = HudTheme.Surface;
-
-        var outline = panel.GetComponent<Outline>();
-        if (outline.IsNullOrDestroyed())
-            outline = panel.AddComponent<Outline>();
-        outline.effectColor = HudTheme.Border;
-        outline.effectDistance = new Vector2(HudTheme.BorderWidth, -HudTheme.BorderWidth);
-        outline.useGraphicAlpha = false;
-
-        foreach (var text in panel.GetComponentsInChildren<Text>(true))
-            ApplyText(text, IsTitle(text.gameObject));
-        foreach (var text in panel.GetComponentsInChildren<TMP_Text>(true))
-            ApplyText(text, IsTitle(text.gameObject));
-        foreach (var button in panel.GetComponentsInChildren<Button>(true))
-            ApplyButton(button);
-        foreach (var slider in panel.GetComponentsInChildren<Slider>(true))
-            ApplySlider(slider);
-        foreach (var toggle in panel.GetComponentsInChildren<Toggle>(true))
-            ApplyToggle(toggle);
-        foreach (var dropdown in panel.GetComponentsInChildren<Dropdown>(true))
-            ApplyDropdown(dropdown);
-        foreach (var scrollbar in panel.GetComponentsInChildren<Scrollbar>(true))
-            ApplyScrollbar(scrollbar);
-        foreach (var scroll in panel.GetComponentsInChildren<ScrollRect>(true))
+        public LegacyFontMetrics(Text text)
         {
-            var image = scroll.GetComponent<Image>();
-            if (!image.IsNullOrDestroyed())
-                image.color = HudTheme.Surface;
-            if (!scroll.viewport.IsNullOrDestroyed())
-            {
-                var viewportImage = scroll.viewport.GetComponent<Image>();
-                if (!viewportImage.IsNullOrDestroyed())
-                    viewportImage.color = HudTheme.Surface;
-            }
-        }
-        for (int i = 0; i < panel.transform.childCount; i++)
-        {
-            var child = panel.transform.GetChild(i).gameObject;
-            if (!child.name.Contains("Title", System.StringComparison.Ordinal))
-                continue;
-            var image = child.GetComponent<Image>();
-            if (!image.IsNullOrDestroyed())
-                image.color = HudTheme.Surface;
-        }
-        if (panel.name != "Old_ForceDrop_Content")
-            ApplyRows(panel);
-    }
-
-    public static void ApplyButton(Button button)
-    {
-        if (button.IsNullOrDestroyed())
-            return;
-        var image = button.GetComponent<Image>();
-        if (!image.IsNullOrDestroyed())
-            image.color = HudTheme.SurfaceRaised;
-        button.colors = HudTheme.ActionButtonColors(HudTheme.SurfaceRaised, HudTheme.Selection);
-        foreach (var text in button.GetComponentsInChildren<Text>(true))
-        {
-            text.color = HudTheme.TextPrimary;
-            text.fontSize = Mathf.Max(text.fontSize, HudTheme.ValueFontSize);
-        }
-        foreach (var text in button.GetComponentsInChildren<TMP_Text>(true))
-        {
-            text.color = HudTheme.TextPrimary;
-            text.fontSize = Mathf.Max(text.fontSize, HudTheme.ValueFontSize);
+            Size = text.fontSize;
+            Minimum = text.resizeTextMinSize;
+            Maximum = text.resizeTextMaxSize;
         }
     }
 
-    public static void ApplyText(Text text, bool title = false)
+    private readonly struct TmpFontMetrics
     {
-        if (text.IsNullOrDestroyed())
-            return;
-        text.color = title ? HudTheme.TextPrimary : HudTheme.TextSecondary;
-        text.fontSize = title
-            ? Mathf.Max(text.fontSize, HudTheme.CardTitleFontSize)
-            : Mathf.Max(text.fontSize, HudTheme.BodyFontSize);
-    }
+        public readonly float Size,
+            Minimum,
+            Maximum;
 
-    public static void ApplyText(TMP_Text text, bool title = false)
-    {
-        if (text.IsNullOrDestroyed())
-            return;
-        text.color = title ? HudTheme.TextPrimary : HudTheme.TextSecondary;
-        text.fontSize = title
-            ? Mathf.Max(text.fontSize, HudTheme.CardTitleFontSize)
-            : Mathf.Max(text.fontSize, HudTheme.BodyFontSize);
-    }
-
-    public static void ApplySlider(Slider slider)
-    {
-        if (slider.IsNullOrDestroyed())
-            return;
-        var background = Prefab.Child(slider.gameObject, "Background");
-        var backgroundImage = background.IsNullOrDestroyed()
-            ? null
-            : background.GetComponent<Image>();
-        if (!backgroundImage.IsNullOrDestroyed())
-            backgroundImage.color = HudTheme.ControlTrack;
-        if (!slider.fillRect.IsNullOrDestroyed())
+        public TmpFontMetrics(TMP_Text text)
         {
-            var fill = slider.fillRect.GetComponent<Image>();
-            if (!fill.IsNullOrDestroyed())
-                fill.color = HudTheme.Accent;
+            Size = text.fontSize;
+            Minimum = text.fontSizeMin;
+            Maximum = text.fontSizeMax;
         }
-        if (!slider.targetGraphic.IsNullOrDestroyed())
-            slider.targetGraphic.color = HudTheme.ControlHandle;
-    }
-
-    public static void ApplyToggle(Toggle toggle)
-    {
-        if (toggle.IsNullOrDestroyed())
-            return;
-        if (!toggle.targetGraphic.IsNullOrDestroyed())
-            toggle.targetGraphic.color = HudTheme.SurfaceRaised;
-        if (!toggle.graphic.IsNullOrDestroyed())
-            toggle.graphic.color = HudTheme.Accent;
-        toggle.colors = HudTheme.ButtonColors(HudTheme.SurfaceRaised, HudTheme.SurfaceHover);
-    }
-
-    private static void ApplyRows(GameObject panel)
-    {
-        Prefab.ForEachDescendant(
-            panel,
-            candidate =>
-            {
-                if (candidate.name != "Content" || candidate.transform.parent == null)
-                    return;
-                if (candidate.transform.parent.gameObject.name != "Viewport")
-                    return;
-
-                foreach (var group in candidate.GetComponents<LayoutGroup>())
-                    group.enabled = false;
-                var vertical = candidate.GetComponent<VerticalLayoutGroup>();
-                if (vertical.IsNullOrDestroyed())
-                    vertical = candidate.AddComponent<VerticalLayoutGroup>();
-                vertical.enabled = true;
-                vertical.padding = new RectOffset(12, 12, 8, 8);
-                vertical.spacing = 0f;
-                vertical.childAlignment = TextAnchor.UpperLeft;
-                vertical.childControlWidth = true;
-                vertical.childControlHeight = true;
-                vertical.childForceExpandWidth = true;
-                vertical.childForceExpandHeight = false;
-
-                var fitter = candidate.GetComponent<ContentSizeFitter>();
-                if (fitter.IsNullOrDestroyed())
-                    fitter = candidate.AddComponent<ContentSizeFitter>();
-                fitter.horizontalFit = ContentSizeFitter.FitMode.Unconstrained;
-                fitter.verticalFit = ContentSizeFitter.FitMode.PreferredSize;
-
-                for (int i = 0; i < candidate.transform.childCount; i++)
-                {
-                    var row = candidate.transform.GetChild(i).gameObject;
-                    if (row.name.StartsWith("Border", System.StringComparison.Ordinal))
-                    {
-                        row.SetActive(false);
-                        continue;
-                    }
-                    ApplyRow(row);
-                }
-            }
-        );
-    }
-
-    private static void ApplyRow(GameObject row)
-    {
-        var toggle = DirectComponent<Toggle>(row);
-        var slider = DirectComponent<Slider>(row);
-        var dropdown = DirectComponent<Dropdown>(row);
-        var button = row.GetComponent<Button>();
-        float height = slider.IsNullOrDestroyed()
-            ? (button.IsNullOrDestroyed() ? HudTheme.RowHeight : HudTheme.ButtonRowHeight)
-            : HudTheme.SliderRowHeight;
-
-        var element = row.GetComponent<LayoutElement>();
-        if (element.IsNullOrDestroyed())
-            element = row.AddComponent<LayoutElement>();
-        element.minHeight = height;
-        element.preferredHeight = height;
-        element.flexibleHeight = 0f;
-
-        var rowImage = row.GetComponent<Image>();
-        if (rowImage.IsNullOrDestroyed())
-            rowImage = row.AddComponent<Image>();
-        rowImage.color = HudTheme.Surface;
-        rowImage.raycastTarget = false;
-
-        var oldDivider = Prefab.Child(row, "LEHUD_RowDivider");
-        if (oldDivider.IsNullOrDestroyed())
-        {
-            oldDivider = new GameObject("LEHUD_RowDivider");
-            oldDivider.layer = row.layer;
-            oldDivider.AddComponent<RectTransform>().SetParent(row.transform, false);
-            var divider = oldDivider.AddComponent<Image>();
-            divider.color = HudTheme.Divider;
-            divider.raycastTarget = false;
-        }
-        var dividerRect = oldDivider.GetComponent<RectTransform>();
-        dividerRect.anchorMin = Vector2.zero;
-        dividerRect.anchorMax = new Vector2(1f, 0f);
-        dividerRect.pivot = new Vector2(0.5f, 0f);
-        dividerRect.anchoredPosition = Vector2.zero;
-        dividerRect.sizeDelta = new Vector2(0f, HudTheme.BorderWidth);
-        oldDivider.transform.SetAsLastSibling();
-
-        if (!button.IsNullOrDestroyed())
-        {
-            rowImage.raycastTarget = true;
-            ApplyButton(button);
-            var outline = row.GetComponent<Outline>();
-            if (outline.IsNullOrDestroyed())
-                outline = row.AddComponent<Outline>();
-            outline.effectColor = HudTheme.Border;
-            outline.effectDistance = new Vector2(1f, -1f);
-        }
-
-        if (!toggle.IsNullOrDestroyed())
-            ArrangeToggle(toggle, slider);
-        if (!slider.IsNullOrDestroyed())
-            ArrangeSlider(slider);
-        if (!dropdown.IsNullOrDestroyed())
-            ArrangeDropdown(row, dropdown);
-    }
-
-    private static void ArrangeToggle(Toggle toggle, Slider slider)
-    {
-        var toggleRect = toggle.GetComponent<RectTransform>();
-        toggleRect.anchorMin = Vector2.zero;
-        toggleRect.anchorMax = Vector2.one;
-        toggleRect.offsetMin = Vector2.zero;
-        toggleRect.offsetMax = Vector2.zero;
-
-        var boxObject = Prefab.Child(toggle.gameObject, "Background");
-        if (!boxObject.IsNullOrDestroyed())
-        {
-            var boxRect = boxObject.GetComponent<RectTransform>();
-            boxRect.anchorMin = new Vector2(1f, 1f);
-            boxRect.anchorMax = new Vector2(1f, 1f);
-            boxRect.pivot = new Vector2(1f, 1f);
-            boxRect.anchoredPosition = new Vector2(-14f, slider.IsNullOrDestroyed() ? -12f : -10f);
-            boxRect.sizeDelta = new Vector2(HudTheme.ToggleSize, HudTheme.ToggleSize);
-            var box = boxObject.GetComponent<Image>();
-            if (!box.IsNullOrDestroyed())
-                box.color = HudTheme.ControlBox;
-            var outline = boxObject.GetComponent<Outline>();
-            if (outline.IsNullOrDestroyed())
-                outline = boxObject.AddComponent<Outline>();
-            outline.effectColor = HudTheme.Border;
-            outline.effectDistance = new Vector2(1f, -1f);
-        }
-
-        var labelObject = Prefab.Child(toggle.gameObject, "Label");
-        if (!labelObject.IsNullOrDestroyed())
-        {
-            var labelRect = labelObject.GetComponent<RectTransform>();
-            labelRect.anchorMin = new Vector2(0f, 1f);
-            labelRect.anchorMax = new Vector2(1f, 1f);
-            labelRect.pivot = new Vector2(0f, 1f);
-            labelRect.anchoredPosition = new Vector2(14f, slider.IsNullOrDestroyed() ? -8f : -7f);
-            labelRect.sizeDelta = new Vector2(-96f, 30f);
-            var label = labelObject.GetComponent<Text>();
-            if (!label.IsNullOrDestroyed())
-            {
-                label.alignment = TextAnchor.MiddleLeft;
-                label.color = HudTheme.TextPrimary;
-            }
-        }
-
-        var valueObject = Prefab.Child(toggle.gameObject, "Value");
-        if (!valueObject.IsNullOrDestroyed())
-        {
-            var valueRect = valueObject.GetComponent<RectTransform>();
-            valueRect.anchorMin = new Vector2(1f, 1f);
-            valueRect.anchorMax = new Vector2(1f, 1f);
-            valueRect.pivot = new Vector2(1f, 1f);
-            valueRect.anchoredPosition = new Vector2(-52f, -7f);
-            valueRect.sizeDelta = new Vector2(116f, 30f);
-            var value = valueObject.GetComponent<Text>();
-            if (!value.IsNullOrDestroyed())
-            {
-                value.alignment = TextAnchor.MiddleRight;
-                value.color = HudTheme.TextPrimary;
-            }
-        }
-        ApplyToggle(toggle);
-    }
-
-    private static void ArrangeSlider(Slider slider)
-    {
-        var rect = slider.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0f, 0f);
-        rect.anchorMax = new Vector2(1f, 0f);
-        rect.pivot = new Vector2(0.5f, 0f);
-        rect.anchoredPosition = new Vector2(0f, 13f);
-        rect.sizeDelta = new Vector2(-28f, 18f);
-        ApplySlider(slider);
-    }
-
-    private static void ArrangeDropdown(GameObject row, Dropdown dropdown)
-    {
-        var dropdownRect = dropdown.GetComponent<RectTransform>();
-        dropdownRect.anchorMin = new Vector2(0.42f, 0.5f);
-        dropdownRect.anchorMax = new Vector2(1f, 0.5f);
-        dropdownRect.pivot = new Vector2(1f, 0.5f);
-        dropdownRect.anchoredPosition = new Vector2(-14f, 0f);
-        dropdownRect.sizeDelta = new Vector2(-14f, 32f);
-        foreach (var text in row.GetComponentsInChildren<Text>(true))
-            text.color = HudTheme.TextPrimary;
-    }
-
-    private static T DirectComponent<T>(GameObject root)
-        where T : Component
-    {
-        var own = root.GetComponent<T>();
-        if (!own.IsNullOrDestroyed())
-            return own;
-        for (int i = 0; i < root.transform.childCount; i++)
-        {
-            var component = root.transform.GetChild(i).GetComponent<T>();
-            if (!component.IsNullOrDestroyed())
-                return component;
-        }
-        return null;
-    }
-
-    public static void ApplyDropdown(Dropdown dropdown)
-    {
-        if (dropdown.IsNullOrDestroyed())
-            return;
-        var image = dropdown.GetComponent<Image>();
-        if (!image.IsNullOrDestroyed())
-            image.color = HudTheme.SurfaceRaised;
-        dropdown.colors = HudTheme.ButtonColors(HudTheme.SurfaceRaised, HudTheme.Selection);
-        if (!dropdown.template.IsNullOrDestroyed())
-        {
-            foreach (var childImage in dropdown.template.GetComponentsInChildren<Image>(true))
-            {
-                string name = childImage.gameObject.name;
-                if (name.Contains("Checkmark", System.StringComparison.OrdinalIgnoreCase))
-                    childImage.color = HudTheme.Accent;
-                else if (name.Contains("Handle", System.StringComparison.OrdinalIgnoreCase))
-                    childImage.color = HudTheme.AccentMuted;
-                else
-                    childImage.color = HudTheme.ControlBox;
-            }
-            foreach (var option in dropdown.template.GetComponentsInChildren<Toggle>(true))
-            {
-                if (!option.targetGraphic.IsNullOrDestroyed())
-                    option.targetGraphic.color = HudTheme.ControlBox;
-                if (!option.graphic.IsNullOrDestroyed())
-                    option.graphic.color = HudTheme.Accent;
-                option.colors = HudTheme.ButtonColors(HudTheme.ControlBox, HudTheme.SurfaceHover);
-            }
-            foreach (var optionText in dropdown.template.GetComponentsInChildren<Text>(true))
-                optionText.color = HudTheme.TextPrimary;
-        }
-    }
-
-    private static void ApplyScrollbar(Scrollbar scrollbar)
-    {
-        if (scrollbar.IsNullOrDestroyed())
-            return;
-        var image = scrollbar.GetComponent<Image>();
-        if (!image.IsNullOrDestroyed())
-            image.color = HudTheme.Surface;
-        if (!scrollbar.targetGraphic.IsNullOrDestroyed())
-            scrollbar.targetGraphic.color = HudTheme.AccentMuted;
-        scrollbar.colors = HudTheme.ButtonColors(HudTheme.AccentMuted, HudTheme.Accent);
-    }
-
-    private static bool IsTitle(GameObject obj)
-    {
-        if (obj.IsNullOrDestroyed())
-            return false;
-        var current = obj.transform;
-        for (int i = 0; i < 3 && current != null; i++, current = current.parent)
-            if (current.gameObject.name.Contains("Title"))
-                return true;
-        return false;
     }
 }

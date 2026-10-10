@@ -715,8 +715,8 @@ public static class ForceDropBuilder
         foreach (var child in Functions.GetAllChild(FD.content_obj))
             if (child != root)
                 child.SetActive(false);
-        HudTheme.NormalizeSelectableGraphics(root);
-        HudTheme.ApplyFontScale(root);
+        HudStyler.NormalizeSelectableGraphics(root);
+        HudStyler.ApplyFontScale(root);
         RefreshItems();
         LogCorruptionMetadata();
     }

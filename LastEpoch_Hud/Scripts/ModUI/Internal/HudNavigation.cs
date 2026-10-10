@@ -132,8 +132,7 @@ internal static class HudNavigation
                 Items_Drop.Hide,
                 Items_Drop.Refresh
             ),
-            // Force Drop deliberately stays outside search until its separate UI
-            // rewrite is complete. Its legacy body is still managed by this page.
+            // ForceDropBuilder supplies the view; there is no search root, so the page stays out of search.
             Page(
                 "items.force-drop",
                 "Force Drop",
@@ -273,39 +272,6 @@ internal static class HudNavigation
         section = null;
         page = null;
         return false;
-    }
-
-    public static bool TryValidate(out string error)
-    {
-        var sectionIds = new HashSet<string>(StringComparer.Ordinal);
-        var pageIds = new HashSet<string>(StringComparer.Ordinal);
-        var searchRoots = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var section in Sections)
-        {
-            if (string.IsNullOrWhiteSpace(section.Id) || !sectionIds.Add(section.Id))
-            {
-                error = "Missing or duplicate HUD section id: " + section.Id;
-                return false;
-            }
-            foreach (var page in section.Pages)
-            {
-                if (string.IsNullOrWhiteSpace(page.Id) || !pageIds.Add(page.Id))
-                {
-                    error = "Missing or duplicate HUD page id: " + page.Id;
-                    return false;
-                }
-                if (
-                    !string.IsNullOrEmpty(page.SearchRootName)
-                    && !searchRoots.Add(page.SearchRootName)
-                )
-                {
-                    error = "Duplicate HUD search root: " + page.SearchRootName;
-                    return false;
-                }
-            }
-        }
-        error = null;
-        return true;
     }
 
     private static HudPageDefinition Page(
