@@ -95,17 +95,20 @@ internal sealed class HudFormPage : IHudSearchPage
     private bool refreshing;
     private bool searchActive;
 
-    public string PageId { get; }
-    public IReadOnlyList<HudSearchEntry> SearchEntries => searchEntries;
-
-    private HudFormPage(GameObject parent, GameObject hud, Font inheritedFont, string name)
+    private HudFormPage(
+        GameObject parent,
+        GameObject hud,
+        Font inheritedFont,
+        HudPageId pageId,
+        string rootName
+    )
     {
         font = inheritedFont;
-        PageId = HudNavigation.SearchPageId(name);
+        PageId = pageId;
         inputTemplate = FindInputTemplate(hud);
         handleSprite = FindHandleSprite(hud);
 
-        root = Node(parent, name);
+        root = Node(parent, rootName);
         var rootRect = root.GetComponent<RectTransform>();
         rootRect.anchorMin = Vector2.zero;
         rootRect.anchorMax = Vector2.one;
@@ -170,11 +173,18 @@ internal sealed class HudFormPage : IHudSearchPage
         HudSearch.Register(this);
     }
 
-    public static HudFormPage Build(GameObject parent, GameObject hud, Font font, string name)
+    public HudPageId PageId { get; }
+    public IReadOnlyList<HudSearchEntry> SearchEntries => searchEntries;
+
+    public static HudFormPage Build(GameObject parent, GameObject hud, Font font, HudPageId pageId)
     {
-        if (parent.IsNullOrDestroyed() || hud.IsNullOrDestroyed())
+        string rootName = HudPageRoutes.SearchRoot(pageId);
+        if (rootName == null || parent.IsNullOrDestroyed() || hud.IsNullOrDestroyed())
+        {
             return null;
-        return new HudFormPage(parent, hud, font, name);
+        }
+
+        return new HudFormPage(parent, hud, font, pageId, rootName);
     }
 
     public Card AddCard(string id, string title)

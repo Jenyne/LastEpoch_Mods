@@ -7,14 +7,17 @@ namespace LastEpoch_Hud.Scripts.ModUI.Shell;
 
 internal static class HudSearch
 {
-    private static readonly Dictionary<string, IHudSearchPage> _pages = new(StringComparer.Ordinal);
+    private static readonly Dictionary<HudPageId, IHudSearchPage> _pages = new();
 
     public static void Reset() => _pages.Clear();
 
     public static void Register(IHudSearchPage page)
     {
-        if (page == null || string.IsNullOrWhiteSpace(page.PageId))
+        if (page == null)
+        {
             return;
+        }
+
         _pages[page.PageId] = page;
     }
 
@@ -24,7 +27,7 @@ internal static class HudSearch
             return Array.Empty<HudSearchMatch>();
 
         var matches = new List<HudSearchMatch>();
-        foreach (KeyValuePair<string, IHudSearchPage> pair in _pages)
+        foreach (KeyValuePair<HudPageId, IHudSearchPage> pair in _pages)
         {
             if (!HudNavigation.TryGetPage(pair.Key, out var section, out var page))
                 continue;

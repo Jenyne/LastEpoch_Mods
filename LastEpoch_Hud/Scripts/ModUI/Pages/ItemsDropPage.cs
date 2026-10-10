@@ -1,4 +1,5 @@
 using System;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,9 +11,9 @@ internal static class ItemsDropPage
 {
     private static HudFormPage page;
 
-    public static void Build(GameObject parent, GameObject hud, Font font)
+    public static void Build(HudPageId pageId, GameObject parent, GameObject hud, Font font)
     {
-        page = HudFormPage.Build(parent, hud, font, "Items_Drop");
+        page = HudFormPage.Build(parent, hud, font, pageId);
         if (page == null)
             return;
 

@@ -1,4 +1,5 @@
 using System;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 using UnityEngine.UI;
@@ -10,9 +11,9 @@ internal static class WorldMonolithsPage
     private static HudFormPage page;
     private static HudFormPage.Card timelines;
 
-    public static void Build(GameObject parent, GameObject hud, Font font)
+    public static void Build(HudPageId pageId, GameObject parent, GameObject hud, Font font)
     {
-        page = HudFormPage.Build(parent, hud, font, "World_Monoliths");
+        page = HudFormPage.Build(parent, hud, font, pageId);
         if (page == null)
             return;
         var card = page.AddCard("Monoliths", "Monoliths");

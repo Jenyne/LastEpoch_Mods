@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 
@@ -8,12 +9,12 @@ internal static class UtilitiesCurrencyPage
 {
     private static HudActionCard page;
 
-    public static void Build(GameObject parent, Font font)
+    public static void Build(HudPageId pageId, GameObject parent, Font font)
     {
         page = HudActionCard.Build(
             parent,
             font,
-            "Utilities_Currency",
+            pageId,
             "Currency",
             new List<HudActionCard.Definition>
             {

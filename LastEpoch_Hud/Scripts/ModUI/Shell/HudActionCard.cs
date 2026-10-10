@@ -24,21 +24,22 @@ internal sealed class HudActionCard : IHudSearchPage
     private readonly List<HudSearchEntry> searchEntries = new();
     private bool searchActive;
 
-    public string PageId { get; }
+    public HudPageId PageId { get; }
     public IReadOnlyList<HudSearchEntry> SearchEntries => searchEntries;
 
     private HudActionCard(
         GameObject parent,
         Font inheritedFont,
-        string name,
+        HudPageId pageId,
+        string rootName,
         string title,
         IReadOnlyList<Definition> definitions
     )
     {
         font = inheritedFont;
         this.title = title;
-        PageId = HudNavigation.SearchPageId(name);
-        root = Node(parent, name);
+        PageId = pageId;
+        root = Node(parent, rootName);
         var rootRect = root.GetComponent<RectTransform>();
         rootRect.anchorMin = Vector2.zero;
         rootRect.anchorMax = Vector2.one;
@@ -114,14 +115,18 @@ internal sealed class HudActionCard : IHudSearchPage
     public static HudActionCard Build(
         GameObject parent,
         Font font,
-        string name,
+        HudPageId pageId,
         string title,
         IReadOnlyList<Definition> definitions
     )
     {
-        if (parent.IsNullOrDestroyed())
+        string rootName = HudPageRoutes.SearchRoot(pageId);
+        if (rootName == null || parent.IsNullOrDestroyed())
+        {
             return null;
-        return new HudActionCard(parent, font, name, title, definitions);
+        }
+
+        return new HudActionCard(parent, font, pageId, rootName, title, definitions);
     }
 
     public void Show()

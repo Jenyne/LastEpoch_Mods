@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using LastEpoch_Hud.Scripts.ModUI.Pages;
 using UnityEngine;
 
@@ -10,46 +11,41 @@ internal static class HudNavigation
     public static readonly HudSectionDefinition[] Sections =
     {
         new(
-            "character",
+            HudSectionId.Utilities,
             "Utilities",
             true,
             Page(
-                "character.main",
+                HudPageId.UtilitiesCharacter,
                 "Character",
-                "Utilities_Character",
                 UtilitiesCharacterPage.Build,
                 UtilitiesCharacterPage.Show,
                 UtilitiesCharacterPage.Hide,
                 UtilitiesCharacterPage.Refresh
             ),
             Page(
-                "character.multipliers",
+                HudPageId.UtilitiesMultipliers,
                 "Multipliers",
-                "Utilities_Multipliers",
                 UtilitiesMultipliersPage.Build,
                 UtilitiesMultipliersPage.Show,
                 UtilitiesMultipliersPage.Hide
             ),
             Page(
-                "character.currency",
+                HudPageId.UtilitiesCurrency,
                 "Currency",
-                "Utilities_Currency",
-                (parent, _, font) => UtilitiesCurrencyPage.Build(parent, font),
+                (id, parent, _, font) => UtilitiesCurrencyPage.Build(id, parent, font),
                 UtilitiesCurrencyPage.Show,
                 UtilitiesCurrencyPage.Hide
             ),
             Page(
-                "character.buffs",
+                HudPageId.UtilitiesBuffs,
                 "Buffs",
-                "Utilities_Buffs",
                 UtilitiesBuffsPage.Build,
                 UtilitiesBuffsPage.Show,
                 UtilitiesBuffsPage.Hide
             ),
             Page(
-                "character.qol",
+                HudPageId.UtilitiesQol,
                 "QOL",
-                "Utilities_QOL",
                 UtilitiesQolPage.Build,
                 UtilitiesQolPage.Show,
                 UtilitiesQolPage.Hide,
@@ -57,31 +53,28 @@ internal static class HudNavigation
             )
         ),
         new(
-            "items",
+            HudSectionId.Items,
             "Items",
             true,
             Page(
-                "items.drop",
+                HudPageId.ItemsDrop,
                 "Drop",
-                "Items_Drop",
                 ItemsDropPage.Build,
                 ItemsDropPage.Show,
                 ItemsDropPage.Hide,
                 ItemsDropPage.Refresh
             ),
-            // ForceDropBuilder supplies the view; there is no search root, so the page stays out of search.
+            // No builder; HudPageRoutes has no root, so it stays out of search.
             Page(
-                "items.force-drop",
+                HudPageId.ItemsForceDrop,
                 "Force Drop",
-                null,
                 null,
                 ItemsForceDropPage.Show,
                 ItemsForceDropPage.Hide
             ),
             Page(
-                "items.crafting",
+                HudPageId.ItemsCraftingSlot,
                 "Crafting Slot",
-                "Items_CraftingSlot",
                 ItemsCraftingSlotPage.Build,
                 ItemsCraftingSlotPage.Show,
                 ItemsCraftingSlotPage.Hide,
@@ -89,40 +82,36 @@ internal static class HudNavigation
             )
         ),
         new(
-            "world",
+            HudSectionId.World,
             "World",
             true,
             Page(
-                "world.difficulty",
+                HudPageId.WorldDifficulty,
                 "Difficulty",
-                "World_Difficulty",
                 WorldDifficultyPage.Build,
                 WorldDifficultyPage.Show,
                 WorldDifficultyPage.Hide,
                 WorldDifficultyPage.Refresh
             ),
             Page(
-                "world.monoliths",
+                HudPageId.WorldMonoliths,
                 "Monoliths",
-                "World_Monoliths",
                 WorldMonolithsPage.Build,
                 WorldMonolithsPage.Show,
                 WorldMonolithsPage.Hide,
                 WorldMonolithsPage.Refresh
             ),
             Page(
-                "world.misc",
+                HudPageId.WorldMisc,
                 "Misc",
-                "World_Misc",
                 WorldMiscPage.Build,
                 WorldMiscPage.Show,
                 WorldMiscPage.Hide,
                 WorldMiscPage.Refresh
             ),
             Page(
-                "world.camera",
+                HudPageId.WorldCamera,
                 "Camera",
-                "World_Camera",
                 WorldCameraPage.Build,
                 WorldCameraPage.Show,
                 WorldCameraPage.Hide,
@@ -130,40 +119,36 @@ internal static class HudNavigation
             )
         ),
         new(
-            "skills",
+            HudSectionId.Skills,
             "Skills",
             true,
             Page(
-                "skills.minions",
+                HudPageId.SkillsMinions,
                 "Minions",
-                "Skills_Minions",
                 SkillsMinionsPage.Build,
                 SkillsMinionsPage.Show,
                 SkillsMinionsPage.Hide,
                 SkillsMinionsPage.Refresh
             ),
             Page(
-                "skills.companions",
+                HudPageId.SkillsCompanions,
                 "Companions",
-                "Skills_Companions",
                 SkillsCompanionsPage.Build,
                 SkillsCompanionsPage.Show,
                 SkillsCompanionsPage.Hide,
                 SkillsCompanionsPage.Refresh
             ),
             Page(
-                "skills.summon",
+                HudPageId.SkillsSummon,
                 "Summon",
-                "Skills_Summon",
                 SkillsSummonPage.Build,
                 SkillsSummonPage.Show,
                 SkillsSummonPage.Hide,
                 SkillsSummonPage.Refresh
             ),
             Page(
-                "skills.qol",
+                HudPageId.SkillsQol,
                 "QOL",
-                "Skills_QOL",
                 SkillsQolPage.Build,
                 SkillsQolPage.Show,
                 SkillsQolPage.Hide,
@@ -182,25 +167,15 @@ internal static class HudNavigation
         }
     }
 
-    public static string SearchPageId(string rootName)
-    {
-        if (string.IsNullOrEmpty(rootName))
-            return null;
-        foreach (var page in Pages)
-            if (string.Equals(page.SearchRootName, rootName, StringComparison.Ordinal))
-                return page.Id;
-        return null;
-    }
-
     public static bool TryGetPage(
-        string pageId,
+        HudPageId pageId,
         out HudSectionDefinition section,
         out HudPageDefinition page
     )
     {
         foreach (var candidateSection in Sections)
         foreach (var candidatePage in candidateSection.Pages)
-            if (string.Equals(candidatePage.Id, pageId, StringComparison.Ordinal))
+            if (candidatePage.Id == pageId)
             {
                 section = candidateSection;
                 page = candidatePage;
@@ -212,12 +187,11 @@ internal static class HudNavigation
     }
 
     private static HudPageDefinition Page(
-        string id,
+        HudPageId id,
         string label,
-        string searchRootName,
-        Action<GameObject, GameObject, Font> build,
+        Action<HudPageId, GameObject, GameObject, Font> build,
         Action show,
         Action hide,
         Action refresh = null
-    ) => new(id, label, searchRootName, build, show, hide, refresh);
+    ) => new(id, label, build, show, hide, refresh);
 }

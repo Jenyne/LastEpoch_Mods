@@ -2,13 +2,13 @@ namespace LastEpoch_Hud.Scripts.ModUI.Shell;
 
 internal sealed class HudSectionDefinition
 {
-    public readonly string Id;
+    public readonly HudSectionId Id;
     public readonly string Label;
     public readonly bool Accordion;
     public readonly HudPageDefinition[] Pages;
 
     public HudSectionDefinition(
-        string id,
+        HudSectionId id,
         string label,
         bool accordion,
         params HudPageDefinition[] pages

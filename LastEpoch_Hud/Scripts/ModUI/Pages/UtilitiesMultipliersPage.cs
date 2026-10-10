@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 
@@ -10,13 +11,13 @@ internal static class UtilitiesMultipliersPage
 {
     private static HudSliderCard page;
 
-    public static void Build(GameObject parent, GameObject hud, Font font)
+    public static void Build(HudPageId pageId, GameObject parent, GameObject hud, Font font)
     {
         page = HudSliderCard.Build(
             parent,
             hud,
             font,
-            "Utilities_Multipliers",
+            pageId,
             "Multipliers",
             new List<HudSliderCard.Definition>
             {

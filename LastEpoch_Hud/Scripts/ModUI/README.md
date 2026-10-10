@@ -14,7 +14,7 @@ Presentation has one owner for each concern:
   palettes, semantic colors, typography, spacing, dimensions, borders, and selectable states.
 - `Shell/HudStyler.cs` applies theme tokens to runtime-built controls, including font scaling.
 - `Shell/HudElements.cs` owns the primitive construction rules shared by runtime-built controls.
-- `Shell/HudNavigation.cs` is the page catalog. A page's sidebar position, search root, build,
+- `Shell/HudNavigation.cs` is the page catalog. A page's sidebar position, `HudPageId`, build,
   show, hide, and refresh lifecycle are declared together in one entry. Moving a page means editing
   its catalog entry; renaming one also needs a new label key in `Locales/base.json` and `en.json`,
   because sidebar labels go through `LocaleRegistry`.
@@ -26,12 +26,13 @@ Presentation has one owner for each concern:
 - `Shell/HudFormPage.cs`, `HudSliderCard.cs`, and `HudActionCard.cs` are the reusable view
   components used by pages.
 
-Force Drop is the sole presentation exception: its catalog entry has no builder and no search root.
+Force Drop is the sole presentation exception: its catalog entry has no builder and no root in `HudPageRoutes`.
 `ItemsForceDropPage` shows the original content root, `ForceDropBuilder` (ticked from `Hud_Manager`)
 builds its runtime view over those prefab controls, and the page stays out of global search.
 
-When adding a page, add one catalog entry to `HudNavigation.Sections` and put its content in
-`Pages/`. Visual values belong in `HudTheme`, not page files. Reusable object creation belongs in
+When adding a page, add a `HudPageId` value, its root name in `Core/ModUI/HudPageRoutes.cs`, and one
+catalog entry to `HudNavigation.Sections`; put its content in `Pages/`. The page's `Build` takes the
+`HudPageId` and forwards it to `HudFormPage`/`HudSliderCard`/`HudActionCard`. Visual values belong in `HudTheme`, not page files. Reusable object creation belongs in
 `HudElements`; reusable component styling belongs in `HudStyler`. Do not add
 page-id condition chains to `HudLayout` or duplicate search-routing tables.
 
@@ -345,6 +346,7 @@ ModUI/
     HudNavigation.cs        Sidebar hierarchy plus page/search lifecycle catalog
     HudPageDefinition.cs    One page's navigation metadata and lifecycle
     HudSectionDefinition.cs One sidebar section and its pages
+    HudSectionId.cs         One value per sidebar section
     HudLayout.cs            Window, header, and page activation
     HudSidebar.cs           Sidebar rows, accordion, and selection
     HudSettingsPanel.cs     Font size and theme panel
@@ -390,7 +392,7 @@ ModUI/
 | I want to... | Do this |
 |---|---|
 | Change a HUD color, size, spacing, or control state | `Shell/HudTheme.cs` |
-| Add a visible sidebar page | Add its view under `Pages/` and one lifecycle entry in `HudNavigation.Sections` |
+| Add a visible sidebar page | Add its view under `Pages/`, a `HudPageId` value, its root in `HudPageRoutes`, and one entry in `HudNavigation.Sections` |
 | Move or rename a sidebar page | Edit its single `HudNavigation.Sections` entry; a rename also needs a new label key in `base.json` + `en.json` |
 | Add a toggle/slider/range | `ModSettings.cs` -- one line: `Group.Bool/Float/Range(...)` |
 | Add a dropdown | `ModSettings.cs` -- `Group.Dropdown("Key")`, optionally with `options:` |

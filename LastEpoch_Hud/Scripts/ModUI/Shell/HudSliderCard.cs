@@ -49,25 +49,26 @@ internal sealed class HudSliderCard : IHudSearchPage
     private bool refreshing;
     private bool searchActive;
 
-    public string PageId { get; }
+    public HudPageId PageId { get; }
     public IReadOnlyList<HudSearchEntry> SearchEntries => searchEntries;
 
     private HudSliderCard(
         GameObject parent,
         GameObject hud,
         Font inheritedFont,
-        string name,
+        HudPageId pageId,
+        string rootName,
         string title,
         IReadOnlyList<Definition> definitions
     )
     {
         font = inheritedFont;
         this.title = title;
-        PageId = HudNavigation.SearchPageId(name);
+        PageId = pageId;
         inputTemplate = FindInputTemplate(hud);
         handleSprite = FindHandleSprite(hud);
 
-        root = Node(parent, name);
+        root = Node(parent, rootName);
         var rootRect = root.GetComponent<RectTransform>();
         rootRect.anchorMin = Vector2.zero;
         rootRect.anchorMax = Vector2.one;
@@ -181,14 +182,18 @@ internal sealed class HudSliderCard : IHudSearchPage
         GameObject parent,
         GameObject hud,
         Font font,
-        string name,
+        HudPageId pageId,
         string title,
         IReadOnlyList<Definition> definitions
     )
     {
-        if (parent.IsNullOrDestroyed() || hud.IsNullOrDestroyed())
+        string rootName = HudPageRoutes.SearchRoot(pageId);
+        if (rootName == null || parent.IsNullOrDestroyed() || hud.IsNullOrDestroyed())
+        {
             return null;
-        return new HudSliderCard(parent, hud, font, name, title, definitions);
+        }
+
+        return new HudSliderCard(parent, hud, font, pageId, rootName, title, definitions);
     }
 
     public void Show()

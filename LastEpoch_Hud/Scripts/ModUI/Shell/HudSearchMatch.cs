@@ -1,9 +1,11 @@
+using LastEpoch_Hud.Scripts.Core.ModUI;
+
 namespace LastEpoch_Hud.Scripts.ModUI.Shell;
 
 internal sealed class HudSearchMatch
 {
     public IHudSearchPage Page { get; init; }
-    public string PageId { get; init; }
+    public HudPageId PageId { get; init; }
     public string Section { get; init; }
     public string Tab { get; init; }
     public string Card { get; init; }

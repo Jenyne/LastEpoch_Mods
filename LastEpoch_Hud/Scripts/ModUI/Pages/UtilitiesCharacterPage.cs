@@ -1,4 +1,5 @@
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 using UnityEngine.UI;
@@ -16,9 +17,9 @@ internal static class UtilitiesCharacterPage
     private static float _factionReputation;
     private static Dropdown _classSource;
 
-    public static void Build(GameObject parent, GameObject hud, Font font)
+    public static void Build(HudPageId pageId, GameObject parent, GameObject hud, Font font)
     {
-        _page = HudFormPage.Build(parent, hud, font, "Utilities_Character");
+        _page = HudFormPage.Build(parent, hud, font, pageId);
         if (_page == null)
         {
             return;

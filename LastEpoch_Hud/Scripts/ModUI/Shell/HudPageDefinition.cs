@@ -1,27 +1,25 @@
 using System;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Shell;
 
 // A page's navigation metadata and runtime lifecycle live together here. Adding a
-// page should require one entry, not another branch in HudLayout and a separate
-// search-routing table.
+// page should require one entry, not another branch in HudLayout.
 internal sealed class HudPageDefinition
 {
-    private readonly Action<GameObject, GameObject, Font> build;
-    private readonly Action show;
-    private readonly Action hide;
-    private readonly Action refresh;
-
-    public readonly string Id;
+    public readonly HudPageId Id;
     public readonly string Label;
-    public readonly string SearchRootName;
+
+    private readonly Action<HudPageId, GameObject, GameObject, Font> _build;
+    private readonly Action _show;
+    private readonly Action _hide;
+    private readonly Action _refresh;
 
     public HudPageDefinition(
-        string id,
+        HudPageId id,
         string label,
-        string searchRootName,
-        Action<GameObject, GameObject, Font> build,
+        Action<HudPageId, GameObject, GameObject, Font> build,
         Action show,
         Action hide,
         Action refresh = null
@@ -29,19 +27,18 @@ internal sealed class HudPageDefinition
     {
         Id = id;
         Label = label;
-        SearchRootName = searchRootName;
-        this.build = build;
-        this.show = show;
-        this.hide = hide;
-        this.refresh = refresh;
+        _build = build;
+        _show = show;
+        _hide = hide;
+        _refresh = refresh;
     }
 
     public void Build(GameObject parent, GameObject hud, Font font) =>
-        build?.Invoke(parent, hud, font);
+        _build?.Invoke(Id, parent, hud, font);
 
-    public void Show() => show?.Invoke();
+    public void Show() => _show?.Invoke();
 
-    public void Hide() => hide?.Invoke();
+    public void Hide() => _hide?.Invoke();
 
-    public void Refresh() => refresh?.Invoke();
+    public void Refresh() => _refresh?.Invoke();
 }

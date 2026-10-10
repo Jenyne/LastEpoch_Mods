@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using LastEpoch_Hud.Scripts.ModUI.Settings;
 using UnityEngine;
 using UnityEngine.UI;
@@ -9,7 +10,7 @@ namespace LastEpoch_Hud.Scripts.ModUI.Shell;
 /// <summary>Builds the sidebar from HudNavigation.Sections and owns its buttons, accordion state and selection visuals; reset on HUD re-bind.</summary>
 internal static class HudSidebar
 {
-    private static readonly Dictionary<string, NavigationButton> _pageButtons = new();
+    private static readonly Dictionary<HudPageId, NavigationButton> _pageButtons = new();
     private static readonly List<NavigationSection> _sections = new();
     private static Font _font;
     private static Action<HudPageDefinition> _activatePage;
@@ -37,7 +38,7 @@ internal static class HudSidebar
         rightBorder.transform.SetAsLastSibling();
     }
 
-    public static void ExpandSection(string sectionId, bool expanded)
+    public static void ExpandSection(HudSectionId sectionId, bool expanded)
     {
         foreach (NavigationSection section in _sections)
         {
@@ -59,9 +60,9 @@ internal static class HudSidebar
         }
     }
 
-    public static void SetSelected(string pageId)
+    public static void SetSelected(HudPageId pageId)
     {
-        foreach (KeyValuePair<string, NavigationButton> pair in _pageButtons)
+        foreach (KeyValuePair<HudPageId, NavigationButton> pair in _pageButtons)
         {
             bool selected = pair.Key == pageId;
             pair.Value.Background.color = HudTheme.SelectableTint;

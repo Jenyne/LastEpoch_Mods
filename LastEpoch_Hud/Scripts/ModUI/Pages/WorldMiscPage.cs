@@ -1,4 +1,5 @@
 using System;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using LastEpoch_Hud.Scripts.ModUI.Settings;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
@@ -11,9 +12,9 @@ internal static class WorldMiscPage
     private static UnityEngine.UI.Text sessionTotals;
     private static UnityEngine.UI.Button sessionPause;
 
-    public static void Build(GameObject parent, GameObject hud, Font font)
+    public static void Build(HudPageId pageId, GameObject parent, GameObject hud, Font font)
     {
-        page = HudFormPage.Build(parent, hud, font, "World_Misc");
+        page = HudFormPage.Build(parent, hud, font, pageId);
         if (page == null)
             return;
 
