@@ -260,7 +260,9 @@ internal static class SessionGainCounters
         {
             balances.Clear();
             if (trace)
-                Main.logger_instance?.Warning("[SessionFavour] FactionTracker or factions unavailable.");
+                Main.logger_instance?.Warning(
+                    "[SessionFavour] FactionTracker or factions unavailable."
+                );
             return;
         }
         foreach (var id in trackedFactions)
