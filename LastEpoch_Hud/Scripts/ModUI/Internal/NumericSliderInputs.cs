@@ -205,7 +205,7 @@ public static class NumericSliderInputs
             background.color = HudTheme.InputBackground;
         }
         ColorBlock colors = input.colors;
-        colors.normalColor = Color.white;
+        colors.normalColor = HudTheme.SelectableTint;
         colors.highlightedColor = HudTheme.TextPrimary;
         colors.selectedColor = colors.highlightedColor;
         colors.pressedColor = HudTheme.TextSecondary;

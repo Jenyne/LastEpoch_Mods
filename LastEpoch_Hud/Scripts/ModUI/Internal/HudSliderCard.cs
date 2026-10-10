@@ -135,7 +135,7 @@ internal sealed class HudSliderCard : IHudSearchPage
         Stretch(viewportRect);
         viewportRect.offsetMax = new Vector2(-HudTheme.SliderScrollbarWidth - 10f, 0f);
         var viewportInput = viewport.AddComponent<Image>();
-        viewportInput.color = new Color(0f, 0f, 0f, 0f);
+        viewportInput.color = HudTheme.Transparent;
         viewportInput.raycastTarget = true;
         viewport.AddComponent<RectMask2D>();
 
@@ -565,34 +565,11 @@ internal sealed class HudSliderCard : IHudSearchPage
         return null;
     }
 
-    private GameObject Node(GameObject parent, string name)
-    {
-        var node = new GameObject(name);
-        node.layer = parent.layer;
-        node.AddComponent<RectTransform>().SetParent(parent.transform, false);
-        return node;
-    }
+    private static GameObject Node(GameObject parent, string name) =>
+        HudElements.Node(parent, name);
 
-    private Text TextNode(GameObject parent, string name, string caption, int size)
-    {
-        var node = Node(parent, name);
-        var text = node.AddComponent<Text>();
-        text.font = font;
-        text.fontSize = size;
-        text.fontStyle = FontStyle.Normal;
-        text.color = HudTheme.TextPrimary;
-        text.horizontalOverflow = HorizontalWrapMode.Overflow;
-        text.verticalOverflow = VerticalWrapMode.Truncate;
-        text.raycastTarget = false;
-        LocaleRegistry.Apply(text, caption);
-        return text;
-    }
+    private Text TextNode(GameObject parent, string name, string caption, int size) =>
+        HudElements.Text(parent, name, caption, font, size);
 
-    private static void Stretch(RectTransform rect)
-    {
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-    }
+    private static void Stretch(RectTransform rect) => HudElements.Stretch(rect);
 }

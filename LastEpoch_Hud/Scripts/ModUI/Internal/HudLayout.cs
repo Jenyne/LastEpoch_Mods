@@ -5,9 +5,8 @@ using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI;
 
-// Runtime composition layer for the HUD. It deliberately moves (rather than
-// clones) the existing prefab panels so every legacy reference and event binding
-// continues to point at the same functional controls.
+// Owns the shared HUD shell. Page metadata and lifecycle behavior are declared in
+// HudNavigation; individual page files own their content.
 public static class HudLayout
 {
     private sealed class NavigationButton
@@ -25,224 +24,10 @@ public static class HudLayout
         public bool Expanded;
     }
 
-    private sealed class RowContainer
-    {
-        public GameObject Root;
-        public readonly List<GameObject> Children = new();
-        public readonly Dictionary<GameObject, bool> InitiallyActive = new();
-    }
-
-    private sealed class PanelState
-    {
-        public readonly string Id;
-        public readonly GameObject Root;
-        public readonly Dictionary<GameObject, bool> DirectChildren = new();
-        public readonly List<RowContainer> RowContainers = new();
-        private readonly List<(Text Text, string Caption)> titleTexts = new();
-
-        public PanelState(string id, GameObject root)
-        {
-            Id = id;
-            Root = root;
-            CaptureDirectChildren();
-            CaptureRowContainers();
-            CaptureTitleTexts();
-        }
-
-        public void Restore()
-        {
-            foreach (var child in DirectChildren)
-                if (!child.Key.IsNullOrDestroyed())
-                    child.Key.SetActive(child.Value);
-            foreach (var container in RowContainers)
-            foreach (var child in container.Children)
-                if (!child.IsNullOrDestroyed())
-                    child.SetActive(
-                        container.InitiallyActive[child]
-                            && !child.name.StartsWith("Border", StringComparison.Ordinal)
-                    );
-            foreach (var title in titleTexts)
-                if (!title.Text.IsNullOrDestroyed())
-                    LocaleRegistry.Apply(title.Text, title.Caption);
-        }
-
-        public void ApplyVisibleChildren(string[] names)
-        {
-            if (names == null)
-                return;
-            var visible = new HashSet<string>(names, StringComparer.Ordinal);
-            foreach (var child in DirectChildren)
-                if (!child.Key.IsNullOrDestroyed())
-                    child.Key.SetActive(child.Value && visible.Contains(child.Key.name));
-        }
-
-        public void ApplyVisibleRows(string[] names)
-        {
-            if (names == null)
-                return;
-            var visible = new HashSet<string>(names, StringComparer.Ordinal);
-            foreach (var container in RowContainers)
-            {
-                bool previousRowVisible = false;
-                foreach (var child in container.Children)
-                {
-                    bool show;
-                    if (child.name.StartsWith("Border", StringComparison.Ordinal))
-                        show = false;
-                    else
-                    {
-                        show = visible.Contains(child.name);
-                        previousRowVisible = show;
-                    }
-                    child.SetActive(container.InitiallyActive[child] && show);
-                }
-            }
-        }
-
-        public float MeasureAndArrange()
-        {
-            if (Id == HudPanelIds.ForceDrop)
-                return 720f;
-            if (Id == HudPanelIds.WorldMisc)
-                return 620f;
-
-            float top = 12f;
-            for (int i = 0; i < Root.transform.childCount; i++)
-            {
-                var child = Root.transform.GetChild(i).gameObject;
-                if (!child.activeSelf)
-                    continue;
-                float height = 0f;
-                if (child.name.Contains("Title", StringComparison.Ordinal))
-                    height = HudTheme.CardTitleHeight;
-                else if (!child.GetComponent<ScrollRect>().IsNullOrDestroyed())
-                    height = MeasureRows(child);
-                else if (
-                    !child.GetComponent<Button>().IsNullOrDestroyed()
-                    || !child.GetComponentInChildren<Button>(true).IsNullOrDestroyed()
-                )
-                    height = HudTheme.ButtonRowHeight + 10f;
-                if (height <= 0f)
-                    continue;
-                PlaceDirectChild(child.GetComponent<RectTransform>(), top, height);
-                top += height;
-            }
-            return Mathf.Max(top + 12f, 140f);
-        }
-
-        public void ApplyTitle(string caption)
-        {
-            if (string.IsNullOrEmpty(caption))
-                return;
-            foreach (var title in titleTexts)
-                if (!title.Text.IsNullOrDestroyed())
-                    LocaleRegistry.Apply(title.Text, caption);
-        }
-
-        private void CaptureDirectChildren()
-        {
-            for (int i = 0; i < Root.transform.childCount; i++)
-            {
-                var child = Root.transform.GetChild(i).gameObject;
-                DirectChildren[child] = child.activeSelf;
-            }
-        }
-
-        private void CaptureRowContainers()
-        {
-            Prefab.ForEachDescendant(
-                Root,
-                candidate =>
-                {
-                    if (candidate.name != "Content" || candidate.transform.parent == null)
-                        return;
-                    if (candidate.transform.parent.gameObject.name != "Viewport")
-                        return;
-                    var rows = new RowContainer { Root = candidate };
-                    for (int i = 0; i < candidate.transform.childCount; i++)
-                    {
-                        var child = candidate.transform.GetChild(i).gameObject;
-                        rows.Children.Add(child);
-                        rows.InitiallyActive[child] = child.activeSelf;
-                    }
-                    if (rows.Children.Count > 0)
-                        RowContainers.Add(rows);
-                }
-            );
-        }
-
-        private void CaptureTitleTexts()
-        {
-            var title = Prefab.Child(Root, "Title");
-            if (title.IsNullOrDestroyed())
-                return;
-            foreach (var text in title.GetComponentsInChildren<Text>(true))
-                titleTexts.Add((text, text.text));
-        }
-
-        private float MeasureRows(GameObject scope)
-        {
-            float height = 16f;
-            foreach (var container in RowContainers)
-            {
-                if (!container.Root.transform.IsChildOf(scope.transform))
-                    continue;
-                foreach (var child in container.Children)
-                {
-                    if (
-                        !child.activeSelf
-                        || child.name.StartsWith("Border", StringComparison.Ordinal)
-                    )
-                        continue;
-                    var element = child.GetComponent<LayoutElement>();
-                    height += element.IsNullOrDestroyed()
-                        ? HudTheme.RowHeight
-                        : element.preferredHeight;
-                }
-            }
-
-            var scroll = scope.GetComponent<ScrollRect>();
-            if (!scroll.IsNullOrDestroyed())
-            {
-                scroll.horizontal = false;
-                scroll.vertical = false;
-                if (!scroll.viewport.IsNullOrDestroyed())
-                {
-                    scroll.viewport.anchorMin = Vector2.zero;
-                    scroll.viewport.anchorMax = Vector2.one;
-                    scroll.viewport.offsetMin = Vector2.zero;
-                    scroll.viewport.offsetMax = Vector2.zero;
-                }
-                if (!scroll.horizontalScrollbar.IsNullOrDestroyed())
-                    scroll.horizontalScrollbar.gameObject.SetActive(false);
-                if (!scroll.verticalScrollbar.IsNullOrDestroyed())
-                    scroll.verticalScrollbar.gameObject.SetActive(false);
-                // The page owns scrolling now. Disabling nested ScrollRects lets
-                // wheel/drag events bubble to the single outer scroller.
-                scroll.enabled = false;
-            }
-            return Mathf.Max(height, 62f);
-        }
-
-        private static void PlaceDirectChild(RectTransform rect, float top, float height)
-        {
-            if (rect.IsNullOrDestroyed())
-                return;
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(1f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -top);
-            rect.sizeDelta = new Vector2(-24f, height);
-        }
-    }
-
-    private static readonly Dictionary<string, PanelState> panels = new();
     private static readonly Dictionary<string, NavigationButton> pageButtons = new();
     private static readonly List<NavigationSection> navigationSections = new();
     private static GameObject boundHud;
     private static GameObject window;
-    private static GameObject stage;
-    private static ScrollRect mainScroll;
     private static Font font;
     private static HudPageDefinition activePage;
     private static GameObject settingsPanel;
@@ -257,7 +42,6 @@ public static class HudLayout
             return;
 
         boundHud = hud;
-        panels.Clear();
         pageButtons.Clear();
         navigationSections.Clear();
         HudSearch.Reset();
@@ -265,6 +49,11 @@ public static class HudLayout
         HudTheme.LoadPreferences();
         HudTheme.ResetFontBaselines();
         font = FindFont(hud);
+        if (!HudNavigation.TryValidate(out string navigationError))
+        {
+            Main.logger_instance?.Error("HudLayout: " + navigationError);
+            return;
+        }
 
         var content = Prefab.Child(hud, "Content");
         var menu = Prefab.Child(hud, "Menu");
@@ -278,27 +67,10 @@ public static class HudLayout
         menu.transform.SetParent(window.transform, false);
         content.transform.SetParent(window.transform, false);
         BuildHeader(window);
-        // Build and validate the replacement navigation first. Content rebuilding
-        // is deliberately deferred so this pass cannot fall back to the old menu.
         BuildNavigation(menu);
         PlaceLegacyContent(content);
-        HideLegacyMultiplierRows(content);
-        HideLegacyBuffPanel(content);
-        Utilities_Character.Build(window, hud, font);
-        Utilities_Multipliers.Build(window, hud, font);
-        Utilities_Buffs.Build(window, hud, font);
-        Utilities_QOL.Build(window, hud, font);
-        Utilities_Currency.Build(window, font);
-        Items_Drop.Build(window, hud, font);
-        Items_CraftingSlot.Build(window, hud, font);
-        World_Difficulty.Build(window, hud, font);
-        World_Monoliths.Build(window, hud, font);
-        World_Misc.Build(window, hud, font);
-        World_Camera.Build(window, hud, font);
-        Skills_Minions.Build(window, hud, font);
-        Skills_Companions.Build(window, hud, font);
-        Skills_Summon.Build(window, hud, font);
-        Skills_QOL.Build(window, hud, font);
+        foreach (var page in HudNavigation.Pages)
+            page.Build(window, hud, font);
 
         var defaultPage = HudNavigation.Sections[0].Pages[0];
         ExpandSection(HudNavigation.Sections[0].Id, true);
@@ -620,50 +392,11 @@ public static class HudLayout
         Color normal = selected ? HudTheme.Selection : HudTheme.Surface;
         var image = button.GetComponent<Image>();
         if (!image.IsNullOrDestroyed())
-            image.color = Color.white;
+            image.color = HudTheme.SelectableTint;
         button.colors = HudTheme.ActionButtonColors(
             normal,
             selected ? HudTheme.Selection : HudTheme.SurfaceHover
         );
-    }
-
-    private static void BuildStage(GameObject content)
-    {
-        var contentRect = content.GetComponent<RectTransform>();
-        contentRect.anchorMin = Vector2.zero;
-        contentRect.anchorMax = Vector2.one;
-        contentRect.offsetMin = new Vector2(HudTheme.SidebarWidth, 0f);
-        contentRect.offsetMax = new Vector2(0f, -HudTheme.HeaderHeight);
-        var contentBackground = content.GetComponent<Image>();
-        if (contentBackground.IsNullOrDestroyed())
-            contentBackground = content.AddComponent<Image>();
-        contentBackground.color = HudTheme.Background;
-
-        var scrollObject = Node(content, "LEHUD_MainScroll");
-        var scrollRect = scrollObject.GetComponent<RectTransform>();
-        Stretch(scrollRect);
-        scrollRect.offsetMin = new Vector2(HudTheme.ContentPadding, HudTheme.ContentPadding);
-        scrollRect.offsetMax = new Vector2(-HudTheme.ContentPadding, -HudTheme.ContentPadding);
-        mainScroll = scrollObject.AddComponent<ScrollRect>();
-        mainScroll.horizontal = false;
-        mainScroll.vertical = true;
-        mainScroll.movementType = ScrollRect.MovementType.Clamped;
-        mainScroll.scrollSensitivity = 34f;
-
-        var viewport = Node(scrollObject, "Viewport");
-        var viewportRect = viewport.GetComponent<RectTransform>();
-        Stretch(viewportRect);
-        viewport.AddComponent<RectMask2D>();
-
-        stage = Node(viewport, "LEHUD_ContentStage");
-        var stageRect = stage.GetComponent<RectTransform>();
-        stageRect.anchorMin = new Vector2(0f, 1f);
-        stageRect.anchorMax = new Vector2(1f, 1f);
-        stageRect.pivot = new Vector2(0.5f, 1f);
-        stageRect.anchoredPosition = Vector2.zero;
-        stageRect.sizeDelta = Vector2.zero;
-        mainScroll.viewport = viewportRect;
-        mainScroll.content = stageRect;
     }
 
     private static void PlaceLegacyContent(GameObject content)
@@ -676,26 +409,6 @@ public static class HudLayout
         var background = content.GetComponent<Image>();
         if (!background.IsNullOrDestroyed())
             background.color = HudTheme.Background;
-    }
-
-    private static void ResolvePanels(GameObject content)
-    {
-        foreach (var source in HudNavigation.PanelSources)
-        {
-            var panel = Prefab.ChildPath(content, source.Path);
-            if (panel.IsNullOrDestroyed())
-            {
-                Main.logger_instance?.Warning(
-                    "HudLayout: panel '" + source.Id + "' not found at " + source.Path
-                );
-                continue;
-            }
-            panel.transform.SetParent(stage.transform, false);
-            var state = new PanelState(source.Id, panel);
-            panels[source.Id] = state;
-            HudStyler.ApplyPanel(panel);
-            panel.SetActive(false);
-        }
     }
 
     private static void BuildNavigation(GameObject menu)
@@ -947,154 +660,10 @@ public static class HudLayout
             HudSearch.ClearAll();
             HudSearchBar.Clear();
         }
-        Utilities_Character.Hide();
-        Utilities_Multipliers.Hide();
-        Utilities_Buffs.Hide();
-        Utilities_QOL.Hide();
-        Utilities_Currency.Hide();
-        Items_Drop.Hide();
-        Items_ForceDrop.Hide();
-        Items_CraftingSlot.Hide();
-        World_Difficulty.Hide();
-        World_Monoliths.Hide();
-        World_Misc.Hide();
-        World_Camera.Hide();
-        Skills_Minions.Hide();
-        Skills_Companions.Hide();
-        Skills_Summon.Hide();
-        Skills_QOL.Hide();
-        if (page.Id == "character.main")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            Utilities_Character.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "character.multipliers")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            Utilities_Multipliers.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "character.buffs")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            Utilities_Buffs.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "character.qol")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            Utilities_QOL.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "character.currency")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            Utilities_Currency.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "items.drop")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            Items_Drop.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "items.force-drop")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            Items_ForceDrop.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "items.crafting")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            Items_CraftingSlot.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "world.difficulty")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            World_Difficulty.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "world.monoliths")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            World_Monoliths.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "world.misc")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            World_Misc.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "world.camera")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            World_Camera.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "skills.minions")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            Skills_Minions.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "skills.companions")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            Skills_Companions.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "skills.summon")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            Skills_Summon.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-        if (page.Id == "skills.qol")
-        {
-            SetLegacyAreas(Array.Empty<HudArea>());
-            Skills_QOL.Show();
-            SetSelected(page.Id);
-            activePage = page;
-            return;
-        }
-
-        // Until each page body is rebuilt, show one intact legacy content page
-        // behind the new navigation instead of overlapping several old layouts.
-        SetLegacyAreas(page.Areas.Length > 0 ? new[] { page.Areas[0] } : Array.Empty<HudArea>());
+        foreach (var candidate in HudNavigation.Pages)
+            candidate.Hide();
+        HideLegacyContent();
+        page.Show();
         SetSelected(page.Id);
         activePage = page;
     }
@@ -1115,151 +684,18 @@ public static class HudLayout
 
     public static void RefreshActivePage()
     {
-        if (activePage?.Id == "character.main")
-            Utilities_Character.Refresh();
-        else if (activePage?.Id == "character.qol")
-            Utilities_QOL.Refresh();
-        else if (activePage?.Id == "items.drop")
-            Items_Drop.Refresh();
-        else if (activePage?.Id == "items.crafting")
-            Items_CraftingSlot.Refresh();
-        else if (activePage?.Id == "world.difficulty")
-            World_Difficulty.Refresh();
-        else if (activePage?.Id == "world.monoliths")
-            World_Monoliths.Refresh();
-        else if (activePage?.Id == "world.misc")
-            World_Misc.Refresh();
-        else if (activePage?.Id == "world.camera")
-            World_Camera.Refresh();
-        else if (activePage?.Id == "skills.minions")
-            Skills_Minions.Refresh();
-        else if (activePage?.Id == "skills.companions")
-            Skills_Companions.Refresh();
-        else if (activePage?.Id == "skills.summon")
-            Skills_Summon.Refresh();
-        else if (activePage?.Id == "skills.qol")
-            Skills_QOL.Refresh();
+        activePage?.Refresh();
     }
 
-    private static void HideLegacyMultiplierRows(GameObject content)
+    private static void HideLegacyContent()
     {
-        var legacyRows = Prefab.ChildPath(
-            content,
-            "Character_Content/Character_Cheats/Character_Cheats_Content/Viewport/Content"
-        );
-        if (legacyRows.IsNullOrDestroyed())
-            return;
-
-        var names = new HashSet<string>(StringComparer.Ordinal)
-        {
-            "DensityMultiplier",
-            "ExperienceMultiplier",
-            "AbilityMultiplier",
-            "FavorMultiplier",
-            "MemoryAmberMultiplier",
-            "ItemDropMultiplier",
-            "ItemDropChance",
-            "GoldDropMultiplier",
-            "GoldDropChance",
-        };
-        bool removedPreviousRow = false;
-        for (int i = 0; i < legacyRows.transform.childCount; i++)
-        {
-            var child = legacyRows.transform.GetChild(i).gameObject;
-            if (names.Contains(child.name))
-            {
-                child.SetActive(false);
-                removedPreviousRow = true;
-            }
-            else if (
-                removedPreviousRow && child.name.StartsWith("Border", StringComparison.Ordinal)
-            )
-            {
-                child.SetActive(false);
-                removedPreviousRow = false;
-            }
-            else
-            {
-                removedPreviousRow = false;
-            }
-        }
-    }
-
-    private static void HideLegacyBuffPanel(GameObject content)
-    {
-        var legacyPanel = Prefab.ChildPath(content, "Character_Content/Character_Buffs");
-        if (!legacyPanel.IsNullOrDestroyed())
-            legacyPanel.SetActive(false);
-    }
-
-    private static void Activate(HudPageDefinition page)
-    {
-        if (page == null)
-            return;
-
-        SetLegacyAreas(page.Areas);
-        foreach (var panel in panels.Values)
-        {
-            panel.Root.SetActive(false);
-            panel.Restore();
-        }
-
-        var activePanels = new List<PanelState>();
-        foreach (var use in page.Panels)
-        {
-            if (!panels.TryGetValue(use.Panel, out var panel))
-                continue;
-            panel.Restore();
-            panel.ApplyVisibleChildren(use.VisibleChildren);
-            panel.ApplyVisibleRows(use.VisibleRows);
-            panel.ApplyTitle(use.Title);
-            panel.Root.SetActive(true);
-            if (!activePanels.Contains(panel))
-                activePanels.Add(panel);
-        }
-
-        LayoutPanels(activePanels);
-        SetSelected(page.Id);
-        activePage = page;
-    }
-
-    private static void SetLegacyAreas(HudArea[] areas)
-    {
-        var selected = new HashSet<HudArea>(areas);
-        Hud_Manager.Content.Character.Set_Active(selected.Contains(HudArea.Character));
-        Hud_Manager.Content.Items.Set_Active(selected.Contains(HudArea.Items));
-        Hud_Manager.Content.Scenes.Set_Active(selected.Contains(HudArea.World));
-        Hud_Manager.Content.Skills.Set_Active(selected.Contains(HudArea.Skills));
-        Hud_Manager.Content.OdlForceDrop.Set_Active(selected.Contains(HudArea.ForceDrop));
+        Hud_Manager.Content.Character.Set_Active(false);
+        Hud_Manager.Content.Items.Set_Active(false);
+        Hud_Manager.Content.Scenes.Set_Active(false);
+        Hud_Manager.Content.Skills.Set_Active(false);
+        Hud_Manager.Content.OdlForceDrop.Set_Active(false);
         Hud_Manager.Content.Headhunter.Set_Active(false);
         Hud_Manager.Content.Set_Active();
-    }
-
-    private static void LayoutPanels(List<PanelState> activePanels)
-    {
-        float top = 0f;
-        for (int i = 0; i < activePanels.Count; i++)
-        {
-            var panel = activePanels[i];
-            var rect = panel.Root.GetComponent<RectTransform>();
-            if (rect.IsNullOrDestroyed())
-                continue;
-            float height = panel.MeasureAndArrange();
-            rect.anchorMin = new Vector2(0f, 1f);
-            rect.anchorMax = new Vector2(1f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -top);
-            rect.sizeDelta = new Vector2(0f, height);
-            top += height + HudTheme.CardGap;
-        }
-        var stageRect = stage.GetComponent<RectTransform>();
-        stageRect.sizeDelta = new Vector2(
-            0f,
-            Mathf.Max(0f, top - (activePanels.Count > 0 ? HudTheme.CardGap : 0f))
-        );
-        Canvas.ForceUpdateCanvases();
-        if (!mainScroll.IsNullOrDestroyed())
-            mainScroll.verticalNormalizedPosition = 1f;
     }
 
     private static void SetSelected(string pageId)
@@ -1267,7 +703,7 @@ public static class HudLayout
         foreach (var pair in pageButtons)
         {
             bool selected = pair.Key == pageId;
-            pair.Value.Background.color = Color.white;
+            pair.Value.Background.color = HudTheme.SelectableTint;
             pair.Value.Button.colors = HudTheme.ButtonColors(
                 selected ? HudTheme.Selection : HudTheme.Surface,
                 selected ? HudTheme.Selection : HudTheme.SurfaceHover
@@ -1293,34 +729,11 @@ public static class HudLayout
         return null;
     }
 
-    private static GameObject Node(GameObject parent, string name)
-    {
-        var node = new GameObject(name);
-        node.layer = parent.layer;
-        node.AddComponent<RectTransform>().SetParent(parent.transform, false);
-        return node;
-    }
+    private static GameObject Node(GameObject parent, string name) =>
+        HudElements.Node(parent, name);
 
-    private static Text TextNode(GameObject parent, string name, string caption, int size)
-    {
-        var node = Node(parent, name);
-        var text = node.AddComponent<Text>();
-        text.font = font;
-        text.fontSize = size;
-        text.fontStyle = FontStyle.Normal;
-        text.color = HudTheme.TextPrimary;
-        text.horizontalOverflow = HorizontalWrapMode.Overflow;
-        text.verticalOverflow = VerticalWrapMode.Truncate;
-        text.raycastTarget = false;
-        LocaleRegistry.Apply(text, caption);
-        return text;
-    }
+    private static Text TextNode(GameObject parent, string name, string caption, int size) =>
+        HudElements.Text(parent, name, caption, font, size);
 
-    private static void Stretch(RectTransform rect)
-    {
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-    }
+    private static void Stretch(RectTransform rect) => HudElements.Stretch(rect);
 }

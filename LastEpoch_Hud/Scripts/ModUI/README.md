@@ -2,22 +2,33 @@
 
 Declarative settings framework for the Last Epoch mod HUD.
 
-## HUD layout and visual system
+## HUD architecture and visual system
 
-The redesigned shell is runtime-composed around the existing functional prefab controls. This
-keeps legacy gameplay callbacks intact while making navigation and visual styling declarative:
+The HUD has separate binding and presentation layers. `ModSettings` and the settings framework
+still bind the original prefab controls, so existing gameplay callbacks and serialized values stay
+intact. The visible pages are runtime-built views over those bindings.
 
-- `Internal/HudTheme.cs` is the single source of truth for colors, typography, spacing, borders,
-  and standard control styling.
-- `Internal/HudNavigation.cs` is the single source of truth for sidebar sections, pages, panel
-  paths, row filters, and page titles.
-- `Internal/HudLayout.cs` builds the header/sidebar, moves the original panels into the content
-  stage, applies page filters, and lays active cards out responsively.
+Presentation has one owner for each concern:
 
-To move a feature between pages, edit only its `HudPanelUse` in `HudNavigation.Sections`. To add a
-new prefab panel, add its path once to `HudNavigation.PanelSources`, then reference its panel id
-from one or more pages. Visual changes belong in `HudTheme`; avoid introducing colors or spacing
-constants in individual control builders.
+- `Internal/HudTheme.cs` is the CSS-like source of truth for dark/light palettes, semantic colors,
+  typography, spacing, dimensions, borders, and selectable states.
+- `Internal/HudStyler.cs` applies those tokens consistently to runtime and legacy controls.
+- `Internal/HudElements.cs` owns the primitive construction rules shared by runtime-built controls.
+- `Internal/HudNavigation.cs` is the page catalog. A page's sidebar position, search root, build,
+  show, hide, and refresh lifecycle are declared together in one entry.
+- `Internal/HudLayout.cs` owns only shared shell behavior: window, header, sidebar, settings,
+  selection, and page activation.
+- `Pages/` owns page content and maps bound settings to reusable cards and form controls.
+- `Internal/HudFormPage.cs`, `HudSliderCard.cs`, and `HudActionCard.cs` are the reusable view
+  components used by pages.
+
+Force Drop is the sole presentation exception: its page catalog entry intentionally has no runtime
+builder or search root because its separately maintained legacy body is still shown in place.
+
+When adding a page, add one catalog entry to `HudNavigation.Sections` and put its content in
+`Pages/`. Visual values belong in `HudTheme`, not page files. Reusable object creation belongs in
+`HudElements`; reusable component styling belongs in `HudStyler`. Do not add
+page-id condition chains to `HudLayout` or duplicate search-routing tables.
 
 ## Adding a setting
 
@@ -313,8 +324,21 @@ new SettingsGroup("Name")           // JSON key, auto-registers for save/load
 
 ```
 ModUI/
-  ModSettings.cs         THE file to edit -- all settings, tabs, and panel config
-  Internal/              Framework internals
+  ModSettings.cs         Binding declarations and serialized setting ownership
+  Pages/                 One runtime-built view per sidebar page
+    Utilities_*.cs         Character, multipliers, currency, buffs, and QOL
+    Items_*.cs             Drop, Force Drop bridge, and crafting slot
+    World_*.cs             Difficulty, monoliths, misc, and camera
+    Skills_*.cs            Minions, companions, summon, and QOL
+  Internal/              Shared framework and presentation internals
+    HudTheme.cs             Visual tokens, palettes, font scaling, and state colors
+    HudStyler.cs            Applies theme tokens to runtime and legacy components
+    HudElements.cs          Runtime object/text/layout construction primitives
+    HudNavigation.cs        Sidebar hierarchy plus page/search lifecycle catalog
+    HudLayout.cs            Window, header, sidebar, settings, and page activation
+    HudFormPage.cs          Reusable expandable cards and mixed form controls
+    HudSliderCard.cs        Reusable slider-card view
+    HudActionCard.cs        Reusable action-button-card view
     SettingTypes.cs         Setting types + ActionBinding + display formatting
     SettingsGroup.cs        Fluent API, factory methods, serialization, UI binding
     SettingsBuilder.cs      Convention-based + path-based prefab binding
@@ -336,6 +360,9 @@ ModUI/
 
 | I want to... | Do this |
 |---|---|
+| Change a HUD color, size, spacing, or control state | `Internal/HudTheme.cs` |
+| Add a visible sidebar page | Add its view under `Pages/` and one lifecycle entry in `HudNavigation.Sections` |
+| Move or rename a sidebar page | Edit its single `HudNavigation.Sections` entry |
 | Add a toggle/slider/range | `ModSettings.cs` -- one line: `Group.Bool/Float/Range(...)` |
 | Add a dropdown | `ModSettings.cs` -- `Group.Dropdown("Key")`, optionally with `options:` |
 | Populate dropdown at runtime | `.SetOptions(string[])` from feature code when game data loads |

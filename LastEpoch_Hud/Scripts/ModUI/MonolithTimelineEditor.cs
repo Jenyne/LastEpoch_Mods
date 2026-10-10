@@ -201,7 +201,7 @@ internal static class MonolithTimelineEditor
             );
             var image = button.GetComponent<Image>();
             if (!image.IsNullOrDestroyed())
-                image.color = Color.white;
+                image.color = HudTheme.SelectableTint;
             if (i < timelineAccents.Count && !timelineAccents[i].IsNullOrDestroyed())
                 timelineAccents[i].SetActive(isSelected);
         }

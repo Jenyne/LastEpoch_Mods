@@ -191,34 +191,11 @@ internal sealed class HudActionCard : IHudSearchPage
         return HudSearchText.Score(query, label, title, page.Label, section.Label) >= 0;
     }
 
-    private GameObject Node(GameObject parent, string name)
-    {
-        var node = new GameObject(name);
-        node.layer = parent.layer;
-        node.AddComponent<RectTransform>().SetParent(parent.transform, false);
-        return node;
-    }
+    private static GameObject Node(GameObject parent, string name) =>
+        HudElements.Node(parent, name);
 
-    private Text TextNode(GameObject parent, string name, string caption, int size)
-    {
-        var node = Node(parent, name);
-        var text = node.AddComponent<Text>();
-        text.font = font;
-        text.fontSize = size;
-        text.fontStyle = FontStyle.Normal;
-        text.color = HudTheme.TextPrimary;
-        text.horizontalOverflow = HorizontalWrapMode.Wrap;
-        text.verticalOverflow = VerticalWrapMode.Truncate;
-        text.raycastTarget = false;
-        LocaleRegistry.Apply(text, caption);
-        return text;
-    }
+    private Text TextNode(GameObject parent, string name, string caption, int size) =>
+        HudElements.Text(parent, name, caption, font, size, HorizontalWrapMode.Wrap);
 
-    private static void Stretch(RectTransform rect)
-    {
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = Vector2.one;
-        rect.offsetMin = Vector2.zero;
-        rect.offsetMax = Vector2.zero;
-    }
+    private static void Stretch(RectTransform rect) => HudElements.Stretch(rect);
 }
