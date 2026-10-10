@@ -7,7 +7,7 @@ namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 // Utilities > QOL. This replaces the mixed legacy Pickup/Requirements panel
 // with small, focused cards while keeping the same Save_Manager fields.
-internal static class Utilities_QOL
+internal static class UtilitiesQolPage
 {
     private static HudFormPage page;
 

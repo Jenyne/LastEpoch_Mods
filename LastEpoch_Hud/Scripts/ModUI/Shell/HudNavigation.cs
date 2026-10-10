@@ -17,43 +17,43 @@ internal static class HudNavigation
                 "character.main",
                 "Character",
                 "Utilities_Character",
-                Utilities_Character.Build,
-                Utilities_Character.Show,
-                Utilities_Character.Hide,
-                Utilities_Character.Refresh
+                UtilitiesCharacterPage.Build,
+                UtilitiesCharacterPage.Show,
+                UtilitiesCharacterPage.Hide,
+                UtilitiesCharacterPage.Refresh
             ),
             Page(
                 "character.multipliers",
                 "Multipliers",
                 "Utilities_Multipliers",
-                Utilities_Multipliers.Build,
-                Utilities_Multipliers.Show,
-                Utilities_Multipliers.Hide
+                UtilitiesMultipliersPage.Build,
+                UtilitiesMultipliersPage.Show,
+                UtilitiesMultipliersPage.Hide
             ),
             Page(
                 "character.currency",
                 "Currency",
                 "Utilities_Currency",
-                (parent, _, font) => Utilities_Currency.Build(parent, font),
-                Utilities_Currency.Show,
-                Utilities_Currency.Hide
+                (parent, _, font) => UtilitiesCurrencyPage.Build(parent, font),
+                UtilitiesCurrencyPage.Show,
+                UtilitiesCurrencyPage.Hide
             ),
             Page(
                 "character.buffs",
                 "Buffs",
                 "Utilities_Buffs",
-                Utilities_Buffs.Build,
-                Utilities_Buffs.Show,
-                Utilities_Buffs.Hide
+                UtilitiesBuffsPage.Build,
+                UtilitiesBuffsPage.Show,
+                UtilitiesBuffsPage.Hide
             ),
             Page(
                 "character.qol",
                 "QOL",
                 "Utilities_QOL",
-                Utilities_QOL.Build,
-                Utilities_QOL.Show,
-                Utilities_QOL.Hide,
-                Utilities_QOL.Refresh
+                UtilitiesQolPage.Build,
+                UtilitiesQolPage.Show,
+                UtilitiesQolPage.Hide,
+                UtilitiesQolPage.Refresh
             )
         ),
         new(
@@ -64,10 +64,10 @@ internal static class HudNavigation
                 "items.drop",
                 "Drop",
                 "Items_Drop",
-                Items_Drop.Build,
-                Items_Drop.Show,
-                Items_Drop.Hide,
-                Items_Drop.Refresh
+                ItemsDropPage.Build,
+                ItemsDropPage.Show,
+                ItemsDropPage.Hide,
+                ItemsDropPage.Refresh
             ),
             // ForceDropBuilder supplies the view; there is no search root, so the page stays out of search.
             Page(
@@ -75,17 +75,17 @@ internal static class HudNavigation
                 "Force Drop",
                 null,
                 null,
-                Items_ForceDrop.Show,
-                Items_ForceDrop.Hide
+                ItemsForceDropPage.Show,
+                ItemsForceDropPage.Hide
             ),
             Page(
                 "items.crafting",
                 "Crafting Slot",
                 "Items_CraftingSlot",
-                Items_CraftingSlot.Build,
-                Items_CraftingSlot.Show,
-                Items_CraftingSlot.Hide,
-                Items_CraftingSlot.Refresh
+                ItemsCraftingSlotPage.Build,
+                ItemsCraftingSlotPage.Show,
+                ItemsCraftingSlotPage.Hide,
+                ItemsCraftingSlotPage.Refresh
             )
         ),
         new(
@@ -96,37 +96,37 @@ internal static class HudNavigation
                 "world.difficulty",
                 "Difficulty",
                 "World_Difficulty",
-                World_Difficulty.Build,
-                World_Difficulty.Show,
-                World_Difficulty.Hide,
-                World_Difficulty.Refresh
+                WorldDifficultyPage.Build,
+                WorldDifficultyPage.Show,
+                WorldDifficultyPage.Hide,
+                WorldDifficultyPage.Refresh
             ),
             Page(
                 "world.monoliths",
                 "Monoliths",
                 "World_Monoliths",
-                World_Monoliths.Build,
-                World_Monoliths.Show,
-                World_Monoliths.Hide,
-                World_Monoliths.Refresh
+                WorldMonolithsPage.Build,
+                WorldMonolithsPage.Show,
+                WorldMonolithsPage.Hide,
+                WorldMonolithsPage.Refresh
             ),
             Page(
                 "world.misc",
                 "Misc",
                 "World_Misc",
-                World_Misc.Build,
-                World_Misc.Show,
-                World_Misc.Hide,
-                World_Misc.Refresh
+                WorldMiscPage.Build,
+                WorldMiscPage.Show,
+                WorldMiscPage.Hide,
+                WorldMiscPage.Refresh
             ),
             Page(
                 "world.camera",
                 "Camera",
                 "World_Camera",
-                World_Camera.Build,
-                World_Camera.Show,
-                World_Camera.Hide,
-                World_Camera.Refresh
+                WorldCameraPage.Build,
+                WorldCameraPage.Show,
+                WorldCameraPage.Hide,
+                WorldCameraPage.Refresh
             )
         ),
         new(
@@ -137,37 +137,37 @@ internal static class HudNavigation
                 "skills.minions",
                 "Minions",
                 "Skills_Minions",
-                Skills_Minions.Build,
-                Skills_Minions.Show,
-                Skills_Minions.Hide,
-                Skills_Minions.Refresh
+                SkillsMinionsPage.Build,
+                SkillsMinionsPage.Show,
+                SkillsMinionsPage.Hide,
+                SkillsMinionsPage.Refresh
             ),
             Page(
                 "skills.companions",
                 "Companions",
                 "Skills_Companions",
-                Skills_Companions.Build,
-                Skills_Companions.Show,
-                Skills_Companions.Hide,
-                Skills_Companions.Refresh
+                SkillsCompanionsPage.Build,
+                SkillsCompanionsPage.Show,
+                SkillsCompanionsPage.Hide,
+                SkillsCompanionsPage.Refresh
             ),
             Page(
                 "skills.summon",
                 "Summon",
                 "Skills_Summon",
-                Skills_Summon.Build,
-                Skills_Summon.Show,
-                Skills_Summon.Hide,
-                Skills_Summon.Refresh
+                SkillsSummonPage.Build,
+                SkillsSummonPage.Show,
+                SkillsSummonPage.Hide,
+                SkillsSummonPage.Refresh
             ),
             Page(
                 "skills.qol",
                 "QOL",
                 "Skills_QOL",
-                Skills_QOL.Build,
-                Skills_QOL.Show,
-                Skills_QOL.Hide,
-                Skills_QOL.Refresh
+                SkillsQolPage.Build,
+                SkillsQolPage.Show,
+                SkillsQolPage.Hide,
+                SkillsQolPage.Refresh
             )
         ),
     };

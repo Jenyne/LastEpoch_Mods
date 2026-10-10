@@ -8,7 +8,7 @@ namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 // Items > Force Drop. The feature still reads the original prefab controls as
 // its game-facing data model, while ForceDropBuilder supplies the replacement
 // runtime view inside the redesigned HUD shell.
-internal static class Items_ForceDrop
+internal static class ItemsForceDropPage
 {
     public static void Show()
     {

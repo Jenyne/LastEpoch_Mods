@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-internal static class Skills_Minions
+internal static class SkillsMinionsPage
 {
     private static HudFormPage page;
 

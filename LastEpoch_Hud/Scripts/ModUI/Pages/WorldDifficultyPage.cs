@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-internal static class World_Difficulty
+internal static class WorldDifficultyPage
 {
     private static HudFormPage page;
 

@@ -6,7 +6,7 @@ namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 // Save bindings for Utilities > Multipliers. The shared HudSliderCard owns all
 // visuals and interaction; these definitions preserve the original raw x values.
-internal static class Utilities_Multipliers
+internal static class UtilitiesMultipliersPage
 {
     private static HudSliderCard page;
 

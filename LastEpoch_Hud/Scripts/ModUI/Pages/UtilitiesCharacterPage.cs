@@ -7,7 +7,7 @@ namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 // Utilities > Character. The legacy Character, Skills, Data, Blessings, and
 // Factions controls are represented here without changing their game logic.
-internal static class Utilities_Character
+internal static class UtilitiesCharacterPage
 {
     private static HudFormPage _page;
     private static int _factionSelection;

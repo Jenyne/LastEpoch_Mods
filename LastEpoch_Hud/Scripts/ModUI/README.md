@@ -27,7 +27,7 @@ Presentation has one owner for each concern:
   components used by pages.
 
 Force Drop is the sole presentation exception: its catalog entry has no builder and no search root.
-`Items_ForceDrop` shows the original content root, `ForceDropBuilder` (ticked from `Hud_Manager`)
+`ItemsForceDropPage` shows the original content root, `ForceDropBuilder` (ticked from `Hud_Manager`)
 builds its runtime view over those prefab controls, and the page stays out of global search.
 
 When adding a page, add one catalog entry to `HudNavigation.Sections` and put its content in
@@ -333,11 +333,11 @@ new SettingsGroup("Name")           // JSON key, auto-registers for save/load
 ModUI/
   ModSettings.cs         Binding declarations and serialized setting ownership
   Pages/                 One runtime-built view per sidebar page
-    Utilities_*.cs         Character, multipliers, currency, buffs, and QOL
-    Items_*.cs             Drop, Force Drop bridge, and crafting slot
-    World_*.cs             Difficulty, monoliths, misc, and camera
-    MonolithTimelineEditor.cs  Timeline editor used by World_Monoliths
-    Skills_*.cs            Minions, companions, summon, and QOL
+    Utilities*Page.cs     Character, multipliers, currency, buffs, and QOL
+    Items*Page.cs         Drop, Force Drop bridge, and crafting slot
+    World*Page.cs         Difficulty, monoliths, misc, and camera
+    MonolithTimelineEditor.cs  Timeline editor used by WorldMonolithsPage
+    Skills*Page.cs        Minions, companions, summon, and QOL
   Shell/                 Window, navigation, search and reusable view components
     HudTheme.cs             Visual tokens, palettes, and saved theme preferences
     HudStyler.cs            Applies theme tokens to runtime-built controls and font scaling

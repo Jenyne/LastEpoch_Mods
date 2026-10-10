@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-internal static class World_Camera
+internal static class WorldCameraPage
 {
     private static HudFormPage page;
 

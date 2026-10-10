@@ -71,7 +71,7 @@ internal static class SessionGainCounters
             {
                 nextDisplay = Time.unscaledTime + .25f;
                 display = Format();
-                World_Misc.RefreshSession();
+                WorldMiscPage.RefreshSession();
             }
         }
         catch (Exception ex)

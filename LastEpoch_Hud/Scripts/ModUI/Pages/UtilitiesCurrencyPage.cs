@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-internal static class Utilities_Currency
+internal static class UtilitiesCurrencyPage
 {
     private static HudActionCard page;
 

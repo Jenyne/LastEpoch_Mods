@@ -5,7 +5,7 @@ using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-internal static class World_Misc
+internal static class WorldMiscPage
 {
     private static HudFormPage page;
     private static UnityEngine.UI.Text sessionTotals;

@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-internal static class World_Monoliths
+internal static class WorldMonolithsPage
 {
     private static HudFormPage page;
     private static HudFormPage.Card timelines;

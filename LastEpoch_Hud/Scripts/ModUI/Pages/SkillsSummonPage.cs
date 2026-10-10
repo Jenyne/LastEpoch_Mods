@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-internal static class Skills_Summon
+internal static class SkillsSummonPage
 {
     private static HudFormPage page;
 
