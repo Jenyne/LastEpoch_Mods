@@ -1,6 +1,7 @@
 using System;
 using HarmonyLib;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.Items;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items;
 
@@ -36,12 +37,12 @@ public class DropRarityClampPatch
             return;
         }
 
-        if (item.rarity != 5 && item.rarity != 6)
+        if (!DropRarityClamp.TryClamp(item.rarity, out byte clamped))
         {
             return;
         }
 
-        item.rarity = 4;
+        item.rarity = clamped;
         item.RefreshIDAndValues();
     }
 }
