@@ -139,6 +139,22 @@ public static class ModSettings
         }
     }
 
+#pragma warning disable CA1034 // nested like every settings section
+    public static class TransformForms
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("TransformForms");
+        public static readonly BoolSetting NoHealthDecay = Group.Bool(
+            "NoHealthDecay",
+            label: "No Transform Health Decay"
+        );
+
+        static TransformForms()
+        {
+            NoHealthDecay.Changed += _ => Mods.Skills.Skills_NoTransformHealthDecay.Reset();
+        }
+    }
+#pragma warning restore CA1034
+
     public static class TravelAnywhere
     {
         public static readonly SettingsGroup Group = new SettingsGroup("TravelAnywhere");

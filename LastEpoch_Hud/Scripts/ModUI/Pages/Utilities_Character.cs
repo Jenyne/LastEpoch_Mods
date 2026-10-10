@@ -8,20 +8,22 @@ namespace LastEpoch_Hud.Scripts.ModUI;
 // Factions controls are represented here without changing their game logic.
 internal static class Utilities_Character
 {
-    private static HudFormPage page;
-    private static int factionSelection;
-    private static float factionFavor;
-    private static float factionRank;
-    private static float factionReputation;
-    private static Dropdown classSource;
+    private static HudFormPage _page;
+    private static int _factionSelection;
+    private static float _factionFavor;
+    private static float _factionRank;
+    private static float _factionReputation;
+    private static Dropdown _classSource;
 
     public static void Build(GameObject parent, GameObject hud, Font font)
     {
-        page = HudFormPage.Build(parent, hud, font, "Utilities_Character");
-        if (page == null)
+        _page = HudFormPage.Build(parent, hud, font, "Utilities_Character");
+        if (_page == null)
+        {
             return;
+        }
 
-        page.AddButtonGrid(
+        _page.AddButtonGrid(
             "CharacterActions",
             new[] { "Level Up Once", "Level Up To Level 100", "Skip Campaign", "Reset Mastery" },
             new System.Action[]
@@ -41,28 +43,28 @@ internal static class Utilities_Character
     public static void Show()
     {
         RefreshClassOptions();
-        page?.Show();
+        _page?.Show();
     }
 
-    public static void Hide() => page?.Hide();
+    public static void Hide() => _page?.Hide();
 
     public static void Refresh()
     {
         RefreshClassOptions();
-        page?.RefreshValues();
+        _page?.RefreshValues();
     }
 
     private static void BuildCheats()
     {
-        var card = page.AddCard("Cheats", "Cheats");
-        page.AddToggle(
+        HudFormPage.Card card = _page.AddCard("Cheats", "Cheats");
+        _page.AddToggle(
             card,
             "IdolRerollFreeAmber",
             "No Memory Amber Cost",
             () => ModSettings.IdolReroll.FreeMemoryAmber.Value,
             value => ModSettings.IdolReroll.FreeMemoryAmber.Set(value)
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "IdolRerollUnlimitedUses",
             "Unlimited Idol Altar Uses",
@@ -70,7 +72,7 @@ internal static class Utilities_Character
             value => ModSettings.IdolReroll.UnlimitedUses.Set(value)
         );
 
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "GodMode",
             "God Mode",
@@ -78,10 +80,19 @@ internal static class Utilities_Character
             value =>
             {
                 if (HasSave())
+                {
                     Save_Manager.instance.data.Character.Cheats.Enable_GodMode = value;
+                }
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
+            card,
+            "NoTransformHealthDecay",
+            "No Transform Health Decay",
+            () => ModSettings.TransformForms.NoHealthDecay.Value,
+            value => ModSettings.TransformForms.NoHealthDecay.Set(value)
+        );
+        _page.AddToggle(
             card,
             "LowLife",
             "Force Low Life",
@@ -89,10 +100,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (HasSave())
+                {
                     Save_Manager.instance.data.Character.Cheats.Enable_LowLife = value;
+                }
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "WeaponRestrictions",
             "Ignore Weapon Restrictions",
@@ -101,10 +114,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (HasSave())
+                {
                     Save_Manager.instance.data.Character.Cheats.Enable_TwoHandedWithShield = value;
+                }
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "ManaCost",
             "Remove Mana Cost",
@@ -112,10 +127,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (HasSave())
+                {
                     Save_Manager.instance.data.Skills.Enable_RemoveManaCost = value;
+                }
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "ChannelCost",
             "Remove Mana Cost While Channeling",
@@ -123,10 +140,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (HasSave())
+                {
                     Save_Manager.instance.data.Skills.Enable_RemoveChannelCost = value;
+                }
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "ChannelRegen",
             "Mana Regeneration While Channeling",
@@ -134,10 +153,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (HasSave())
+                {
                     Save_Manager.instance.data.Skills.Enable_NoManaRegenWhileChanneling = value;
+                }
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "ContinueOutOfMana",
             "Don't Stop When Out Of Mana",
@@ -145,10 +166,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (HasSave())
+                {
                     Save_Manager.instance.data.Skills.Enable_StopWhenOutOfMana = value;
+                }
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "Cooldown",
             "No Cooldown",
@@ -156,10 +179,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (HasSave())
+                {
                     Save_Manager.instance.data.Skills.Enable_RemoveCooldown = value;
+                }
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "NodeRequirements",
             "Remove Node Requirements",
@@ -167,11 +192,13 @@ internal static class Utilities_Character
             value =>
             {
                 if (HasSave())
+                {
                     Save_Manager.instance.data.Skills.Disable_NodeRequirement = value;
+                }
             }
         );
 
-        page.AddSlider(
+        _page.AddSlider(
             card,
             "PassivePoints",
             "Passive Points",
@@ -186,15 +213,19 @@ internal static class Utilities_Character
             value =>
             {
                 if (!HasSave())
+                {
                     return;
+                }
                 bool enabled = value > 0.0001f;
                 Save_Manager.instance.data.Skills.Enable_PassivePoints = enabled;
                 if (enabled)
+                {
                     Save_Manager.instance.data.Skills.PassivePoints = value;
+                }
                 Mods.Skills.Passives_Points.Sync();
             }
         );
-        page.AddSlider(
+        _page.AddSlider(
             card,
             "PassiveMultiplier",
             "Passive Point Multiplier Per Level",
@@ -209,17 +240,21 @@ internal static class Utilities_Character
             value =>
             {
                 if (!HasSave())
+                {
                     return;
+                }
                 bool enabled = value > 0.0001f;
                 Save_Manager.instance.data.Skills.Enable_PassivePointMultiplier = enabled;
                 if (enabled)
+                {
                     Save_Manager.instance.data.Skills.PassivePointMultiplier = SettingRow.Clamp(
                         value
                     );
+                }
                 Mods.Skills.Passives_Points.Sync();
             }
         );
-        page.AddSlider(
+        _page.AddSlider(
             card,
             "SkillLevel",
             "Skill Level",
@@ -234,15 +269,19 @@ internal static class Utilities_Character
             value =>
             {
                 if (!HasSave())
+                {
                     return;
+                }
                 bool enabled = value > 0.0001f;
                 Save_Manager.instance.data.Skills.Enable_SkillLevel = enabled;
                 if (enabled)
+                {
                     Save_Manager.instance.data.Skills.SkillLevel = value;
+                }
                 Mods.Skills.Skills_Level.Sync();
             }
         );
-        page.AddSlider(
+        _page.AddSlider(
             card,
             "SkillMultiplier",
             "Skill Point Multiplier",
@@ -257,17 +296,21 @@ internal static class Utilities_Character
             value =>
             {
                 if (!HasSave())
+                {
                     return;
+                }
                 bool enabled = value > 0.0001f;
                 Save_Manager.instance.data.Skills.Enable_SkillLevelMultiplier = enabled;
                 if (enabled)
+                {
                     Save_Manager.instance.data.Skills.SkillLevelMultiplier = SettingRow.Clamp(
                         value
                     );
+                }
                 Mods.Skills.Skills_Level.Sync();
             }
         );
-        page.AddSlider(
+        _page.AddSlider(
             card,
             "WeaverPoints",
             "Weaver Tree Points",
@@ -282,7 +325,9 @@ internal static class Utilities_Character
             value =>
             {
                 if (!HasSave())
+                {
                     return;
+                }
                 bool enabled = value > 0.0001f;
                 Save_Manager.instance.data.Factions.TheWoven.Enable_TreePoints = enabled;
                 if (enabled)
@@ -296,7 +341,7 @@ internal static class Utilities_Character
                 }
             }
         );
-        page.AddSlider(
+        _page.AddSlider(
             card,
             "WeaverMultiplier",
             "Weaver Tree Points Multiplier",
@@ -311,17 +356,21 @@ internal static class Utilities_Character
             value =>
             {
                 if (!HasSave())
+                {
                     return;
+                }
                 bool enabled = value > 0.0001f;
                 Save_Manager.instance.data.Factions.TheWoven.Enable_PointMultiplier = enabled;
                 if (enabled)
+                {
                     Save_Manager.instance.data.Factions.TheWoven.PointMultiplier = SettingRow.Clamp(
                         value
                     );
+                }
                 Mods.Factions.TheWoven.Faction_Woven_TreePoints.ApplyToPlayer();
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "FreeWeaverRespec",
             "Free Weaver Respec",
@@ -329,20 +378,22 @@ internal static class Utilities_Character
             value =>
             {
                 if (HasSave())
+                {
                     Save_Manager.instance.data.Factions.TheWoven.Enable_FreeRespe = value;
+                }
             }
         );
     }
 
     private static void BuildData()
     {
-        var card = page.AddCard("Data", "Data");
-        classSource = Hud_Manager.Content.Character.Data.class_dropdown;
-        page.AddDropdown(
+        HudFormPage.Card card = _page.AddCard("Data", "Data");
+        _classSource = Hud_Manager.Content.Character.Data.class_dropdown;
+        _page.AddDropdown(
             card,
             "Class",
             "Class",
-            classSource,
+            _classSource,
             () =>
                 Refs_Manager.player_data.IsNullOrDestroyed()
                     ? 0
@@ -350,10 +401,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (!Refs_Manager.player_data.IsNullOrDestroyed())
+                {
                     Refs_Manager.player_data.CharacterClass = value;
+                }
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "Died",
             "Died",
@@ -361,10 +414,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (!Refs_Manager.player_data.IsNullOrDestroyed())
+                {
                     Refs_Manager.player_data.Died = value;
+                }
             }
         );
-        page.AddSlider(
+        _page.AddSlider(
             card,
             "Deaths",
             "Deaths",
@@ -377,10 +432,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (!Refs_Manager.player_data.IsNullOrDestroyed())
+                {
                     Refs_Manager.player_data.Deaths = (int)value;
+                }
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "Hardcore",
             "Hardcore",
@@ -389,10 +446,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (!Refs_Manager.player_data.IsNullOrDestroyed())
+                {
                     Refs_Manager.player_data.Hardcore = value;
+                }
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "Masochist",
             "Masochist",
@@ -401,10 +460,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (!Refs_Manager.player_data.IsNullOrDestroyed())
+                {
                     Refs_Manager.player_data.Masochist = value;
+                }
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "Portal",
             "Portal Unlocked",
@@ -414,10 +475,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (!Refs_Manager.player_data.IsNullOrDestroyed())
+                {
                     Refs_Manager.player_data.PortalUnlocked = value;
+                }
             }
         );
-        page.AddToggle(
+        _page.AddToggle(
             card,
             "SoloChallenge",
             "Solo Challenge",
@@ -427,10 +490,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (!Refs_Manager.player_data.IsNullOrDestroyed())
+                {
                     Refs_Manager.player_data.SoloChallenge = value;
+                }
             }
         );
-        page.AddSlider(
+        _page.AddSlider(
             card,
             "LanternLuminance",
             "Lantern Luminance",
@@ -445,10 +510,12 @@ internal static class Utilities_Character
             value =>
             {
                 if (!Refs_Manager.player_data.IsNullOrDestroyed())
+                {
                     Refs_Manager.player_data.LanternLuminance = (int)value;
+                }
             }
         );
-        page.AddButton(
+        _page.AddButton(
             card,
             "Save",
             "Save Character Data",
@@ -458,26 +525,26 @@ internal static class Utilities_Character
 
     private static void BuildBlessings()
     {
-        var card = page.AddCard("Blessings", "Blessings");
-        page.AddButton(
+        HudFormPage.Card card = _page.AddCard("Blessings", "Blessings");
+        _page.AddButton(
             card,
             "Choose",
             "Choose Blessings",
             Mods.Character.Character_Blessings.ChooseBlessings
         );
-        page.AddButton(
+        _page.AddButton(
             card,
             "Discover",
             "Discover All Blessings",
             Hud_Manager.Content.Character.Cheats.DiscoverAllBlessings_Click
         );
-        page.AddButton(
+        _page.AddButton(
             card,
             "Max",
             "Max Out Blessings",
             Mods.Character.Character_Blessings.MaxOutBlessings
         );
-        page.AddButton(
+        _page.AddButton(
             card,
             "Slots",
             "Unlock Blessing Slots",
@@ -487,36 +554,38 @@ internal static class Utilities_Character
 
     private static void BuildFactions()
     {
-        var dropdownSource = Hud_Manager.Content.Character.Faction_Tracker.factions_dropdown;
-        var favorSource = Hud_Manager.Content.Character.Faction_Tracker.factions_favor_slider;
-        var rankSource = Hud_Manager.Content.Character.Faction_Tracker.factions_rank_slider;
-        var reputationSource = Hud_Manager
+        Dropdown dropdownSource = Hud_Manager.Content.Character.Faction_Tracker.factions_dropdown;
+        Slider favorSource = Hud_Manager.Content.Character.Faction_Tracker.factions_favor_slider;
+        Slider rankSource = Hud_Manager.Content.Character.Faction_Tracker.factions_rank_slider;
+        Slider reputationSource = Hud_Manager
             .Content
             .Character
             .Faction_Tracker
             .factions_reputation_slider;
-        factionSelection = dropdownSource.IsNullOrDestroyed() ? 0 : dropdownSource.value;
-        factionFavor = favorSource.IsNullOrDestroyed() ? 0f : favorSource.value;
-        factionRank = rankSource.IsNullOrDestroyed() ? 0f : rankSource.value;
-        factionReputation = reputationSource.IsNullOrDestroyed() ? 0f : reputationSource.value;
+        _factionSelection = dropdownSource.IsNullOrDestroyed() ? 0 : dropdownSource.value;
+        _factionFavor = favorSource.IsNullOrDestroyed() ? 0f : favorSource.value;
+        _factionRank = rankSource.IsNullOrDestroyed() ? 0f : rankSource.value;
+        _factionReputation = reputationSource.IsNullOrDestroyed() ? 0f : reputationSource.value;
 
-        var card = page.AddCard("Factions", "Factions");
-        var dropdown = page.AddDropdown(
+        HudFormPage.Card card = _page.AddCard("Factions", "Factions");
+        Dropdown dropdown = _page.AddDropdown(
             card,
             "Faction",
             "Faction",
             dropdownSource,
-            () => factionSelection,
+            () => _factionSelection,
             value =>
             {
-                factionSelection = value;
+                _factionSelection = value;
                 Hud_Manager.Content.Character.Update_Faction_Data();
             }
         );
         if (!dropdown.IsNullOrDestroyed())
+        {
             Hud_Manager.Content.Character.Faction_Tracker.factions_dropdown = dropdown;
+        }
 
-        var favor = page.AddSlider(
+        Slider favor = _page.AddSlider(
             card,
             "Favor",
             "Favor",
@@ -524,19 +593,21 @@ internal static class Utilities_Character
             SliderMinimum(favorSource, 0f),
             SliderMaximum(favorSource, 999999f),
             true,
-            () => factionFavor,
-            value => factionFavor = value
+            () => _factionFavor,
+            value => _factionFavor = value
         );
         if (!favor.IsNullOrDestroyed())
+        {
             Hud_Manager.Content.Character.Faction_Tracker.factions_favor_slider = favor;
-        page.AddButton(
+        }
+        _page.AddButton(
             card,
             "GainFavor",
             "Gain Favor",
             Hud_Manager.Content.Character.Faction_Tracker.factions_gain_favor_Click
         );
 
-        var rank = page.AddSlider(
+        Slider rank = _page.AddSlider(
             card,
             "Rank",
             "Rank",
@@ -544,19 +615,21 @@ internal static class Utilities_Character
             SliderMinimum(rankSource, 0f),
             SliderMaximum(rankSource, 12f),
             true,
-            () => factionRank,
-            value => factionRank = value
+            () => _factionRank,
+            value => _factionRank = value
         );
         if (!rank.IsNullOrDestroyed())
+        {
             Hud_Manager.Content.Character.Faction_Tracker.factions_rank_slider = rank;
-        page.AddButton(
+        }
+        _page.AddButton(
             card,
             "SetRank",
             "Set Rank",
             Hud_Manager.Content.Character.Faction_Tracker.factions_set_rank_Click
         );
 
-        var reputation = page.AddSlider(
+        Slider reputation = _page.AddSlider(
             card,
             "Reputation",
             "Reputation",
@@ -564,12 +637,14 @@ internal static class Utilities_Character
             SliderMinimum(reputationSource, 0f),
             SliderMaximum(reputationSource, 999999f),
             true,
-            () => factionReputation,
-            value => factionReputation = value
+            () => _factionReputation,
+            value => _factionReputation = value
         );
         if (!reputation.IsNullOrDestroyed())
+        {
             Hud_Manager.Content.Character.Faction_Tracker.factions_reputation_slider = reputation;
-        page.AddButton(
+        }
+        _page.AddButton(
             card,
             "SetReputation",
             "Set Reputation",
@@ -586,15 +661,18 @@ internal static class Utilities_Character
     private static void RefreshClassOptions()
     {
         if (
-            classSource.IsNullOrDestroyed() || Refs_Manager.character_class_list.IsNullOrDestroyed()
+            _classSource.IsNullOrDestroyed()
+            || Refs_Manager.character_class_list.IsNullOrDestroyed()
         )
         {
             return;
         }
         Il2CppSystem.Collections.Generic.List<Dropdown.OptionData> options = new();
         foreach (CharacterClass characterClass in Refs_Manager.character_class_list.classes)
+        {
             options.Add(new Dropdown.OptionData { text = characterClass.className });
-        classSource.options = options;
+        }
+        _classSource.options = options;
     }
 
     private static bool HasSave() =>
