@@ -9,7 +9,7 @@ using UnityEngine;
 using ModSaveManager = LastEpoch_Hud.Scripts.ModUI.Settings.SaveManager;
 using Random = UnityEngine.Random;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.Crafting;
 
 // Restores the old Craft_MaxTier behavior in a narrower form:
 // normal equipment may be upgraded through displayed T7 (internal tier 6).

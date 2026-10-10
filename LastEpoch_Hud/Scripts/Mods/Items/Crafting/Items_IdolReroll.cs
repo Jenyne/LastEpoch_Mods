@@ -6,7 +6,7 @@ using LastEpoch_Hud.Scripts.ModUI;
 using CraftType = Il2Cpp.ZoneRestrictedCraftingManager.CraftingType;
 using ModSaveManager = LastEpoch_Hud.Scripts.ModUI.Settings.SaveManager;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.Crafting;
 
 internal static class Items_IdolReroll
 {

@@ -1,6 +1,6 @@
 ﻿using Il2Cpp;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.Requirements;
 
 public class Items_Update
 {

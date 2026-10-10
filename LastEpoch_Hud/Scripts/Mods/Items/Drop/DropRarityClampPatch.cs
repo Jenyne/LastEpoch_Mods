@@ -3,7 +3,7 @@ using HarmonyLib;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.Items;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.Drop;
 
 /// <summary>Clamps loaded rarity 5/6 drops to 4 so items with more than four affixes load.</summary>
 [HarmonyPatch(typeof(GroundItemManager), "dropItemForPlayer")]

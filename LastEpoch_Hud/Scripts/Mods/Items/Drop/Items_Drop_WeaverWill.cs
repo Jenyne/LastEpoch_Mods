@@ -2,7 +2,7 @@
 using Il2Cpp;
 using UnityEngine;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.Drop;
 
 public class Items_Drop_WeaverWill
 {

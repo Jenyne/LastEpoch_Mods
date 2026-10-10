@@ -2,7 +2,7 @@
 using Il2Cpp;
 using UnityEngine;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.Pickup;
 
 public class Items_Drop_Notifications
 {

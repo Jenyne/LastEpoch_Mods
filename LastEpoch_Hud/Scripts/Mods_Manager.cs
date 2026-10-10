@@ -127,7 +127,7 @@ public class Mods_Manager : MonoBehaviour
             Vector3.zero,
             Quaternion.identity
         );
-        items_nbsocket_obj.AddComponent<Mods.Items.Items_SocketsNb>();
+        items_nbsocket_obj.AddComponent<Mods.Items.Drop.Items_SocketsNb>();
         Mods_Objects.Add(items_nbsocket_obj);
 
         items_autosell_timer_obj = Object.Instantiate(
@@ -136,7 +136,7 @@ public class Mods_Manager : MonoBehaviour
             Quaternion.identity
         );
         items_autosell_timer_obj.active = true;
-        items_autosell_timer_obj.AddComponent<Mods.Items.Items_AutoStore_WithTimer>();
+        items_autosell_timer_obj.AddComponent<Mods.Items.Pickup.Items_AutoStore_WithTimer>();
         Mods_Objects.Add(items_autosell_timer_obj);
 
         items_headhunter_obj = Object.Instantiate(
@@ -293,7 +293,7 @@ public class Mods_Manager : MonoBehaviour
                 Save_Manager.instance.data.Character.Cheats.Enable_AutoPot
             );
             items_autosell_timer_obj.SetActive(true); // worker also services debounced AutoStore-on-drop
-            Mods.Items.Items_Update.Reqs(); //Used to update item req
+            Mods.Items.Requirements.Items_Update.Reqs(); //Used to update item req
         }
     }
 }

@@ -2,9 +2,9 @@
 using Il2Cpp;
 using UnityEngine;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.Drop;
 
-public class Items_Drop_Implicits
+public class Items_Drop_UniqueMods
 {
     public static bool CanRun()
     {
@@ -16,7 +16,7 @@ public class Items_Drop_Implicits
             }
             else if (!Save_Manager.instance.data.IsNullOrDestroyed())
             {
-                return Save_Manager.instance.data.Items.Drop.Enable_Implicits;
+                return Save_Manager.instance.data.Items.Drop.Enable_UniqueMods;
             }
             else
             {
@@ -29,33 +29,33 @@ public class Items_Drop_Implicits
         }
     }
 
-    [HarmonyPatch(typeof(ItemData), "randomiseImplicitRolls")]
-    public class ItemData_randomiseImplicitRolls
+    [HarmonyPatch(typeof(ItemData), "randomiseUniqueRolls")]
+    public class randomiseUniqueRolls
     {
         [HarmonyPostfix]
         static void Postfix(ItemData __instance)
         {
             if (CanRun() && !__instance.IsNullOrDestroyed())
             {
-                for (int z = 0; z < __instance.implicitRolls.Count; z++)
+                for (int k = 0; k < __instance.uniqueRolls.Count; k++)
                 {
                     byte roll = 0;
                     if (
-                        Save_Manager.instance.data.Items.Drop.Implicits_Min
-                        == Save_Manager.instance.data.Items.Drop.Implicits_Max
+                        Save_Manager.instance.data.Items.Drop.UniqueMods_Min
+                        == Save_Manager.instance.data.Items.Drop.UniqueMods_Max
                     )
                     {
-                        roll = (byte)Save_Manager.instance.data.Items.Drop.Implicits_Max;
+                        roll = (byte)Save_Manager.instance.data.Items.Drop.UniqueMods_Max;
                     }
                     else
                     {
                         roll = (byte)
                             Random.RandomRange(
-                                Save_Manager.instance.data.Items.Drop.Implicits_Min,
-                                Save_Manager.instance.data.Items.Drop.Implicits_Max
+                                Save_Manager.instance.data.Items.Drop.UniqueMods_Min,
+                                Save_Manager.instance.data.Items.Drop.UniqueMods_Max
                             );
                     }
-                    __instance.implicitRolls[z] = roll;
+                    __instance.uniqueRolls[k] = roll;
                 }
                 // Only change the rolls here. Ascendance can call this before it has
                 // finished assigning the unique identity; rebuilding or refreshing now

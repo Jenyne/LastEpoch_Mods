@@ -1,6 +1,6 @@
 ﻿using HarmonyLib;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.Pickup;
 
 public class Items_AutoStore_OnInventoryOpen
 {

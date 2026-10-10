@@ -96,7 +96,7 @@ public static class CorruptedAffixAdapter
                         if (item.subTypeID == subType)
                         {
                             if (
-                                !LastEpoch_Hud.Scripts.Mods.Items.Items_Req_Class.TryGetOriginalRequirement(
+                                !LastEpoch_Hud.Scripts.Mods.Items.Requirements.Items_Req_Class.TryGetOriginalRequirement(
                                     baseType,
                                     subType,
                                     item.classRequirement,

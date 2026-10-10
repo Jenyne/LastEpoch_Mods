@@ -1,7 +1,7 @@
 ﻿using MelonLoader;
 using UnityEngine;
 
-namespace LastEpoch_Hud.Scripts.Mods.Items;
+namespace LastEpoch_Hud.Scripts.Mods.Items.Pickup;
 
 [RegisterTypeInIl2Cpp]
 public class Items_AutoStore_WithTimer : MonoBehaviour

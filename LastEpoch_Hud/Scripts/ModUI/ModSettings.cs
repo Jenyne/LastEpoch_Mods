@@ -135,8 +135,8 @@ public static class ModSettings
 
         static IdolReroll()
         {
-            FreeMemoryAmber.Changed += _ => Mods.Items.Items_IdolReroll.RefreshUI();
-            UnlimitedUses.Changed += _ => Mods.Items.Items_IdolReroll.RefreshUI();
+            FreeMemoryAmber.Changed += _ => Mods.Items.Crafting.Items_IdolReroll.RefreshUI();
+            UnlimitedUses.Changed += _ => Mods.Items.Crafting.Items_IdolReroll.RefreshUI();
         }
     }
 
