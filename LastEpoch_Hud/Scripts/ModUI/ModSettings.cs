@@ -162,6 +162,14 @@ public static class ModSettings
         public static readonly BoolSetting Enabled = Group.Bool("Enabled");
     }
 
+#pragma warning disable CA1034 // nested like every settings section
+    public static class AutoStore
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("AutoStore");
+        public static readonly BoolSetting OnFullInventory = Group.Bool("OnFullInventory");
+    }
+#pragma warning restore CA1034
+
     // Saved independently of legacy HUD prefabs; modern page bindings live in Pages/.
     public static class SessionStats
     {
