@@ -513,8 +513,9 @@ public partial class Hud_Manager : MonoBehaviour
             if (!Content.OdlForceDrop.Type_Initialized)
             {
                 Content.OdlForceDrop.InitForcedrop();
+                return;
             }
-            else if (!ModUI.ForceDropBuilder.Tick())
+            if (!ModUI.ForceDropBuilder.Tick())
             {
                 Content.OdlForceDrop.implicits.active = Content.OdlForceDrop.implicits_enable;
                 Content.OdlForceDrop.implicits_border.active = Content
