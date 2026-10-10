@@ -57,6 +57,21 @@ internal static class Utilities_Character
     private static void BuildCheats()
     {
         HudFormPage.Card card = _page.AddCard("Cheats", "Cheats");
+        // Preserve native lens/double-reward behavior; only the transient item count changes.
+        _page.AddToggleSlider(
+            card,
+            "ProphecyRewardMultiplier",
+            "Prophecy Reward Multiplier",
+            "x",
+            1f,
+            10f,
+            true,
+            () => ModSettings.ProphecyRewards.Multiplier.Enabled,
+            enabled => ModSettings.ProphecyRewards.Multiplier.SetEnabled(enabled),
+            () => ModSettings.ProphecyRewards.Multiplier.Value,
+            value => ModSettings.ProphecyRewards.Multiplier.SetValue(value)
+        );
+
         _page.AddToggle(
             card,
             "IdolRerollFreeAmber",

@@ -42,6 +42,11 @@ internal static class Utilities_Currency
                     Mods.Character.Character_MemoryAmber.Add10000
                 ),
                 Action(
+                    "GoldMillion",
+                    "Spawn 1,000,000 Gold",
+                    Mods.Character.Character_Gold.SpawnMillion
+                ),
+                Action(
                     "SoulEmbers",
                     "Add 1,000 Soul Embers",
                     Hud_Manager.Content.Character.Data.AddSoulEmbers

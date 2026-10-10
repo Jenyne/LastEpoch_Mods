@@ -397,5 +397,17 @@
   "Guaranteed Despair cannot seal a second affix.": "Désespoir garanti ne peut pas sceller un deuxième affixe.",
   "No Memory Amber Cost": "Aucun coût en ambre mémoriel",
   "Unlimited Idol Altar Uses": "Utilisations illimitées de l'autel des idoles",
-  "No Transform Health Decay": "Pas de perte de santé en transformation"
+  "No Transform Health Decay": "Pas de perte de santé en transformation",
+  "Spawn 1,000,000 Gold": "Faire apparaître 1 000 000 d’or",
+  "Session Gains": "Gains de la session",
+  "Show counter HUD": "Afficher les compteurs",
+  "Pause": "Pause des compteurs",
+  "Paused": "En pause",
+  "Session": "Session de jeu",
+  "XP": "EXP",
+  "Favour": "Faveur",
+  "Memory Amber": "Ambre de mémoire",
+  "Hold Alt and drag the counter to move it.": "Maintenez Alt et faites glisser le compteur pour le déplacer.",
+  "Reset counter position": "Réinitialiser la position du compteur",
+  "Prophecy Reward Multiplier": "Multiplicateur de récompenses de prophétie"
 }
