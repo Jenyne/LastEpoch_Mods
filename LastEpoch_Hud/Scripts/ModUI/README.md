@@ -18,8 +18,10 @@ Presentation has one owner for each concern:
   show, hide, and refresh lifecycle are declared together in one entry. Moving a page means editing
   its catalog entry; renaming one also needs a new label key in `Locales/base.json` and `en.json`,
   because sidebar labels go through `LocaleRegistry`.
-- `Shell/HudLayout.cs` owns only shared shell behavior: window, header, sidebar, settings,
-  selection, and page activation.
+- `Shell/HudLayout.cs` owns only shared shell behavior: window, header, page activation, and
+  wiring the sidebar, settings panel and search together.
+- `Shell/HudSidebar.cs` builds the sidebar, owns accordion state and selection visuals.
+- `Shell/HudSettingsPanel.cs` is the header panel for font size and light/dark theme.
 - `Pages/` owns page content and maps bound settings to reusable cards and form controls.
 - `Shell/HudFormPage.cs`, `HudSliderCard.cs`, and `HudActionCard.cs` are the reusable view
   components used by pages.
@@ -343,7 +345,9 @@ ModUI/
     HudNavigation.cs        Sidebar hierarchy plus page/search lifecycle catalog
     HudPageDefinition.cs    One page's navigation metadata and lifecycle
     HudSectionDefinition.cs One sidebar section and its pages
-    HudLayout.cs            Window, header, sidebar, settings, and page activation
+    HudLayout.cs            Window, header, and page activation
+    HudSidebar.cs           Sidebar rows, accordion, and selection
+    HudSettingsPanel.cs     Font size and theme panel
     HudFormPage.cs          Reusable expandable cards and mixed form controls
     HudSliderCard.cs        Reusable slider-card view
     HudActionCard.cs        Reusable action-button-card view
