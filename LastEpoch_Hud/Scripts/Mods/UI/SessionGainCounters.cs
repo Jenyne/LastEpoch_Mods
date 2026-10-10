@@ -25,6 +25,7 @@ internal static class SessionGainCounters
     static int manualGrants;
     static string display = "";
     static float nextDisplay;
+    static float nextFactionTrace;
     static GUIStyle style;
     static readonly GainBalances balances = new(Session);
     static long factionOwner;
@@ -252,9 +253,14 @@ internal static class SessionGainCounters
     static void SampleFactions(bool record)
     {
         var tracker = LocalFactions();
+        bool trace = Active && Time.unscaledTime >= nextFactionTrace;
+        if (trace)
+            nextFactionTrace = Time.unscaledTime + 15f;
         if (tracker.IsNullOrDestroyed() || tracker.factions == null)
         {
             balances.Clear();
+            if (trace)
+                Main.logger_instance?.Warning("[SessionFavour] FactionTracker or factions unavailable.");
             return;
         }
         foreach (var id in trackedFactions)
@@ -264,6 +270,7 @@ internal static class SessionGainCounters
                 && !local.IsNullOrDestroyed()
                 && local.IsMember
             )
+            {
                 balances.Observe(
                     (int)id,
                     local.Pointer.ToInt64(),
@@ -271,8 +278,20 @@ internal static class SessionGainCounters
                     local.Favor,
                     record
                 );
+                if (trace)
+                    Main.logger_instance?.Msg(
+                        "[SessionFavour] " + id + " member=yes balance=" + local.Favor
+                        + " record=" + record
+                    );
+            }
             else
+            {
                 balances.Forget((int)id);
+                if (trace)
+                    Main.logger_instance?.Warning(
+                        "[SessionFavour] " + id + " unavailable or not a member."
+                    );
+            }
         }
     }
 
