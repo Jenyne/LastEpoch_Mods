@@ -86,12 +86,7 @@ internal static class World_Misc
             "Reset counter position",
             Mods.UI.SessionGainCounters.ResetPosition
         );
-        page.AddText(
-            gains,
-            "DragCounterHint",
-            "Hold Alt and drag the counter to move it.",
-            48f
-        );
+        page.AddText(gains, "DragCounterHint", "Hold Alt and drag the counter to move it.", 48f);
 
         var minimap = page.AddCard("Minimap", "Minimap");
         AddToggle(
