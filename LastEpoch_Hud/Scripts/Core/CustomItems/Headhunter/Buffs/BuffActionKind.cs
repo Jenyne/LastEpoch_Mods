@@ -6,4 +6,7 @@ public enum BuffActionKind
     Add,
     Refresh,
     Remove,
+
+    /// <summary>Set the seconds of a live buff; never adds.</summary>
+    SetRemaining,
 }

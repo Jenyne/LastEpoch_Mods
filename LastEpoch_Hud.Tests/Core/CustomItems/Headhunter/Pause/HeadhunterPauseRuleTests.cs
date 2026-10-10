@@ -1,0 +1,27 @@
+using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Pause;
+
+namespace LastEpoch_Hud.Tests.Core.CustomItems.Headhunter.Pause;
+
+public sealed class HeadhunterPauseRuleTests
+{
+    [Theory]
+    [InlineData(false, false, false, false, false)]
+    [InlineData(true, false, false, false, true)]
+    [InlineData(false, true, false, false, true)]
+    [InlineData(false, false, true, false, true)]
+    [InlineData(false, false, false, true, true)]
+    [InlineData(true, true, true, true, true)]
+    public void IsPaused_IsAnyOfFour(
+        bool nonCombat,
+        bool arrival,
+        bool cinematic,
+        bool bossIntro,
+        bool expected
+    )
+    {
+        Assert.Equal(
+            expected,
+            HeadhunterPauseRule.IsPaused(nonCombat, arrival, cinematic, bossIntro)
+        );
+    }
+}
