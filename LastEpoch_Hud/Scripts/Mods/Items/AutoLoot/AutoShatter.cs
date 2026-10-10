@@ -1,19 +1,17 @@
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.Items.AutoLoot;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.AutoLoot;
 
 /// <summary>Shatters a dropped item into affix shards; exceptions reach the caller.</summary>
 public static class AutoShatter
 {
+    private static readonly SystemShatterRandom _random = new();
+
     public static bool TryShatter(ItemDataUnpacked item)
     {
         Save_Manager.Data.Pickup pickup = Save_Manager.instance.data.Items.Pickup;
-        int chance = pickup.AutoShatter_Chance;
-        if (chance <= 0)
-        {
-            return false;
-        }
-        if ((chance < 100) && (UnityEngine.Random.Range(0, 100) >= chance))
+        if (!ShatterRoll.Triggers(pickup.AutoShatter_Chance, _random))
         {
             return false;
         }
@@ -82,10 +80,6 @@ public static class AutoShatter
         {
             return false;
         }
-        if (affixChance <= 0)
-        {
-            return true;
-        }
         Il2CppSystem.Collections.Generic.List<ItemAffix> affixes = item.affixes;
         if (affixes.IsNullOrDestroyed())
         {
@@ -94,23 +88,16 @@ public static class AutoShatter
         for (int i = 0; i < affixes.Count; i++)
         {
             ItemAffix affix = affixes[i];
-            if ((affix.IsNullOrDestroyed()) || (affix.affixId == 0))
+            if (affix.IsNullOrDestroyed())
             {
                 continue;
             }
-            if ((affixChance < 100) && (UnityEngine.Random.Range(0, 100) >= affixChance))
+            int shards = ShatterRoll.ShardsFor(affix.affixId, affixChance, quantityChance, _random);
+            if (shards == 0)
             {
                 continue;
             }
-            int quantity = 1;
-            if (
-                (quantityChance > 0)
-                && ((quantityChance >= 100) || (UnityEngine.Random.Range(0, 100) < quantityChance))
-            )
-            {
-                quantity = 2;
-            }
-            manager.shardStorage.AddShard(affix.affixId, quantity, true);
+            manager.shardStorage.AddShard(affix.affixId, shards, true);
         }
         return true;
     }

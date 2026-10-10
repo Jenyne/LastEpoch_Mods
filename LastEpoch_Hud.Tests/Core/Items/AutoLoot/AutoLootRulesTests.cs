@@ -214,15 +214,15 @@ public sealed class AutoLootRulesTests
     }
 
     [Theory]
-    [InlineData(LootKind.Other)]
-    [InlineData(LootKind.Key)]
-    [InlineData(LootKind.WovenEcho)]
-    [InlineData(LootKind.Material)]
-    [InlineData(LootKind.Gear)]
-    public void Route_ModOrigin_SameAsGame(LootKind kind)
+    [InlineData(LootKind.Key, LootRoute.PickUp)]
+    [InlineData(LootKind.WovenEcho, LootRoute.PickUp)]
+    [InlineData(LootKind.Material, LootRoute.PickUp)]
+    [InlineData(LootKind.Gear, LootRoute.Filter)]
+    [InlineData(LootKind.Other, LootRoute.Ignore)]
+    public void Route_ModOrigin_SameAsGame(LootKind kind, LootRoute expected)
     {
         Assert.Equal(
-            AutoLootRules.Route(kind, _allOn),
+            expected,
             AutoLootRules.Route(kind, AutoLootRules.ForOrigin(_allOn, DropOrigin.Mod))
         );
     }
