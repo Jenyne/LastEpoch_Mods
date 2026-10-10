@@ -18,7 +18,7 @@ public class Main : MelonLoader.MelonMod
     public const string company_name = "Eleventh Hour Games";
     public const string game_name = "Last Epoch";
     public const string mod_name = "LastEpoch_Hud";
-    public const string mod_version = "4.4.21";
+    public const string mod_version = "5.0.0";
     public static bool debug = false;
 
     public override void OnInitializeMelon()
