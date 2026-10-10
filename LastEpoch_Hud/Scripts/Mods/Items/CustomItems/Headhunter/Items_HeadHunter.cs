@@ -28,6 +28,7 @@ public class Items_HeadHunter : MonoBehaviour
 
     private static void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
+        HeadhunterIconLoads.AllowRetry();
         if (!HeadhunterRunReset.IsCharacterExit(scene.name))
         {
             return;
@@ -47,6 +48,7 @@ public class Items_HeadHunter : MonoBehaviour
         HeadhunterConfigLoader.ReloadIfChanged(Time.unscaledTime);
         HeadhunterBuffBar.Tick(Time.unscaledTime);
         HeadhunterBarHover.Tick();
+        HeadhunterHeartbeat.Tick(Time.unscaledTime);
         MonsterModDump.Tick(Time.unscaledTime);
     }
 

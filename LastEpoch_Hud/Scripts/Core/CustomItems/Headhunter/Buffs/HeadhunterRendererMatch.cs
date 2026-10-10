@@ -54,4 +54,21 @@ public static class HeadhunterRendererMatch
     {
         return captured != IntPtr.Zero && captured == current;
     }
+
+    /// <summary>Restore step for the rarity field from captured, last tinted and current block ids.</summary>
+    public static HeadhunterRarityRestore RarityRestore(
+        IntPtr captured,
+        IntPtr tinted,
+        IntPtr current
+    )
+    {
+        if (current == IntPtr.Zero || current != tinted)
+        {
+            return HeadhunterRarityRestore.Keep;
+        }
+
+        return captured == IntPtr.Zero || captured == current
+            ? HeadhunterRarityRestore.Clear
+            : HeadhunterRarityRestore.PutBack;
+    }
 }

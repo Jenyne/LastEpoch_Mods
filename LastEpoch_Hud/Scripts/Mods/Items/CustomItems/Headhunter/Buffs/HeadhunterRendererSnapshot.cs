@@ -15,6 +15,7 @@ internal sealed class HeadhunterRendererSnapshot
     private readonly List<Material[]> _applied = new();
     private RendererManager _manager;
     private MaterialPropertyBlock _rarityBlock;
+    private MaterialPropertyBlock _tintedBlock;
 
     public int Count => _renderers.Count;
     public bool RarityWasNull { get; private set; }
@@ -45,7 +46,11 @@ internal sealed class HeadhunterRendererSnapshot
             _applied.Add(renderer.IsNullOrDestroyed() ? null : renderer.sharedMaterials);
         }
 
-        RarityChangedInPlace |= TintedCapturedBlock();
+        _tintedBlock = _manager.IsNullOrDestroyed() ? null : _manager.monsterRarityPropertyBlock;
+        RarityChangedInPlace = HeadhunterRendererMatch.ChangedInPlace(
+            IdOf(_rarityBlock),
+            IdOf(_tintedBlock)
+        );
     }
 
     public void Restore()
@@ -88,18 +93,9 @@ internal sealed class HeadhunterRendererSnapshot
         }
     }
 
-    private bool TintedCapturedBlock()
+    private static IntPtr IdOf(MaterialPropertyBlock block)
     {
-        if (_rarityBlock == null || _manager.IsNullOrDestroyed())
-        {
-            return false;
-        }
-
-        MaterialPropertyBlock current = _manager.monsterRarityPropertyBlock;
-        return HeadhunterRendererMatch.ChangedInPlace(
-            _rarityBlock.Pointer,
-            current == null ? IntPtr.Zero : current.Pointer
-        );
+        return block == null ? IntPtr.Zero : block.Pointer;
     }
 
     private static IntPtr IdOf(Renderer renderer)
@@ -135,10 +131,21 @@ internal sealed class HeadhunterRendererSnapshot
             return;
         }
 
-        _manager.monsterRarityPropertyBlock = _rarityBlock;
-        if (RarityChangedInPlace)
+        MaterialPropertyBlock current = _manager.monsterRarityPropertyBlock;
+        HeadhunterRarityRestore step = HeadhunterRendererMatch.RarityRestore(
+            IdOf(_rarityBlock),
+            IdOf(_tintedBlock),
+            IdOf(current)
+        );
+        if (step == HeadhunterRarityRestore.Clear)
         {
-            _rarityBlock.Clear();
+            current.Clear();
+            return;
+        }
+
+        if (step == HeadhunterRarityRestore.PutBack)
+        {
+            _manager.monsterRarityPropertyBlock = _rarityBlock;
         }
     }
 

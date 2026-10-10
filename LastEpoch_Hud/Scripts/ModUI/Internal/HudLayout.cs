@@ -260,6 +260,7 @@ public static class HudLayout
         panels.Clear();
         pageButtons.Clear();
         navigationSections.Clear();
+        HudSearch.Reset();
         activePage = null;
         HudTheme.LoadPreferences();
         HudTheme.ResetFontBaselines();
@@ -405,6 +406,7 @@ public static class HudLayout
         lineImage.raycastTarget = false;
 
         BuildSettingsPanel(hud);
+        HudSearchBar.Build(header, hud, boundHud, font, ActivateSearchMatch);
     }
 
     private static void BuildSettingsPanel(GameObject parent)
@@ -936,10 +938,15 @@ public static class HudLayout
             ActivateNavigationOnly(section.Definition.Pages[0]);
     }
 
-    private static void ActivateNavigationOnly(HudPageDefinition page)
+    private static void ActivateNavigationOnly(HudPageDefinition page, bool preserveSearch = false)
     {
         if (page == null)
             return;
+        if (!preserveSearch)
+        {
+            HudSearch.ClearAll();
+            HudSearchBar.Clear();
+        }
         Utilities_Character.Hide();
         Utilities_Multipliers.Hide();
         Utilities_Buffs.Hide();
@@ -1090,6 +1097,20 @@ public static class HudLayout
         SetLegacyAreas(page.Areas.Length > 0 ? new[] { page.Areas[0] } : Array.Empty<HudArea>());
         SetSelected(page.Id);
         activePage = page;
+    }
+
+    private static void ActivateSearchMatch(HudSearchMatch match, string query)
+    {
+        if (
+            match == null
+            || string.IsNullOrWhiteSpace(query)
+            || !HudNavigation.TryGetPage(match.PageId, out var section, out var page)
+        )
+            return;
+        HudSearch.ClearAll();
+        ExpandSection(section.Id, true);
+        ActivateNavigationOnly(page, true);
+        match.Page.ApplySearch(query);
     }
 
     public static void RefreshActivePage()

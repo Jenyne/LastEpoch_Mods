@@ -45,6 +45,13 @@ internal static class World_Misc
             "SafeTeleportNote",
             "End of Time waypoint required. Bind a key or modifier + key."
         );
+        page.AddToggle(
+            misc,
+            "TravelAnywhere",
+            "Enable Travel Anywhere",
+            () => ModSettings.TravelAnywhere.Enabled.Value,
+            value => ModSettings.TravelAnywhere.Enabled.Set(value)
+        );
 
         var gains = page.AddCard("SessionGains", "Session Gains");
         sessionTotals = page.AddText(

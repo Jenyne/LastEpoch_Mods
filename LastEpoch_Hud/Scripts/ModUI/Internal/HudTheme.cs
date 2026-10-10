@@ -204,6 +204,13 @@ public static class HudTheme
     public const float SliderScrollbarWidth = 12f;
     public const float ActionButtonHeight = 54f;
     public const float ActionButtonGap = 12f;
+    public const float SearchAnchorX = 0.59f;
+    public const float SearchWidth = 520f;
+    public const float SearchHeight = 44f;
+    public const float SearchButtonWidth = 92f;
+    public const float SearchResultsWidth = 590f;
+    public const float SearchResultHeight = 58f;
+    public const float SearchCornerRadius = 8f;
 
     public const int BrandFontSize = 34;
     public const int SectionFontSize = 24;

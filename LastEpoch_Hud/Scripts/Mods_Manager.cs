@@ -242,6 +242,7 @@ public class Mods_Manager : MonoBehaviour
             Quaternion.identity
         );
         teleport_to_scene_obj.AddComponent<Mods.Teleport.Teleport_ToScene>();
+        teleport_to_scene_obj.AddComponent<Mods.Teleport.TravelAnywhere>();
         Mods_Objects.Add(teleport_to_scene_obj);
 
         GameObject summon_options = new GameObject { name = "Mod_Summon_Options" };
