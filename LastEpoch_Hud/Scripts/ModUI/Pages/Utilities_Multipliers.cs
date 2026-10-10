@@ -1,7 +1,8 @@
 using System.Collections.Generic;
+using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 
-namespace LastEpoch_Hud.Scripts.ModUI;
+namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 // Save bindings for Utilities > Multipliers. The shared HudSliderCard owns all
 // visuals and interaction; these definitions preserve the original raw x values.

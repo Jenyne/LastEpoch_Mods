@@ -4,8 +4,9 @@ using HarmonyLib;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.Items;
 using LastEpoch_Hud.Scripts.ModUI;
+using LastEpoch_Hud.Scripts.ModUI.Settings;
 using UnityEngine;
-using ModSaveManager = LastEpoch_Hud.Scripts.ModUI.SaveManager;
+using ModSaveManager = LastEpoch_Hud.Scripts.ModUI.Settings.SaveManager;
 using Random = UnityEngine.Random;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items;

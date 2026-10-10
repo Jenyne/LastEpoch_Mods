@@ -1,8 +1,9 @@
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace LastEpoch_Hud.Scripts.ModUI;
+namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 // Utilities > Character. The legacy Character, Skills, Data, Blessings, and
 // Factions controls are represented here without changing their game logic.

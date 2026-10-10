@@ -1,8 +1,9 @@
 using System;
+using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace LastEpoch_Hud.Scripts.ModUI;
+namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 // Utilities > QOL. This replaces the mixed legacy Pickup/Requirements panel
 // with small, focused cards while keeping the same Save_Manager fields.

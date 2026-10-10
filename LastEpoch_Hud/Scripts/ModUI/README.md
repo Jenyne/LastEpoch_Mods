@@ -10,18 +10,18 @@ intact. The visible pages are runtime-built views over those bindings.
 
 Presentation has one owner for each concern:
 
-- `Internal/HudTheme.cs` holds the tokens, palettes, and saved theme preferences: dark/light
+- `Shell/HudTheme.cs` holds the tokens, palettes, and saved theme preferences: dark/light
   palettes, semantic colors, typography, spacing, dimensions, borders, and selectable states.
-- `Internal/HudStyler.cs` applies theme tokens to runtime-built controls, including font scaling.
-- `Internal/HudElements.cs` owns the primitive construction rules shared by runtime-built controls.
-- `Internal/HudNavigation.cs` is the page catalog. A page's sidebar position, search root, build,
+- `Shell/HudStyler.cs` applies theme tokens to runtime-built controls, including font scaling.
+- `Shell/HudElements.cs` owns the primitive construction rules shared by runtime-built controls.
+- `Shell/HudNavigation.cs` is the page catalog. A page's sidebar position, search root, build,
   show, hide, and refresh lifecycle are declared together in one entry. Moving a page means editing
   its catalog entry; renaming one also needs a new label key in `Locales/base.json` and `en.json`,
   because sidebar labels go through `LocaleRegistry`.
-- `Internal/HudLayout.cs` owns only shared shell behavior: window, header, sidebar, settings,
+- `Shell/HudLayout.cs` owns only shared shell behavior: window, header, sidebar, settings,
   selection, and page activation.
 - `Pages/` owns page content and maps bound settings to reusable cards and form controls.
-- `Internal/HudFormPage.cs`, `HudSliderCard.cs`, and `HudActionCard.cs` are the reusable view
+- `Shell/HudFormPage.cs`, `HudSliderCard.cs`, and `HudActionCard.cs` are the reusable view
   components used by pages.
 
 Force Drop is the sole presentation exception: its catalog entry has no builder and no search root.
@@ -90,6 +90,8 @@ public static readonly FloatSetting TreePoints =
 
 ```csharp
 using LastEpoch_Hud.Scripts.ModUI;
+using LastEpoch_Hud.Scripts.ModUI.Keybind;   // KeybindMatcher
+using LastEpoch_Hud.Scripts.ModUI.Settings;  // SaveManager, LocaleRegistry
 
 // Direct reads
 if (ModSettings.ItemsDrop.ForceSeal.Value) { /* ... */ }
@@ -332,25 +334,45 @@ ModUI/
     Utilities_*.cs         Character, multipliers, currency, buffs, and QOL
     Items_*.cs             Drop, Force Drop bridge, and crafting slot
     World_*.cs             Difficulty, monoliths, misc, and camera
+    MonolithTimelineEditor.cs  Timeline editor used by World_Monoliths
     Skills_*.cs            Minions, companions, summon, and QOL
-  Internal/              Shared framework and presentation internals
+  Shell/                 Window, navigation, search and reusable view components
     HudTheme.cs             Visual tokens, palettes, and saved theme preferences
     HudStyler.cs            Applies theme tokens to runtime-built controls and font scaling
     HudElements.cs          Runtime object/text/layout construction primitives
     HudNavigation.cs        Sidebar hierarchy plus page/search lifecycle catalog
+    HudPageDefinition.cs    One page's navigation metadata and lifecycle
+    HudSectionDefinition.cs One sidebar section and its pages
     HudLayout.cs            Window, header, sidebar, settings, and page activation
     HudFormPage.cs          Reusable expandable cards and mixed form controls
     HudSliderCard.cs        Reusable slider-card view
     HudActionCard.cs        Reusable action-button-card view
+    HudSearch.cs            Header search registry and matching
+    HudSearchBar.cs         Header search box and result list
+    IHudSearchPage.cs       Contract a page implements to be searchable
+    HudSearchEntry.cs       One searchable card on a page
+    HudSearchMatch.cs       One search result with its breadcrumb
+  Settings/              Prefab binding, persistence and setting types
     SettingTypes.cs         Setting types + ActionBinding + display formatting
     SettingsGroup.cs        Fluent API, factory methods, serialization, UI binding
     SettingsBuilder.cs      Convention-based + path-based prefab binding
     TabManager.cs           Tab switching and menu button wiring (Hud root only)
     Prefab.cs               Null-safe child + path lookups, ChildPath / ComponentAtPath
+    ButtonHook.cs           Harmony patch for IL2CPP button events
     SliderHook.cs           Harmony patch for IL2CPP slider events
+    ToggleHook.cs           Harmony patch for IL2CPP toggle events
     SaveManager.cs          SaveModUI.json persistence + BindHud / BindRoot entry points
     BindingRoots.cs         Name-keyed registry of prefab roots ("Hud", custom, ...)
+    RootKind.cs             Kind of a binding root (generic or Hud with tabs)
     LocaleRegistry.cs       Tracks (Text, English label) pairs for clean language round-trip
+    NumericSliderInputs.cs  Typed-value inputs for sliders
+    CharacterActionControls.cs, DungeonRevealControls.cs, InfiniteForgingPotentialControls.cs,
+    SafeTeleportControls.cs, ScenesSectionControls.cs   Binders for specific legacy-prefab controls
+  ForceDrop/             Force Drop page logic and item adapters
+    ForceDropBuilder.cs, ForceDropCatalog.cs, ForceDropCorruptionPool.cs,
+    ForceDropItemCreator.cs, ForceDropLegalAffixes.cs   Catalog, rules and item creation
+    CorruptedAffixAdapter.cs, IllegalItemAdapter.cs, UniqueVariantAdapter.cs   Item display adapters
+    NativeItemNames.cs      Game item name lookups
   Keybind/               Keybind setting helpers (rebindable inputs)
     KeybindStrings.cs       Centralized localized strings (Reset, Press any key, etc.)
     KeybindFormat.cs        Friendly display formatting for tagged bindings
@@ -363,7 +385,7 @@ ModUI/
 
 | I want to... | Do this |
 |---|---|
-| Change a HUD color, size, spacing, or control state | `Internal/HudTheme.cs` |
+| Change a HUD color, size, spacing, or control state | `Shell/HudTheme.cs` |
 | Add a visible sidebar page | Add its view under `Pages/` and one lifecycle entry in `HudNavigation.Sections` |
 | Move or rename a sidebar page | Edit its single `HudNavigation.Sections` entry; a rename also needs a new label key in `base.json` + `en.json` |
 | Add a toggle/slider/range | `ModSettings.cs` -- one line: `Group.Bool/Float/Range(...)` |
@@ -377,8 +399,8 @@ ModUI/
 | React to button click | `.Clicked` event on the ActionBinding |
 | Wire a non-standard element | `.OnBind()` on the SettingsGroup |
 | Override prefab panel name | `panel:` parameter on factory method |
-| Add a new display format | `Internal/SettingTypes.cs` |
-| Add a new setting type | `Internal/SettingTypes.cs` + `SettingsGroup.cs` + `SettingsBuilder.cs` |
+| Add a new display format | `Settings/SettingTypes.cs` |
+| Add a new setting type | `Settings/SettingTypes.cs` + `SettingsGroup.cs` + `SettingsBuilder.cs` |
 | Add a section header | `ModSettings.cs` -- `Group.Header("Header", label: "Section Name")` |
 | Add a rebindable input | `ModSettings.cs` -- `Group.Keybind("Key", defaultBinding: "kb:LeftControl", label: "Modifier")` |
 | Read a keybind | `KeybindMatcher.IsHeld(ModSettings.X.Y.Value)` |

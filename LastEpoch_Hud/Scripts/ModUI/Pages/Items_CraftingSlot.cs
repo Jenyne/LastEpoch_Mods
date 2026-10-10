@@ -1,8 +1,9 @@
 using System;
+using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace LastEpoch_Hud.Scripts.ModUI;
+namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 // Items > Crafting Slot. Every override has an explicit checkbox; slider zero is
 // therefore a valid value and never doubles as an enabled/disabled sentinel.

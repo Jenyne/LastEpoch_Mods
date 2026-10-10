@@ -1,8 +1,9 @@
 using System;
+using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 using UnityEngine.UI;
 
-namespace LastEpoch_Hud.Scripts.ModUI;
+namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 // Items > Drop. This replaces the legacy mixed Items page with one focused card.
 internal static class Items_Drop

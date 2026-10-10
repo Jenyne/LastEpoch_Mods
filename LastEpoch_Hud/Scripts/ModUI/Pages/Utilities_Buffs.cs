@@ -1,7 +1,8 @@
 using System.Collections.Generic;
+using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 
-namespace LastEpoch_Hud.Scripts.ModUI;
+namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 // Save bindings for Utilities > Buffs. Values are shown in the same percentage
 // units as the legacy labels while retaining every original raw slider range.

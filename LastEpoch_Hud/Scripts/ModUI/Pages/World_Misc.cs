@@ -1,7 +1,9 @@
 using System;
+using LastEpoch_Hud.Scripts.ModUI.Settings;
+using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 
-namespace LastEpoch_Hud.Scripts.ModUI;
+namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 internal static class World_Misc
 {
