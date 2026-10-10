@@ -6,6 +6,8 @@ namespace LastEpoch_Hud.Scripts.ModUI;
 internal static class World_Misc
 {
     private static HudFormPage page;
+    private static UnityEngine.UI.Text sessionTotals;
+    private static UnityEngine.UI.Button sessionPause;
 
     public static void Build(GameObject parent, GameObject hud, Font font)
     {
@@ -43,7 +45,6 @@ internal static class World_Misc
             "SafeTeleportNote",
             "End of Time waypoint required. Bind a key or modifier + key."
         );
-
         page.AddToggle(
             misc,
             "TravelAnywhere",
@@ -51,6 +52,48 @@ internal static class World_Misc
             () => ModSettings.TravelAnywhere.Enabled.Value,
             value => ModSettings.TravelAnywhere.Enabled.Set(value)
         );
+
+        var gains = page.AddCard("SessionGains", "Session Gains");
+        sessionTotals = page.AddText(
+            gains,
+            "SessionTotals",
+            Mods.UI.SessionGainCounters.Format(),
+            124f
+        );
+        page.AddToggle(
+            gains,
+            "ShowSessionOverlay",
+            "Show counter HUD",
+            () => ModSettings.SessionStats.ShowOverlay.Value,
+            value => ModSettings.SessionStats.ShowOverlay.Set(value)
+        );
+        sessionPause = page.AddButton(
+            gains,
+            "PauseSession",
+            "Pause",
+            () =>
+            {
+                Mods.UI.SessionGainCounters.SetPaused(!Mods.UI.SessionGainCounters.Session.Paused);
+                RefreshSession();
+            }
+        );
+        page.AddButton(
+            gains,
+            "ResetSession",
+            "Reset",
+            () =>
+            {
+                Mods.UI.SessionGainCounters.Reset();
+                RefreshSession();
+            }
+        );
+        page.AddButton(
+            gains,
+            "ResetCounterPosition",
+            "Reset counter position",
+            Mods.UI.SessionGainCounters.ResetPosition
+        );
+        page.AddText(gains, "DragCounterHint", "Hold Alt and drag the counter to move it.", 48f);
 
         var minimap = page.AddCard("Minimap", "Minimap");
         AddToggle(
@@ -69,11 +112,33 @@ internal static class World_Misc
         );
     }
 
-    public static void Show() => page?.Show();
+    public static void Show()
+    {
+        page?.Show();
+        RefreshSession();
+    }
 
     public static void Hide() => page?.Hide();
 
-    public static void Refresh() => page?.RefreshValues();
+    public static void Refresh()
+    {
+        page?.RefreshValues();
+        RefreshSession();
+    }
+
+    public static void RefreshSession()
+    {
+        if (!sessionTotals.IsNullOrDestroyed())
+            sessionTotals.text = Mods.UI.SessionGainCounters.Format();
+        if (sessionPause.IsNullOrDestroyed())
+            return;
+        var text = sessionPause.GetComponentInChildren<UnityEngine.UI.Text>(true);
+        if (!text.IsNullOrDestroyed())
+            LocaleRegistry.Apply(
+                text,
+                Mods.UI.SessionGainCounters.Session.Paused ? "Resume" : "Pause"
+            );
+    }
 
     private static void AddToggle(
         HudFormPage.Card card,
