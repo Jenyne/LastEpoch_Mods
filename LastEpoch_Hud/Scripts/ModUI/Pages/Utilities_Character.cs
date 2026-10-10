@@ -70,7 +70,6 @@ internal static class Utilities_Character
             value => ModSettings.ProphecyRewards.Multiplier.SetValue(value)
         );
 
-
         page.AddToggle(
             card,
             "IdolRerollFreeAmber",
