@@ -87,6 +87,50 @@ public sealed class HeadhunterPauseLogTests
     }
 
     [Fact]
+    public void BossIntroStarted_HasSceneActorDuration()
+    {
+        string line = InGermanCulture(() =>
+            HeadhunterPauseLog.BossIntroStarted(FakeScene, Intro())
+        );
+
+        Assert.Contains($"scene={FakeScene}", line);
+        Assert.Contains("actor=FakeA", line);
+        Assert.Contains("duration=12.00s", line);
+        Assert.DoesNotContain("held=", line);
+    }
+
+    [Fact]
+    public void BossIntroEnded_HasHeld()
+    {
+        string line = InGermanCulture(() =>
+            HeadhunterPauseLog.BossIntroEnded(FakeScene, Intro(), 11.5)
+        );
+
+        Assert.Contains($"scene={FakeScene}", line);
+        Assert.Contains("actor=FakeA", line);
+        Assert.Contains("duration=12.00s", line);
+        Assert.Contains("held=11.50s", line);
+    }
+
+    [Fact]
+    public void BossIntroExpired_HasHeldAndDiffersFromEnded()
+    {
+        string expired = InGermanCulture(() =>
+            HeadhunterPauseLog.BossIntroExpired(FakeScene, Intro(), 11.5)
+        );
+        string ended = InGermanCulture(() =>
+            HeadhunterPauseLog.BossIntroEnded(FakeScene, Intro(), 11.5)
+        );
+
+        Assert.Contains($"scene={FakeScene}", expired);
+        Assert.Contains("actor=FakeA", expired);
+        Assert.Contains("duration=12.00s", expired);
+        Assert.Contains("held=11.50s", expired);
+        Assert.Contains("expired", expired);
+        Assert.NotEqual(ended, expired);
+    }
+
+    [Fact]
     public void Lines_HaveNoNewline()
     {
         string lines =
@@ -94,9 +138,31 @@ public sealed class HeadhunterPauseLogTests
             + HeadhunterPauseLog.Applied(true, 3)
             + HeadhunterPauseLog.Arrival(FakeScene, 1, HeadhunterArrivalState.Damageable)
             + HeadhunterPauseLog.Cinematic(FakeScene, true, 0)
-            + HeadhunterPauseLog.Cinematic(FakeScene, false, 1);
+            + HeadhunterPauseLog.Cinematic(FakeScene, false, 1)
+            + HeadhunterPauseLog.BossIntroStarted(FakeScene, Intro())
+            + HeadhunterPauseLog.BossIntroEnded(FakeScene, Intro(), 1)
+            + HeadhunterPauseLog.BossIntroExpired(FakeScene, Intro(), 1);
 
         Assert.DoesNotContain('\n', lines);
         Assert.DoesNotContain('\r', lines);
+    }
+
+    private static HeadhunterBossIntro Intro()
+    {
+        return new HeadhunterBossIntro(1, "FakeA", 12f, 10);
+    }
+
+    private static string InGermanCulture(Func<string> build)
+    {
+        CultureInfo previous = CultureInfo.CurrentCulture;
+        CultureInfo.CurrentCulture = new CultureInfo("de-DE");
+        try
+        {
+            return build();
+        }
+        finally
+        {
+            CultureInfo.CurrentCulture = previous;
+        }
     }
 }

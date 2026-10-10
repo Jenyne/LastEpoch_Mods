@@ -256,6 +256,136 @@ public sealed class HeadhunterZonePauseTests
         Assert.False(_zone.Freeze.IsPaused);
     }
 
+    [Fact]
+    public void BossIntro_Long_PausesThenEndResumes()
+    {
+        StartHostileAndEndArrival();
+
+        bool started = _zone.TryStartBossIntro(1, "FakeA", 12f, Start + 2);
+
+        Assert.True(started);
+        Assert.True(_zone.HasBossIntro);
+        Assert.True(_zone.Freeze.IsPaused);
+
+        bool ended = _zone.TryEndBossIntro(1, Start + 13, out _, out _);
+
+        Assert.True(ended);
+        Assert.False(_zone.Freeze.IsPaused);
+    }
+
+    [Fact]
+    public void BossIntro_Short_NoPause()
+    {
+        StartHostileAndEndArrival();
+
+        bool started = _zone.TryStartBossIntro(1, "FakeA", 2f, Start + 2);
+
+        Assert.False(started);
+        Assert.False(_zone.Freeze.IsPaused);
+        Assert.False(_zone.HasBossIntro);
+    }
+
+    [Fact]
+    public void BossIntro_NonCombatZone_Ignored()
+    {
+        _zone.OnScene(Town, true, Start);
+
+        bool started = _zone.TryStartBossIntro(1, "FakeA", 12f, Start + 1);
+
+        Assert.False(started);
+        Assert.False(_zone.HasBossIntro);
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void BossIntro_WithCinematic_ResumesOnlyWhenBothEnd(bool introEndsFirst)
+    {
+        StartHostileAndEndArrival();
+        _zone.TryStartBossIntro(1, "FakeA", 12f, Start + 2);
+        _zone.TryCinematic(true, Start + 2, out _);
+
+        EndOne(introEndsFirst);
+        Assert.True(_zone.Freeze.IsPaused);
+
+        EndOne(!introEndsFirst);
+        Assert.False(_zone.Freeze.IsPaused);
+    }
+
+    [Fact]
+    public void BossIntro_DuringArrival_StaysPausedAfterIntroEnds()
+    {
+        _zone.OnScene(Hostile, false, Start);
+        _zone.TryStartBossIntro(1, "FakeA", 12f, Start + 1);
+
+        _zone.TryEndBossIntro(1, Start + 5, out _, out _);
+
+        Assert.True(_zone.Freeze.IsPaused);
+    }
+
+    [Fact]
+    public void TryExpireBossIntro_Overdue_Resumes()
+    {
+        StartHostileAndEndArrival();
+        _zone.TryStartBossIntro(1, "FakeA", 12f, Start + 2);
+
+        bool expired = _zone.TryExpireBossIntro(Start + 16, out _, out _);
+
+        Assert.True(expired);
+        Assert.False(_zone.Freeze.IsPaused);
+    }
+
+    [Fact]
+    public void BossIntro_NotDueOrUnknown_StaysPaused()
+    {
+        StartHostileAndEndArrival();
+        _zone.TryStartBossIntro(1, "FakeA", 12f, Start + 2);
+
+        bool expired = _zone.TryExpireBossIntro(Start + 15.9, out _, out _);
+        bool ended = _zone.TryEndBossIntro(99, Start + 5, out _, out _);
+
+        Assert.False(expired);
+        Assert.False(ended);
+        Assert.True(_zone.Freeze.IsPaused);
+        Assert.True(_zone.HasBossIntro);
+    }
+
+    [Fact]
+    public void OnScene_DropsBossIntro()
+    {
+        StartHostileAndEndArrival();
+        _zone.TryStartBossIntro(1, "FakeA", 12f, Start + 2);
+
+        _zone.OnScene(Hostile, false, Start + 3);
+        _zone.TryEndArrival(HeadhunterArrivalState.Damageable, Start + 4, out _);
+
+        Assert.False(_zone.HasBossIntro);
+        Assert.False(_zone.Freeze.IsPaused);
+    }
+
+    [Fact]
+    public void Clear_DropsBossIntro()
+    {
+        StartHostileAndEndArrival();
+        _zone.TryStartBossIntro(1, "FakeA", 12f, Start + 2);
+
+        _zone.Clear();
+
+        Assert.False(_zone.HasBossIntro);
+        Assert.False(_zone.Freeze.IsPaused);
+    }
+
+    private void EndOne(bool intro)
+    {
+        if (intro)
+        {
+            _zone.TryEndBossIntro(1, Start + 5, out _, out _);
+            return;
+        }
+
+        _zone.TryCinematic(false, Start + 5, out _);
+    }
+
     private void StartHostileAndEndArrival()
     {
         _zone.OnScene(Hostile, false, Start);

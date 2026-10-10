@@ -32,6 +32,25 @@ public static class HeadhunterPauseLog
         return $"Headhunter cinematic ended: scene={scene} held={Seconds(heldSeconds)}s";
     }
 
+    public static string BossIntroStarted(string scene, HeadhunterBossIntro intro)
+    {
+        return $"Headhunter boss intro started: scene={scene} actor={intro.Actor} duration={Seconds(intro.DurationSeconds)}s";
+    }
+
+    public static string BossIntroEnded(string scene, HeadhunterBossIntro intro, double heldSeconds)
+    {
+        return $"Headhunter boss intro ended: scene={scene} actor={intro.Actor} duration={Seconds(intro.DurationSeconds)}s held={Seconds(heldSeconds)}s";
+    }
+
+    public static string BossIntroExpired(
+        string scene,
+        HeadhunterBossIntro intro,
+        double heldSeconds
+    )
+    {
+        return $"Headhunter boss intro expired: scene={scene} actor={intro.Actor} duration={Seconds(intro.DurationSeconds)}s held={Seconds(heldSeconds)}s";
+    }
+
     private static string Seconds(double seconds)
     {
         return seconds.ToString("0.00", CultureInfo.InvariantCulture);

@@ -3,6 +3,7 @@ using HarmonyLib;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Kills;
 using LastEpoch_Hud.Scripts.Core.CustomItems.Headhunter.Probe;
+using LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Kills;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Probe;
 
@@ -20,7 +21,7 @@ public class HeadhunterProbeEmergeStartPatch
         try
         {
             Actor actor = __instance.getActor();
-            if (!HeadhunterProbe.TryBossKind(actor, out KillKind kind))
+            if (!HeadhunterBossKind.TryGet(actor, out KillKind kind))
             {
                 return;
             }

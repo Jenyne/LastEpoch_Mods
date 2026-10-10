@@ -9,7 +9,7 @@ using LastEpoch_Hud.Scripts.ModUI;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Buffs;
 
-/// <summary>Applies the zone, arrival and cinematic pause to the player's HH buffs.</summary>
+/// <summary>Applies the zone, arrival, cinematic and boss intro pause to the player's HH buffs.</summary>
 internal static class HeadhunterTimerPause
 {
     private static float[] _live = Array.Empty<float>();
@@ -17,6 +17,8 @@ internal static class HeadhunterTimerPause
     private static readonly HeadhunterZonePause _zone = new();
 
     public static HeadhunterTimerFreeze Freeze => _zone.Freeze;
+
+    public static bool HasBossIntro => _zone.HasBossIntro;
 
     public static void OnSceneLoaded(string sceneName, double now)
     {
@@ -41,6 +43,40 @@ internal static class HeadhunterTimerPause
 
         PollArrival(now);
         PollCinematic(now);
+        PollBossIntroExpiry(now);
+    }
+
+    /// <summary>Freezes timers while a long boss intro plays.</summary>
+    public static void OnBossIntroStart(long id, string actor, float durationSeconds, double now)
+    {
+        if (!_zone.TryStartBossIntro(id, actor, durationSeconds, now))
+        {
+            return;
+        }
+
+        ApplyPending();
+        HeadhunterBuffBar.MarkDirty();
+        if (ModSettings.Debug.Enabled.Value)
+        {
+            HeadhunterBossIntro intro = new(id, actor, durationSeconds, now);
+            Main.logger_instance?.Msg(HeadhunterPauseLog.BossIntroStarted(_zone.Scene, intro));
+        }
+    }
+
+    /// <summary>Resumes timers when a tracked boss intro ends.</summary>
+    public static void OnBossIntroEnd(long id, double now)
+    {
+        if (!_zone.TryEndBossIntro(id, now, out HeadhunterBossIntro intro, out double held))
+        {
+            return;
+        }
+
+        ApplyPending();
+        HeadhunterBuffBar.MarkDirty();
+        if (ModSettings.Debug.Enabled.Value)
+        {
+            Main.logger_instance?.Msg(HeadhunterPauseLog.BossIntroEnded(_zone.Scene, intro, held));
+        }
     }
 
     /// <summary>Drops the arrival watch and kept timers after HH buffs were removed.</summary>
@@ -95,6 +131,22 @@ internal static class HeadhunterTimerPause
         if (ModSettings.Debug.Enabled.Value)
         {
             Main.logger_instance?.Msg(HeadhunterPauseLog.Cinematic(_zone.Scene, active, held));
+        }
+    }
+
+    /// <summary>Releases timers held by intros whose end was never seen.</summary>
+    private static void PollBossIntroExpiry(double now)
+    {
+        while (_zone.TryExpireBossIntro(now, out HeadhunterBossIntro intro, out double held))
+        {
+            ApplyPending();
+            HeadhunterBuffBar.MarkDirty();
+            if (ModSettings.Debug.Enabled.Value)
+            {
+                Main.logger_instance?.Msg(
+                    HeadhunterPauseLog.BossIntroExpired(_zone.Scene, intro, held)
+                );
+            }
         }
     }
 

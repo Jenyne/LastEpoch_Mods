@@ -54,19 +54,6 @@ internal static class HeadhunterProbe
         Main.logger_instance?.Msg(line);
     }
 
-    /// <summary>Boss/miniboss kind of the actor; false for others or missing.</summary>
-    public static bool TryBossKind(Actor actor, out KillKind kind)
-    {
-        kind = KillKind.Normal;
-        if (actor.IsNullOrDestroyed())
-        {
-            return false;
-        }
-
-        kind = KillKindClassifier.Classify(actor.isBoss(), actor.isMiniboss(), false, false);
-        return kind != KillKind.Normal;
-    }
-
     /// <summary>Reads the game's cinematic, input and subtitle flags.</summary>
     private static bool TryReadFlags(out HeadhunterProbeFlags flags)
     {
