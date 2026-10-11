@@ -613,7 +613,16 @@ public static class ForceDropBuilder
                 () => AffixPicker(index)
             );
             row.selectedLabel = row.select.GetComponentInChildren<Text>(true);
-            row.tier = NumericCompact(affixPage, .59f, y, .72f, y + .11f, i == 5 ? 8 : 1, i == 5 ? 8 : 7, i == 5 ? 8 : 7);
+            row.tier = NumericCompact(
+                affixPage,
+                .59f,
+                y,
+                .72f,
+                y + .11f,
+                i == 5 ? 8 : 1,
+                i == 5 ? 8 : 7,
+                i == 5 ? 8 : 7
+            );
             row.roll = NumericCompact(affixPage, .75f, y, .86f, y + .11f, 0, 100, 100);
             row.roll.mode = Button(
                 affixPage,

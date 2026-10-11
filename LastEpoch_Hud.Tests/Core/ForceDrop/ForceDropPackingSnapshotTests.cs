@@ -19,8 +19,18 @@ public sealed class ForceDropPackingSnapshotTests
         };
         ForceDropPackingSnapshot Build(PackedForceDropAffix[] selected, int sockets) =>
             new(
-                21, 11, 0, 4, 0, 0, 0, true, sockets,
-                true, true, true,
+                21,
+                11,
+                0,
+                4,
+                0,
+                0,
+                0,
+                true,
+                sockets,
+                true,
+                true,
+                true,
                 new[] { 255, 255, 255 },
                 Array.Empty<int>(),
                 selected

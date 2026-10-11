@@ -19,7 +19,15 @@ public static class ForceDropClassSearch
             new[] { "Mage", "Sorcerer", "Spellblade", "Rune Master", "Runemaster" },
             new[] { "Primalist", "Beastmaster", "Beast Master", "Shaman", "Druid" },
             new[] { "Rogue", "Bladedancer", "Blade Dancer", "Marksman", "Falconer" },
-            new[] { "Sentinel", "Forge Guard", "Forgeguard", "Void Knight", "Voidknight", "Paladin" },
+            new[]
+            {
+                "Sentinel",
+                "Forge Guard",
+                "Forgeguard",
+                "Void Knight",
+                "Voidknight",
+                "Paladin",
+            },
         };
         for (int i = 0; i < names.Length; i++)
             foreach (string alias in names[i])
@@ -61,10 +69,14 @@ public static class ForceDropClassSearch
             bool explicitlyClass = part.StartsWith("class:", StringComparison.OrdinalIgnoreCase);
             string name = explicitlyClass ? part.Substring(6) : part;
             // Support natural two-word mastery names as well as class:forgeguard.
-            if (!TryBaseClass(name, out int index) && i + 1 < words.Length
-                && TryBaseClass(name + words[i + 1], out index))
-                i++;
-            else if (!TryBaseClass(name, out index))
+            bool recognized = TryBaseClass(name, out int index);
+            if (!recognized && i + 1 < words.Length)
+            {
+                recognized = TryBaseClass(name + words[i + 1], out index);
+                if (recognized)
+                    i++;
+            }
+            if (!recognized)
             {
                 textTerms.Add(word);
                 continue;

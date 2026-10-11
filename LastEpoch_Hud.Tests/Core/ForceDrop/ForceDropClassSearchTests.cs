@@ -48,16 +48,20 @@ public sealed class ForceDropClassSearchTests
     [Fact]
     public void SearchCombinesMasteryTokensWithNativeLanguageNames()
     {
-        Assert.True(ForceDropClassSearch.Matches(
-            "lich 毒",
-            1,
-            query => ForceDropItemSearch.Matches(query, "毒 daño", "Poison")
-        ));
-        Assert.False(ForceDropClassSearch.Matches(
-            "paladin 毒",
-            1,
-            query => ForceDropItemSearch.Matches(query, "毒 daño", "Poison")
-        ));
+        Assert.True(
+            ForceDropClassSearch.Matches(
+                "lich 毒",
+                1,
+                query => ForceDropItemSearch.Matches(query, "毒 daño", "Poison")
+            )
+        );
+        Assert.False(
+            ForceDropClassSearch.Matches(
+                "paladin 毒",
+                1,
+                query => ForceDropItemSearch.Matches(query, "毒 daño", "Poison")
+            )
+        );
         Assert.True(ForceDropClassSearch.Matches("class:all", 1, _ => true));
     }
 
