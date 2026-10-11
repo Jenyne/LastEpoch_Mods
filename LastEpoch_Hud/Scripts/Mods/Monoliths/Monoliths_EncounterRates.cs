@@ -37,9 +37,12 @@ internal static class Monoliths_EncounterRates
     private static bool IsEcho(RandomEncounterTypes.EncounterPlacementData placementData) =>
         placementData?.MonolithData != null && placementData.MonolithData.HasMonolithData;
 
-    /// <summary>The configured count (rounded), or -1 when the setting is off.</summary>
+    // The slider's range; a hand-edited save can't go past it.
+    private const int MaxCount = 10;
+
+    /// <summary>The configured count (rounded, 0-10), or -1 when the setting is off.</summary>
     private static int Count(FloatSetting setting) =>
-        setting.Enabled ? Math.Max(0, (int)Math.Round(setting.Value)) : -1;
+        setting.Enabled ? Math.Clamp((int)Math.Round(setting.Value), 0, MaxCount) : -1;
 
     private static void Apply(
         RandomEncounterData d,

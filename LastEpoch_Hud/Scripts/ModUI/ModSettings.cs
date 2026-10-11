@@ -200,11 +200,15 @@ public static class ModSettings
         public static readonly FloatSetting RunePrisonCount = Group.Float(
             "RunePrisonCount",
             defaultValue: 1f,
+            min: 0f,
+            max: 10f,
             label: "Rune Prisons Per Echo"
         );
         public static readonly FloatSetting FavourCacheCount = Group.Float(
             "FavourCacheCount",
             defaultValue: 1f,
+            min: 0f,
+            max: 10f,
             label: "Favour Caches Per Echo"
         );
     }
