@@ -1,4 +1,5 @@
-﻿using MelonLoader;
+﻿using LastEpoch_Hud.Scripts.ModUI.Shell.Host;
+using MelonLoader;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Fixs;
@@ -67,7 +68,7 @@ public class Fix_LowFPS : MonoBehaviour
                 {
                     fixing = false;
                     need_fix = false;
-                    Hud_Manager.Hud_Base.Btn_Resume.onClick.Invoke();
+                    GamePauseMenu.ResumeButton.onClick.Invoke();
                     //Hud_Manager.hud_object.active = true;
                     //Init();
                     check_fps = true;

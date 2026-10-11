@@ -1,4 +1,5 @@
 using LastEpoch_Hud.Scripts.Core.Character;
+using LastEpoch_Hud.Scripts.ModUI.Shell.Host;
 
 namespace LastEpoch_Hud.Scripts.Mods.Character;
 
@@ -29,7 +30,7 @@ internal static class Character_Masteries
 
     private static void ChooseMasterie()
     {
-        Hud_Manager.Hud_Base.Resume_Click(); //Close Hud
+        GamePauseMenu.Resume(); //Close Hud
         if (!Refs_Manager.game_uibase.IsNullOrDestroyed())
         {
             Refs_Manager.game_uibase.openMasteryPanel(false);

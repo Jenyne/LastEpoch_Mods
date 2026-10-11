@@ -359,6 +359,14 @@ ModUI/
     IHudSearchPage.cs       Contract a page implements to be searchable
     HudSearchEntry.cs       One searchable card on a page
     HudSearchMatch.cs       One search result with its breadcrumb
+    Host/                   Hosts the HUD inside the game (used by Hud_Manager)
+      HudBundleLoader.cs      Loads the mod asset bundle
+      HudPrefab.cs            Instantiates the HUD prefab and wires its sections
+      HudMenuToggle.cs        F3, Esc and scene rules for the menu flag
+      HudInputLock.cs         Takes and releases the game input lock
+      HudEscapeResume.cs      Esc release clicks the game's Resume
+      GamePauseMenu.cs        Finds the game pause menu, hides its buttons, Resume
+      HudScale.cs             Keeps the HUD canvas scale equal to the game's
   Settings/              Prefab binding, persistence and setting types
     SettingTypes.cs         Setting types + ActionBinding + display formatting
     SettingsGroup.cs        Fluent API, factory methods, serialization, UI binding

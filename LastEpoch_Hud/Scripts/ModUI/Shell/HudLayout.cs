@@ -1,6 +1,7 @@
 using System;
 using LastEpoch_Hud.Scripts.ModUI.Pages;
 using LastEpoch_Hud.Scripts.ModUI.Settings;
+using LastEpoch_Hud.Scripts.ModUI.Shell.Host;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -229,7 +230,7 @@ public static class HudLayout
         if (Hud_Manager.mod_menu_open)
             Hud_Manager.mod_menu_open = false;
         else
-            Hud_Manager.Hud_Base.Resume_Click();
+            GamePauseMenu.Resume();
     }
 
     private static GameObject Node(GameObject parent, string name) =>
