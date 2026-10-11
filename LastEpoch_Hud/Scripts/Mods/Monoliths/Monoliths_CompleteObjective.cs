@@ -56,6 +56,13 @@ public class Monoliths_CompleteObjective : MonoBehaviour
             initialized = false;
             started = false;
         }
+        // Disabling the feature mid-echo must also stop the Update worker.
+        if (initialized && (!CanRun() || MonolithEncounterGuard.ShouldSkip(monolith_zone_manager, out _)))
+        {
+            initialized = false;
+            started = false;
+            return;
+        }
         if (initialized)
         {
             if (
@@ -296,58 +303,60 @@ public class Monoliths_CompleteObjective : MonoBehaviour
         [HarmonyPrefix]
         static void Prefix(ref MonolithZoneManager __instance, StatefulQuestList __0)
         {
-            Main.logger_instance?.Msg("MonolithZoneManager.initialise() Prefix");
-
+            // Never reuse state or IL2CPP handles from a previous echo.
             started = false;
-            player_position = Get_PlayerPosition();
+            initialized = false;
+            complete = false;
+            player_position = Vector3.zero;
+            monolith_zone_manager = null;
 
             forge_sync = null;
             tp_forge = false;
-
             rift_sync =
                 new Il2CppSystem.Collections.Generic.List<Il2CppLE.Networking.Monolith.UnstableRiftSync>();
             tp_rift = new Il2CppSystem.Collections.Generic.List<bool>();
+            rift_index = 0;
 
             prison_sync = null;
+            prison_started = false;
             tp_prison = false;
 
             tomb_entrance_logic_sync = null;
             tp_tomb_entrance = false;
 
-            if (monolith_zone_manager.IsNullOrDestroyed())
+            // The Harmony patch stays installed, but disabled features must not
+            // read or modify the zone's encounter logic.
+            if (!CanRun() || MonolithEncounterGuard.ShouldSkip(__instance, out _))
             {
-                monolith_zone_manager = __instance;
+                return;
             }
-            initialized = false;
+
+            monolith_zone_manager = __instance;
+            player_position = Get_PlayerPosition();
         }
 
         [HarmonyPostfix]
         static void Postfix(ref MonolithZoneManager __instance, StatefulQuestList __0)
         {
-            Main.logger_instance?.Msg("MonolithZoneManager.initialise() Postfix");
-            if (CanRun())
+            bool enabled = CanRun();
+            bool protectedEncounter = MonolithEncounterGuard.ShouldSkip(
+                __instance,
+                out string sceneName
+            );
+            Main.logger_instance?.Msg(
+                "[Monolith Guard] initialise scene=" + sceneName
+                + " CompleteObjective=" + enabled
+                + " protected=" + protectedEncounter
+            );
+            if (!enabled || protectedEncounter)
             {
-                if (__instance.isQuestZone)
-                {
-                    Main.logger_instance?.Msg("MonolithZoneManager.isQuestZone");
-                    foreach (Il2Cpp.Quest quest in __instance.questsThatCompleteZone)
-                    {
-                        Main.logger_instance?.Msg("Complete quest : " + quest.name);
-                        quest.completeQuest(Refs_Manager.player_actor);
-                    }
-                }
-                if (__instance.isHarbingerFight)
-                {
-                    Main.logger_instance?.Msg("MonolithZoneManager.isHarbingerFight");
-                }
-                if (__instance.isTimelineBossEncounter)
-                {
-                    Main.logger_instance?.Msg("MonolithZoneManager.isTimelineBossEncounter");
-                }
-                initialized = true;
+                return;
             }
 
-            //initialized = true;
+            monolith_zone_manager = __instance;
+            initialized = true;
+            // Do not complete quest objectives in initialise; special encounters
+            // have not necessarily spawned the player or their objective actors yet.
         }
     }
 
