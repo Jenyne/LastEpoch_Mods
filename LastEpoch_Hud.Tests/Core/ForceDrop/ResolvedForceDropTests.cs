@@ -131,6 +131,27 @@ public sealed class ResolvedForceDropTests
     }
 
     [Fact]
+    public void SevenAffixesIncludeBothSealsAndIndependentCorruption()
+    {
+        var affixes = new[]
+        {
+            new ResolvedForceDropAffix(11, 6, 200, ForceDropSeal.None),
+            new ResolvedForceDropAffix(12, 6, 201, ForceDropSeal.None),
+            new ResolvedForceDropAffix(13, 6, 202, ForceDropSeal.None),
+            new ResolvedForceDropAffix(14, 6, 203, ForceDropSeal.None),
+            new ResolvedForceDropAffix(15, 5, 204, ForceDropSeal.Regular),
+            new ResolvedForceDropAffix(16, 7, 205, ForceDropSeal.Primordial),
+        };
+        var corruption = new ResolvedForceDropAffix(17, 6, 206, ForceDropSeal.Corruption);
+        var request = Request(affixes: affixes, corruption: corruption);
+        Assert.Equal(6, request.Affixes.Count);
+        Assert.Equal(7, request.Affixes.Count + 1);
+        Assert.Equal(1, request.Affixes.Count(a => a.Seal == ForceDropSeal.Regular));
+        Assert.Equal(1, request.Affixes.Count(a => a.Seal == ForceDropSeal.Primordial));
+        Assert.Equal(ForceDropSeal.Corruption, request.Corruption.Seal);
+    }
+
+    [Fact]
     public void RegularSealAndCorruption_AreIndependentSlots()
     {
         var request = Request(

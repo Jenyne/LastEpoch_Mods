@@ -161,6 +161,17 @@ public class ForceDropLegalRulesTests
     }
 
     [Fact]
+    public void EquipmentHasIndependentRegularAndPrimordialSealSlots()
+    {
+        Assert.True(ForceDropLegalRules.SlotAllowed(4, false, false, false));
+        Assert.True(ForceDropLegalRules.SlotAllowed(5, false, false, false));
+        Assert.False(ForceDropLegalRules.SlotAllowed(5, false, true, false));
+        Assert.False(ForceDropLegalRules.SlotAllowed(5, true, false, false));
+        Assert.False(ForceDropLegalRules.SlotAllowed(5, false, false, true));
+        Assert.False(ForceDropLegalRules.SlotAllowed(6, false, false, false));
+    }
+
+    [Fact]
     public void RegularSealOnUniqueIsNotExposedAsALegalTransfer()
     {
         Assert.True(ForceDropLegalRules.SlotAllowed(4, false, false, false));

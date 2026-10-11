@@ -11,6 +11,9 @@ public sealed class ForceDropItemSearchTests
     [InlineData("seed", "Graine d'exemple", "Seed of Example\nseedInternal", true)]
     [InlineData("투구", "예시의 씨앗", "투구\n고유", true)]
     [InlineData(" ", "Anything", null, true)]
+    [InlineData("epee", "Épée", "", true)]
+    [InlineData("epee", "Something", "épée", true)]
+    [InlineData("epee", "Something", "Ring", false)]
     public void SearchCombinesTranslatedNamesAliasesAndCategoryTokens(
         string query,
         string name,

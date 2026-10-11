@@ -5,6 +5,36 @@ namespace LastEpoch_Hud.Tests.Core.ForceDrop;
 public sealed class ForceDropPackingSnapshotTests
 {
     [Fact]
+    public void SevenAffixLegalItemPreservesThreeIndependentSeals()
+    {
+        var affixes = new[]
+        {
+            new PackedForceDropAffix(11, 6, 201, ForceDropSeal.None, 0, 0),
+            new PackedForceDropAffix(12, 6, 202, ForceDropSeal.None, 0, 0),
+            new PackedForceDropAffix(13, 6, 203, ForceDropSeal.None, 0, 1),
+            new PackedForceDropAffix(14, 6, 204, ForceDropSeal.None, 0, 1),
+            new PackedForceDropAffix(15, 5, 205, ForceDropSeal.Regular, 0, 0),
+            new PackedForceDropAffix(16, 7, 206, ForceDropSeal.Primordial, 0, 1),
+            new PackedForceDropAffix(17, 6, 207, ForceDropSeal.Corruption, 6, 0),
+        };
+        ForceDropPackingSnapshot Build(PackedForceDropAffix[] selected, int sockets) =>
+            new(
+                21, 11, 0, 4, 0, 0, 0, true, sockets,
+                true, true, true,
+                new[] { 255, 255, 255 },
+                Array.Empty<int>(),
+                selected
+            );
+        var expected = Build(affixes, 6);
+        Assert.Equal("", expected.IntegrityError());
+        Assert.Equal("", expected.Difference(Build(affixes.Reverse().ToArray(), 0)));
+        var lost = affixes.ToArray();
+        lost[5] = new PackedForceDropAffix(16, 7, 206, ForceDropSeal.None, 0, 1);
+        Assert.NotEqual("", expected.Difference(Build(lost, 0)));
+        Assert.NotEqual("", expected.Difference(Build(affixes.Take(6).ToArray(), 0)));
+    }
+
+    [Fact]
     public void FourNativePrimordialT8AffixesRequireIllegalModeAndExactRoundTrip()
     {
         int[] ids = { 32, 371, 391, 468 };
