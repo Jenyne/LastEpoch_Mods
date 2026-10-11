@@ -35,7 +35,7 @@ public class Monoliths_StabilityChanged
         [HarmonyPrefix]
         static void Prefix(ref MonolithZoneManager __instance)
         {
-            if (CanRun())
+            if (CanRun() && !MonolithEncounterGuard.ShouldSkip(__instance, out _))
             {
                 __instance.bonusStablity = __instance.maxBonusStablity;
             }
