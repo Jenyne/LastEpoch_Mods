@@ -103,10 +103,10 @@ public static class ForceDropLegalRules
         bool heretical = false
     )
     {
-        if (slot < 0 || slot > 4 || setItem)
+        if (slot < 0 || slot > 5 || setItem)
             return false;
         if (idol)
             return !unique && (slot == 0 || slot == 2 || (heretical && (slot == 1 || slot == 3)));
-        return slot != 4 || !unique;
+        return slot < 4 || !unique;
     }
 }
