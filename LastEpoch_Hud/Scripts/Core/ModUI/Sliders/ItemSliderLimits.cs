@@ -45,4 +45,33 @@ public static class ItemSliderLimits
 
     // Source: Slider_Items_Pickup_AutoShatter_QuantityChance
     public static readonly SliderRange AutoShatterQuantityChance = new(0f, 100f, true);
+
+    // CraftingSlot*: Min/Max from the prefab; whole numbers on purpose (prefab says false), as the page always did.
+
+    // Source: Slider_Items_Craft_ForginPotencial
+    public static readonly SliderRange CraftingSlotForgingPotential = new(0f, 255f, true);
+
+    // Source: Slider_Items_Craft_Implicit0..2
+    public static readonly SliderRange CraftingSlotImplicit = new(0f, 255f, true);
+
+    // Source: Slider_Items_Craft_SealTier
+    public static readonly SliderRange CraftingSlotSealTier = new(0f, 6f, true);
+
+    // Source: Slider_Items_Craft_SealValue
+    public static readonly SliderRange CraftingSlotSealValue = new(0f, 255f, true);
+
+    // Source: Slider_Items_Craft_AffixTier0..3
+    public static readonly SliderRange CraftingSlotAffixTier = new(0f, 7f, true);
+
+    // Source: Slider_Items_Craft_AffixValue0..3
+    public static readonly SliderRange CraftingSlotAffixValue = new(0f, 255f, true);
+
+    // Source: Slider_Items_Craft_UniqueMod0..7
+    public static readonly SliderRange CraftingSlotUniqueMod = new(0f, 255f, true);
+
+    // Source: Slider_Items_Craft_LegendaryPotencial
+    public static readonly SliderRange CraftingSlotLegendaryPotential = new(0f, 4f, true);
+
+    // Source: Slider_Items_Craft_WeaverWill
+    public static readonly SliderRange CraftingSlotWeaverWill = new(0f, 28f, true);
 }

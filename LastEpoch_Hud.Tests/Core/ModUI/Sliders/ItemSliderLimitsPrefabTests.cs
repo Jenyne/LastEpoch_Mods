@@ -101,4 +101,62 @@ public sealed class ItemSliderLimitsPrefabTests
         Assert.True(actual.HasValue, $"Limits field missing: {field}");
         Assert.Equal(expected, actual.Value);
     }
+
+    [Theory]
+    [InlineData(
+        nameof(ItemSliderLimits.CraftingSlotForgingPotential),
+        "Slider_Items_Craft_ForginPotencial"
+    )]
+    [InlineData(
+        nameof(ItemSliderLimits.CraftingSlotImplicit),
+        "Slider_Items_Craft_Implicit0",
+        "Slider_Items_Craft_Implicit1",
+        "Slider_Items_Craft_Implicit2"
+    )]
+    [InlineData(nameof(ItemSliderLimits.CraftingSlotSealTier), "Slider_Items_Craft_SealTier")]
+    [InlineData(nameof(ItemSliderLimits.CraftingSlotSealValue), "Slider_Items_Craft_SealValue")]
+    [InlineData(
+        nameof(ItemSliderLimits.CraftingSlotAffixTier),
+        "Slider_Items_Craft_AffixTier0",
+        "Slider_Items_Craft_AffixTier1",
+        "Slider_Items_Craft_AffixTier2",
+        "Slider_Items_Craft_AffixTier3"
+    )]
+    [InlineData(
+        nameof(ItemSliderLimits.CraftingSlotAffixValue),
+        "Slider_Items_Craft_AffixValue0",
+        "Slider_Items_Craft_AffixValue1",
+        "Slider_Items_Craft_AffixValue2",
+        "Slider_Items_Craft_AffixValue3"
+    )]
+    [InlineData(
+        nameof(ItemSliderLimits.CraftingSlotUniqueMod),
+        "Slider_Items_Craft_UniqueMod0",
+        "Slider_Items_Craft_UniqueMod1",
+        "Slider_Items_Craft_UniqueMod2",
+        "Slider_Items_Craft_UniqueMod3",
+        "Slider_Items_Craft_UniqueMod4",
+        "Slider_Items_Craft_UniqueMod5",
+        "Slider_Items_Craft_UniqueMod6",
+        "Slider_Items_Craft_UniqueMod7"
+    )]
+    [InlineData(
+        nameof(ItemSliderLimits.CraftingSlotLegendaryPotential),
+        "Slider_Items_Craft_LegendaryPotencial"
+    )]
+    [InlineData(nameof(ItemSliderLimits.CraftingSlotWeaverWill), "Slider_Items_Craft_WeaverWill")]
+    public void CraftingSlotRange_MatchesPrefab(string field, params string[] sliders)
+    {
+        IReadOnlyDictionary<string, SliderRange> prefab = PrefabSliders.Load(_prefabPath);
+        SliderRange? actual = ItemSliderLimitsReflection.Find(field);
+        Assert.True(actual.HasValue, $"Limits field missing: {field}");
+
+        foreach (string slider in sliders)
+        {
+            Assert.True(prefab.ContainsKey(slider), $"Prefab slider missing: {slider}");
+            // Whole numbers is always true: ItemsCraftingSlotPage forces it, the prefab flag is false for all of them.
+            var expected = new SliderRange(prefab[slider].Min, prefab[slider].Max, true);
+            Assert.Equal(expected, actual.Value);
+        }
+    }
 }

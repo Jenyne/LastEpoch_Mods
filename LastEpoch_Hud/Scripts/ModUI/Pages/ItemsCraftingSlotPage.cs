@@ -1,8 +1,8 @@
 using System;
 using LastEpoch_Hud.Scripts.Core.ModUI;
+using LastEpoch_Hud.Scripts.Core.ModUI.Sliders;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
@@ -77,132 +77,96 @@ internal static class ItemsCraftingSlotPage
             card,
             "ForgingPotential",
             "Forging Potential",
-            Hud_Manager.Content.Items.CraftingSlot.forgin_potencial_slider,
+            ItemSliderLimits.CraftingSlotForgingPotential,
             () => Save_Manager.instance.data.Items.CraftingSlot.Enable_ForginPotencial,
             v => Save_Manager.instance.data.Items.CraftingSlot.Enable_ForginPotencial = v,
             () => Save_Manager.instance.data.Items.CraftingSlot.ForginPotencial,
-            v => Save_Manager.instance.data.Items.CraftingSlot.ForginPotencial = v,
-            0f,
-            255f
+            v => Save_Manager.instance.data.Items.CraftingSlot.ForginPotencial = v
         );
         AddOverride(
             card,
             "Implicit0",
             "Implicit 1",
-            Hud_Manager.Content.Items.CraftingSlot.implicit_0_slider,
+            ItemSliderLimits.CraftingSlotImplicit,
             () => Save_Manager.instance.data.Items.CraftingSlot.Enable_Implicit_0,
             v => Save_Manager.instance.data.Items.CraftingSlot.Enable_Implicit_0 = v,
             () => Save_Manager.instance.data.Items.CraftingSlot.Implicit_0,
-            v => Save_Manager.instance.data.Items.CraftingSlot.Implicit_0 = v,
-            0f,
-            255f
+            v => Save_Manager.instance.data.Items.CraftingSlot.Implicit_0 = v
         );
         AddOverride(
             card,
             "Implicit1",
             "Implicit 2",
-            Hud_Manager.Content.Items.CraftingSlot.implicit_1_slider,
+            ItemSliderLimits.CraftingSlotImplicit,
             () => Save_Manager.instance.data.Items.CraftingSlot.Enable_Implicit_1,
             v => Save_Manager.instance.data.Items.CraftingSlot.Enable_Implicit_1 = v,
             () => Save_Manager.instance.data.Items.CraftingSlot.Implicit_1,
-            v => Save_Manager.instance.data.Items.CraftingSlot.Implicit_1 = v,
-            0f,
-            255f
+            v => Save_Manager.instance.data.Items.CraftingSlot.Implicit_1 = v
         );
         AddOverride(
             card,
             "Implicit2",
             "Implicit 3",
-            Hud_Manager.Content.Items.CraftingSlot.implicit_2_slider,
+            ItemSliderLimits.CraftingSlotImplicit,
             () => Save_Manager.instance.data.Items.CraftingSlot.Enable_Implicit_2,
             v => Save_Manager.instance.data.Items.CraftingSlot.Enable_Implicit_2 = v,
             () => Save_Manager.instance.data.Items.CraftingSlot.Implicit_2,
-            v => Save_Manager.instance.data.Items.CraftingSlot.Implicit_2 = v,
-            0f,
-            255f
+            v => Save_Manager.instance.data.Items.CraftingSlot.Implicit_2 = v
         );
         AddOverride(
             card,
             "SealTier",
             "Seal Tier",
-            Hud_Manager.Content.Items.CraftingSlot.seal_tier_slider,
+            ItemSliderLimits.CraftingSlotSealTier,
             () => Save_Manager.instance.data.Items.CraftingSlot.Enable_Seal_Tier,
             v => Save_Manager.instance.data.Items.CraftingSlot.Enable_Seal_Tier = v,
             () => Save_Manager.instance.data.Items.CraftingSlot.Seal_Tier,
-            v => Save_Manager.instance.data.Items.CraftingSlot.Seal_Tier = (int)v,
-            0f,
-            6f
+            v => Save_Manager.instance.data.Items.CraftingSlot.Seal_Tier = (int)v
         );
         AddOverride(
             card,
             "SealValue",
             "Seal Value",
-            Hud_Manager.Content.Items.CraftingSlot.seal_value_slider,
+            ItemSliderLimits.CraftingSlotSealValue,
             () => Save_Manager.instance.data.Items.CraftingSlot.Enable_Seal_Value,
             v => Save_Manager.instance.data.Items.CraftingSlot.Enable_Seal_Value = v,
             () => Save_Manager.instance.data.Items.CraftingSlot.Seal_Value,
-            v => Save_Manager.instance.data.Items.CraftingSlot.Seal_Value = v,
-            0f,
-            255f
+            v => Save_Manager.instance.data.Items.CraftingSlot.Seal_Value = v
         );
 
-        AddAffix(
-            card,
-            0,
-            Hud_Manager.Content.Items.CraftingSlot.affix_0_tier_slider,
-            Hud_Manager.Content.Items.CraftingSlot.affix_0_value_slider
-        );
-        AddAffix(
-            card,
-            1,
-            Hud_Manager.Content.Items.CraftingSlot.affix_1_tier_slider,
-            Hud_Manager.Content.Items.CraftingSlot.affix_1_value_slider
-        );
-        AddAffix(
-            card,
-            2,
-            Hud_Manager.Content.Items.CraftingSlot.affix_2_tier_slider,
-            Hud_Manager.Content.Items.CraftingSlot.affix_2_value_slider
-        );
-        AddAffix(
-            card,
-            3,
-            Hud_Manager.Content.Items.CraftingSlot.affix_3_tier_slider,
-            Hud_Manager.Content.Items.CraftingSlot.affix_3_value_slider
-        );
+        AddAffix(card, 0);
+        AddAffix(card, 1);
+        AddAffix(card, 2);
+        AddAffix(card, 3);
 
-        AddUnique(card, 0, Hud_Manager.Content.Items.CraftingSlot.uniquemod_0_value_slider);
-        AddUnique(card, 1, Hud_Manager.Content.Items.CraftingSlot.uniquemod_1_value_slider);
-        AddUnique(card, 2, Hud_Manager.Content.Items.CraftingSlot.uniquemod_2_value_slider);
-        AddUnique(card, 3, Hud_Manager.Content.Items.CraftingSlot.uniquemod_3_value_slider);
-        AddUnique(card, 4, Hud_Manager.Content.Items.CraftingSlot.uniquemod_4_value_slider);
-        AddUnique(card, 5, Hud_Manager.Content.Items.CraftingSlot.uniquemod_5_value_slider);
-        AddUnique(card, 6, Hud_Manager.Content.Items.CraftingSlot.uniquemod_6_value_slider);
-        AddUnique(card, 7, Hud_Manager.Content.Items.CraftingSlot.uniquemod_7_value_slider);
+        AddUnique(card, 0);
+        AddUnique(card, 1);
+        AddUnique(card, 2);
+        AddUnique(card, 3);
+        AddUnique(card, 4);
+        AddUnique(card, 5);
+        AddUnique(card, 6);
+        AddUnique(card, 7);
 
         AddOverride(
             card,
             "LegendaryPotential",
             "Legendary Potential",
-            Hud_Manager.Content.Items.CraftingSlot.legendary_potencial_slider,
+            ItemSliderLimits.CraftingSlotLegendaryPotential,
             () => Save_Manager.instance.data.Items.CraftingSlot.Enable_LegendaryPotencial,
             v => Save_Manager.instance.data.Items.CraftingSlot.Enable_LegendaryPotencial = v,
             () => Save_Manager.instance.data.Items.CraftingSlot.LegendaryPotencial,
-            v => Save_Manager.instance.data.Items.CraftingSlot.LegendaryPotencial = (int)v,
-            0f,
-            4f
+            v => Save_Manager.instance.data.Items.CraftingSlot.LegendaryPotencial = (int)v
         );
         AddOverride(
             card,
             "WeaverWill",
             "Weaver Will",
-            Hud_Manager.Content.Items.CraftingSlot.weaver_will_slider,
+            ItemSliderLimits.CraftingSlotWeaverWill,
             () => Save_Manager.instance.data.Items.CraftingSlot.Enable_WeaverWill,
             v => Save_Manager.instance.data.Items.CraftingSlot.Enable_WeaverWill = v,
             () => Save_Manager.instance.data.Items.CraftingSlot.WeaverWill,
-            v => Save_Manager.instance.data.Items.CraftingSlot.WeaverWill = (int)v,
-            0f,
-            28f
+            v => Save_Manager.instance.data.Items.CraftingSlot.WeaverWill = (int)v
         );
     }
 
@@ -212,52 +176,41 @@ internal static class ItemsCraftingSlotPage
 
     public static void Refresh() => page?.RefreshValues();
 
-    private static void AddAffix(
-        HudFormPage.Card card,
-        int index,
-        Slider tierSource,
-        Slider valueSource
-    )
+    private static void AddAffix(HudFormPage.Card card, int index)
     {
         AddOverride(
             card,
             "Affix" + index + "Tier",
             "Affix " + (index + 1) + " Tier",
-            tierSource,
+            ItemSliderLimits.CraftingSlotAffixTier,
             () => ReadAffixTierEnabled(index),
             v => WriteAffixTierEnabled(index, v),
             () => ReadAffixTier(index),
-            v => WriteAffixTier(index, (int)v),
-            0f,
-            6f
+            v => WriteAffixTier(index, (int)v)
         );
         AddOverride(
             card,
             "Affix" + index + "Value",
             "Affix " + (index + 1) + " Value",
-            valueSource,
+            ItemSliderLimits.CraftingSlotAffixValue,
             () => ReadAffixValueEnabled(index),
             v => WriteAffixValueEnabled(index, v),
             () => ReadAffixValue(index),
-            v => WriteAffixValue(index, v),
-            0f,
-            255f
+            v => WriteAffixValue(index, v)
         );
     }
 
-    private static void AddUnique(HudFormPage.Card card, int index, Slider source)
+    private static void AddUnique(HudFormPage.Card card, int index)
     {
         AddOverride(
             card,
             "UniqueMod" + index,
             "Unique Mod " + (index + 1),
-            source,
+            ItemSliderLimits.CraftingSlotUniqueMod,
             () => ReadUniqueEnabled(index),
             v => WriteUniqueEnabled(index, v),
             () => ReadUnique(index),
-            v => WriteUnique(index, v),
-            0f,
-            255f
+            v => WriteUnique(index, v)
         );
     }
 
@@ -265,32 +218,28 @@ internal static class ItemsCraftingSlotPage
         HudFormPage.Card card,
         string id,
         string label,
-        Slider source,
+        SliderRange range,
         Func<bool> readEnabled,
         Action<bool> writeEnabled,
         Func<float> read,
-        Action<float> write,
-        float fallbackMinimum,
-        float fallbackMaximum
+        Action<float> write
     )
     {
-        float minimum = source.IsNullOrDestroyed() ? fallbackMinimum : source.minValue;
-        float maximum = source.IsNullOrDestroyed() ? fallbackMaximum : source.maxValue;
         page.AddToggleSlider(
             card,
             id,
             label,
             string.Empty,
-            minimum,
-            maximum,
-            true,
+            range.Min,
+            range.Max,
+            range.WholeNumbers,
             () => HasSave() && readEnabled(),
             v =>
             {
                 if (HasSave())
                     writeEnabled(v);
             },
-            () => HasSave() ? read() : minimum,
+            () => HasSave() ? read() : range.Min,
             v =>
             {
                 if (HasSave())

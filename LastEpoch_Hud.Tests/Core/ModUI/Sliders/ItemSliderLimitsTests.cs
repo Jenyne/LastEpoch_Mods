@@ -4,7 +4,7 @@ namespace LastEpoch_Hud.Tests.Core.ModUI.Sliders;
 
 public sealed class ItemSliderLimitsTests
 {
-    private const int RangeCount = 14;
+    private const int RangeCount = 23;
 
     [Fact]
     public void EveryRange_HasMinBelowMax()
