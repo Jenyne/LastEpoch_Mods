@@ -1,5 +1,6 @@
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.ModUI;
+using LastEpoch_Hud.Scripts.ModUI.Settings;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 using UnityEngine.UI;
@@ -57,6 +58,21 @@ internal static class UtilitiesCharacterPage
     {
         RefreshClassOptions();
         _page?.RefreshValues();
+    }
+
+    // The two out-of-mana modes exclude each other: turning one on turns the other off.
+    private static void SetManaMode(BoolSetting setting, bool value)
+    {
+        setting.Set(value);
+        if (value)
+        {
+            BoolSetting other =
+                setting == ModSettings.SkillsMana.CastWhenOutOfMana
+                    ? ModSettings.SkillsMana.AllowNegativeMana
+                    : ModSettings.SkillsMana.CastWhenOutOfMana;
+            other.Set(false);
+            _page?.RefreshValues();
+        }
     }
 
     private static void BuildCheats()
@@ -195,7 +211,7 @@ internal static class UtilitiesCharacterPage
         _page.AddToggle(
             card,
             "ContinueOutOfMana",
-            "Don't Stop When Out Of Mana",
+            "Don't Stop When Out Of Mana Channeling",
             () => HasSave() && Save_Manager.instance.data.Skills.Enable_StopWhenOutOfMana,
             value =>
             {
@@ -204,6 +220,20 @@ internal static class UtilitiesCharacterPage
                     Save_Manager.instance.data.Skills.Enable_StopWhenOutOfMana = value;
                 }
             }
+        );
+        _page.AddToggle(
+            card,
+            "CastWhenOutOfMana",
+            "Cast When Out Of Mana",
+            () => ModSettings.SkillsMana.CastWhenOutOfMana.Value,
+            value => SetManaMode(ModSettings.SkillsMana.CastWhenOutOfMana, value)
+        );
+        _page.AddToggle(
+            card,
+            "AllowNegativeMana",
+            "Allow Negative Mana",
+            () => ModSettings.SkillsMana.AllowNegativeMana.Value,
+            value => SetManaMode(ModSettings.SkillsMana.AllowNegativeMana, value)
         );
         _page.AddToggle(
             card,
