@@ -1313,9 +1313,7 @@ public static class ForceDropBuilder
             return ForceDropClassSearch.AllClasses;
         try
         {
-            return ForceDropClassSearch.MaskFromSpecificity(
-                affix.classSpecificity.ToString()
-            );
+            return ForceDropClassSearch.MaskFromSpecificity(affix.classSpecificity.ToString());
         }
         catch (Exception)
         {
