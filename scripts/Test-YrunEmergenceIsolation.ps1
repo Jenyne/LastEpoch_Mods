@@ -74,6 +74,8 @@ try {
     Write-Host "At startup, confirm four [Yrun Isolation] Disabled messages in the MelonLoader log."
     Write-Host "In World > Monoliths, enable Replay Completed Echoes before opening the echo map to revisit the completed Yrun quest echo."
     Write-Host "Quest replay requires a completed normal non-boss quest, the matching branch and enough stability. Incomplete echoes should retain their locks."
+    Write-Host "For replay diagnostics, toggle Replay Completed Echoes OFF then ON, reopen the map, and try one completed normal echo plus Morditas second quest echo."
+    Write-Host "Send the new MelonLoader log with [Echo Replay] lines, even if entry stays blocked."
     Write-Host "Enter Morditas second echo with the SAME settings/equipment and approach Yrun."
     Write-Host "Report whether Yrun becomes visible without crashing. Capture the new MelonLoader and Player logs."
 } finally {

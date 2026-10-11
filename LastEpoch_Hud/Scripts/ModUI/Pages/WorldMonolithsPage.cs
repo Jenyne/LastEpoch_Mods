@@ -1,5 +1,6 @@
 using System;
 using LastEpoch_Hud.Scripts.Core.ModUI;
+using LastEpoch_Hud.Scripts.Mods.Monoliths;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 using UnityEngine.UI;
@@ -23,7 +24,11 @@ internal static class WorldMonolithsPage
             "ReplayCompletedEchoes",
             "Replay Completed Echoes",
             () => Save_Manager.instance.data.Scenes.Monoliths.Enable_Islands,
-            v => Save_Manager.instance.data.Scenes.Monoliths.Enable_Islands = v
+            v =>
+            {
+                Save_Manager.instance.data.Scenes.Monoliths.Enable_Islands = v;
+                Monoliths_Islands.ResetReplayTrace(v);
+            }
         );
         page.AddText(
             card,
