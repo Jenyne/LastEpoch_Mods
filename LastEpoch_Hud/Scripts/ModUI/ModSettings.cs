@@ -135,8 +135,8 @@ public static class ModSettings
 
         static IdolReroll()
         {
-            FreeMemoryAmber.Changed += _ => Mods.Items.Items_IdolReroll.RefreshUI();
-            UnlimitedUses.Changed += _ => Mods.Items.Items_IdolReroll.RefreshUI();
+            FreeMemoryAmber.Changed += _ => Mods.Items.Crafting.Items_IdolReroll.RefreshUI();
+            UnlimitedUses.Changed += _ => Mods.Items.Crafting.Items_IdolReroll.RefreshUI();
         }
     }
 
@@ -161,6 +161,14 @@ public static class ModSettings
         public static readonly SettingsGroup Group = new SettingsGroup("TravelAnywhere");
         public static readonly BoolSetting Enabled = Group.Bool("Enabled");
     }
+
+#pragma warning disable CA1034 // nested like every settings section
+    public static class AutoStore
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("AutoStore");
+        public static readonly BoolSetting OnFullInventory = Group.Bool("OnFullInventory");
+    }
+#pragma warning restore CA1034
 
     // Saved independently of legacy HUD prefabs; modern page bindings live in Pages/.
     public static class SessionStats

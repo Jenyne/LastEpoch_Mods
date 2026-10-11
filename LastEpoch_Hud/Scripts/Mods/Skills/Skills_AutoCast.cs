@@ -246,12 +246,17 @@ public class Skills_AutoCast : MonoBehaviour
     {
         if (string.IsNullOrEmpty(Scenes.SceneName))
             return false;
+        if (SceneList.instance.IsNullOrDestroyed())
+        {
+            return false;
+        }
         try
         {
             return SceneList.IsNonCombatZone(Scenes.SceneName);
         }
-        catch
+        catch (System.Exception ex)
         {
+            ErrorLog.Report(ex, "AutoCast zone check");
             return false;
         }
     }

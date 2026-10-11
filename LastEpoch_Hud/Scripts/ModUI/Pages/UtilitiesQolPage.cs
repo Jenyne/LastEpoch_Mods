@@ -132,6 +132,19 @@ internal static class UtilitiesQolPage
                 Save_Manager.instance.data.Items.Pickup.AutoStore_Timer = 10;
             }
         );
+        page.AddToggle(
+            card,
+            "OnFullInventory",
+            "On Full Inventory",
+            () => ModSettings.AutoStore.OnFullInventory.Value,
+            ModSettings.AutoStore.OnFullInventory.Set
+        );
+        page.AddText(
+            card,
+            "OnFullInventoryNote",
+            "Stores materials in your stash when a pickup doesn't fit, then picks the item up.",
+            58f
+        );
     }
 
     private static void BuildAutoShatter()

@@ -7766,11 +7766,11 @@ public partial class Hud_Manager : MonoBehaviour
                                     }
                                 }
                                 item.RefreshIDAndValues();
-                                Refs_Manager.ground_item_manager.dropItemForPlayer(
+                                Mods.Items.AutoLoot.ModItemDrop.Drop(
+                                    Refs_Manager.ground_item_manager,
                                     Refs_Manager.player_actor,
                                     item.TryCast<ItemData>(),
-                                    Refs_Manager.player_actor.position(),
-                                    false
+                                    Refs_Manager.player_actor.position()
                                 );
                             }
                         }
@@ -13256,11 +13256,11 @@ public partial class Hud_Manager : MonoBehaviour
                             Mods.Items.Items_Drop_ForginPotencial.Stamp(item, fg);
                         }
 
-                        Refs_Manager.ground_item_manager.dropItemForPlayer(
+                        Mods.Items.AutoLoot.ModItemDrop.Drop(
+                            Refs_Manager.ground_item_manager,
                             Refs_Manager.player_actor,
                             item.TryCast<ItemData>(),
-                            Refs_Manager.player_actor.position(),
-                            false
+                            Refs_Manager.player_actor.position()
                         );
                     }
                 }

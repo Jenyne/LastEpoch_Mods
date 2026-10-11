@@ -3,6 +3,7 @@ using HarmonyLib;
 using Il2Cpp;
 using Il2CppLE.Data;
 using Il2CppTMPro;
+using LastEpoch_Hud.Scripts.Mods.Items.AutoLoot;
 using MelonLoader;
 using Newtonsoft.Json;
 using UnityEngine;
@@ -422,7 +423,7 @@ public class Bank_Quad : MonoBehaviour
             Vector3 dropPosition = player.position();
             foreach (ItemData dropData in drops)
             {
-                ground.dropItemForPlayer(player, dropData, dropPosition, false);
+                ModItemDrop.Drop(ground, player, dropData, dropPosition);
             }
         }
         occupied_slots.Remove(container.Pointer);

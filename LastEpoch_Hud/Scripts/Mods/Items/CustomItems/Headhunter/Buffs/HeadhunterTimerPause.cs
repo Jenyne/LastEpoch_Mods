@@ -392,6 +392,11 @@ internal static class HeadhunterTimerPause
             return false;
         }
 
+        if (SceneList.instance.IsNullOrDestroyed())
+        {
+            return false;
+        }
+
         try
         {
             return SceneList.IsNonCombatZone(sceneName);
