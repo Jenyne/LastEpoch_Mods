@@ -1,5 +1,8 @@
+using System;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.Factions;
 using LastEpoch_Hud.Scripts.Core.ModUI;
+using LastEpoch_Hud.Scripts.Mods.Factions;
 using LastEpoch_Hud.Scripts.ModUI.Settings;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
@@ -9,7 +12,7 @@ namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 /// <summary>
 /// Utilities &gt; Character. The legacy Character, Skills, Data, Blessings, and
-/// Factions controls are represented here without changing their game logic.
+/// Factions controls are represented here; factions edit through Core rules.
 /// Page, class source and faction inputs re-seed from the legacy controls on HUD re-bind (Build).
 /// </summary>
 internal static class UtilitiesCharacterPage
@@ -639,18 +642,10 @@ internal static class UtilitiesCharacterPage
             "Faction",
             dropdownSource,
             () => _factionSelection,
-            value =>
-            {
-                _factionSelection = value;
-                Hud_Manager.Content.Character.Update_Faction_Data();
-            }
+            value => _factionSelection = value
         );
-        if (!dropdown.IsNullOrDestroyed())
-        {
-            Hud_Manager.Content.Character.Faction_Tracker.factions_dropdown = dropdown;
-        }
 
-        Slider favor = _page.AddSlider(
+        _page.AddSlider(
             card,
             "Favor",
             "Favor",
@@ -661,18 +656,9 @@ internal static class UtilitiesCharacterPage
             () => _factionFavor,
             value => _factionFavor = value
         );
-        if (!favor.IsNullOrDestroyed())
-        {
-            Hud_Manager.Content.Character.Faction_Tracker.factions_favor_slider = favor;
-        }
-        _page.AddButton(
-            card,
-            "GainFavor",
-            "Gain Favor",
-            Hud_Manager.Content.Character.Faction_Tracker.factions_gain_favor_Click
-        );
+        _page.AddButton(card, "GainFavor", "Gain Favor", GainFavorClicked);
 
-        Slider rank = _page.AddSlider(
+        _page.AddSlider(
             card,
             "Rank",
             "Rank",
@@ -683,18 +669,9 @@ internal static class UtilitiesCharacterPage
             () => _factionRank,
             value => _factionRank = value
         );
-        if (!rank.IsNullOrDestroyed())
-        {
-            Hud_Manager.Content.Character.Faction_Tracker.factions_rank_slider = rank;
-        }
-        _page.AddButton(
-            card,
-            "SetRank",
-            "Set Rank",
-            Hud_Manager.Content.Character.Faction_Tracker.factions_set_rank_Click
-        );
+        _page.AddButton(card, "SetRank", "Set Rank", SetRankClicked);
 
-        Slider reputation = _page.AddSlider(
+        _page.AddSlider(
             card,
             "Reputation",
             "Reputation",
@@ -705,17 +682,38 @@ internal static class UtilitiesCharacterPage
             () => _factionReputation,
             value => _factionReputation = value
         );
-        if (!reputation.IsNullOrDestroyed())
-        {
-            Hud_Manager.Content.Character.Faction_Tracker.factions_reputation_slider = reputation;
-        }
-        _page.AddButton(
-            card,
-            "SetReputation",
-            "Set Reputation",
-            Hud_Manager.Content.Character.Faction_Tracker.factions_set_reputation_Click
-        );
+        _page.AddButton(card, "SetReputation", "Set Reputation", SetReputationClicked);
     }
+
+    private static void GainFavorClicked()
+    {
+        if (!TrySelectedKind(out FactionKind kind))
+        {
+            return;
+        }
+        FactionStanding.GainFavor(kind, (int)MathF.Round(_factionFavor));
+    }
+
+    private static void SetRankClicked()
+    {
+        if (!TrySelectedKind(out FactionKind kind))
+        {
+            return;
+        }
+        FactionStanding.SetRank(kind, (int)MathF.Round(_factionRank));
+    }
+
+    private static void SetReputationClicked()
+    {
+        if (!TrySelectedKind(out FactionKind kind))
+        {
+            return;
+        }
+        FactionStanding.SetReputation(kind, (int)MathF.Round(_factionReputation));
+    }
+
+    private static bool TrySelectedKind(out FactionKind kind) =>
+        FactionSelection.TryKindAt(_factionSelection, out kind);
 
     private static float SliderMinimum(Slider slider, float fallback) =>
         slider.IsNullOrDestroyed() ? fallback : slider.minValue;

@@ -620,12 +620,8 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_faction_content,
                                 "Factions_Dropdown",
                                 "Dropdown",
-                                new System.Action<int>(
-                                    (_) =>
-                                    {
-                                        Update_Faction_Data();
-                                    }
-                                )
+                                // Hidden control: the page clones it; removed with Faction_Tracker.
+                                new System.Action<int>(_ => { })
                             );
                             Faction_Tracker.factions_favor_slider = Functions.Get_SliderInPanel(
                                 character_faction_content,
@@ -935,11 +931,6 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
                 ModUI.Pages.MonolithTimelineEditor.RefreshSelection();
-            }
-
-            public static void Update_Faction_Data()
-            {
-                Faction_Tracker.selected_faction = Faction_Tracker.GetFaction();
             }
 
             public class Data
@@ -1773,155 +1764,10 @@ public partial class Hud_Manager : MonoBehaviour
 
             public class Faction_Tracker
             {
-                public static Il2CppLE.Factions.Faction selected_faction = null;
-
-                public static Il2CppLE.Factions.Faction GetFaction()
-                {
-                    Il2CppLE.Factions.Faction faction = null;
-                    if (!Refs_Manager.faction_tracker.IsNullOrDestroyed())
-                    {
-                        foreach (
-                            Il2CppSystem.Collections.Generic.KeyValuePair<
-                                Il2CppLE.Factions.FactionID,
-                                Il2CppLE.Factions.Faction
-                            > values in Refs_Manager.faction_tracker.factions
-                        )
-                        {
-                            if (
-                                (
-                                    (values.Key == Il2CppLE.Factions.FactionID.CircleOfFortune)
-                                    && (factions_dropdown.value == 1)
-                                )
-                                || (
-                                    (values.Key == Il2CppLE.Factions.FactionID.MerchantsGuild)
-                                    && (factions_dropdown.value == 2)
-                                )
-                                || (
-                                    (values.Key == Il2CppLE.Factions.FactionID.ForgottenKnights)
-                                    && (factions_dropdown.value == 3)
-                                )
-                                || (
-                                    (values.Key == Il2CppLE.Factions.FactionID.TheWeaver)
-                                    && (factions_dropdown.value == 4)
-                                )
-                            )
-                            {
-                                faction = values.Value;
-                            }
-                        }
-                    }
-
-                    return faction;
-                }
-
                 public static Dropdown factions_dropdown = null;
                 public static Slider factions_favor_slider = null;
-
-                public static void factions_gain_favor_Click()
-                {
-                    if (
-                        (!factions_favor_slider.IsNullOrDestroyed())
-                        && (!selected_faction.IsNullOrDestroyed())
-                    )
-                    {
-                        if (!selected_faction.hasEverJoined)
-                        {
-                            selected_faction.Join(true);
-                        }
-                        if (!selected_faction.IsMember)
-                        {
-                            selected_faction.IsMember = true;
-                        }
-
-                        int added_favor = Il2CppSystem.Convert.ToInt32(factions_favor_slider.value);
-                        int max_favor = 999999;
-                        int max_added_favor = max_favor - selected_faction.Favor;
-                        if (added_favor > max_added_favor)
-                        {
-                            added_favor = max_added_favor;
-                        }
-
-                        using (Mods.UI.SessionGainCounters.SuppressManualGrants())
-                            selected_faction.GainFavor(added_favor, false);
-                        selected_faction.SaveAndSync(false);
-                    }
-                    else
-                    {
-                        Main.logger_instance.Error("Faction not found");
-                    }
-                }
-
                 public static Slider factions_rank_slider = null;
-
-                public static void factions_set_rank_Click()
-                {
-                    if (
-                        (!factions_rank_slider.IsNullOrDestroyed())
-                        && (!selected_faction.IsNullOrDestroyed())
-                    )
-                    {
-                        if (!selected_faction.hasEverJoined)
-                        {
-                            selected_faction.Join(true);
-                        }
-                        if (!selected_faction.IsMember)
-                        {
-                            selected_faction.IsMember = true;
-                        }
-
-                        int max_rank = 12;
-                        if ((factions_dropdown.value == 3) || (factions_dropdown.value == 4))
-                        {
-                            max_rank = 10;
-                        }
-                        int rank = Il2CppSystem.Convert.ToInt32(factions_rank_slider.value);
-                        if (rank > max_rank)
-                        {
-                            rank = max_rank;
-                        }
-
-                        selected_faction.Rank = rank;
-                        selected_faction.SaveAndSync(false);
-                    }
-                    else
-                    {
-                        Main.logger_instance.Error("Faction not found");
-                    }
-                }
-
                 public static Slider factions_reputation_slider = null;
-
-                public static void factions_set_reputation_Click()
-                {
-                    if (
-                        (!factions_reputation_slider.IsNullOrDestroyed())
-                        && (!selected_faction.IsNullOrDestroyed())
-                    )
-                    {
-                        if (!selected_faction.hasEverJoined)
-                        {
-                            selected_faction.Join(true);
-                        }
-                        if (!selected_faction.IsMember)
-                        {
-                            selected_faction.IsMember = true;
-                        }
-
-                        int favor = Il2CppSystem.Convert.ToInt32(factions_reputation_slider.value);
-                        int total_reputation = selected_faction.TotalReputation;
-                        if (favor > total_reputation)
-                        {
-                            favor = total_reputation;
-                        }
-
-                        selected_faction.Reputation = favor;
-                        selected_faction.SaveAndSync(false);
-                    }
-                    else
-                    {
-                        Main.logger_instance.Error("Faction not found");
-                    }
-                }
             }
         }
 
