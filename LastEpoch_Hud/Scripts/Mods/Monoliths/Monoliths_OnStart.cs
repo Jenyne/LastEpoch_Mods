@@ -20,6 +20,7 @@ public class Monoliths_OnStart
                     || (Save_Manager.instance.data.Scenes.Monoliths.Enable_MaxStabilityOnStart)
                     || (Save_Manager.instance.data.Scenes.Monoliths.Enable_MobsDefeatOnStart)
                     || (Save_Manager.instance.data.Scenes.Monoliths.Enable_ObjectiveReveal)
+                    || (Save_Manager.instance.data.Scenes.Monoliths.Enable_DropShadeGauntlet)
                 ) //||
                 //(Save_Manager.instance.data.Scenes.Monoliths.Enable_CompleteObjective))
                 {
@@ -49,11 +50,26 @@ public class Monoliths_OnStart
         [HarmonyPostfix]
         static void Postfix(ref MonolithZoneManager __instance, StatefulQuestList __0)
         {
-            if (Refs_Manager.monolith_zone_manager.IsNullOrDestroyed())
+            if (__instance.IsNullOrDestroyed())
             {
-                Refs_Manager.monolith_zone_manager = __instance;
+                return;
             }
-            if (CanRun())
+
+            // Assign the current scene's manager, not an old manager from another echo.
+            Refs_Manager.monolith_zone_manager = __instance;
+
+            if (!CanRun())
+            {
+                return;
+            }
+            if (MonolithEncounterGuard.ShouldSkip(__instance, out string sceneName))
+            {
+                Main.logger_instance?.Msg(
+                    "[Monolith Guard] Skipped OnStart changes in " + sceneName
+                );
+                return;
+            }
+
             {
                 if (Save_Manager.instance.data.Scenes.Monoliths.Enable_MaxStability)
                 {
@@ -79,7 +95,7 @@ public class Monoliths_OnStart
                 }
                 if (
                     (Save_Manager.instance.data.Scenes.Monoliths.Enable_DropShadeGauntlet)
-                    && (!Refs_Manager.player_actor.IsNotNullOrDestroyed())
+                    && (Refs_Manager.player_actor.IsNotNullOrDestroyed())
                 )
                 {
                     //Drop woven echoes on start
