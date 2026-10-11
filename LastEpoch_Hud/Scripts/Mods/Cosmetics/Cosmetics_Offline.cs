@@ -1,5 +1,6 @@
 using HarmonyLib;
 using Il2Cpp;
+using Il2CppEHG.Multiplayer;
 using Il2CppLE.MicrotransactionSystem;
 using Il2CppLE.Networking.Cosmetics;
 using Il2CppLE.Services.Cosmetics;
@@ -151,6 +152,11 @@ public class Cosmetics_Offline : MonoBehaviour
             ref Il2CppCysharp.Threading.Tasks.UniTask<Il2CppSystem.Collections.Generic.List<string>> __result
         )
         {
+            if (GameplayEnvironment.IsOnlinePlay)
+            {
+                return;
+            }
+
             if (!Refs_Manager.player_actor.IsNullOrDestroyed())
             {
                 __instance.player = Refs_Manager.player_actor.gameObject;
@@ -175,6 +181,11 @@ public class Cosmetics_Offline : MonoBehaviour
         [HarmonyPostfix]
         static void Postfix(ref Il2CppSystem.Collections.Generic.List<string> __result)
         {
+            if (GameplayEnvironment.IsOnlinePlay)
+            {
+                return;
+            }
+
             ReplaceOwnedList(ref __result);
         }
     }
@@ -185,6 +196,11 @@ public class Cosmetics_Offline : MonoBehaviour
         [HarmonyPostfix]
         static void Postfix(ref bool __result)
         {
+            if (GameplayEnvironment.IsOnlinePlay)
+            {
+                return;
+            }
+
             __result = true;
         }
     }
@@ -195,6 +211,11 @@ public class Cosmetics_Offline : MonoBehaviour
         [HarmonyPostfix]
         static void Postfix(ref bool __result)
         {
+            if (GameplayEnvironment.IsOnlinePlay)
+            {
+                return;
+            }
+
             __result = true;
         }
     }
@@ -208,6 +229,11 @@ public class Cosmetics_Offline : MonoBehaviour
         [HarmonyPostfix]
         static void Postfix(ref Il2CppSystem.Collections.Generic.List<string> __result)
         {
+            if (GameplayEnvironment.IsOnlinePlay)
+            {
+                return;
+            }
+
             ReplaceOwnedList(ref __result);
         }
     }
@@ -218,6 +244,11 @@ public class Cosmetics_Offline : MonoBehaviour
         [HarmonyPostfix]
         static void Postfix(ref bool __result)
         {
+            if (GameplayEnvironment.IsOnlinePlay)
+            {
+                return;
+            }
+
             __result = true;
         }
     }
@@ -228,6 +259,11 @@ public class Cosmetics_Offline : MonoBehaviour
         [HarmonyPrefix]
         static bool Prefix(string backendId, ref bool __result)
         {
+            if (GameplayEnvironment.IsOnlinePlay)
+            {
+                return true;
+            }
+
             __result = false;
             return false;
         }
@@ -239,6 +275,11 @@ public class Cosmetics_Offline : MonoBehaviour
         [HarmonyPrefix]
         static bool Prefix(ref Il2CppSystem.Collections.Generic.List<CatalogItem> __result)
         {
+            if (GameplayEnvironment.IsOnlinePlay)
+            {
+                return true;
+            }
+
             __result = new Il2CppSystem.Collections.Generic.List<CatalogItem>();
             return false;
         }
@@ -256,6 +297,11 @@ public class Cosmetics_Offline : MonoBehaviour
             CosmeticSelectionFlyoutPanelUI __instance
         )
         {
+            if (GameplayEnvironment.IsOnlinePlay)
+            {
+                return __exception;
+            }
+
             if (__exception != null)
             {
                 Main.logger_instance?.Warning(
