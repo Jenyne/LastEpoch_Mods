@@ -1045,6 +1045,7 @@ public static class ForceDropBuilder
                             CorruptedAffixAdapter.IsCorruption(a) ? "Corruption-exclusive" : family
                         ),
                     aliases = NativeItemNames.AffixAliases(a) + "\n" + family,
+                    classMask = AffixClassMask(a),
                     affixFamily = ForceDropLegalAffixes.Family(a),
                     champion = champion,
                     suffix = a.type == AffixList.AffixType.SUFFIX,

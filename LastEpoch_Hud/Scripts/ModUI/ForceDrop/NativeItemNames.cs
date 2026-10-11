@@ -374,8 +374,6 @@ internal static class NativeItemNames
 
     public static bool Matches(string query, string translated, string aliases)
     {
-        return string.IsNullOrEmpty(query)
-            || (translated ?? "").IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0
-            || (aliases ?? "").IndexOf(query, StringComparison.OrdinalIgnoreCase) >= 0;
+        return ForceDropItemSearch.Matches(query, translated, aliases);
     }
 }
