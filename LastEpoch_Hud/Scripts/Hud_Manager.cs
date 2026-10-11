@@ -1,10 +1,8 @@
 using System.IO;
 using System.Linq;
-using System.Runtime.InteropServices;
 using HarmonyLib;
 using Il2Cpp;
 using Il2CppLE.Data;
-using Il2CppRewired.Components;
 using Il2CppSystem.Collections.Generic;
 using LastEpoch_Hud.Scripts.Core.ModUI;
 using MelonLoader;
@@ -18,8 +16,6 @@ public partial class Hud_Manager : MonoBehaviour
 {
     public Hud_Manager(System.IntPtr ptr)
         : base(ptr) { }
-
-    public static Hud_Manager instance;
 
     public static AssetBundle asset_bundle;
     public static GameObject hud_object = null;
@@ -36,29 +32,11 @@ public partial class Hud_Manager : MonoBehaviour
     private readonly MenuInputLock _inputLock = new();
     private float nextPauseMenuProbe = 0f;
     private bool exit = false;
-    public static bool enable = false; //Used to wait loading (Fix_PlayerLoopHelper)
     public static readonly KeyCode MenuKey = KeyCode.F3;
     public static bool mod_menu_open = false;
 
-    //Gamepad
-    public static PlayerMouse virtual_mouse = null;
-
-    [DllImport("user32.dll", CharSet = CharSet.Auto, CallingConvention = CallingConvention.StdCall)]
-    public static extern void mouse_event(
-        uint dwFlags,
-        uint dx,
-        uint dy,
-        uint cButtons,
-        uint dwExtraInfo
-    );
-
-    private const int MOUSEEVENTF_LEFTDOWN = 0x02;
-    private const int MOUSEEVENTF_LEFTUP = 0x04;
-
     void Awake()
     {
-        instance = this;
-        enable = true;
         // Do not read AssetBundleCreateRequest.assetBundle before async loading
         // completes. A fresh process can hit this race while Unity is starting.
         string bundlePath = Path.Combine(asset_path, asset_bundle_name);
@@ -167,7 +145,6 @@ public partial class Hud_Manager : MonoBehaviour
         }
         if (Refs_Manager.epoch_input_manager.isControllerActive)
         {
-            Update_Controller_Click();
             return;
         }
         Update_Keyboard_Exit();
@@ -188,29 +165,6 @@ public partial class Hud_Manager : MonoBehaviour
             Hud_Base.Btn_Resume.onClick.Invoke();
             exit = false;
         }
-    }
-
-    private void Update_Controller_Click()
-    {
-        if (virtual_mouse.IsNullOrDestroyed())
-        {
-            virtual_mouse = null;
-        }
-        if (!Input.GetKeyDown(KeyCode.Joystick1Button0) || virtual_mouse.IsNullOrDestroyed())
-        {
-            return;
-        }
-        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-        {
-            return;
-        }
-        mouse_event(
-            MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP,
-            (uint)virtual_mouse.screenPosition.x,
-            (uint)virtual_mouse.screenPosition.y,
-            0,
-            0
-        );
     }
 
     private void Hide_Menu()
@@ -276,14 +230,6 @@ public partial class Hud_Manager : MonoBehaviour
                     {
                         Main.logger_instance.Msg("Hud Manager : Initialize hud refs");
                     }
-                    SafeInit(
-                        "Hud_Menu.Set_Events",
-                        () =>
-                        {
-                            Hud_Menu.Set_Events();
-                        }
-                    );
-
                     Content.content_obj = Functions.GetChild(hud_object, "Content");
                     SafeInit(
                         "Content.Character",
@@ -327,14 +273,6 @@ public partial class Hud_Manager : MonoBehaviour
                             Content.OdlForceDrop.Get_Refs();
                             Content.OdlForceDrop.Set_Events();
                             Content.OdlForceDrop.Set_Active(false);
-                        }
-                    );
-                    SafeInit(
-                        "Content.Headhunter",
-                        () =>
-                        {
-                            Content.Headhunter.Get_Refs();
-                            Content.Headhunter.Set_Active(false);
                         }
                     );
                     SafeInit(
@@ -431,8 +369,7 @@ public partial class Hud_Manager : MonoBehaviour
                 bool items = Content.Items.Init_UserData();
                 bool scenes = Content.Scenes.Init_UserData();
                 bool skills = Content.Skills.Init_UserData();
-                bool headhunter = Content.Headhunter.Init_Data();
-                if ((character) && (items) && (scenes) && (skills)) // && (headhunter))
+                if ((character) && (items) && (scenes) && (skills))
                 {
                     if (Main.debug)
                     {
@@ -552,10 +489,6 @@ public partial class Hud_Manager : MonoBehaviour
         if ((Content.Items.enable) && (Content.Items.controls_initialized))
         {
             Content.Items.UpdateVisuals();
-            if (!Content.Items.ForceDrop.Type_Initialized)
-            {
-                Content.Items.ForceDrop.InitForcedrop();
-            }
         }
         if ((Content.Scenes.enable) && (Content.Scenes.controls_initialized))
         {
@@ -919,7 +852,6 @@ public partial class Hud_Manager : MonoBehaviour
                     || (Scenes.enable)
                     || (Skills.enable)
                     || (OdlForceDrop.enable)
-                    || (Headhunter.enable)
                 )
                 {
                     show = true;
@@ -929,16 +861,6 @@ public partial class Hud_Manager : MonoBehaviour
                     content_obj.active = show;
                 }
             }
-        }
-
-        public static void Close_AllContent()
-        {
-            Character.enable = false;
-            Items.enable = false;
-            Scenes.enable = false;
-            Skills.enable = false;
-            OdlForceDrop.enable = false;
-            Headhunter.enable = false;
         }
 
         public class Character
@@ -1596,7 +1518,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "Btn_Character_Factions_Gain_Favor"
                                 )
                                 .GetComponent<Button>();
-                            //Faction_Tracker.factions_set_favor_button = Functions.GetChild(Faction_Tracker.factions_go, "Btn_Character_Factions_Set_Favor").GetComponent<Button>();
 
                             Faction_Tracker.factions_rank_text = Functions.Get_TextInButton(
                                 character_faction_content,
@@ -2214,16 +2135,6 @@ public partial class Hud_Manager : MonoBehaviour
             {
                 if (!content_obj.IsNullOrDestroyed())
                 {
-                    content_obj.active = show;
-                    enable = show;
-                }
-            }
-
-            public static void Toggle_Active()
-            {
-                if (!content_obj.IsNullOrDestroyed())
-                {
-                    bool show = !content_obj.active;
                     content_obj.active = show;
                     enable = show;
                 }
@@ -5751,70 +5662,6 @@ public partial class Hud_Manager : MonoBehaviour
                             Main.logger_instance.Error("Requirements");
                         }
 
-                        GameObject items_forcedrop_content = Functions.GetViewportContent(
-                            content_obj,
-                            "Items_Pickup",
-                            "Items_ForceDrop_Content"
-                        );
-                        if (!items_forcedrop_content.IsNullOrDestroyed())
-                        {
-                            ForceDrop.forcedrop_type_dropdown = Functions.Get_DopboxInPanel(
-                                items_forcedrop_content,
-                                "Type",
-                                "Dropdown_Items_ForceDrop_Type",
-                                new System.Action<int>(
-                                    (_) =>
-                                    {
-                                        Content.Items.ForceDrop.SelectType();
-                                    }
-                                )
-                            );
-                            ForceDrop.forcedrop_rarity_dropdown = Functions.Get_DopboxInPanel(
-                                items_forcedrop_content,
-                                "Rarity",
-                                "Dropdown_Items_ForceDrop_Rarity",
-                                new System.Action<int>(
-                                    (_) =>
-                                    {
-                                        Content.Items.ForceDrop.SelectRarity();
-                                    }
-                                )
-                            );
-                            ForceDrop.forcedrop_items_dropdown = Functions.Get_DopboxInPanel(
-                                items_forcedrop_content,
-                                "Item",
-                                "Dropdown_Items_ForceDrop_Item",
-                                new System.Action<int>(
-                                    (_) =>
-                                    {
-                                        Content.Items.ForceDrop.SelectItem();
-                                    }
-                                )
-                            );
-                            ForceDrop.forcedrop_quantity_text = Functions.Get_TextInButton(
-                                items_forcedrop_content,
-                                "Quantity",
-                                "Value"
-                            );
-                            ForceDrop.forcedrop_quantity_slider = Functions.Get_SliderInPanel(
-                                items_forcedrop_content,
-                                "Quantity",
-                                "Slider_Items_ForceDrop_Quantity"
-                            );
-                            GameObject new_obj = Functions.GetChild(content_obj, "Items_Pickup");
-                            if (!new_obj.IsNullOrDestroyed())
-                            {
-                                ForceDrop.forcedrop_drop_button = Functions.Get_ButtonInPanel(
-                                    new_obj,
-                                    "Btn_Items_ForceDrop_Drop"
-                                );
-                            }
-                        }
-                        else
-                        {
-                            Main.logger_instance.Error("Forcedrop");
-                        }
-
                         CraftingSlot.enable_mod = Functions.Get_ToggleInLabel(
                             content_obj,
                             "Items_Craft",
@@ -6258,27 +6105,12 @@ public partial class Hud_Manager : MonoBehaviour
                     Requirements.set_req_toggle,
                     Requirements.Set_Toggle_Action
                 );
-
-                Events.Set_Button_Event(
-                    ForceDrop.forcedrop_drop_button,
-                    ForceDrop.Drop_OnClick_Action
-                );
             }
 
             public static void Set_Active(bool show)
             {
                 if (!content_obj.IsNullOrDestroyed())
                 {
-                    content_obj.active = show;
-                    enable = show;
-                }
-            }
-
-            public static void Toggle_Active()
-            {
-                if (!content_obj.IsNullOrDestroyed())
-                {
-                    bool show = !content_obj.active;
                     content_obj.active = show;
                     enable = show;
                 }
@@ -7025,8 +6857,6 @@ public partial class Hud_Manager : MonoBehaviour
                             (int)(Save_Manager.instance.data.Items.Drop.WeaverWill_Min)
                             + " to "
                             + (int)(Save_Manager.instance.data.Items.Drop.WeaverWill_Max);
-                        ForceDrop.forcedrop_quantity_text.text =
-                            "" + (int)(ForceDrop.forcedrop_quantity_slider.value);
                         CraftingSlot.forgin_potencial_text.text =
                             ""
                             + (int)(Save_Manager.instance.data.Items.CraftingSlot.ForginPotencial);
@@ -7333,7 +7163,6 @@ public partial class Hud_Manager : MonoBehaviour
                     {
                         Save_Manager.instance.data.Items.Req.classe = class_req_toggle.isOn;
                     }
-                    //Items_Req_Class.Enable();
                 }
 
                 public static Toggle level_req_toggle = null;
@@ -7363,501 +7192,6 @@ public partial class Hud_Manager : MonoBehaviour
                     )
                     {
                         Save_Manager.instance.data.Items.Req.set = set_req_toggle.isOn;
-                        //Items_Req_Set.Enable();
-                    }
-                }
-            }
-
-            public class ForceDrop
-            {
-                public static Dropdown forcedrop_type_dropdown = null;
-                public static Dropdown forcedrop_rarity_dropdown = null;
-                public static Dropdown forcedrop_items_dropdown = null;
-                public static Text forcedrop_quantity_text = null;
-                public static Slider forcedrop_quantity_slider = null;
-                public static Button forcedrop_drop_button = null;
-                public static int item_type = -1;
-                public static int item_rarity = -1;
-                public static int item_subtype = -1;
-                public static int item_unique_id = -1;
-                public static bool btn_enable = false;
-                public static bool Type_Initialized = false;
-                public static bool Initializing_type = false;
-
-                public static void InitForcedrop()
-                {
-                    if (
-                        (enable)
-                        && (LastEpoch_Hud.Scenes.IsGameScene())
-                        && (!Type_Initialized)
-                        && (!Initializing_type)
-                        && (!Refs_Manager.item_list.IsNullOrDestroyed())
-                        && (!forcedrop_type_dropdown.IsNullOrDestroyed())
-                        && (!forcedrop_rarity_dropdown.IsNullOrDestroyed())
-                        && (!forcedrop_items_dropdown.IsNullOrDestroyed())
-                    )
-                    {
-                        Initializing_type = true;
-                        forcedrop_type_dropdown.ClearOptions();
-                        Il2CppSystem.Collections.Generic.List<Dropdown.OptionData> options =
-                            new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
-                        options.Add(new Dropdown.OptionData { text = "Select" });
-                        foreach (ItemList.BaseEquipmentItem item in ItemList.get().EquippableItems)
-                        {
-                            options.Add(new Dropdown.OptionData { text = item.BaseTypeName });
-                        }
-                        foreach (
-                            ItemList.BaseNonEquipmentItem item in ItemList.get().nonEquippableItems
-                        )
-                        {
-                            options.Add(new Dropdown.OptionData { text = item.BaseTypeName });
-                        }
-                        forcedrop_type_dropdown.options = options;
-                        forcedrop_type_dropdown.value = 0;
-
-                        forcedrop_rarity_dropdown.ClearOptions();
-                        forcedrop_rarity_dropdown.enabled = false;
-
-                        forcedrop_items_dropdown.ClearOptions();
-                        forcedrop_items_dropdown.enabled = false;
-
-                        //forcedrop_drop_button.enabled = false;
-
-                        Initializing_type = false;
-                        Type_Initialized = true;
-                    }
-                }
-
-                public static void SelectType()
-                {
-                    if ((Type_Initialized) && (!forcedrop_type_dropdown.IsNullOrDestroyed()))
-                    {
-                        int index = forcedrop_type_dropdown.value;
-                        if (index < forcedrop_type_dropdown.options.Count)
-                        {
-                            string type_str = forcedrop_type_dropdown
-                                .options[forcedrop_type_dropdown.value]
-                                .text;
-                            //Main.logger_instance.Msg("Select : Type = " + type_str);
-                            item_type = -1;
-                            bool found = false;
-                            foreach (
-                                ItemList.BaseEquipmentItem item in ItemList.get().EquippableItems
-                            )
-                            {
-                                if (item.BaseTypeName == type_str)
-                                {
-                                    item_type = item.baseTypeID;
-                                    found = true;
-                                    break;
-                                }
-                            }
-                            if (!found)
-                            {
-                                foreach (
-                                    ItemList.BaseNonEquipmentItem item in ItemList
-                                        .get()
-                                        .nonEquippableItems
-                                )
-                                {
-                                    if (item.BaseTypeName == type_str)
-                                    {
-                                        item_type = item.baseTypeID;
-                                        found = true;
-                                        break;
-                                    }
-                                }
-                            }
-                            if (!found)
-                            {
-                                item_type = -1;
-                            }
-                            UpdateRarity();
-                            UpdateItems();
-                            UpdateButton();
-                        }
-                    }
-                }
-
-                public static void UpdateRarity()
-                {
-                    if (
-                        (enable)
-                        && (LastEpoch_Hud.Scenes.IsGameScene())
-                        && (!Refs_Manager.item_list.IsNullOrDestroyed())
-                        && (Type_Initialized)
-                        && (!forcedrop_type_dropdown.IsNullOrDestroyed())
-                        && (!forcedrop_rarity_dropdown.IsNullOrDestroyed())
-                        && (!forcedrop_items_dropdown.IsNullOrDestroyed())
-                    )
-                    {
-                        forcedrop_rarity_dropdown.ClearOptions();
-                        Il2CppSystem.Collections.Generic.List<Dropdown.OptionData> options =
-                            new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
-                        options.Add(new Dropdown.OptionData { text = "Select" });
-                        if ((forcedrop_type_dropdown.value > 0) && (item_type > -1))
-                        {
-                            bool has_unique = false;
-                            bool has_set = false;
-                            if (UniqueList.instance.IsNullOrDestroyed())
-                            {
-                                UniqueList.getUnique(0);
-                            }
-                            if (!UniqueList.instance.IsNullOrDestroyed())
-                            {
-                                foreach (UniqueList.Entry unique in UniqueList.instance.uniques)
-                                {
-                                    if (unique.baseType == item_type)
-                                    {
-                                        if (unique.isSetItem)
-                                        {
-                                            has_set = true;
-                                        }
-                                        else
-                                        {
-                                            has_unique = true;
-                                        }
-                                    }
-                                }
-                            }
-                            options.Add(new Dropdown.OptionData { text = "Base Item" });
-                            if (has_unique)
-                            {
-                                options.Add(new Dropdown.OptionData { text = "Unique" });
-                            }
-                            if (has_set)
-                            {
-                                options.Add(new Dropdown.OptionData { text = "Set" });
-                            }
-                            forcedrop_rarity_dropdown.enabled = true;
-                        }
-                        else
-                        {
-                            forcedrop_rarity_dropdown.enabled = false;
-                        }
-                        forcedrop_rarity_dropdown.options = options;
-                        forcedrop_rarity_dropdown.value = 0;
-                        item_rarity = -1;
-                    }
-                }
-
-                public static void SelectRarity()
-                {
-                    if ((Type_Initialized) && (!forcedrop_rarity_dropdown.IsNullOrDestroyed()))
-                    {
-                        int index = forcedrop_rarity_dropdown.value;
-                        if (index < forcedrop_rarity_dropdown.options.Count)
-                        {
-                            string rarity_str = forcedrop_rarity_dropdown.options[index].text;
-                            item_rarity = -1;
-                            if (rarity_str == "Base Item")
-                            {
-                                item_rarity = 0;
-                            }
-                            else if (rarity_str == "Unique")
-                            {
-                                item_rarity = 7;
-                            }
-                            else if (rarity_str == "Set")
-                            {
-                                item_rarity = 8;
-                            }
-                            //Main.logger_instance.Msg("Select : Rarity = " + rarity_str);
-                            UpdateItems();
-                            UpdateButton();
-                        }
-                    }
-                }
-
-                public static void UpdateItems()
-                {
-                    if (
-                        (enable)
-                        && (LastEpoch_Hud.Scenes.IsGameScene())
-                        && (!Refs_Manager.item_list.IsNullOrDestroyed())
-                        && (Type_Initialized)
-                        &&
-                        //(!forcedrop_type_dropdown.IsNullOrDestroyed()) &&
-                        //(!forcedrop_rarity_dropdown.IsNullOrDestroyed()) &&
-                        (!forcedrop_items_dropdown.IsNullOrDestroyed())
-                    )
-                    {
-                        //Main.logger_instance.Msg("Update Items : Type = " + item_type + ", Rarity = " + item_rarity);
-                        forcedrop_items_dropdown.ClearOptions();
-
-                        Il2CppSystem.Collections.Generic.List<Dropdown.OptionData> options =
-                            new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
-                        options.Add(new Dropdown.OptionData { text = "Select" });
-                        if ((item_type > -1) && (item_rarity > -1))
-                        {
-                            if (item_rarity == 0)
-                            {
-                                bool type_found = false;
-                                foreach (
-                                    ItemList.BaseEquipmentItem item_t in ItemList
-                                        .get()
-                                        .EquippableItems
-                                )
-                                {
-                                    if (item_t.baseTypeID == item_type)
-                                    {
-                                        foreach (ItemList.EquipmentItem item in item_t.subItems)
-                                        {
-                                            string name = item.displayName;
-                                            if (name == "")
-                                            {
-                                                name = item.name;
-                                            }
-                                            options.Add(new Dropdown.OptionData { text = name });
-                                        }
-                                        type_found = true;
-                                    }
-                                }
-                                if (!type_found)
-                                {
-                                    foreach (
-                                        ItemList.BaseNonEquipmentItem item_t in ItemList
-                                            .get()
-                                            .nonEquippableItems
-                                    )
-                                    {
-                                        if (item_t.baseTypeID == item_type)
-                                        {
-                                            foreach (
-                                                ItemList.NonEquipmentItem item in item_t.subItems
-                                            )
-                                            {
-                                                string name = item.displayName;
-                                                if (name == "")
-                                                {
-                                                    name = item.name;
-                                                }
-                                                options.Add(
-                                                    new Dropdown.OptionData { text = name }
-                                                );
-                                            }
-
-                                            type_found = true;
-                                        }
-                                    }
-                                }
-                            }
-                            else if ((item_rarity == 7) || (item_rarity == 8))
-                            {
-                                if (UniqueList.instance.IsNullOrDestroyed())
-                                {
-                                    UniqueList.getUnique(0);
-                                }
-                                if (!UniqueList.instance.IsNullOrDestroyed())
-                                {
-                                    foreach (UniqueList.Entry unique in UniqueList.instance.uniques)
-                                    {
-                                        if (
-                                            (unique.baseType == item_type)
-                                            && (
-                                                ((item_rarity == 7) && (!unique.isSetItem))
-                                                || ((item_rarity == 8) && (unique.isSetItem))
-                                            )
-                                        )
-                                        {
-                                            string name = unique.displayName;
-                                            if (name == "")
-                                            {
-                                                name = unique.name;
-                                            }
-                                            options.Add(new Dropdown.OptionData { text = name });
-                                        }
-                                    }
-                                }
-                            }
-                            forcedrop_items_dropdown.enabled = true;
-                        }
-                        else
-                        {
-                            forcedrop_items_dropdown.enabled = false;
-                        }
-                        forcedrop_items_dropdown.options = options;
-                        forcedrop_items_dropdown.value = 0;
-                    }
-                }
-
-                public static void SelectItem()
-                {
-                    if ((Type_Initialized) && (!forcedrop_items_dropdown.IsNullOrDestroyed()))
-                    {
-                        int index = forcedrop_items_dropdown.value;
-                        if (index < forcedrop_items_dropdown.options.Count)
-                        {
-                            string item_str = forcedrop_items_dropdown
-                                .options[forcedrop_items_dropdown.value]
-                                .text;
-                            //Main.logger_instance.Msg("Select : Item = " + item_str);
-
-                            item_subtype = -1;
-                            item_unique_id = 0;
-                            bool item_found = false;
-                            if (item_rarity == 0)
-                            {
-                                foreach (
-                                    ItemList.BaseEquipmentItem item_t in ItemList
-                                        .get()
-                                        .EquippableItems
-                                )
-                                {
-                                    if (item_t.baseTypeID == item_type)
-                                    {
-                                        foreach (ItemList.EquipmentItem item in item_t.subItems)
-                                        {
-                                            if (
-                                                (item_str == item.displayName)
-                                                || (item_str == item.name)
-                                            )
-                                            {
-                                                item_subtype = item.subTypeID;
-                                                item_found = true;
-                                                break;
-                                            }
-                                        }
-                                    }
-                                }
-                                if (!item_found)
-                                {
-                                    foreach (
-                                        ItemList.BaseNonEquipmentItem item_t in ItemList
-                                            .get()
-                                            .nonEquippableItems
-                                    )
-                                    {
-                                        if (item_t.baseTypeID == item_type)
-                                        {
-                                            foreach (
-                                                ItemList.NonEquipmentItem item in item_t.subItems
-                                            )
-                                            {
-                                                if (
-                                                    (item_str == item.displayName)
-                                                    || (item_str == item.name)
-                                                )
-                                                {
-                                                    item_subtype = item.subTypeID;
-                                                    break;
-                                                }
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            else if ((item_rarity == 7) || (item_rarity == 8))
-                            {
-                                if (UniqueList.instance.IsNullOrDestroyed())
-                                {
-                                    UniqueList.getUnique(0);
-                                }
-                                if (!UniqueList.instance.IsNullOrDestroyed())
-                                {
-                                    foreach (UniqueList.Entry unique in UniqueList.instance.uniques)
-                                    {
-                                        if (
-                                            (item_str == unique.displayName)
-                                            || (item_str == unique.name)
-                                        )
-                                        {
-                                            item_subtype = unique.subTypes[0]; //need to be fix here
-                                            item_unique_id = unique.uniqueID;
-                                            break;
-                                        }
-                                    }
-                                }
-                            }
-                            UpdateButton();
-                        }
-                    }
-                }
-
-                public static void UpdateButton()
-                {
-                    if ((item_type > -1) && (item_rarity > -1) && (item_subtype > -1))
-                    {
-                        btn_enable = true;
-                    }
-                    else
-                    {
-                        btn_enable = false;
-                    }
-                }
-
-                public static readonly System.Action Drop_OnClick_Action = new System.Action(Drop);
-
-                public static void Drop()
-                {
-                    if ((btn_enable) && (!forcedrop_quantity_slider.IsNullOrDestroyed()))
-                    {
-                        if (
-                            (!Refs_Manager.ground_item_manager.IsNullOrDestroyed())
-                            && (!Refs_Manager.player_actor.IsNullOrDestroyed())
-                        )
-                        {
-                            for (int i = 0; i < forcedrop_quantity_slider.value; i++)
-                            {
-                                ItemDataUnpacked item = new ItemDataUnpacked
-                                {
-                                    LvlReq = 0,
-                                    classReq = ItemList.ClassRequirement.Any,
-                                    itemType = (byte)item_type,
-                                    subType = (ushort)item_subtype,
-                                    rarity = (byte)item_rarity,
-                                    forgingPotential = (byte)0,
-                                    sockets = (byte)0,
-                                    uniqueID = (ushort)item_unique_id,
-                                    legendaryPotential = (byte)0,
-                                    weaversWill = (byte)0,
-                                    hasSealedRegularAffix = false,
-                                };
-
-                                //Random
-                                if (item.itemType < 100)
-                                {
-                                    for (int k = 0; k < item.implicitRolls.Count; k++)
-                                    {
-                                        item.implicitRolls[k] = (byte)Random.RandomRange(0f, 255f);
-                                    }
-                                    if (!item.isUniqueSetOrLegendary())
-                                    {
-                                        item.forgingPotential = (byte)Random.RandomRange(0f, 255f);
-                                    }
-                                    UniqueList.LegendaryType legendary_type = UniqueList
-                                        .LegendaryType
-                                        .LegendaryPotential;
-                                    if (item.isUniqueSetOrLegendary())
-                                    {
-                                        legendary_type = UniqueList
-                                            .getUnique((ushort)item_unique_id)
-                                            .legendaryType;
-                                        for (int k = 0; k < item.uniqueRolls.Count; k++)
-                                        {
-                                            item.uniqueRolls[k] = (byte)
-                                                Random.RandomRange(0f, 255f);
-                                        }
-                                        if (legendary_type == UniqueList.LegendaryType.WeaversWill)
-                                        {
-                                            item.weaversWill = (byte)Random.RandomRange(0f, 28f);
-                                        }
-                                        else if (item.isUnique())
-                                        {
-                                            item.legendaryPotential = (byte)
-                                                Random.RandomRange(0f, 4f);
-                                        }
-                                    }
-                                }
-                                item.RefreshIDAndValues();
-                                Mods.Items.AutoLoot.ModItemDrop.Drop(
-                                    Refs_Manager.ground_item_manager,
-                                    Refs_Manager.player_actor,
-                                    item.TryCast<ItemData>(),
-                                    Refs_Manager.player_actor.position()
-                                );
-                            }
-                        }
                     }
                 }
             }
@@ -8302,16 +7636,6 @@ public partial class Hud_Manager : MonoBehaviour
                     {
                         Content.Character.Update_Monoliths_Data();
                     }
-                }
-            }
-
-            public static void Toggle_Active()
-            {
-                if (!content_obj.IsNullOrDestroyed())
-                {
-                    bool show = !content_obj.active;
-                    content_obj.active = show;
-                    enable = show;
                 }
             }
 
@@ -9514,16 +8838,6 @@ public partial class Hud_Manager : MonoBehaviour
             {
                 if (!content_obj.IsNullOrDestroyed())
                 {
-                    content_obj.active = show;
-                    enable = show;
-                }
-            }
-
-            public static void Toggle_Active()
-            {
-                if (!content_obj.IsNullOrDestroyed())
-                {
-                    bool show = !content_obj.active;
                     content_obj.active = show;
                     enable = show;
                 }
@@ -11971,16 +11285,6 @@ public partial class Hud_Manager : MonoBehaviour
                 }
             }
 
-            public static void Toggle_Active()
-            {
-                if (!content_obj.IsNullOrDestroyed())
-                {
-                    bool show = !content_obj.active;
-                    content_obj.active = show;
-                    enable = show;
-                }
-            }
-
             public static void InitForcedrop()
             {
                 if ((!Type_Initialized) && (!Initializing_type))
@@ -13347,54 +12651,6 @@ public partial class Hud_Manager : MonoBehaviour
                             Refs_Manager.player_actor.position()
                         );
                     }
-                }
-            }
-        }
-
-        public class Headhunter
-        {
-            public static GameObject content_obj = null;
-            public static bool enable = false;
-
-            public static void Get_Refs()
-            {
-                content_obj = Functions.FindDescendant(Content.content_obj, "Headhunter_Content");
-            }
-
-            public static void Set_Active(bool show)
-            {
-                if (!content_obj.IsNullOrDestroyed())
-                {
-                    content_obj.active = show;
-                    enable = show;
-                }
-            }
-
-            public static void Toggle_Active()
-            {
-                if (!content_obj.IsNullOrDestroyed())
-                {
-                    bool show = !content_obj.active;
-                    content_obj.active = show;
-                    enable = show;
-                }
-            }
-
-            public static bool Init_Data()
-            {
-                bool result = false;
-
-                return result;
-            }
-
-            public static void UpdateVisuals()
-            {
-                if (!Save_Manager.instance.IsNullOrDestroyed())
-                {
-                    if (
-                        (Save_Manager.instance.initialized)
-                        && (!Save_Manager.instance.data.IsNullOrDestroyed())
-                    ) { }
                 }
             }
         }

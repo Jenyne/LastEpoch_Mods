@@ -1,12 +1,5 @@
-﻿using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using HarmonyLib;
+﻿using HarmonyLib;
 using Il2Cpp;
-using Il2CppLE.Data;
-using Il2CppRewired.Components;
-using Il2CppSystem.Collections.Generic;
-using MelonLoader;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -30,8 +23,6 @@ public partial class Hud_Manager
                         try
                         {
                             int i = System.Convert.ToInt32(__instance.name.Split('_')[1]);
-                            //GameObject shard_id_object = Functions.GetChild(shard_btn_object, "shard_id");
-                            //Text shard_id = shard_id_object.GetComponent<Text>();
 
                             GameObject shard_name_object = Functions.GetChild(
                                 __instance.gameObject,
@@ -1705,14 +1696,12 @@ public partial class Hud_Manager
                                 case "Slider_Character_Cheats_AutoPotions":
                                 {
                                     Save_Manager.instance.data.Character.Cheats.autoPot = __0;
-                                    //Content.Character.Cheats.autopot_text.text = (int)((Save_Manager.instance.data.Character.Cheats.autoPot / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Cheats_DensityMultiplier":
                                 {
                                     Save_Manager.instance.data.Character.Cheats.DensityMultiplier =
                                         __0;
-                                    //Content.Character.Cheats.density_text.text = "x " + (int)(Save_Manager.instance.data.Character.Cheats.DensityMultiplier);
                                     break;
                                 }
                                 case "Slider_Character_Cheats_ExperienceMultiplier":
@@ -1723,21 +1712,18 @@ public partial class Hud_Manager
                                         .Character
                                         .Cheats
                                         .ExperienceMultiplier = __0;
-                                    //Content.Character.Cheats.experience_text.text = "x " + (int)(Save_Manager.instance.data.Character.Cheats.ExperienceMultiplier);
                                     break;
                                 }
                                 case "Slider_Character_Cheats_AbilityMultiplier":
                                 {
                                     Save_Manager.instance.data.Character.Cheats.AbilityMultiplier =
                                         __0;
-                                    //Content.Character.Cheats.ability_text.text = "x " + (int)(Save_Manager.instance.data.Character.Cheats.AbilityMultiplier);
                                     break;
                                 }
                                 case "Slider_Character_Cheats_FavorMultiplier":
                                 {
                                     Save_Manager.instance.data.Character.Cheats.FavorMultiplier =
                                         __0;
-                                    //Content.Character.Cheats.favor_text.text = "x " + (int)(Save_Manager.instance.data.Character.Cheats.FavorMultiplier);
                                     break;
                                 }
                                 case "Slider_Character_Cheats_MemoryAmberMultiplier":
@@ -1763,28 +1749,24 @@ public partial class Hud_Manager
                                 {
                                     Save_Manager.instance.data.Character.Cheats.ItemDropMultiplier =
                                         __0;
-                                    //Content.Character.Cheats.itemdropmultiplier_text.text = "x " + (int)(Save_Manager.instance.data.Character.Cheats.ItemDropMultiplier);
                                     break;
                                 }
                                 case "Slider_Character_Cheats_ItemDropChance":
                                 {
                                     Save_Manager.instance.data.Character.Cheats.ItemDropChance =
                                         __0;
-                                    //Content.Character.Cheats.itemdropchance_text.text = "+ " + (int)((Save_Manager.instance.data.Character.Cheats.ItemDropChance / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Cheats_GoldDropMultiplier":
                                 {
                                     Save_Manager.instance.data.Character.Cheats.GoldDropMultiplier =
                                         __0;
-                                    //Content.Character.Cheats.golddropmultiplier_text.text = "x " + (int)(Save_Manager.instance.data.Character.Cheats.GoldDropMultiplier);
                                     break;
                                 }
                                 case "Slider_Character_Cheats_GoldDropChance":
                                 {
                                     Save_Manager.instance.data.Character.Cheats.GoldDropChance =
                                         __0;
-                                    //Content.Character.Cheats.golddropchance_text.text = "+ " + (int)((Save_Manager.instance.data.Character.Cheats.GoldDropChance / 255) * 100) + " %";
                                     break;
                                 }
                                 //Data
@@ -1794,8 +1776,6 @@ public partial class Hud_Manager
                                     {
                                         Refs_Manager.player_data.Deaths = (int)__0;
                                     }
-
-                                    //Content.Character.Data.deaths_text.text = ((int)__0).ToString();
                                     break;
                                 }
                                 case "Slider_Character_Data_LanternLuminance":
@@ -1804,7 +1784,6 @@ public partial class Hud_Manager
                                     {
                                         Refs_Manager.player_data.LanternLuminance = (int)__0;
                                     }
-                                    //Content.Character.Data.lantern_text.text = ((int)__0).ToString();
                                     break;
                                 }
                                 //Buffs
@@ -1816,7 +1795,6 @@ public partial class Hud_Manager
                                         .Character
                                         .PermanentBuffs
                                         .MoveSpeed_Buff_Value = __0;
-                                    //Content.Character.Buffs.movespeed_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.MoveSpeed_Buff_Value / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Buffs_Damage":
@@ -1827,7 +1805,6 @@ public partial class Hud_Manager
                                         .Character
                                         .PermanentBuffs
                                         .Damage_Buff_Value = __0;
-                                    //Content.Character.Buffs.damage_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.Damage_Buff_Value / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Buffs_AttackSpeed":
@@ -1838,7 +1815,6 @@ public partial class Hud_Manager
                                         .Character
                                         .PermanentBuffs
                                         .AttackSpeed_Buff_Value = __0;
-                                    //Content.Character.Buffs.attackspeed_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.AttackSpeed_Buff_Value / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Buffs_CastingSpeed":
@@ -1849,7 +1825,6 @@ public partial class Hud_Manager
                                         .Character
                                         .PermanentBuffs
                                         .CastSpeed_Buff_Value = __0;
-                                    //Content.Character.Buffs.castingspeed_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.CastSpeed_Buff_Value / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Buffs_CriticalChance":
@@ -1860,7 +1835,6 @@ public partial class Hud_Manager
                                         .Character
                                         .PermanentBuffs
                                         .CriticalChance_Buff_Value = __0;
-                                    //Content.Character.Buffs.criticalchance_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.CriticalChance_Buff_Value / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Buffs_CriticalMultiplier":
@@ -1871,7 +1845,6 @@ public partial class Hud_Manager
                                         .Character
                                         .PermanentBuffs
                                         .CriticalMultiplier_Buff_Value = __0;
-                                    //Content.Character.Buffs.criticalmultiplier_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.CriticalMultiplier_Buff_Value / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Buffs_HealthRegen":
@@ -1882,7 +1855,6 @@ public partial class Hud_Manager
                                         .Character
                                         .PermanentBuffs
                                         .HealthRegen_Buff_Value = __0;
-                                    //Content.Character.Buffs.healthregen_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.HealthRegen_Buff_Value / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Buffs_ManaRegen":
@@ -1893,7 +1865,6 @@ public partial class Hud_Manager
                                         .Character
                                         .PermanentBuffs
                                         .ManaRegen_Buff_Value = __0;
-                                    //Content.Character.Buffs.manaregen_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.ManaRegen_Buff_Value / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Buffs_Strenght":
@@ -1904,7 +1875,6 @@ public partial class Hud_Manager
                                         .Character
                                         .PermanentBuffs
                                         .Str_Buff_Value = __0;
-                                    //Content.Character.Buffs.str_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.Str_Buff_Value / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Buffs_Intelligence":
@@ -1915,7 +1885,6 @@ public partial class Hud_Manager
                                         .Character
                                         .PermanentBuffs
                                         .Int_Buff_Value = __0;
-                                    //Content.Character.Buffs.int_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.Int_Buff_Value / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Buffs_Dexterity":
@@ -1926,7 +1895,6 @@ public partial class Hud_Manager
                                         .Character
                                         .PermanentBuffs
                                         .Dex_Buff_Value = __0;
-                                    //Content.Character.Buffs.dex_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.Dex_Buff_Value / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Buffs_Vitality":
@@ -1937,7 +1905,6 @@ public partial class Hud_Manager
                                         .Character
                                         .PermanentBuffs
                                         .Vit_Buff_Value = __0;
-                                    //Content.Character.Buffs.vit_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.Vit_Buff_Value / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Buffs_Attunement":
@@ -1948,7 +1915,6 @@ public partial class Hud_Manager
                                         .Character
                                         .PermanentBuffs
                                         .Att_Buff_Value = __0;
-                                    //Content.Character.Buffs.att_text.text = "+ " + (int)((Save_Manager.instance.data.Character.PermanentBuffs.Att_Buff_Value / 255) * 100) + " %";
                                     break;
                                 }
                                 case "Slider_Character_Buffs_AreaOfEffect":

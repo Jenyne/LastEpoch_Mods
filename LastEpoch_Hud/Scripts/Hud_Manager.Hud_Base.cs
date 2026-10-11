@@ -1,13 +1,4 @@
-﻿using System.IO;
-using System.Linq;
-using System.Runtime.InteropServices;
-using HarmonyLib;
-using Il2Cpp;
-using Il2CppLE.Data;
-using Il2CppRewired.Components;
-using Il2CppSystem.Collections.Generic;
-using MelonLoader;
-using UnityEngine;
+﻿using UnityEngine;
 using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts;
@@ -16,13 +7,8 @@ public partial class Hud_Manager
 {
     public class Hud_Base
     {
-        public static bool Initialized = false;
-        public static bool Initializing = false;
         public static GameObject Default_PauseMenu_Btns = null;
         public static Button Btn_Resume;
-        public static GameObject ChapterInfo = null;
-        public static GameObject Menu_Fade_Background = null;
-        public static GameObject Chapter_Fade_Background = null;
 
         public static bool Get_DefaultPauseMenu()
         {
@@ -68,48 +54,6 @@ public partial class Hud_Manager
                 }
             }
             return null;
-        }
-
-        public static void Set_ChapterInfo(bool show)
-        {
-            if (
-                (!Refs_Manager.game_uibase.IsNullOrDestroyed())
-                && (!game_pause_menu.IsNullOrDestroyed())
-            )
-            {
-                if (ChapterInfo.IsNullOrDestroyed())
-                {
-                    ChapterInfo = Functions.GetChild(game_pause_menu, "ChapterInfo");
-                }
-                if (!ChapterInfo.IsNullOrDestroyed())
-                {
-                    ChapterInfo.active = show;
-                }
-
-                if (Menu_Fade_Background.IsNullOrDestroyed())
-                {
-                    Menu_Fade_Background = Functions.GetChild(
-                        game_pause_menu,
-                        "Menu_Fade_Background"
-                    );
-                }
-                if (!Menu_Fade_Background.IsNullOrDestroyed())
-                {
-                    Menu_Fade_Background.active = show;
-                }
-
-                if (Chapter_Fade_Background.IsNullOrDestroyed())
-                {
-                    Chapter_Fade_Background = Functions.GetChild(
-                        game_pause_menu,
-                        "Chapter_Fade_Background"
-                    );
-                }
-                if (!Chapter_Fade_Background.IsNullOrDestroyed())
-                {
-                    Chapter_Fade_Background.active = show;
-                }
-            }
         }
 
         public static bool Get_DefaultPauseMenu_Open()

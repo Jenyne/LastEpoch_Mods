@@ -222,7 +222,6 @@ public static class HudLayout
         Hud_Manager.Content.Scenes.Set_Active(false);
         Hud_Manager.Content.Skills.Set_Active(false);
         Hud_Manager.Content.OdlForceDrop.Set_Active(false);
-        Hud_Manager.Content.Headhunter.Set_Active(false);
         Hud_Manager.Content.Set_Active();
     }
 
