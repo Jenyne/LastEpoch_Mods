@@ -137,6 +137,7 @@
   "Remove Channel Cost": "Remove Channel Cost",
   "Mana Regen when Channeling": "Mana Regen when Channeling",
   "Don't stop when Out of Mana": "Don't stop when Out of Mana",
+  "Don't Stop When Out Of Mana Channeling": "Don't Stop When Out Of Mana Channeling",
   "All the above options edit game base object. If you want to reset, you have to restart your game": "All the above options edit game base object. If you want to reset, you have to restart your game",
   "No Cooldown": "No Cooldown",
   "Unlock All Skills": "Unlock All Skills",

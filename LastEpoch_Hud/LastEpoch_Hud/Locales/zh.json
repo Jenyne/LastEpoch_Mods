@@ -137,6 +137,7 @@
   "Remove Channel Cost": "移除引导消耗",
   "Mana Regen when Channeling": "引导时魔力再生",
   "Don't stop when Out of Mana": "魔力耗尽时不停下",
+  "Don't Stop When Out Of Mana Channeling": "魔力耗尽时不停止引导",
   "All the above options edit game base object. If you want to reset, you have to restart your game": "以上所有选项，修改后需要重新启动游戏才能生效",
   "No Cooldown": "无冷却",
   "Unlock All Skills": "解锁所有技能",

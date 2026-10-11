@@ -137,6 +137,7 @@
   "Remove Channel Cost": "Retirer le coût de canalisation",
   "Mana Regen when Channeling": "Régénération de mana en canalisant",
   "Don't stop when Out of Mana": "Ne pas s'arrêter sans mana",
+  "Don't Stop When Out Of Mana Channeling": "Ne pas arrêter la canalisation sans mana",
   "All the above options edit game base object. If you want to reset, you have to restart your game": "Toutes les options ci-dessus modifient les objets de base du jeu. Pour réinitialiser, redémarrez le jeu",
   "No Cooldown": "Pas de temps de recharge",
   "Unlock All Skills": "Déverrouiller toutes les compétences",

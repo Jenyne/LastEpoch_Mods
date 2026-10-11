@@ -211,7 +211,7 @@ internal static class UtilitiesCharacterPage
         _page.AddToggle(
             card,
             "ContinueOutOfMana",
-            "Don't Stop When Out Of Mana",
+            "Don't Stop When Out Of Mana Channeling",
             () => HasSave() && Save_Manager.instance.data.Skills.Enable_StopWhenOutOfMana,
             value =>
             {
