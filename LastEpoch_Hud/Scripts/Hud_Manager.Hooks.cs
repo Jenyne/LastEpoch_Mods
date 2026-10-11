@@ -1681,11 +1681,6 @@ public partial class Hud_Manager
                             int multiplier = SettingRow.Clamp(__0);
                             Save_Manager.instance.data.Factions.TheWoven.PointMultiplier =
                                 multiplier;
-                            if (!Content.Character.Data.weaver_multiplier_text.IsNullOrDestroyed())
-                            {
-                                Content.Character.Data.weaver_multiplier_text.text =
-                                    multiplier + "x";
-                            }
                             Mods.Factions.TheWoven.Faction_Woven_TreePoints.ApplyToPlayer();
                             return;
                         }
@@ -1736,13 +1731,6 @@ public partial class Hud_Manager
                                         .Character
                                         .Cheats
                                         .MemoryAmberMultiplier = multiplier;
-                                    if (
-                                        !Content.Character.Cheats.memoryamber_text.IsNullOrDestroyed()
-                                    )
-                                    {
-                                        Content.Character.Cheats.memoryamber_text.text =
-                                            "x " + multiplier;
-                                    }
                                     break;
                                 }
                                 case "Slider_Character_Cheats_ItemDropMultiplier":
@@ -2303,13 +2291,6 @@ public partial class Hud_Manager
                                 {
                                     Save_Manager.instance.data.Items.Pickup.AutoShatter_Chance =
                                         (int)__0;
-                                    if (
-                                        !Content.Items.Pickup.autoshatter_chance_text.IsNullOrDestroyed()
-                                    )
-                                    {
-                                        Content.Items.Pickup.autoshatter_chance_text.text =
-                                            (int)__0 + " %";
-                                    }
                                     break;
                                 }
                                 case "Slider_Items_Pickup_AutoShatter_AffixChance":
@@ -2320,13 +2301,6 @@ public partial class Hud_Manager
                                         .Items
                                         .Pickup
                                         .AutoShatter_AffixChance = (int)__0;
-                                    if (
-                                        !Content.Items.Pickup.autoshatter_affix_text.IsNullOrDestroyed()
-                                    )
-                                    {
-                                        Content.Items.Pickup.autoshatter_affix_text.text =
-                                            (int)__0 + " %";
-                                    }
                                     break;
                                 }
                                 case "Slider_Items_Pickup_AutoShatter_QuantityChance":
@@ -2337,13 +2311,6 @@ public partial class Hud_Manager
                                         .Items
                                         .Pickup
                                         .AutoShatter_QuantityChance = (int)__0;
-                                    if (
-                                        !Content.Items.Pickup.autoshatter_quantity_text.IsNullOrDestroyed()
-                                    )
-                                    {
-                                        Content.Items.Pickup.autoshatter_quantity_text.text =
-                                            (int)__0 + " %";
-                                    }
                                     break;
                                 }
                             }
@@ -2437,13 +2404,6 @@ public partial class Hud_Manager
                                     int multiplier = SettingRow.Clamp(__0);
                                     Save_Manager.instance.data.Skills.SkillLevelMultiplier =
                                         multiplier;
-                                    if (
-                                        !Content.Skills.SkillTree.skill_level_multiplier_text.IsNullOrDestroyed()
-                                    )
-                                    {
-                                        Content.Skills.SkillTree.skill_level_multiplier_text.text =
-                                            multiplier + "x";
-                                    }
                                     Mods.Skills.Skills_Level.ApplyAll();
                                     break;
                                 }
@@ -2458,16 +2418,6 @@ public partial class Hud_Manager
                                     int multiplier = SettingRow.Clamp(__0);
                                     Save_Manager.instance.data.Skills.PassivePointMultiplier =
                                         multiplier;
-                                    if (
-                                        !Content.Skills.SkillTree.passive_point_multiplier_text.IsNullOrDestroyed()
-                                    )
-                                    {
-                                        Content
-                                            .Skills
-                                            .SkillTree
-                                            .passive_point_multiplier_text
-                                            .text = multiplier + "x";
-                                    }
                                     Mods.Skills.Passives_Points.Apply();
                                     break;
                                 }

@@ -173,7 +173,6 @@ public partial class Hud_Manager : MonoBehaviour
         {
             hud_object.active = false;
         }
-        Content.Character.need_update = true;
     }
 
     void Init_Hud()
@@ -478,26 +477,6 @@ public partial class Hud_Manager : MonoBehaviour
     void Update_Hud_Content()
     {
         ModUI.Shell.HudLayout.RefreshActivePage();
-        if ((Content.Character.enable) && (Content.Character.need_update))
-        {
-            Content.Character.Update_PlayerData();
-        }
-        if ((Content.Character.enable) && (Content.Character.controls_initialized))
-        {
-            Content.Character.UpdateVisuals();
-        }
-        if ((Content.Items.enable) && (Content.Items.controls_initialized))
-        {
-            Content.Items.UpdateVisuals();
-        }
-        if ((Content.Scenes.enable) && (Content.Scenes.controls_initialized))
-        {
-            Content.Scenes.UpdateVisuals();
-        }
-        if ((Content.Skills.enable) && (Content.Skills.controls_initialized))
-        {
-            Content.Skills.UpdateVisuals();
-        }
         if ((Content.OdlForceDrop.enable) && (Content.OdlForceDrop.initialized))
         {
             if (!Content.OdlForceDrop.Type_Initialized)
@@ -845,17 +824,7 @@ public partial class Hud_Manager : MonoBehaviour
         {
             if (!content_obj.IsNullOrDestroyed())
             {
-                bool show = false;
-                if (
-                    (Character.enable)
-                    || (Items.enable)
-                    || (Scenes.enable)
-                    || (Skills.enable)
-                    || (OdlForceDrop.enable)
-                )
-                {
-                    show = true;
-                }
+                bool show = OdlForceDrop.enable;
                 if (content_obj.active != show)
                 {
                     content_obj.active = show;
@@ -866,9 +835,6 @@ public partial class Hud_Manager : MonoBehaviour
         public class Character
         {
             public static GameObject content_obj = null;
-            public static bool controls_initialized = false;
-            public static bool enable = false;
-            public static bool need_update = true;
 
             public static void Get_Refs()
             {
@@ -905,12 +871,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "AutoPotions",
                                 "Toggle_Character_Cheats_AutoPotions"
                             );
-                            Cheats.autopot_text = Functions.Get_TextInToggle(
-                                character_cheats_content,
-                                "AutoPotions",
-                                "Toggle_Character_Cheats_AutoPotions",
-                                "Value"
-                            );
                             Cheats.autopot_slider = Functions.Get_SliderInPanel(
                                 character_cheats_content,
                                 "AutoPotions",
@@ -921,12 +881,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_cheats_content,
                                 "DensityMultiplier",
                                 "Toggle_Character_Cheats_DensityMultiplier"
-                            );
-                            Cheats.density_text = Functions.Get_TextInToggle(
-                                character_cheats_content,
-                                "DensityMultiplier",
-                                "Toggle_Character_Cheats_DensityMultiplier",
-                                "Value"
                             );
                             Cheats.density_slider = Functions.Get_SliderInPanel(
                                 character_cheats_content,
@@ -939,12 +893,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "ExperienceMultiplier",
                                 "Toggle_Character_Cheats_ExperienceMultiplier"
                             );
-                            Cheats.experience_text = Functions.Get_TextInToggle(
-                                character_cheats_content,
-                                "ExperienceMultiplier",
-                                "Toggle_Character_Cheats_ExperienceMultiplier",
-                                "Value"
-                            );
                             Cheats.experience_slider = Functions.Get_SliderInPanel(
                                 character_cheats_content,
                                 "ExperienceMultiplier",
@@ -955,12 +903,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_cheats_content,
                                 "AbilityMultiplier",
                                 "Toggle_Character_Cheats_AbilityMultiplier"
-                            );
-                            Cheats.ability_text = Functions.Get_TextInToggle(
-                                character_cheats_content,
-                                "AbilityMultiplier",
-                                "Toggle_Character_Cheats_AbilityMultiplier",
-                                "Value"
                             );
                             Cheats.ability_slider = Functions.Get_SliderInPanel(
                                 character_cheats_content,
@@ -973,12 +915,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "FavorMultiplier",
                                 "Toggle_Character_Cheats_FavorMultiplier"
                             );
-                            Cheats.favor_text = Functions.Get_TextInToggle(
-                                character_cheats_content,
-                                "FavorMultiplier",
-                                "Toggle_Character_Cheats_FavorMultiplier",
-                                "Value"
-                            );
                             Cheats.favor_slider = Functions.Get_SliderInPanel(
                                 character_cheats_content,
                                 "FavorMultiplier",
@@ -989,12 +925,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_cheats_content,
                                 "MemoryAmberMultiplier",
                                 "Toggle_Character_Cheats_MemoryAmberMultiplier"
-                            );
-                            Cheats.memoryamber_text = Functions.Get_TextInToggle(
-                                character_cheats_content,
-                                "MemoryAmberMultiplier",
-                                "Toggle_Character_Cheats_MemoryAmberMultiplier",
-                                "Value"
                             );
                             Cheats.memoryamber_slider = Functions.Get_SliderInPanel(
                                 character_cheats_content,
@@ -1008,12 +938,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "ItemDropMultiplier",
                                 "Toggle_Character_Cheats_ItemDropMultiplier"
                             );
-                            Cheats.itemdropmultiplier_text = Functions.Get_TextInToggle(
-                                character_cheats_content,
-                                "ItemDropMultiplier",
-                                "Toggle_Character_Cheats_ItemDropMultiplier",
-                                "Value"
-                            );
                             Cheats.itemdropmultiplier_slider = Functions.Get_SliderInPanel(
                                 character_cheats_content,
                                 "ItemDropMultiplier",
@@ -1024,12 +948,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_cheats_content,
                                 "ItemDropChance",
                                 "Toggle_Character_Cheats_ItemDropChance"
-                            );
-                            Cheats.itemdropchance_text = Functions.Get_TextInToggle(
-                                character_cheats_content,
-                                "ItemDropChance",
-                                "Toggle_Character_Cheats_ItemDropChance",
-                                "Value"
                             );
                             Cheats.itemdropchance_slider = Functions.Get_SliderInPanel(
                                 character_cheats_content,
@@ -1042,12 +960,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "GoldDropMultiplier",
                                 "Toggle_Character_Cheats_GoldDropMultiplier"
                             );
-                            Cheats.golddropmultiplier_text = Functions.Get_TextInToggle(
-                                character_cheats_content,
-                                "GoldDropMultiplier",
-                                "Toggle_Character_Cheats_GoldDropMultiplier",
-                                "Value"
-                            );
                             Cheats.golddropmultiplier_slider = Functions.Get_SliderInPanel(
                                 character_cheats_content,
                                 "GoldDropMultiplier",
@@ -1058,12 +970,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_cheats_content,
                                 "GoldDropChance",
                                 "Toggle_Character_Cheats_GoldDropChance"
-                            );
-                            Cheats.golddropchance_text = Functions.Get_TextInToggle(
-                                character_cheats_content,
-                                "GoldDropChance",
-                                "Toggle_Character_Cheats_GoldDropChance",
-                                "Value"
                             );
                             Cheats.golddropchance_slider = Functions.Get_SliderInPanel(
                                 character_cheats_content,
@@ -1204,22 +1110,12 @@ public partial class Hud_Manager : MonoBehaviour
                                 "Toggle_Character_Data_SoloChallenge"
                             );
 
-                            Data.deaths_text = Functions.Get_TextInButton(
-                                character_data_content,
-                                "Deaths",
-                                "Value"
-                            );
                             Data.deaths_slider = Functions.Get_SliderInPanel(
                                 character_data_content,
                                 "Deaths",
                                 "Slider_Character_Data_Deaths"
                             );
 
-                            Data.lantern_text = Functions.Get_TextInButton(
-                                character_data_content,
-                                "LanternLuminance",
-                                "Value"
-                            );
                             Data.lantern_slider = Functions.Get_SliderInPanel(
                                 character_data_content,
                                 "LanternLuminance",
@@ -1301,12 +1197,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "TreePointMultiplier",
                                 "Toggle_Weaver_PointMultiplier"
                             );
-                            Data.weaver_multiplier_text = Functions.Get_TextInToggle(
-                                character_data_content,
-                                "TreePointMultiplier",
-                                "Toggle_Weaver_PointMultiplier",
-                                "Value"
-                            );
                             Data.weaver_multiplier_slider = Functions.Get_SliderInPanel(
                                 character_data_content,
                                 "TreePointMultiplier",
@@ -1326,10 +1216,6 @@ public partial class Hud_Manager : MonoBehaviour
                                         .Factions
                                         .TheWoven
                                         .Enable_PointMultiplier;
-                                }
-                                if (!Data.weaver_multiplier_text.IsNullOrDestroyed())
-                                {
-                                    Data.weaver_multiplier_text.text = multiplier + "x";
                                 }
                             }
 
@@ -1574,12 +1460,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "MoveSpeed",
                                 "Toggle_Character_Buffs_MoveSpeed"
                             );
-                            Buffs.movespeed_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "MoveSpeed",
-                                "Toggle_Character_Buffs_MoveSpeed",
-                                "Value"
-                            );
                             Buffs.movespeed_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
                                 "MoveSpeed",
@@ -1591,12 +1471,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_buffs_content,
                                 "Damage",
                                 "Toggle_Character_Buffs_Damage"
-                            );
-                            Buffs.damage_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "Damage",
-                                "Toggle_Character_Buffs_Damage",
-                                "Value"
                             );
                             Buffs.damage_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
@@ -1612,12 +1486,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "AreaOfEffect",
                                 "Toggle_Character_Buffs_AreaOfEffect"
                             );
-                            Buffs.aoe_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "AreaOfEffect",
-                                "Toggle_Character_Buffs_AreaOfEffect",
-                                "Value"
-                            );
                             Buffs.aoe_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
                                 "AreaOfEffect",
@@ -1629,12 +1497,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_buffs_content,
                                 "AttackSpeed",
                                 "Toggle_Character_Buffs_AttackSpeed"
-                            );
-                            Buffs.attackspeed_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "AttackSpeed",
-                                "Toggle_Character_Buffs_AttackSpeed",
-                                "Value"
                             );
                             Buffs.attackspeed_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
@@ -1648,12 +1510,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "CastingSpeed",
                                 "Toggle_Character_Buffs_CastingSpeed"
                             );
-                            Buffs.castingspeed_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "CastingSpeed",
-                                "Toggle_Character_Buffs_CastingSpeed",
-                                "Value"
-                            );
                             Buffs.castingspeed_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
                                 "CastingSpeed",
@@ -1665,12 +1521,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_buffs_content,
                                 "CriticalChance",
                                 "Toggle_Character_Buffs_CriticalChance"
-                            );
-                            Buffs.criticalchance_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "CriticalChance",
-                                "Toggle_Character_Buffs_CriticalChance",
-                                "Value"
                             );
                             Buffs.criticalchance_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
@@ -1684,12 +1534,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "CriticalMultiplier",
                                 "Toggle_Character_Buffs_CriticalMultiplier"
                             );
-                            Buffs.criticalmultiplier_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "CriticalMultiplier",
-                                "Toggle_Character_Buffs_CriticalMultiplier",
-                                "Value"
-                            );
                             Buffs.criticalmultiplier_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
                                 "CriticalMultiplier",
@@ -1701,12 +1545,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_buffs_content,
                                 "HealthRegen",
                                 "Toggle_Character_Buffs_HealthRegen"
-                            );
-                            Buffs.healthregen_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "HealthRegen",
-                                "Toggle_Character_Buffs_HealthRegen",
-                                "Value"
                             );
                             Buffs.healthregen_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
@@ -1720,12 +1558,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "ManaRegen",
                                 "Toggle_Character_Buffs_ManaRegen"
                             );
-                            Buffs.manaregen_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "ManaRegen",
-                                "Toggle_Character_Buffs_ManaRegen",
-                                "Value"
-                            );
                             Buffs.manaregen_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
                                 "ManaRegen",
@@ -1737,12 +1569,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_buffs_content,
                                 "Strenght",
                                 "Toggle_Character_Buffs_Strenght"
-                            );
-                            Buffs.str_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "Strenght",
-                                "Toggle_Character_Buffs_Strenght",
-                                "Value"
                             );
                             Buffs.str_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
@@ -1756,12 +1582,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "Intelligence",
                                 "Toggle_Character_Buffs_Intelligence"
                             );
-                            Buffs.int_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "Intelligence",
-                                "Toggle_Character_Buffs_Intelligence",
-                                "Value"
-                            );
                             Buffs.int_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
                                 "Intelligence",
@@ -1773,12 +1593,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_buffs_content,
                                 "Dexterity",
                                 "Toggle_Character_Buffs_Dexterity"
-                            );
-                            Buffs.dex_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "Dexterity",
-                                "Toggle_Character_Buffs_Dexterity",
-                                "Value"
                             );
                             Buffs.dex_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
@@ -1792,12 +1606,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "Vitality",
                                 "Toggle_Character_Buffs_Vitality"
                             );
-                            Buffs.vit_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "Vitality",
-                                "Toggle_Character_Buffs_Vitality",
-                                "Value"
-                            );
                             Buffs.vit_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
                                 "Vitality",
@@ -1809,12 +1617,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 character_buffs_content,
                                 "Attunement",
                                 "Toggle_Character_Buffs_Attunement"
-                            );
-                            Buffs.att_text = Functions.Get_TextInToggle(
-                                character_buffs_content,
-                                "Attunement",
-                                "Toggle_Character_Buffs_Attunement",
-                                "Value"
                             );
                             Buffs.att_slider = Functions.Get_SliderInPanel(
                                 character_buffs_content,
@@ -2136,7 +1938,6 @@ public partial class Hud_Manager : MonoBehaviour
                 if (!content_obj.IsNullOrDestroyed())
                 {
                     content_obj.active = show;
-                    enable = show;
                 }
             }
 
@@ -2635,73 +2436,11 @@ public partial class Hud_Manager : MonoBehaviour
                                 .PermanentBuffs
                                 .Att_Buff_Value;
                         }
-                        controls_initialized = true;
                         result = true;
                     }
                 }
 
                 return result;
-            }
-
-            public static void Update_PlayerData()
-            {
-                need_update = false;
-                if (
-                    (!Refs_Manager.player_treedata.IsNullOrDestroyed())
-                    && (!Refs_Manager.character_class_list.IsNullOrDestroyed())
-                    && (!Refs_Manager.player_data.IsNullOrDestroyed())
-                )
-                {
-                    Il2CppSystem.Collections.Generic.List<Dropdown.OptionData> options =
-                        new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
-                    foreach (CharacterClass char_class in Refs_Manager.character_class_list.classes)
-                    {
-                        options.Add(new Dropdown.OptionData { text = char_class.className });
-                    }
-                    if (!Data.class_dropdown.IsNullOrDestroyed())
-                    {
-                        Data.class_dropdown.options = options;
-                        Data.class_dropdown.value = Refs_Manager.player_data.CharacterClass;
-                    }
-                    if (!Data.died_toggle.IsNullOrDestroyed())
-                    {
-                        Data.died_toggle.isOn = Refs_Manager.player_data.Died;
-                    }
-                    if (!Data.deaths_slider.IsNullOrDestroyed())
-                    {
-                        Data.deaths_slider.value = Refs_Manager.player_data.Deaths;
-                    }
-                    if (!Data.deaths_text.IsNullOrDestroyed())
-                    {
-                        Data.deaths_text.text = Refs_Manager.player_data.Deaths.ToString();
-                    }
-                    if (!Data.hardcore_toggle.IsNullOrDestroyed())
-                    {
-                        Data.hardcore_toggle.isOn = Refs_Manager.player_data.Hardcore;
-                    }
-                    if (!Data.masochist_toggle.IsNullOrDestroyed())
-                    {
-                        Data.masochist_toggle.isOn = Refs_Manager.player_data.Masochist;
-                    }
-                    if (!Data.portal_toggle.IsNullOrDestroyed())
-                    {
-                        Data.portal_toggle.isOn = Refs_Manager.player_data.PortalUnlocked;
-                    }
-                    if (!Data.solo_toggle.IsNullOrDestroyed())
-                    {
-                        Data.solo_toggle.isOn = Refs_Manager.player_data.SoloChallenge;
-                    }
-                    if (!Data.lantern_slider.IsNullOrDestroyed())
-                    {
-                        Data.lantern_slider.value = Refs_Manager.player_data.LanternLuminance;
-                    }
-                    if (!Data.lantern_text.IsNullOrDestroyed())
-                    {
-                        Data.lantern_text.text =
-                            Refs_Manager.player_data.LanternLuminance.ToString();
-                    }
-                    Data.UpdateSoulEmberBalance();
-                }
             }
 
             public static void Update_Monoliths_Data()
@@ -2938,317 +2677,6 @@ public partial class Hud_Manager : MonoBehaviour
                 Faction_Tracker.selected_faction = Faction_Tracker.GetFaction();
             }
 
-            public static void UpdateVisuals()
-            {
-                if ((!Save_Manager.instance.IsNullOrDestroyed()) && (controls_initialized))
-                {
-                    if (Save_Manager.instance.initialized)
-                    {
-                        if (!Cheats.autopot_text.IsNullOrDestroyed())
-                        {
-                            Cheats.autopot_text.text =
-                                (int)(
-                                    (Save_Manager.instance.data.Character.Cheats.autoPot / 255)
-                                    * 100
-                                ) + " %";
-                        }
-                        if (!Cheats.density_text.IsNullOrDestroyed())
-                        {
-                            Cheats.density_text.text =
-                                "x "
-                                + (int)(
-                                    Save_Manager.instance.data.Character.Cheats.DensityMultiplier
-                                );
-                        }
-                        if (!Cheats.experience_text.IsNullOrDestroyed())
-                        {
-                            Cheats.experience_text.text =
-                                "x "
-                                + (int)(
-                                    Save_Manager.instance.data.Character.Cheats.ExperienceMultiplier
-                                );
-                        }
-                        if (!Cheats.ability_text.IsNullOrDestroyed())
-                        {
-                            Cheats.ability_text.text =
-                                "x "
-                                + (int)(
-                                    Save_Manager.instance.data.Character.Cheats.AbilityMultiplier
-                                );
-                        }
-                        if (!Cheats.favor_text.IsNullOrDestroyed())
-                        {
-                            Cheats.favor_text.text =
-                                "x "
-                                + (int)(
-                                    Save_Manager.instance.data.Character.Cheats.FavorMultiplier
-                                );
-                        }
-                        if (!Cheats.memoryamber_text.IsNullOrDestroyed())
-                        {
-                            Cheats.memoryamber_text.text =
-                                "x "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .Cheats
-                                        .MemoryAmberMultiplier
-                                );
-                        }
-                        if (!Cheats.itemdropmultiplier_text.IsNullOrDestroyed())
-                        {
-                            Cheats.itemdropmultiplier_text.text =
-                                "x "
-                                + (int)(
-                                    Save_Manager.instance.data.Character.Cheats.ItemDropMultiplier
-                                );
-                        }
-                        if (!Cheats.itemdropchance_text.IsNullOrDestroyed())
-                        {
-                            Cheats.itemdropchance_text.text =
-                                "+ "
-                                + (int)(
-                                    (
-                                        Save_Manager.instance.data.Character.Cheats.ItemDropChance
-                                        / 255
-                                    ) * 100
-                                )
-                                + " %";
-                        }
-                        if (!Cheats.golddropmultiplier_text.IsNullOrDestroyed())
-                        {
-                            Cheats.golddropmultiplier_text.text =
-                                "x "
-                                + (int)(
-                                    Save_Manager.instance.data.Character.Cheats.GoldDropMultiplier
-                                );
-                        }
-                        if (!Cheats.golddropchance_text.IsNullOrDestroyed())
-                        {
-                            Cheats.golddropchance_text.text =
-                                "+ "
-                                + (int)(
-                                    (
-                                        Save_Manager.instance.data.Character.Cheats.GoldDropChance
-                                        / 255
-                                    ) * 100
-                                )
-                                + " %";
-                        }
-
-                        if (!Buffs.movespeed_text.IsNullOrDestroyed())
-                        {
-                            Buffs.movespeed_text.text =
-                                "+ "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .MoveSpeed_Buff_Value * 100
-                                )
-                                + " %";
-                        }
-                        if (!Buffs.damage_text.IsNullOrDestroyed())
-                        {
-                            Buffs.damage_text.text =
-                                "+ "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .Damage_Buff_Value * 100
-                                )
-                                + " %";
-                        }
-                        if (!Buffs.aoe_text.IsNullOrDestroyed())
-                        {
-                            Buffs.aoe_text.text =
-                                "+ "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .AoE_Buff_Value * 100
-                                )
-                                + " %";
-                        }
-                        if (!Buffs.attackspeed_text.IsNullOrDestroyed())
-                        {
-                            Buffs.attackspeed_text.text =
-                                "+ "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .AttackSpeed_Buff_Value * 100
-                                )
-                                + " %";
-                        }
-                        if (!Buffs.castingspeed_text.IsNullOrDestroyed())
-                        {
-                            Buffs.castingspeed_text.text =
-                                "+ "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .CastSpeed_Buff_Value * 100
-                                )
-                                + " %";
-                        }
-
-                        int crit_chance = 0;
-                        if (
-                            Save_Manager
-                                .instance
-                                .data
-                                .Character
-                                .PermanentBuffs
-                                .CriticalChance_Buff_Value > 0
-                        )
-                        {
-                            crit_chance =
-                                (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .CriticalChance_Buff_Value * 100
-                                ) + 1;
-                        }
-                        if (!Buffs.criticalchance_text.IsNullOrDestroyed())
-                        {
-                            Buffs.criticalchance_text.text = "+ " + crit_chance + " %";
-                        }
-                        if (!Buffs.criticalmultiplier_text.IsNullOrDestroyed())
-                        {
-                            Buffs.criticalmultiplier_text.text =
-                                "+ "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .CriticalMultiplier_Buff_Value * 100
-                                )
-                                + " %";
-                        }
-                        if (!Buffs.healthregen_text.IsNullOrDestroyed())
-                        {
-                            Buffs.healthregen_text.text =
-                                "+ "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .HealthRegen_Buff_Value * 100
-                                )
-                                + " %";
-                        }
-                        if (!Buffs.manaregen_text.IsNullOrDestroyed())
-                        {
-                            Buffs.manaregen_text.text =
-                                "+ "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .ManaRegen_Buff_Value * 100
-                                )
-                                + " %";
-                        }
-                        if (!Buffs.str_text.IsNullOrDestroyed())
-                        {
-                            Buffs.str_text.text =
-                                "+ "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .Str_Buff_Value
-                                )
-                                + " %";
-                        }
-                        if (!Buffs.int_text.IsNullOrDestroyed())
-                        {
-                            Buffs.int_text.text =
-                                "+ "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .Int_Buff_Value
-                                )
-                                + " %";
-                        }
-                        if (!Buffs.dex_text.IsNullOrDestroyed())
-                        {
-                            Buffs.dex_text.text =
-                                "+ "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .Dex_Buff_Value
-                                )
-                                + " %";
-                        }
-                        if (!Buffs.vit_text.IsNullOrDestroyed())
-                        {
-                            Buffs.vit_text.text =
-                                "+ "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .Vit_Buff_Value
-                                )
-                                + " %";
-                        }
-                        if (!Buffs.att_text.IsNullOrDestroyed())
-                        {
-                            Buffs.att_text.text =
-                                "+ "
-                                + (int)(
-                                    Save_Manager
-                                        .instance
-                                        .data
-                                        .Character
-                                        .PermanentBuffs
-                                        .Att_Buff_Value
-                                )
-                                + " %";
-                        }
-                    }
-                }
-            }
-
             public class Cheats
             {
                 // BUG: For some reason the game always return true in action delegates
@@ -3478,7 +2906,6 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static Text autopot_text = null;
                 public static Slider autopot_slider = null;
 
                 public static Toggle density_toggle = null;
@@ -3497,7 +2924,6 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static Text density_text = null;
                 public static Slider density_slider = null;
 
                 public static Toggle experience_toggle = null;
@@ -3516,7 +2942,6 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static Text experience_text = null;
                 public static Slider experience_slider = null;
 
                 public static Toggle ability_toggle = null;
@@ -3535,7 +2960,6 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static Text ability_text = null;
                 public static Slider ability_slider = null;
 
                 public static Toggle favor_toggle = null;
@@ -3554,7 +2978,6 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static Text favor_text = null;
                 public static Slider favor_slider = null;
 
                 public static Toggle memoryamber_toggle = null;
@@ -3601,14 +3024,9 @@ public partial class Hud_Manager : MonoBehaviour
                         }
                         Save_Manager.instance.data.Character.Cheats.MemoryAmberMultiplier = value;
                         memoryamber_slider.value = value;
-                        if (!memoryamber_text.IsNullOrDestroyed())
-                        {
-                            memoryamber_text.text = "x " + value;
-                        }
                     }
                 }
 
-                public static Text memoryamber_text = null;
                 public static Slider memoryamber_slider = null;
 
                 public static Toggle itemdropmultiplier_toggle = null;
@@ -3627,7 +3045,6 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static Text itemdropmultiplier_text = null;
                 public static Slider itemdropmultiplier_slider = null;
 
                 public static Toggle itemdropchance_toggle = null;
@@ -3646,7 +3063,6 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static Text itemdropchance_text = null;
                 public static Slider itemdropchance_slider = null;
 
                 public static Toggle golddropmultiplier_toggle = null;
@@ -3665,7 +3081,6 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static Text golddropmultiplier_text = null;
                 public static Slider golddropmultiplier_slider = null;
 
                 public static Toggle golddropchance_toggle = null;
@@ -3684,7 +3099,6 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static Text golddropchance_text = null;
                 public static Slider golddropchance_slider = null;
 
                 public static Toggle waypoints_toggle = null;
@@ -3801,9 +3215,7 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Toggle masochist_toggle = null;
                 public static Toggle portal_toggle = null;
                 public static Toggle solo_toggle = null;
-                public static Text deaths_text = null;
                 public static Slider deaths_slider = null;
-                public static Text lantern_text = null;
                 public static Slider lantern_slider = null;
                 public static GameObject soul_row = null;
                 public static Text soul_text = null;
@@ -3816,7 +3228,6 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Text weaver_points_text = null;
                 public static Slider weaver_points_slider = null;
                 public static Toggle weaver_multiplier_toggle = null;
-                public static Text weaver_multiplier_text = null;
                 public static Slider weaver_multiplier_slider = null;
                 public static bool suppressWeaverSlider = false;
                 public static readonly System.Action<bool> weaver_points_toggle_Action =
@@ -5021,59 +4432,45 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Toggle enable_mod = null;
 
                 public static Toggle movespeed_toggle = null;
-                public static Text movespeed_text = null;
                 public static Slider movespeed_slider = null;
 
                 public static Toggle damage_toggle = null;
-                public static Text damage_text = null;
                 public static Slider damage_slider = null;
 
                 public static Toggle aoe_toggle = null;
-                public static Text aoe_text = null;
                 public static Slider aoe_slider = null;
 
                 public static Toggle attackspeed_toggle = null;
-                public static Text attackspeed_text = null;
                 public static Slider attackspeed_slider = null;
 
                 public static Toggle castingspeed_toggle = null;
-                public static Text castingspeed_text = null;
                 public static Slider castingspeed_slider = null;
 
                 public static Toggle criticalchance_toggle = null;
-                public static Text criticalchance_text = null;
                 public static Slider criticalchance_slider = null;
 
                 public static Toggle criticalmultiplier_toggle = null;
-                public static Text criticalmultiplier_text = null;
                 public static Slider criticalmultiplier_slider = null;
 
                 public static Toggle healthregen_toggle = null;
-                public static Text healthregen_text = null;
                 public static Slider healthregen_slider = null;
 
                 public static Toggle manaregen_toggle = null;
-                public static Text manaregen_text = null;
                 public static Slider manaregen_slider = null;
 
                 public static Toggle str_toggle = null;
-                public static Text str_text = null;
                 public static Slider str_slider = null;
 
                 public static Toggle int_toggle = null;
-                public static Text int_text = null;
                 public static Slider int_slider = null;
 
                 public static Toggle dex_toggle = null;
-                public static Text dex_text = null;
                 public static Slider dex_slider = null;
 
                 public static Toggle vit_toggle = null;
-                public static Text vit_text = null;
                 public static Slider vit_slider = null;
 
                 public static Toggle att_toggle = null;
-                public static Text att_text = null;
                 public static Slider att_slider = null;
 
                 static readonly string[] BuffPanelOrder =
@@ -5231,8 +4628,6 @@ public partial class Hud_Manager : MonoBehaviour
         public class Items
         {
             public static GameObject content_obj = null;
-            public static bool controls_initialized = false;
-            public static bool enable = false;
 
             public static void Get_Refs()
             {
@@ -5272,12 +4667,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "Implicits",
                                 "Toggle_Items_Drop_Implicits"
                             );
-                            Drop.implicits_text = Functions.Get_TextInToggle(
-                                items_drop_content,
-                                "Implicits",
-                                "Toggle_Items_Drop_Implicits",
-                                "Value"
-                            );
                             Drop.implicits_slider_min = Functions.Get_SliderInPanel(
                                 items_drop_content,
                                 "Implicits",
@@ -5293,12 +4682,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_drop_content,
                                 "ForginPotencial",
                                 "Toggle_Items_Drop_ForginPotencial"
-                            );
-                            Drop.forgin_potencial_text = Functions.Get_TextInToggle(
-                                items_drop_content,
-                                "ForginPotencial",
-                                "Toggle_Items_Drop_ForginPotencial",
-                                "Value"
                             );
                             Drop.forgin_potencial_slider_min = Functions.Get_SliderInPanel(
                                 items_drop_content,
@@ -5322,12 +4705,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "SealTier",
                                 "Toggle_Items_Drop_SealTier"
                             );
-                            Drop.seal_tier_text = Functions.Get_TextInToggle(
-                                items_drop_content,
-                                "SealTier",
-                                "Toggle_Items_Drop_SealTier",
-                                "Value"
-                            );
                             Drop.seal_tier_slider_min = Functions.Get_SliderInPanel(
                                 items_drop_content,
                                 "SealTier",
@@ -5344,12 +4721,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "SealValue",
                                 "Toggle_Items_Drop_SealValue"
                             );
-                            Drop.seal_value_text = Functions.Get_TextInToggle(
-                                items_drop_content,
-                                "SealValue",
-                                "Toggle_Items_Drop_SealValue",
-                                "Value"
-                            );
                             Drop.seal_value_slider_min = Functions.Get_SliderInPanel(
                                 items_drop_content,
                                 "SealValue",
@@ -5365,12 +4736,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_drop_content,
                                 "NbAffixes",
                                 "Toggle_Items_Drop_NbAffixes"
-                            );
-                            Drop.affix_count_text = Functions.Get_TextInToggle(
-                                items_drop_content,
-                                "NbAffixes",
-                                "Toggle_Items_Drop_NbAffixes",
-                                "Value"
                             );
                             Drop.affix_count_slider_min = Functions.Get_SliderInPanel(
                                 items_drop_content,
@@ -5390,12 +4755,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "AffixesTiers",
                                 "Toggle_Items_Drop_AffixesTiers"
                             );
-                            Drop.affix_tiers_text = Functions.Get_TextInToggle(
-                                items_drop_content,
-                                "AffixesTiers",
-                                "Toggle_Items_Drop_AffixesTiers",
-                                "Value"
-                            );
                             Drop.affix_tiers_slider_min = Functions.Get_SliderInPanel(
                                 items_drop_content,
                                 "AffixesTiers",
@@ -5411,12 +4770,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_drop_content,
                                 "AffixesValues",
                                 "Toggle_Items_Drop_AffixesValues"
-                            );
-                            Drop.affix_values_text = Functions.Get_TextInToggle(
-                                items_drop_content,
-                                "AffixesValues",
-                                "Toggle_Items_Drop_AffixesValues",
-                                "Value"
                             );
                             Drop.affix_values_slider_min = Functions.Get_SliderInPanel(
                                 items_drop_content,
@@ -5434,12 +4787,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "UniqueMods",
                                 "Toggle_Items_Drop_UniqueMods"
                             );
-                            Drop.unique_mods_text = Functions.Get_TextInToggle(
-                                items_drop_content,
-                                "UniqueMods",
-                                "Toggle_Items_Drop_UniqueMods",
-                                "Value"
-                            );
                             Drop.unique_mods_slider_min = Functions.Get_SliderInPanel(
                                 items_drop_content,
                                 "UniqueMods",
@@ -5456,12 +4803,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "LegendaryPotencial",
                                 "Toggle_Items_Drop_LegendaryPotencial"
                             );
-                            Drop.legendary_potencial_text = Functions.Get_TextInToggle(
-                                items_drop_content,
-                                "LegendaryPotencial",
-                                "Toggle_Items_Drop_LegendaryPotencial",
-                                "Value"
-                            );
                             Drop.legendary_potencial_slider_min = Functions.Get_SliderInPanel(
                                 items_drop_content,
                                 "LegendaryPotencial",
@@ -5477,12 +4818,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_drop_content,
                                 "WeaverWill",
                                 "Toggle_Items_Drop_WeaverWill"
-                            );
-                            Drop.weaver_will_text = Functions.Get_TextInToggle(
-                                items_drop_content,
-                                "WeaverWill",
-                                "Toggle_Items_Drop_WeaverWill",
-                                "Value"
                             );
                             Drop.weaver_will_slider_min = Functions.Get_SliderInPanel(
                                 items_drop_content,
@@ -5565,12 +4900,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "AutoStore_Timer",
                                 "Toggle_Items_Pickup_AutoStore_Timer"
                             );
-                            Pickup.autostore_materials_Timer_text = Functions.Get_TextInToggle(
-                                items_pickup_content,
-                                "AutoStore_Timer",
-                                "Toggle_Items_Pickup_AutoStore_Timer",
-                                "Label"
-                            );
                             Pickup.autostore_materials_Timer_slider = Functions.Get_SliderInPanel(
                                 items_pickup_content,
                                 "AutoStore_Timer",
@@ -5607,18 +4936,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_pickup_content,
                                 "AutoShatter_QuantityChance",
                                 "Slider_Items_Pickup_AutoShatter_QuantityChance"
-                            );
-                            Pickup.autoshatter_chance_text = Pickup.PanelValueText(
-                                items_pickup_content,
-                                "AutoShatter_Chance"
-                            );
-                            Pickup.autoshatter_affix_text = Pickup.PanelValueText(
-                                items_pickup_content,
-                                "AutoShatter_AffixChance"
-                            );
-                            Pickup.autoshatter_quantity_text = Pickup.PanelValueText(
-                                items_pickup_content,
-                                "AutoShatter_QuantityChance"
                             );
 
                             Pickup.range_pickup_toggle = Functions.Get_ToggleInPanel(
@@ -5684,12 +5001,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "ForginPotencial",
                                 "Toggle_Items_Craft_ForginPotencial"
                             );
-                            CraftingSlot.forgin_potencial_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "ForginPotencial",
-                                "Toggle_Items_Craft_ForginPotencial",
-                                "Value"
-                            );
                             CraftingSlot.forgin_potencial_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
                                 "ForginPotencial",
@@ -5700,12 +5011,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_craft_content,
                                 "Implicit0",
                                 "Toggle_Items_Craft_Implicit0"
-                            );
-                            CraftingSlot.implicit_0_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "Implicit0",
-                                "Toggle_Items_Craft_Implicit0",
-                                "Value"
                             );
                             CraftingSlot.implicit_0_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
@@ -5718,12 +5023,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "Implicit1",
                                 "Toggle_Items_Craft_Implicit1"
                             );
-                            CraftingSlot.implicit_1_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "Implicit1",
-                                "Toggle_Items_Craft_Implicit1",
-                                "Value"
-                            );
                             CraftingSlot.implicit_1_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
                                 "Implicit1",
@@ -5734,12 +5033,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_craft_content,
                                 "Implicit2",
                                 "Toggle_Items_Craft_Implicit2"
-                            );
-                            CraftingSlot.implicit_2_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "Implicit2",
-                                "Toggle_Items_Craft_Implicit2",
-                                "Value"
                             );
                             CraftingSlot.implicit_2_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
@@ -5752,12 +5045,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "SealTier",
                                 "Toggle_Items_Craft_SealTier"
                             );
-                            CraftingSlot.seal_tier_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "SealTier",
-                                "Toggle_Items_Craft_SealTier",
-                                "Value"
-                            );
                             CraftingSlot.seal_tier_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
                                 "SealTier",
@@ -5768,12 +5055,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_craft_content,
                                 "SealValue",
                                 "Toggle_Items_Craft_SealValue"
-                            );
-                            CraftingSlot.seal_value_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "SealValue",
-                                "Toggle_Items_Craft_SealValue",
-                                "Value"
                             );
                             CraftingSlot.seal_value_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
@@ -5786,12 +5067,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "AffixTier0",
                                 "Toggle_Items_Craft_AffixTier0"
                             );
-                            CraftingSlot.affix_0_tier_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "AffixTier0",
-                                "Toggle_Items_Craft_AffixTier0",
-                                "Value"
-                            );
                             CraftingSlot.affix_0_tier_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
                                 "AffixTier0",
@@ -5802,12 +5077,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_craft_content,
                                 "AffixValue0",
                                 "Toggle_Items_Craft_AffixValue0"
-                            );
-                            CraftingSlot.affix_0_value_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "AffixValue0",
-                                "Toggle_Items_Craft_AffixValue0",
-                                "Value"
                             );
                             CraftingSlot.affix_0_value_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
@@ -5820,12 +5089,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "AffixTier1",
                                 "Toggle_Items_Craft_AffixTier1"
                             );
-                            CraftingSlot.affix_1_tier_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "AffixTier1",
-                                "Toggle_Items_Craft_AffixTier1",
-                                "Value"
-                            );
                             CraftingSlot.affix_1_tier_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
                                 "AffixTier1",
@@ -5836,12 +5099,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_craft_content,
                                 "AffixValue1",
                                 "Toggle_Items_Craft_AffixValue1"
-                            );
-                            CraftingSlot.affix_1_value_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "AffixValue1",
-                                "Toggle_Items_Craft_AffixValue1",
-                                "Value"
                             );
                             CraftingSlot.affix_1_value_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
@@ -5854,12 +5111,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "AffixTier2",
                                 "Toggle_Items_Craft_AffixTier2"
                             );
-                            CraftingSlot.affix_2_tier_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "AffixTier2",
-                                "Toggle_Items_Craft_AffixTier2",
-                                "Value"
-                            );
                             CraftingSlot.affix_2_tier_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
                                 "AffixTier2",
@@ -5870,12 +5121,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_craft_content,
                                 "AffixValue2",
                                 "Toggle_Items_Craft_AffixValue2"
-                            );
-                            CraftingSlot.affix_2_value_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "AffixValue2",
-                                "Toggle_Items_Craft_AffixValue2",
-                                "Value"
                             );
                             CraftingSlot.affix_2_value_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
@@ -5888,12 +5133,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "AffixTier3",
                                 "Toggle_Items_Craft_AffixTier3"
                             );
-                            CraftingSlot.affix_3_tier_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "AffixTier3",
-                                "Toggle_Items_Craft_AffixTier3",
-                                "Value"
-                            );
                             CraftingSlot.affix_3_tier_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
                                 "AffixTier3",
@@ -5904,12 +5143,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_craft_content,
                                 "AffixValue3",
                                 "Toggle_Items_Craft_AffixValue3"
-                            );
-                            CraftingSlot.affix_3_value_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "AffixValue3",
-                                "Toggle_Items_Craft_AffixValue3",
-                                "Value"
                             );
                             CraftingSlot.affix_3_value_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
@@ -5922,12 +5155,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "UniqueMod0",
                                 "Toggle_Items_Craft_UniqueMod0"
                             );
-                            CraftingSlot.uniquemod_0_value_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "UniqueMod0",
-                                "Toggle_Items_Craft_UniqueMod0",
-                                "Value"
-                            );
                             CraftingSlot.uniquemod_0_value_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
                                 "UniqueMod0",
@@ -5938,12 +5165,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_craft_content,
                                 "UniqueMod1",
                                 "Toggle_Items_Craft_UniqueMod1"
-                            );
-                            CraftingSlot.uniquemod_1_value_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "UniqueMod1",
-                                "Toggle_Items_Craft_UniqueMod1",
-                                "Value"
                             );
                             CraftingSlot.uniquemod_1_value_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
@@ -5956,12 +5177,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "UniqueMod2",
                                 "Toggle_Items_Craft_UniqueMod2"
                             );
-                            CraftingSlot.uniquemod_2_value_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "UniqueMod2",
-                                "Toggle_Items_Craft_UniqueMod2",
-                                "Value"
-                            );
                             CraftingSlot.uniquemod_2_value_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
                                 "UniqueMod2",
@@ -5972,12 +5187,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_craft_content,
                                 "UniqueMod3",
                                 "Toggle_Items_Craft_UniqueMod3"
-                            );
-                            CraftingSlot.uniquemod_3_value_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "UniqueMod3",
-                                "Toggle_Items_Craft_UniqueMod3",
-                                "Value"
                             );
                             CraftingSlot.uniquemod_3_value_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
@@ -5990,12 +5199,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "UniqueMod4",
                                 "Toggle_Items_Craft_UniqueMod4"
                             );
-                            CraftingSlot.uniquemod_4_value_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "UniqueMod4",
-                                "Toggle_Items_Craft_UniqueMod4",
-                                "Value"
-                            );
                             CraftingSlot.uniquemod_4_value_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
                                 "UniqueMod4",
@@ -6006,12 +5209,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_craft_content,
                                 "UniqueMod5",
                                 "Toggle_Items_Craft_UniqueMod5"
-                            );
-                            CraftingSlot.uniquemod_5_value_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "UniqueMod5",
-                                "Toggle_Items_Craft_UniqueMod5",
-                                "Value"
                             );
                             CraftingSlot.uniquemod_5_value_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
@@ -6024,12 +5221,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "UniqueMod6",
                                 "Toggle_Items_Craft_UniqueMod6"
                             );
-                            CraftingSlot.uniquemod_6_value_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "UniqueMod6",
-                                "Toggle_Items_Craft_UniqueMod6",
-                                "Value"
-                            );
                             CraftingSlot.uniquemod_6_value_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
                                 "UniqueMod6",
@@ -6040,12 +5231,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_craft_content,
                                 "UniqueMod7",
                                 "Toggle_Items_Craft_UniqueMod7"
-                            );
-                            CraftingSlot.uniquemod_7_value_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "UniqueMod7",
-                                "Toggle_Items_Craft_UniqueMod7",
-                                "Value"
                             );
                             CraftingSlot.uniquemod_7_value_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
@@ -6058,12 +5243,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "LegendaryPotencial",
                                 "Toggle_Items_Craft_LegendaryPotencial"
                             );
-                            CraftingSlot.legendary_potencial_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "LegendaryPotencial",
-                                "Toggle_Items_Craft_LegendaryPotencial",
-                                "Value"
-                            );
                             CraftingSlot.legendary_potencial_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
                                 "LegendaryPotencial",
@@ -6074,12 +5253,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 items_craft_content,
                                 "WeaverWill",
                                 "Toggle_Items_Craft_WeaverWill"
-                            );
-                            CraftingSlot.weaver_will_text = Functions.Get_TextInToggle(
-                                items_craft_content,
-                                "WeaverWill",
-                                "Toggle_Items_Craft_WeaverWill",
-                                "Value"
                             );
                             CraftingSlot.weaver_will_slider = Functions.Get_SliderInPanel(
                                 items_craft_content,
@@ -6112,7 +5285,6 @@ public partial class Hud_Manager : MonoBehaviour
                 if (!content_obj.IsNullOrDestroyed())
                 {
                     content_obj.active = show;
-                    enable = show;
                 }
             }
 
@@ -6823,224 +5995,11 @@ public partial class Hud_Manager : MonoBehaviour
                             .CraftingSlot
                             .WeaverWill;
 
-                        controls_initialized = true;
                         result = true;
                     }
                 }
 
                 return result;
-            }
-
-            public static void UpdateVisuals()
-            {
-                if ((!Save_Manager.instance.IsNullOrDestroyed()) && (controls_initialized))
-                {
-                    if (
-                        (Save_Manager.instance.initialized)
-                        && (!Save_Manager.instance.data.IsNullOrDestroyed())
-                    )
-                    {
-                        //Values
-                        Drop.forgin_potencial_text.text =
-                            (int)(Save_Manager.instance.data.Items.Drop.ForginPotencial_Min)
-                            + " to "
-                            + (int)(Save_Manager.instance.data.Items.Drop.ForginPotencial_Max);
-                        Drop.affix_count_text.text =
-                            (int)(Save_Manager.instance.data.Items.Drop.AffixCount_Min)
-                            + " to "
-                            + (int)(Save_Manager.instance.data.Items.Drop.AffixCount_Max);
-                        Drop.legendary_potencial_text.text =
-                            (int)(Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Min)
-                            + " to "
-                            + (int)(Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Max);
-                        Drop.weaver_will_text.text =
-                            (int)(Save_Manager.instance.data.Items.Drop.WeaverWill_Min)
-                            + " to "
-                            + (int)(Save_Manager.instance.data.Items.Drop.WeaverWill_Max);
-                        CraftingSlot.forgin_potencial_text.text =
-                            ""
-                            + (int)(Save_Manager.instance.data.Items.CraftingSlot.ForginPotencial);
-                        CraftingSlot.legendary_potencial_text.text =
-                            ""
-                            + (int)(
-                                Save_Manager.instance.data.Items.CraftingSlot.LegendaryPotencial
-                            );
-                        CraftingSlot.weaver_will_text.text =
-                            "" + (int)(Save_Manager.instance.data.Items.CraftingSlot.WeaverWill);
-                        Pickup.autostore_materials_Timer_text.text =
-                            "All "
-                            + (int)Save_Manager.instance.data.Items.Pickup.AutoStore_Timer
-                            + " sec";
-                        if (!Pickup.autoshatter_chance_text.IsNullOrDestroyed())
-                        {
-                            Pickup.autoshatter_chance_text.text =
-                                Save_Manager.instance.data.Items.Pickup.AutoShatter_Chance + " %";
-                        }
-                        if (!Pickup.autoshatter_affix_text.IsNullOrDestroyed())
-                        {
-                            Pickup.autoshatter_affix_text.text =
-                                Save_Manager.instance.data.Items.Pickup.AutoShatter_AffixChance
-                                + " %";
-                        }
-                        if (!Pickup.autoshatter_quantity_text.IsNullOrDestroyed())
-                        {
-                            Pickup.autoshatter_quantity_text.text =
-                                Save_Manager.instance.data.Items.Pickup.AutoShatter_QuantityChance
-                                + " %";
-                        }
-
-                        //Tiers
-                        Drop.seal_tier_text.text =
-                            ((int)(Save_Manager.instance.data.Items.Drop.SealTier_Min) + 1)
-                            + " to "
-                            + ((int)(Save_Manager.instance.data.Items.Drop.SealTier_Max) + 1);
-                        Drop.affix_tiers_text.text =
-                            ((int)(Save_Manager.instance.data.Items.Drop.AffixTiers_Min) + 1)
-                            + " to "
-                            + ((int)(Save_Manager.instance.data.Items.Drop.AffixTiers_Max) + 1);
-                        CraftingSlot.seal_tier_text.text =
-                            ""
-                            + ((int)(Save_Manager.instance.data.Items.CraftingSlot.Seal_Tier) + 1);
-                        CraftingSlot.affix_0_tier_text.text =
-                            ""
-                            + (
-                                (int)(Save_Manager.instance.data.Items.CraftingSlot.Affix_0_Tier)
-                                + 1
-                            );
-                        CraftingSlot.affix_1_tier_text.text =
-                            ""
-                            + (
-                                (int)(Save_Manager.instance.data.Items.CraftingSlot.Affix_1_Tier)
-                                + 1
-                            );
-                        CraftingSlot.affix_2_tier_text.text =
-                            ""
-                            + (
-                                (int)(Save_Manager.instance.data.Items.CraftingSlot.Affix_2_Tier)
-                                + 1
-                            );
-                        CraftingSlot.affix_3_tier_text.text =
-                            ""
-                            + (
-                                (int)(Save_Manager.instance.data.Items.CraftingSlot.Affix_3_Tier)
-                                + 1
-                            );
-
-                        //%
-                        Drop.implicits_text.text =
-                            (int)((Save_Manager.instance.data.Items.Drop.Implicits_Min / 255) * 100)
-                            + " to "
-                            + (int)(
-                                (Save_Manager.instance.data.Items.Drop.Implicits_Max / 255) * 100
-                            )
-                            + " %";
-                        Drop.seal_value_text.text =
-                            (int)((Save_Manager.instance.data.Items.Drop.SealValue_Min / 255) * 100)
-                            + " to "
-                            + (int)(
-                                (Save_Manager.instance.data.Items.Drop.SealValue_Max / 255) * 100
-                            )
-                            + " %";
-                        Drop.affix_values_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.Drop.AffixValues_Min / 255) * 100
-                            )
-                            + " to "
-                            + (int)(
-                                (Save_Manager.instance.data.Items.Drop.AffixValues_Max / 255) * 100
-                            )
-                            + " %";
-                        Drop.unique_mods_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.Drop.UniqueMods_Min / 255) * 100
-                            )
-                            + " to "
-                            + (int)(
-                                (Save_Manager.instance.data.Items.Drop.UniqueMods_Max / 255) * 100
-                            )
-                            + " %";
-                        CraftingSlot.implicit_0_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.Implicit_0 / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.implicit_1_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.Implicit_1 / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.implicit_2_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.Implicit_2 / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.seal_value_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.Seal_Value / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.affix_0_value_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.Affix_0_Value / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.affix_1_value_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.Affix_1_Value / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.affix_2_value_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.Affix_2_Value / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.affix_3_value_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.Affix_3_Value / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.uniquemod_0_value_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.UniqueMod_0 / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.uniquemod_1_value_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.UniqueMod_1 / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.uniquemod_2_value_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.UniqueMod_2 / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.uniquemod_3_value_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.UniqueMod_3 / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.uniquemod_4_value_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.UniqueMod_4 / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.uniquemod_5_value_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.UniqueMod_5 / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.uniquemod_6_value_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.UniqueMod_6 / 255)
-                                * 100
-                            ) + " %";
-                        CraftingSlot.uniquemod_7_value_text.text =
-                            (int)(
-                                (Save_Manager.instance.data.Items.CraftingSlot.UniqueMod_7 / 255)
-                                * 100
-                            ) + " %";
-                    }
-                }
             }
 
             public class Drop
@@ -7050,54 +6009,44 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Toggle force_legendary_toggle = null;
 
                 public static Toggle implicits_toggle = null;
-                public static Text implicits_text = null;
                 public static Slider implicits_slider_min = null;
                 public static Slider implicits_slider_max = null;
 
                 public static Toggle forgin_potencial_toggle = null;
-                public static Text forgin_potencial_text = null;
                 public static Slider forgin_potencial_slider_min = null;
                 public static Slider forgin_potencial_slider_max = null;
 
                 public static Toggle force_seal_toggle = null;
 
                 public static Toggle seal_tier_toggle = null;
-                public static Text seal_tier_text = null;
                 public static Slider seal_tier_slider_min = null;
                 public static Slider seal_tier_slider_max = null;
 
                 public static Toggle seal_value_toggle = null;
-                public static Text seal_value_text = null;
                 public static Slider seal_value_slider_min = null;
                 public static Slider seal_value_slider_max = null;
 
                 public static Toggle affix_count_toggle = null;
-                public static Text affix_count_text = null;
                 public static Slider affix_count_slider_min = null;
                 public static Slider affix_count_slider_max = null;
 
                 public static Toggle affix_tiers_toggle = null;
-                public static Text affix_tiers_text = null;
                 public static Slider affix_tiers_slider_min = null;
                 public static Slider affix_tiers_slider_max = null;
 
                 public static Toggle affix_values_toggle = null;
-                public static Text affix_values_text = null;
                 public static Slider affix_values_slider_min = null;
                 public static Slider affix_values_slider_max = null;
 
                 public static Toggle unique_mods_toggle = null;
-                public static Text unique_mods_text = null;
                 public static Slider unique_mods_slider_min = null;
                 public static Slider unique_mods_slider_max = null;
 
                 public static Toggle legendary_potencial_toggle = null;
-                public static Text legendary_potencial_text = null;
                 public static Slider legendary_potencial_slider_min = null;
                 public static Slider legendary_potencial_slider_max = null;
 
                 public static Toggle weaver_will_toggle = null;
-                public static Text weaver_will_text = null;
                 public static Slider weaver_will_slider_min = null;
                 public static Slider weaver_will_slider_max = null;
             }
@@ -7116,7 +6065,6 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Toggle autostore_materials_ondrop_toggle = null;
                 public static Toggle autostore_materials_oninventoryopen_toggle = null;
                 public static Toggle autostore_materials_Timer_toggle = null;
-                public static Text autostore_materials_Timer_text = null;
                 public static Slider autostore_materials_Timer_slider = null;
                 public static Toggle autosell_hide_toggle = null;
                 public static Toggle autoshatter_fromfilter_toggle = null;
@@ -7124,24 +6072,6 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Slider autoshatter_chance_slider = null;
                 public static Slider autoshatter_affix_slider = null;
                 public static Slider autoshatter_quantity_slider = null;
-                public static Text autoshatter_chance_text = null;
-                public static Text autoshatter_affix_text = null;
-                public static Text autoshatter_quantity_text = null;
-
-                public static Text PanelValueText(GameObject content, string panelName)
-                {
-                    GameObject panel = Functions.GetChild(content, panelName);
-                    if (panel.IsNullOrDestroyed())
-                    {
-                        return null;
-                    }
-                    GameObject valueObj = Functions.FindDescendant(panel, "Value");
-                    if (valueObj.IsNullOrDestroyed())
-                    {
-                        return null;
-                    }
-                    return valueObj.GetComponent<Text>();
-                }
 
                 public static Toggle range_pickup_toggle = null;
                 public static Toggle hide_materials_notifications_toggle = null;
@@ -7201,99 +6131,75 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Toggle enable_mod = null;
 
                 public static Toggle forgin_potencial_toggle = null;
-                public static Text forgin_potencial_text = null;
                 public static Slider forgin_potencial_slider = null;
 
                 public static Toggle implicit_0_toggle = null;
-                public static Text implicit_0_text = null;
                 public static Slider implicit_0_slider = null;
 
                 public static Toggle implicit_1_toggle = null;
-                public static Text implicit_1_text = null;
                 public static Slider implicit_1_slider = null;
 
                 public static Toggle implicit_2_toggle = null;
-                public static Text implicit_2_text = null;
                 public static Slider implicit_2_slider = null;
 
                 public static Toggle seal_tier_toggle = null;
-                public static Text seal_tier_text = null;
                 public static Slider seal_tier_slider = null;
 
                 public static Toggle seal_value_toggle = null;
-                public static Text seal_value_text = null;
                 public static Slider seal_value_slider = null;
 
                 public static Toggle affix_0_tier_toggle = null;
-                public static Text affix_0_tier_text = null;
                 public static Slider affix_0_tier_slider = null;
 
                 public static Toggle affix_0_value_toggle = null;
-                public static Text affix_0_value_text = null;
                 public static Slider affix_0_value_slider = null;
 
                 public static Toggle affix_1_tier_toggle = null;
-                public static Text affix_1_tier_text = null;
                 public static Slider affix_1_tier_slider = null;
 
                 public static Toggle affix_1_value_toggle = null;
-                public static Text affix_1_value_text = null;
                 public static Slider affix_1_value_slider = null;
 
                 public static Toggle affix_2_tier_toggle = null;
-                public static Text affix_2_tier_text = null;
                 public static Slider affix_2_tier_slider = null;
 
                 public static Toggle affix_2_value_toggle = null;
-                public static Text affix_2_value_text = null;
                 public static Slider affix_2_value_slider = null;
 
                 public static Toggle affix_3_tier_toggle = null;
-                public static Text affix_3_tier_text = null;
                 public static Slider affix_3_tier_slider = null;
 
                 public static Toggle affix_3_value_toggle = null;
-                public static Text affix_3_value_text = null;
                 public static Slider affix_3_value_slider = null;
 
                 public static Toggle uniquemod_0_value_toggle = null;
-                public static Text uniquemod_0_value_text = null;
                 public static Slider uniquemod_0_value_slider = null;
 
                 public static Toggle uniquemod_1_value_toggle = null;
-                public static Text uniquemod_1_value_text = null;
                 public static Slider uniquemod_1_value_slider = null;
 
                 public static Toggle uniquemod_2_value_toggle = null;
-                public static Text uniquemod_2_value_text = null;
                 public static Slider uniquemod_2_value_slider = null;
 
                 public static Toggle uniquemod_3_value_toggle = null;
-                public static Text uniquemod_3_value_text = null;
                 public static Slider uniquemod_3_value_slider = null;
 
                 public static Toggle uniquemod_4_value_toggle = null;
-                public static Text uniquemod_4_value_text = null;
                 public static Slider uniquemod_4_value_slider = null;
 
                 public static Toggle uniquemod_5_value_toggle = null;
-                public static Text uniquemod_5_value_text = null;
                 public static Slider uniquemod_5_value_slider = null;
 
                 public static Toggle uniquemod_6_value_toggle = null;
-                public static Text uniquemod_6_value_text = null;
                 public static Slider uniquemod_6_value_slider = null;
 
                 public static Toggle uniquemod_7_value_toggle = null;
-                public static Text uniquemod_7_value_text = null;
                 public static Slider uniquemod_7_value_slider = null;
 
                 public static Toggle legendary_potencial_toggle = null;
-                public static Text legendary_potencial_text = null;
                 public static Slider legendary_potencial_slider = null;
 
                 public static Toggle weaver_will_toggle = null;
-                public static Text weaver_will_text = null;
                 public static Slider weaver_will_slider = null;
             }
         }
@@ -7301,8 +6207,6 @@ public partial class Hud_Manager : MonoBehaviour
         public class Scenes
         {
             public static GameObject content_obj = null;
-            public static bool controls_initialized = false;
-            public static bool enable = false;
 
             public static void Get_Refs()
             {
@@ -7329,12 +6233,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "ZoomMinimum",
                                 "Toggle_Scenes_Camera_ZoomMinimum"
                             );
-                            Camera.zoom_minimum_text = Functions.Get_TextInToggle(
-                                scene_camera_content,
-                                "ZoomMinimum",
-                                "Toggle_Scenes_Camera_ZoomMinimum",
-                                "Value"
-                            );
                             Camera.zoom_minimum_slider = Functions.Get_SliderInPanel(
                                 scene_camera_content,
                                 "ZoomMinimum",
@@ -7345,12 +6243,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 scene_camera_content,
                                 "ZoomPerScroll",
                                 "Toggle_Scenes_Camera_ZoomPerScroll"
-                            );
-                            Camera.zoom_per_scroll_text = Functions.Get_TextInToggle(
-                                scene_camera_content,
-                                "ZoomPerScroll",
-                                "Toggle_Scenes_Camera_ZoomPerScroll",
-                                "Value"
                             );
                             Camera.zoom_per_scroll_slider = Functions.Get_SliderInPanel(
                                 scene_camera_content,
@@ -7363,12 +6255,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "ZoomSpeed",
                                 "Toggle_Scenes_Camera_ZoomSpeed"
                             );
-                            Camera.zoom_speed_text = Functions.Get_TextInToggle(
-                                scene_camera_content,
-                                "ZoomSpeed",
-                                "Toggle_Scenes_Camera_ZoomSpeed",
-                                "Value"
-                            );
                             Camera.zoom_speed_slider = Functions.Get_SliderInPanel(
                                 scene_camera_content,
                                 "ZoomSpeed",
@@ -7379,12 +6265,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 scene_camera_content,
                                 "DefaultRotation",
                                 "Toggle_Scenes_Camera_DefaultRotation"
-                            );
-                            Camera.default_rotation_text = Functions.Get_TextInToggle(
-                                scene_camera_content,
-                                "DefaultRotation",
-                                "Toggle_Scenes_Camera_DefaultRotation",
-                                "Value"
                             );
                             Camera.default_rotation_slider = Functions.Get_SliderInPanel(
                                 scene_camera_content,
@@ -7397,12 +6277,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "OffsetMinimum",
                                 "Toggle_Scenes_Camera_OffsetMinimum"
                             );
-                            Camera.offset_minimum_text = Functions.Get_TextInToggle(
-                                scene_camera_content,
-                                "OffsetMinimum",
-                                "Toggle_Scenes_Camera_OffsetMinimum",
-                                "Value"
-                            );
                             Camera.offset_minimum_slider = Functions.Get_SliderInPanel(
                                 scene_camera_content,
                                 "OffsetMinimum",
@@ -7413,12 +6287,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 scene_camera_content,
                                 "OffsetMaximum",
                                 "Toggle_Scenes_Camera_OffsetMaximum"
-                            );
-                            Camera.offset_maximum_text = Functions.Get_TextInToggle(
-                                scene_camera_content,
-                                "OffsetMaximum",
-                                "Toggle_Scenes_Camera_OffsetMaximum",
-                                "Value"
                             );
                             Camera.offset_maximum_slider = Functions.Get_SliderInPanel(
                                 scene_camera_content,
@@ -7431,12 +6299,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "AngleMinimum",
                                 "Toggle_Scenes_Camera_AngleMinimum"
                             );
-                            Camera.angle_minimum_text = Functions.Get_TextInToggle(
-                                scene_camera_content,
-                                "AngleMinimum",
-                                "Toggle_Scenes_Camera_AngleMinimum",
-                                "Value"
-                            );
                             Camera.angle_minimum_slider = Functions.Get_SliderInPanel(
                                 scene_camera_content,
                                 "AngleMinimum",
@@ -7447,12 +6309,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 scene_camera_content,
                                 "AngleMaximum",
                                 "Toggle_Scenes_Camera_AngleMaximum"
-                            );
-                            Camera.angle_maximum_text = Functions.Get_TextInToggle(
-                                scene_camera_content,
-                                "AngleMaximum",
-                                "Toggle_Scenes_Camera_AngleMaximum",
-                                "Value"
                             );
                             Camera.angle_maximum_slider = Functions.Get_SliderInPanel(
                                 scene_camera_content,
@@ -7520,12 +6376,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "MaxStability",
                                 "Toggle_Scenes_Monoliths_MaxStability"
                             );
-                            Monoliths.max_stability_text = Functions.Get_TextInToggle(
-                                scene_monoliths_content,
-                                "MaxStability",
-                                "Toggle_Scenes_Monoliths_MaxStability",
-                                "Value"
-                            );
                             Monoliths.max_stability_slider = Functions.Get_SliderInPanel(
                                 scene_monoliths_content,
                                 "MaxStability",
@@ -7536,12 +6386,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 scene_monoliths_content,
                                 "MobsDensity",
                                 "Toggle_Scenes_Monoliths_MobsDensity"
-                            );
-                            Monoliths.mob_density_text = Functions.Get_TextInToggle(
-                                scene_monoliths_content,
-                                "MobsDensity",
-                                "Toggle_Scenes_Monoliths_MobsDensity",
-                                "Value"
                             );
                             Monoliths.mob_density_slider = Functions.Get_SliderInPanel(
                                 scene_monoliths_content,
@@ -7554,12 +6398,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "MobsDefeatOnStart",
                                 "Toggle_Scenes_Monoliths_MobsDefeatOnStart"
                             );
-                            Monoliths.mob_defeat_text = Functions.Get_TextInToggle(
-                                scene_monoliths_content,
-                                "MobsDefeatOnStart",
-                                "Toggle_Scenes_Monoliths_MobsDefeatOnStart",
-                                "Value"
-                            );
                             Monoliths.mob_defeat_slider = Functions.Get_SliderInPanel(
                                 scene_monoliths_content,
                                 "MobsDefeatOnStart",
@@ -7570,12 +6408,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 scene_monoliths_content,
                                 "BlessingSlots",
                                 "Toggle_Scenes_Monoliths_BlessingSlots"
-                            );
-                            Monoliths.blessing_slot_text = Functions.Get_TextInToggle(
-                                scene_monoliths_content,
-                                "BlessingSlots",
-                                "Toggle_Scenes_Monoliths_BlessingSlots",
-                                "Value"
                             );
                             Monoliths.blessing_slot_slider = Functions.Get_SliderInPanel(
                                 scene_monoliths_content,
@@ -7629,13 +6461,7 @@ public partial class Hud_Manager : MonoBehaviour
             {
                 if (!content_obj.IsNullOrDestroyed())
                 {
-                    bool wasEnabled = enable;
                     content_obj.active = show;
-                    enable = show;
-                    if (show && !wasEnabled)
-                    {
-                        Content.Character.Update_Monoliths_Data();
-                    }
                 }
             }
 
@@ -7870,7 +6696,6 @@ public partial class Hud_Manager : MonoBehaviour
                             .Monoliths
                             .Enable_NoLostWhenDie;
 
-                        controls_initialized = true;
                         result = true;
                     }
                 }
@@ -7878,78 +6703,32 @@ public partial class Hud_Manager : MonoBehaviour
                 return result;
             }
 
-            public static void UpdateVisuals()
-            {
-                if ((!Save_Manager.instance.IsNullOrDestroyed()) && (controls_initialized))
-                {
-                    if (
-                        (Save_Manager.instance.initialized)
-                        && (!Save_Manager.instance.data.IsNullOrDestroyed())
-                    )
-                    {
-                        Camera.zoom_minimum_text.text =
-                            "" + (int)(Save_Manager.instance.data.Scenes.Camera.ZoomMinimum);
-                        Camera.zoom_per_scroll_text.text =
-                            "" + (int)(Save_Manager.instance.data.Scenes.Camera.ZoomPerScroll);
-                        Camera.zoom_speed_text.text =
-                            "" + (int)(Save_Manager.instance.data.Scenes.Camera.ZoomSpeed);
-                        Camera.default_rotation_text.text =
-                            "" + (int)(Save_Manager.instance.data.Scenes.Camera.DefaultRotation);
-                        Camera.offset_minimum_text.text =
-                            "" + (int)(Save_Manager.instance.data.Scenes.Camera.OffsetMinimum);
-                        Camera.offset_maximum_text.text =
-                            "" + (int)(Save_Manager.instance.data.Scenes.Camera.OffsetMaximum);
-                        Camera.angle_minimum_text.text =
-                            "" + (int)(Save_Manager.instance.data.Scenes.Camera.AngleMinimum);
-                        Camera.angle_maximum_text.text =
-                            "" + (int)(Save_Manager.instance.data.Scenes.Camera.AngleMaximum);
-                        Monoliths.max_stability_text.text =
-                            "" + (int)(Save_Manager.instance.data.Scenes.Monoliths.MaxStability);
-                        Monoliths.mob_density_text.text =
-                            "" + (int)(Save_Manager.instance.data.Scenes.Monoliths.MobsDensity);
-                        Monoliths.mob_defeat_text.text =
-                            ""
-                            + (int)(Save_Manager.instance.data.Scenes.Monoliths.MobsDefeatOnStart);
-                        Monoliths.blessing_slot_text.text =
-                            "" + (int)(Save_Manager.instance.data.Scenes.Monoliths.BlessingSlots);
-                    }
-                }
-            }
-
             public class Camera
             {
                 public static Toggle enable_mod = null;
 
                 public static Toggle zoom_minimum_toggle = null;
-                public static Text zoom_minimum_text = null;
                 public static Slider zoom_minimum_slider = null;
 
                 public static Toggle zoom_per_scroll_toggle = null;
-                public static Text zoom_per_scroll_text = null;
                 public static Slider zoom_per_scroll_slider = null;
 
                 public static Toggle zoom_speed_toggle = null;
-                public static Text zoom_speed_text = null;
                 public static Slider zoom_speed_slider = null;
 
                 public static Toggle default_rotation_toggle = null;
-                public static Text default_rotation_text = null;
                 public static Slider default_rotation_slider = null;
 
                 public static Toggle offset_minimum_toggle = null;
-                public static Text offset_minimum_text = null;
                 public static Slider offset_minimum_slider = null;
 
                 public static Toggle offset_maximum_toggle = null;
-                public static Text offset_maximum_text = null;
                 public static Slider offset_maximum_slider = null;
 
                 public static Toggle angle_minimum_toggle = null;
-                public static Text angle_minimum_text = null;
                 public static Slider angle_minimum_slider = null;
 
                 public static Toggle angle_maximum_toggle = null;
-                public static Text angle_maximum_text = null;
                 public static Slider angle_maximum_slider = null;
 
                 public static Toggle zoom_load_on_start_toggle = null;
@@ -7997,19 +6776,15 @@ public partial class Hud_Manager : MonoBehaviour
             public class Monoliths
             {
                 public static Toggle max_stability_toggle = null;
-                public static Text max_stability_text = null;
                 public static Slider max_stability_slider = null;
 
                 public static Toggle mob_density_toggle = null;
-                public static Text mob_density_text = null;
                 public static Slider mob_density_slider = null;
 
                 public static Toggle mob_defeat_toggle = null;
-                public static Text mob_defeat_text = null;
                 public static Slider mob_defeat_slider = null;
 
                 public static Toggle blessing_slot_toggle = null;
-                public static Text blessing_slot_text = null;
                 public static Slider blessing_slot_slider = null;
 
                 public static Toggle max_stability_on_start_toggle = null;
@@ -8023,8 +6798,6 @@ public partial class Hud_Manager : MonoBehaviour
         public class Skills
         {
             public static GameObject content_obj = null;
-            public static bool controls_initialized = false;
-            public static bool enable = false;
 
             public static void Get_Refs()
             {
@@ -8085,12 +6858,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "SpecializationSlots",
                                     "Toggle_SpecializationSlots"
                                 );
-                            SkillTree.specialization_slots_text = Functions.Get_TextInToggle(
-                                skills_content,
-                                "SpecializationSlots",
-                                "Toggle_SpecializationSlots",
-                                "Value"
-                            );
                             SkillTree.specialization_slots_slider = Functions.Get_SliderInPanel(
                                 skills_content,
                                 "SpecializationSlots",
@@ -8102,12 +6869,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "SkillLevel",
                                 "Toggle_SkillLevel"
                             );
-                            SkillTree.skill_level_text = Functions.Get_TextInToggle(
-                                skills_content,
-                                "SkillLevel",
-                                "Toggle_SkillLevel",
-                                "Value"
-                            );
                             SkillTree.skill_level_slider = Functions.Get_SliderInPanel(
                                 skills_content,
                                 "SkillLevel",
@@ -8118,12 +6879,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 skills_content,
                                 "PassivePoints",
                                 "Toggle_PassivePoints"
-                            );
-                            SkillTree.passive_points_text = Functions.Get_TextInToggle(
-                                skills_content,
-                                "PassivePoints",
-                                "Toggle_PassivePoints",
-                                "Value"
                             );
                             SkillTree.passive_points_slider = Functions.Get_SliderInPanel(
                                 skills_content,
@@ -8147,12 +6902,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "SkillLevelMultiplier",
                                     "Toggle_SkillLevelMultiplier"
                                 );
-                            SkillTree.skill_level_multiplier_text = Functions.Get_TextInToggle(
-                                skills_content,
-                                "SkillLevelMultiplier",
-                                "Toggle_SkillLevelMultiplier",
-                                "Value"
-                            );
                             SkillTree.skill_level_multiplier_slider = Functions.Get_SliderInPanel(
                                 skills_content,
                                 "SkillLevelMultiplier",
@@ -8175,12 +6924,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "PassivePointMultiplier",
                                     "Toggle_PassivePointMultiplier"
                                 );
-                            SkillTree.passive_point_multiplier_text = Functions.Get_TextInToggle(
-                                skills_content,
-                                "PassivePointMultiplier",
-                                "Toggle_PassivePointMultiplier",
-                                "Value"
-                            );
                             SkillTree.passive_point_multiplier_slider = Functions.Get_SliderInPanel(
                                 skills_content,
                                 "PassivePointMultiplier",
@@ -8223,12 +6966,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "MaximumCompanions",
                                     "Toggle_MaximumCompanions"
                                 );
-                            Companions.maximum_companions_text = Functions.Get_TextInToggle(
-                                companions_content,
-                                "MaximumCompanions",
-                                "Toggle_MaximumCompanions",
-                                "Value"
-                            );
                             Companions.maximum_companions_slider = Functions.Get_SliderInPanel(
                                 companions_content,
                                 "MaximumCompanions",
@@ -8249,12 +6986,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "Wolf_SummonLimit",
                                     "Toggle_Wolf_SummonLimit"
                                 );
-                            Companions.wolf_summon_limit_text = Functions.Get_TextInToggle(
-                                companions_content,
-                                "Wolf_SummonLimit",
-                                "Toggle_Wolf_SummonLimit",
-                                "Value"
-                            );
                             Companions.wolf_summon_limit_slider = Functions.Get_SliderInPanel(
                                 companions_content,
                                 "Wolf_SummonLimit",
@@ -8275,12 +7006,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "Scorpions_SummonLimit",
                                     "Toggle_Scorpions_SummonLimit"
                                 );
-                            Companions.scorpion_summon_limit_text = Functions.Get_TextInToggle(
-                                companions_content,
-                                "Scorpions_SummonLimit",
-                                "Toggle_Scorpions_SummonLimit",
-                                "Value"
-                            );
                             Companions.scorpion_summon_limit_slider = Functions.Get_SliderInPanel(
                                 companions_content,
                                 "Scorpions_SummonLimit",
@@ -8306,12 +7031,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "Skeleteon_SummonQuantityFromPassive",
                                     "Toggle_Skeleteon_SummonQuantityFromPassive"
                                 );
-                            Minions.skeleton_passive_summon_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "Skeleteon_SummonQuantityFromPassive",
-                                "Toggle_Skeleteon_SummonQuantityFromPassive",
-                                "Value"
-                            );
                             Minions.skeleton_passive_summon_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "Skeleteon_SummonQuantityFromPassive",
@@ -8324,12 +7043,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "Skeleteon_SummonQuantityFromSkillTree",
                                     "Toggle_Skeleteon_SummonQuantityFromSkillTree"
                                 );
-                            Minions.skeleton_skilltree_summon_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "Skeleteon_SummonQuantityFromSkillTree",
-                                "Toggle_Skeleteon_SummonQuantityFromSkillTree",
-                                "Value"
-                            );
                             Minions.skeleton_skilltree_summon_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "Skeleteon_SummonQuantityFromSkillTree",
@@ -8342,12 +7055,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "Skeleteon_SummonQuantityPerCast",
                                     "Toggle_Skeleteon_SummonQuantityPerCast"
                                 );
-                            Minions.skeleton_quantity_per_cast_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "Skeleteon_SummonQuantityPerCast",
-                                "Toggle_Skeleteon_SummonQuantityPerCast",
-                                "Value"
-                            );
                             Minions.skeleton_quantity_per_cast_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "Skeleteon_SummonQuantityPerCast",
@@ -8360,12 +7067,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "Skeleteon_ChanceToResummonOnDeath",
                                     "Toggle_Skeleteon_ChanceToResummonOnDeath"
                                 );
-                            Minions.skeleton_resummon_on_death_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "Skeleteon_ChanceToResummonOnDeath",
-                                "Toggle_Skeleteon_ChanceToResummonOnDeath",
-                                "Value"
-                            );
                             Minions.skeleton_resummon_on_death_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "Skeleteon_ChanceToResummonOnDeath",
@@ -8397,12 +7098,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "Wraiths_SummonMax",
                                 "Toggle_Wraiths_SummonMax"
                             );
-                            Minions.wraith_summon_limit_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "Wraiths_SummonMax",
-                                "Toggle_Wraiths_SummonMax",
-                                "Value"
-                            );
                             Minions.wraith_summon_limit_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "Wraiths_SummonMax",
@@ -8414,12 +7109,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "Wraiths_Delayed",
                                 "Toggle_Wraiths_Delayed"
                             );
-                            Minions.wraith_delay_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "Wraiths_Delayed",
-                                "Toggle_Wraiths_Delayed",
-                                "Value"
-                            );
                             Minions.wraith_delay_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "Wraiths_Delayed",
@@ -8430,12 +7119,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 minions_content,
                                 "Wraiths_CastSpeed",
                                 "Toggle_Wraiths_CastSpeed"
-                            );
-                            Minions.wraith_cast_speed_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "Wraiths_CastSpeed",
-                                "Toggle_Wraiths_CastSpeed",
-                                "Value"
                             );
                             Minions.wraith_cast_speed_slider = Functions.Get_SliderInPanel(
                                 minions_content,
@@ -8460,12 +7143,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "Mages_SummonQuantityFromPassive",
                                 "Toggle_Mages_SummonQuantityFromPassive"
                             );
-                            Minions.mage_passive_summon_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "Mages_SummonQuantityFromPassive",
-                                "Toggle_Mages_SummonQuantityFromPassive",
-                                "Value"
-                            );
                             Minions.mage_passive_summon_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "Mages_SummonQuantityFromPassive",
@@ -8478,12 +7155,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "Mages_SummonQuantityFromSkillTree",
                                     "Toggle_Mages_SummonQuantityFromSkillTree"
                                 );
-                            Minions.mage_skilltree_summon_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "Mages_SummonQuantityFromSkillTree",
-                                "Toggle_Mages_SummonQuantityFromSkillTree",
-                                "Value"
-                            );
                             Minions.mage_skilltree_summon_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "Mages_SummonQuantityFromSkillTree",
@@ -8494,12 +7165,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 minions_content,
                                 "Mages_SummonQuantityFromItems",
                                 "Toggle_Mages_SummonQuantityFromItems"
-                            );
-                            Minions.mage_items_summon_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "Mages_SummonQuantityFromItems",
-                                "Toggle_Mages_SummonQuantityFromItems",
-                                "Value"
                             );
                             Minions.mage_items_summon_slider = Functions.Get_SliderInPanel(
                                 minions_content,
@@ -8513,12 +7178,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "Mages_SummonPerCast",
                                     "Toggle_Mages_SummonPerCast"
                                 );
-                            Minions.mage_per_cast_summon_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "Mages_SummonPerCast",
-                                "Toggle_Mages_SummonPerCast",
-                                "Value"
-                            );
                             Minions.mage_per_cast_summon_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "Mages_SummonPerCast",
@@ -8531,12 +7190,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "Mages_ChanceForExtraPorjectiles",
                                     "Toggle_Mages_ChanceForExtraPorjectiles"
                                 );
-                            Minions.mage_projectile_chance_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "Mages_ChanceForExtraPorjectiles",
-                                "Toggle_Mages_ChanceForExtraPorjectiles",
-                                "Value"
-                            );
                             Minions.mage_projectile_chance_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "Mages_ChanceForExtraPorjectiles",
@@ -8569,12 +7222,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "BoneGolem_GolemPerSkeletons",
                                     "Toggle_BoneGolem_GolemPerSkeletons"
                                 );
-                            Minions.bonegolem_per_skeleton_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "BoneGolem_GolemPerSkeletons",
-                                "Toggle_BoneGolem_GolemPerSkeletons",
-                                "Value"
-                            );
                             Minions.bonegolem_per_skeleton_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "BoneGolem_GolemPerSkeletons",
@@ -8587,12 +7234,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "BoneGolem_SelfResurectChance",
                                     "Toggle_BoneGolem_SelfResurectChance"
                                 );
-                            Minions.bonegolem_resurect_chance_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "BoneGolem_SelfResurectChance",
-                                "Toggle_BoneGolem_SelfResurectChance",
-                                "Value"
-                            );
                             Minions.bonegolem_resurect_chance_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "BoneGolem_SelfResurectChance",
@@ -8603,12 +7244,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 minions_content,
                                 "BoneGolem_IncreaseFireAura",
                                 "Toggle_BoneGolem_IncreaseFireAura"
-                            );
-                            Minions.bonegolem_fire_aura_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "BoneGolem_IncreaseFireAura",
-                                "Toggle_BoneGolem_IncreaseFireAura",
-                                "Value"
                             );
                             Minions.bonegolem_fire_aura_slider = Functions.Get_SliderInPanel(
                                 minions_content,
@@ -8622,12 +7257,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "BoneGolem_IncreaseArmorAura",
                                     "Toggle_BoneGolem_IncreaseArmorAura"
                                 );
-                            Minions.bonegolem_armor_aura_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "BoneGolem_IncreaseArmorAura",
-                                "Toggle_BoneGolem_IncreaseArmorAura",
-                                "Value"
-                            );
                             Minions.bonegolem_armor_aura_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "BoneGolem_IncreaseArmorAura",
@@ -8640,12 +7269,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "BoneGolem_IncreaseMoveSpeedAura",
                                     "Toggle_BoneGolem_IncreaseMoveSpeedAura"
                                 );
-                            Minions.bonegolem_movespeed_aura_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "BoneGolem_IncreaseMoveSpeedAura",
-                                "Toggle_BoneGolem_IncreaseMoveSpeedAura",
-                                "Value"
-                            );
                             Minions.bonegolem_movespeed_aura_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "BoneGolem_IncreaseMoveSpeedAura",
@@ -8658,12 +7281,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "BoneGolem_IncreaseMoveSpeed",
                                     "Toggle_BoneGolem_IncreaseMoveSpeed"
                                 );
-                            Minions.bonegolem_move_speed_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "BoneGolem_IncreaseMoveSpeed",
-                                "Toggle_BoneGolem_IncreaseMoveSpeed",
-                                "Value"
-                            );
                             Minions.bonegolem_move_speed_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "BoneGolem_IncreaseMoveSpeed",
@@ -8688,12 +7305,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "VolatileZombies_ChanceOnMinionDeath",
                                     "Toggle_VolatileZombies_ChanceOnMinionDeath"
                                 );
-                            Minions.volatilezombie_cast_on_death_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "VolatileZombies_ChanceOnMinionDeath",
-                                "Toggle_VolatileZombies_ChanceOnMinionDeath",
-                                "Value"
-                            );
                             Minions.volatilezombie_cast_on_death_slider =
                                 Functions.Get_SliderInPanel(
                                     minions_content,
@@ -8707,12 +7318,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "VolatileZombies_InfernalShadeChance",
                                     "Toggle_VolatileZombies_InfernalShadeChance"
                                 );
-                            Minions.volatilezombie_infernal_shade_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "VolatileZombies_InfernalShadeChance",
-                                "Toggle_VolatileZombies_InfernalShadeChance",
-                                "Value"
-                            );
                             Minions.volatilezombie_infernal_shade_slider =
                                 Functions.Get_SliderInPanel(
                                     minions_content,
@@ -8726,12 +7331,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "VolatileZombies_MarrowShardsChance",
                                     "Toggle_VolatileZombies_MarrowShardsChance"
                                 );
-                            Minions.volatilezombie_marrow_shards_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "VolatileZombies_MarrowShardsChance",
-                                "Toggle_VolatileZombies_MarrowShardsChance",
-                                "Value"
-                            );
                             Minions.volatilezombie_marrow_shards_slider =
                                 Functions.Get_SliderInPanel(
                                     minions_content,
@@ -8745,12 +7344,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "DreadShades_Max",
                                 "Toggle_DreadShades_Max"
                             );
-                            Minions.dreadShades_max_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "DreadShades_Max",
-                                "Toggle_DreadShades_Max",
-                                "Value"
-                            );
                             Minions.dreadShades_max_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "DreadShades_Max",
@@ -8763,12 +7356,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "DreadShades_Duration",
                                     "Toggle_DreadShades_Duration"
                                 );
-                            Minions.dreadShades_duration_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "DreadShades_Duration",
-                                "Toggle_DreadShades_Duration",
-                                "Value"
-                            );
                             Minions.dreadShades_duration_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "DreadShades_Duration",
@@ -8780,12 +7367,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "DreadShades_Decay",
                                 "Toggle_DreadShades_Decay"
                             );
-                            Minions.dreadShades_decay_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "DreadShades_Decay",
-                                "Toggle_DreadShades_Decay",
-                                "Value"
-                            );
                             Minions.dreadShades_decay_slider = Functions.Get_SliderInPanel(
                                 minions_content,
                                 "DreadShades_Decay",
@@ -8796,12 +7377,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 minions_content,
                                 "DreadShades_Radius",
                                 "Toggle_DreadShades_Radius"
-                            );
-                            Minions.dreadShades_radius_text = Functions.Get_TextInToggle(
-                                minions_content,
-                                "DreadShades_Radius",
-                                "Toggle_DreadShades_Radius",
-                                "Value"
                             );
                             Minions.dreadShades_radius_slider = Functions.Get_SliderInPanel(
                                 minions_content,
@@ -8839,7 +7414,6 @@ public partial class Hud_Manager : MonoBehaviour
                 if (!content_obj.IsNullOrDestroyed())
                 {
                     content_obj.active = show;
-                    enable = show;
                 }
             }
 
@@ -8940,10 +7514,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     .Skills
                                     .Enable_SkillLevelMultiplier;
                             }
-                            if (!SkillTree.skill_level_multiplier_text.IsNullOrDestroyed())
-                            {
-                                SkillTree.skill_level_multiplier_text.text = skill_multiplier + "x";
-                            }
                         }
                         if (!SkillTree.passive_point_multiplier_slider.IsNullOrDestroyed())
                         {
@@ -8963,11 +7533,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     .data
                                     .Skills
                                     .Enable_PassivePointMultiplier;
-                            }
-                            if (!SkillTree.passive_point_multiplier_text.IsNullOrDestroyed())
-                            {
-                                SkillTree.passive_point_multiplier_text.text =
-                                    passive_multiplier + "x";
                             }
                         }
 
@@ -9520,272 +8085,11 @@ public partial class Hud_Manager : MonoBehaviour
                             .DreadShades
                             .Enable_DisableHealthDrain;
 
-                        controls_initialized = true;
                         result = true;
                     }
                 }
 
                 return result;
-            }
-
-            public static void UpdateVisuals()
-            {
-                if ((!Save_Manager.instance.IsNullOrDestroyed()) && (controls_initialized))
-                {
-                    if (
-                        (Save_Manager.instance.initialized)
-                        && (!Save_Manager.instance.data.IsNullOrDestroyed())
-                    )
-                    {
-                        SkillTree.specialization_slots_text.text =
-                            "" + (int)Save_Manager.instance.data.Skills.SpecializationSlots;
-                        SkillTree.skill_level_text.text =
-                            "" + (int)Save_Manager.instance.data.Skills.SkillLevel;
-                        SkillTree.passive_points_text.text =
-                            "" + (int)Save_Manager.instance.data.Skills.PassivePoints;
-                        if (!SkillTree.skill_level_multiplier_text.IsNullOrDestroyed())
-                        {
-                            SkillTree.skill_level_multiplier_text.text =
-                                SettingRow.Clamp(
-                                    Save_Manager.instance.data.Skills.SkillLevelMultiplier
-                                ) + "x";
-                        }
-                        if (!SkillTree.passive_point_multiplier_text.IsNullOrDestroyed())
-                        {
-                            SkillTree.passive_point_multiplier_text.text =
-                                SettingRow.Clamp(
-                                    Save_Manager.instance.data.Skills.PassivePointMultiplier
-                                ) + "x";
-                        }
-
-                        Companions.maximum_companions_text.text =
-                            "" + (int)Save_Manager.instance.data.Skills.Companion.Limit;
-                        Companions.wolf_summon_limit_text.text =
-                            "" + (int)Save_Manager.instance.data.Skills.Companion.Wolf.SummonLimit;
-                        Companions.scorpion_summon_limit_text.text =
-                            ""
-                            + (int)
-                                Save_Manager.instance.data.Skills.Companion.Scorpion.BabyQuantity;
-
-                        Minions.skeleton_passive_summon_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .Skeletons
-                                    .additionalSkeletonsFromPassives;
-                        Minions.skeleton_skilltree_summon_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .Skeletons
-                                    .additionalSkeletonsFromSkillTree;
-                        Minions.skeleton_quantity_per_cast_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .Skeletons
-                                    .additionalSkeletonsPerCast;
-                        Minions.skeleton_resummon_on_death_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .Skeletons
-                                    .chanceToResummonOnDeath;
-
-                        Minions.wraith_summon_limit_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .Wraiths
-                                    .additionalMaxWraiths;
-                        Minions.wraith_delay_text.text =
-                            ""
-                            + (int)Save_Manager.instance.data.Skills.Minions.Wraiths.delayedWraiths;
-                        Minions.wraith_cast_speed_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .Wraiths
-                                    .increasedCastSpeed;
-
-                        Minions.mage_passive_summon_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .Mages
-                                    .additionalSkeletonsFromPassives;
-                        Minions.mage_skilltree_summon_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .Mages
-                                    .additionalSkeletonsFromSkillTree;
-                        Minions.mage_items_summon_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .Mages
-                                    .additionalSkeletonsFromItems;
-                        Minions.mage_per_cast_summon_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .Mages
-                                    .additionalSkeletonsPerCast;
-                        Minions.mage_projectile_chance_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .Mages
-                                    .chanceForTwoExtraProjectiles;
-
-                        Minions.bonegolem_per_skeleton_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .BoneGolems
-                                    .addedGolemsPer4Skeletons;
-                        Minions.bonegolem_resurect_chance_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .BoneGolems
-                                    .selfResurrectChance;
-                        Minions.bonegolem_fire_aura_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .BoneGolems
-                                    .increasedFireAuraArea;
-                        Minions.bonegolem_armor_aura_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .BoneGolems
-                                    .undeadArmorAura;
-                        Minions.bonegolem_movespeed_aura_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .BoneGolems
-                                    .undeadMovespeedAura;
-                        Minions.bonegolem_move_speed_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .BoneGolems
-                                    .increasedMoveSpeed;
-
-                        Minions.volatilezombie_cast_on_death_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .VolatileZombies
-                                    .chanceToCastFromMinionDeath;
-                        Minions.volatilezombie_infernal_shade_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .VolatileZombies
-                                    .chanceToCastInfernalShadeOnDeath;
-                        Minions.volatilezombie_marrow_shards_text.text =
-                            ""
-                            + (int)
-                                Save_Manager
-                                    .instance
-                                    .data
-                                    .Skills
-                                    .Minions
-                                    .VolatileZombies
-                                    .chanceToCastMarrowShardsOnDeath;
-
-                        Minions.dreadShades_duration_text.text =
-                            ""
-                            + (int)Save_Manager.instance.data.Skills.Minions.DreadShades.Duration;
-                        Minions.dreadShades_max_text.text =
-                            "" + (int)Save_Manager.instance.data.Skills.Minions.DreadShades.max;
-                        Minions.dreadShades_decay_text.text =
-                            "" + (int)Save_Manager.instance.data.Skills.Minions.DreadShades.decay;
-                        Minions.dreadShades_radius_text.text =
-                            "" + (int)Save_Manager.instance.data.Skills.Minions.DreadShades.radius;
-                    }
-                }
             }
 
             public class SkillTree
@@ -9799,23 +8103,18 @@ public partial class Hud_Manager : MonoBehaviour
                 public static Toggle enable_remove_node_req_toggle = null;
 
                 public static Toggle enable_specialization_slots_toggle = null;
-                public static Text specialization_slots_text = null;
                 public static Slider specialization_slots_slider = null;
 
                 public static Toggle enable_skill_level_toggle = null;
-                public static Text skill_level_text = null;
                 public static Slider skill_level_slider = null;
 
                 public static Toggle enable_passive_points_toggle = null;
-                public static Text passive_points_text = null;
                 public static Slider passive_points_slider = null;
 
                 public static Toggle enable_skill_level_multiplier_toggle = null;
-                public static Text skill_level_multiplier_text = null;
                 public static Slider skill_level_multiplier_slider = null;
 
                 public static Toggle enable_passive_point_multiplier_toggle = null;
-                public static Text passive_point_multiplier_text = null;
                 public static Slider passive_point_multiplier_slider = null;
 
                 public static Toggle enable_movement_no_target_toggle = null;
@@ -9826,21 +8125,18 @@ public partial class Hud_Manager : MonoBehaviour
             public class Companions
             {
                 public static Toggle enable_maximum_companions_toggle = null;
-                public static Text maximum_companions_text = null;
                 public static Slider maximum_companions_slider = null;
 
                 //wolf
                 public static Toggle enable_wolf_summon_maximum_toggle = null;
 
                 public static Toggle enable_wolf_summon_limit_toggle = null;
-                public static Text wolf_summon_limit_text = null;
                 public static Slider wolf_summon_limit_slider = null;
 
                 public static Toggle enable_wolf_stun_immunity_toggle = null;
 
                 //Scorpions
                 public static Toggle enable_scorpion_summon_limit_toggle = null;
-                public static Text scorpion_summon_limit_text = null;
                 public static Slider scorpion_summon_limit_slider = null;
             }
 
@@ -9848,19 +8144,15 @@ public partial class Hud_Manager : MonoBehaviour
             {
                 //Skeletons
                 public static Toggle enable_skeleton_passive_summon_toggle = null;
-                public static Text skeleton_passive_summon_text = null;
                 public static Slider skeleton_passive_summon_slider = null;
 
                 public static Toggle enable_skeleton_skilltree_summon_toggle = null;
-                public static Text skeleton_skilltree_summon_text = null;
                 public static Slider skeleton_skilltree_summon_slider = null;
 
                 public static Toggle enable_skeleton_quantity_per_cast_toggle = null;
-                public static Text skeleton_quantity_per_cast_text = null;
                 public static Slider skeleton_quantity_per_cast_slider = null;
 
                 public static Toggle enable_skeleton_resummon_on_death_toggle = null;
-                public static Text skeleton_resummon_on_death_text = null;
                 public static Slider skeleton_resummon_on_death_slider = null;
 
                 public static Toggle enable_skeleton_force_archer_toggle = null;
@@ -9869,15 +8161,12 @@ public partial class Hud_Manager : MonoBehaviour
 
                 //Wraiths
                 public static Toggle enable_wraith_summon_limit_toggle = null;
-                public static Text wraith_summon_limit_text = null;
                 public static Slider wraith_summon_limit_slider = null;
 
                 public static Toggle enable_wraith_delay_toggle = null;
-                public static Text wraith_delay_text = null;
                 public static Slider wraith_delay_slider = null;
 
                 public static Toggle enable_wraith_cast_speed_toggle = null;
-                public static Text wraith_cast_speed_text = null;
                 public static Slider wraith_cast_speed_slider = null;
 
                 public static Toggle enable_wraith_no_limit_toggle = null;
@@ -9885,23 +8174,18 @@ public partial class Hud_Manager : MonoBehaviour
 
                 //Mage
                 public static Toggle enable_mage_passive_summon_toggle = null;
-                public static Text mage_passive_summon_text = null;
                 public static Slider mage_passive_summon_slider = null;
 
                 public static Toggle enable_mage_items_summon_toggle = null;
-                public static Text mage_items_summon_text = null;
                 public static Slider mage_items_summon_slider = null;
 
                 public static Toggle enable_mage_skilltree_summon_toggle = null;
-                public static Text mage_skilltree_summon_text = null;
                 public static Slider mage_skilltree_summon_slider = null;
 
                 public static Toggle enable_mage_per_cast_summon_toggle = null;
-                public static Text mage_per_cast_summon_text = null;
                 public static Slider mage_per_cast_summon_slider = null;
 
                 public static Toggle enable_mage_projectile_chance_toggle = null;
-                public static Text mage_projectile_chance_text = null;
                 public static Slider mage_projectile_chance_slider = null;
 
                 public static Toggle enable_mage_force_cryomancer_toggle = null;
@@ -9910,27 +8194,21 @@ public partial class Hud_Manager : MonoBehaviour
 
                 //Bone Golem
                 public static Toggle enable_bonegolem_per_skeleton_toggle = null;
-                public static Text bonegolem_per_skeleton_text = null;
                 public static Slider bonegolem_per_skeleton_slider = null;
 
                 public static Toggle enable_bonegolem_resurect_chance_toggle = null;
-                public static Text bonegolem_resurect_chance_text = null;
                 public static Slider bonegolem_resurect_chance_slider = null;
 
                 public static Toggle enable_bonegolem_fire_aura_toggle = null;
-                public static Text bonegolem_fire_aura_text = null;
                 public static Slider bonegolem_fire_aura_slider = null;
 
                 public static Toggle enable_bonegolem_armor_aura_toggle = null;
-                public static Text bonegolem_armor_aura_text = null;
                 public static Slider bonegolem_armor_aura_slider = null;
 
                 public static Toggle enable_bonegolem_movespeed_aura_toggle = null;
-                public static Text bonegolem_movespeed_aura_text = null;
                 public static Slider bonegolem_movespeed_aura_slider = null;
 
                 public static Toggle enable_bonegolem_move_speed_toggle = null;
-                public static Text bonegolem_move_speed_text = null;
                 public static Slider bonegolem_move_speed_slider = null;
 
                 public static Toggle enable_bonegolem_twins_toggle = null;
@@ -9938,32 +8216,25 @@ public partial class Hud_Manager : MonoBehaviour
 
                 //Volatile Zombies
                 public static Toggle enable_volatilezombie_cast_on_death_toggle = null;
-                public static Text volatilezombie_cast_on_death_text = null;
                 public static Slider volatilezombie_cast_on_death_slider = null;
 
                 public static Toggle enable_volatilezombie_infernal_shade_toggle = null;
-                public static Text volatilezombie_infernal_shade_text = null;
                 public static Slider volatilezombie_infernal_shade_slider = null;
 
                 public static Toggle enable_volatilezombie_marrow_shards_toggle = null;
-                public static Text volatilezombie_marrow_shards_text = null;
                 public static Slider volatilezombie_marrow_shards_slider = null;
 
                 //DreadShades
                 public static Toggle enable_dreadShades_duration_toggle = null;
-                public static Text dreadShades_duration_text = null;
                 public static Slider dreadShades_duration_slider = null;
 
                 public static Toggle enable_dreadShades_max_toggle = null;
-                public static Text dreadShades_max_text = null;
                 public static Slider dreadShades_max_slider = null;
 
                 public static Toggle enable_dreadShades_decay_toggle = null;
-                public static Text dreadShades_decay_text = null;
                 public static Slider dreadShades_decay_slider = null;
 
                 public static Toggle enable_dreadShades_radius_toggle = null;
-                public static Text dreadShades_radius_text = null;
                 public static Slider dreadShades_radius_slider = null;
 
                 public static Toggle enable_dreadShades_summon_limit_toggle = null;
