@@ -32,7 +32,6 @@ public class Mods_Manager : MonoBehaviour
     //GameObject items_crafting_obj = null;
     GameObject monoliths_complete_objectives_obj = null;
     GameObject bank_quad_obj = null;
-    GameObject Cosmetics_offline_obj = null;
     GameObject damage_meter_obj = null;
     GameObject teleport_to_scene_obj = null;
 
@@ -222,14 +221,6 @@ public class Mods_Manager : MonoBehaviour
         );
         bank_quad_obj.AddComponent<Mods.Bank.Bank_Quad>();
         Mods_Objects.Add(bank_quad_obj);
-
-        Cosmetics_offline_obj = Object.Instantiate(
-            new GameObject { name = "mod_cosmetics_offline" },
-            Vector3.zero,
-            Quaternion.identity
-        );
-        Cosmetics_offline_obj.AddComponent<Mods.Cosmetics.Cosmetics_Offline>();
-        Mods_Objects.Add(Cosmetics_offline_obj);
 
         damage_meter_obj = Object.Instantiate(
             new GameObject { name = "mod_damage_meter" },
