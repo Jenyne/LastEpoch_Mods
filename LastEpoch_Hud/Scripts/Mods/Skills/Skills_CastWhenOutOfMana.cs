@@ -6,24 +6,6 @@ using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Skills;
 
-/// <summary>
-/// Two ways to cast without enough mana, both hooked only at InitialiseAbilityUse and UseAbility:
-/// - When mana is short, the mod runs the game's own cooldown and remaining checks
-///   (canUseAbilityChecksAfterManaAndCooldown) and, if they pass, starts the cast with the game's
-///   ignoreCanUseAbilityChecks, skipping the mana refusal.
-/// - That skips the game's pacing too (Heartseeker cast ~1.8x faster than attack speed), so
-///   OutOfManaCastPacer (Core) paces forced casts to the character's own cast speed.
-/// - The forced cast's spend is skipped (useMana = false); "Allow Negative Mana" charges the cost
-///   afterwards through the game's reduceMana, with canGoNegative on. Casts the game allows by
-///   itself (e.g. gear that lets mana go negative) are never changed.
-/// What is deliberately not done, each of which broke casting in testing:
-/// - patching the cast checks (ClientUsingAbilityState.CanUseAbility, UsingAbilityPlayer.canUseAbility):
-///   they take the target as ref Vector3, and patching them broke targeting even with the modes off;
-/// - changing current mana during a check, or letting the game spend mana it doesn't have:
-///   both froze projectiles;
-/// - patching getters such as getFreeWhenOutOfMana: tiny IL2CPP getters can share native code;
-/// - setting freeWhenOutOfMana on the server-side CastingData: the server's check ignores it.
-/// </summary>
 internal static class Skills_CastWhenOutOfMana
 {
     // The player mana whose canGoNegative this mod manages, and the character's own value to

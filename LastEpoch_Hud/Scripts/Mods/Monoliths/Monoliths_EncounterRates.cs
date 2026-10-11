@@ -7,18 +7,7 @@ using LastEpoch_Hud.Scripts.ModUI.Settings;
 
 namespace LastEpoch_Hud.Scripts.Mods.Monoliths;
 
-/// <summary>
-/// Echo Encounters: guaranteed spawns and exact counts for random encounters in echoes.
-/// The game rolls (base + perLevel * level + perCorruption * corruption) * zone multiplier from a
-/// table shared with the campaign, so the table is reset to the game's originals before every
-/// zone's placement and only changed for echoes:
-/// - "Always Spawn" mechanics get a base far above 1, so their single Roll always succeeds.
-/// - Rune Prisons are a count (the game StochasticRounds the value), so the base is set to
-///   N / zone multiplier with no per-level or per-corruption terms: exactly N prisons.
-/// - The Favour Cache chance is the Weaver's SpawnFavorCacheChance, raised to 1 for the
-///   placement and put back after; extra caches come from running its spawner again.
-/// A count of 0 blocks that spawner (CanSpawn = false).
-/// </summary>
+/// <summary>Echo Encounters: guaranteed spawns and exact counts for random encounters in echoes.</summary>
 internal static class Monoliths_EncounterRates
 {
     // Far above 1, so the Roll succeeds whatever the zone multiplier or Weaver modifiers.
