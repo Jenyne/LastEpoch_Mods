@@ -9,20 +9,56 @@ public sealed class CosmeticCatalogTests
     public void Add_DuplicateId_CountsOnce()
     {
         var catalog = new CosmeticCatalog();
-        catalog.Add("MTX_A", "A");
-        catalog.Add("MTX_A", "A");
+        catalog.Add("MTX_A", "A", true, false);
+        catalog.Add("MTX_A", "A", true, false);
 
         Assert.Equal(1, catalog.KeptCount);
         Assert.Equal(new[] { "MTX_A" }, catalog.KeptIds);
     }
 
     [Fact]
+    public void Add_NoStoreIcon_NotKept_Counted()
+    {
+        var catalog = new CosmeticCatalog();
+
+        CosmeticVerdict verdict = catalog.Add("MTX_A", "A", false, false);
+
+        Assert.Equal(CosmeticVerdict.NoStoreIcon, verdict);
+        Assert.False(catalog.Contains("MTX_A"));
+        Assert.Equal(1, catalog.RemovedBy(CosmeticVerdict.NoStoreIcon));
+        Assert.Equal(1, catalog.RemovedCount);
+        Assert.Equal(0, catalog.KeptCount);
+    }
+
+    [Fact]
+    public void Add_NoStoreIcon_Title_Kept()
+    {
+        var catalog = new CosmeticCatalog();
+
+        CosmeticVerdict verdict = catalog.Add("MTX_A", "A", false, true);
+
+        Assert.Equal(CosmeticVerdict.Keep, verdict);
+        Assert.True(catalog.Contains("MTX_A"));
+    }
+
+    [Theory]
+    [InlineData(false, false, true)]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, false)]
+    public void IsJunk_UnseenId_UsesIconAndTitleFacts(bool hasIcon, bool isTitle, bool expected)
+    {
+        var catalog = new CosmeticCatalog();
+
+        Assert.Equal(expected, catalog.IsJunk("MTX_A", "A", hasIcon, isTitle));
+    }
+
+    [Fact]
     public void Add_FirstSightingDecides()
     {
         var catalog = new CosmeticCatalog();
-        catalog.Add("MTX_A", "Test A");
+        catalog.Add("MTX_A", "Test A", true, false);
 
-        CosmeticVerdict second = catalog.Add("MTX_A", "A");
+        CosmeticVerdict second = catalog.Add("MTX_A", "A", true, false);
 
         Assert.Equal(CosmeticVerdict.TestEntry, second);
         Assert.False(catalog.Contains("MTX_A"));
@@ -34,8 +70,8 @@ public sealed class CosmeticCatalogTests
     {
         var catalog = new CosmeticCatalog();
 
-        CosmeticVerdict first = catalog.Add("MTX_A", "A");
-        CosmeticVerdict second = catalog.Add("MTX_A", "Test A");
+        CosmeticVerdict first = catalog.Add("MTX_A", "A", true, false);
+        CosmeticVerdict second = catalog.Add("MTX_A", "Test A", true, false);
 
         Assert.Equal(CosmeticVerdict.Keep, first);
         Assert.Equal(CosmeticVerdict.Keep, second);
@@ -48,9 +84,9 @@ public sealed class CosmeticCatalogTests
     public void KeptIds_KeepFirstSeenOrder()
     {
         var catalog = new CosmeticCatalog();
-        catalog.Add("MTX_B", "B");
-        catalog.Add("MTX_A", "A");
-        catalog.Add("MTX_B", "B");
+        catalog.Add("MTX_B", "B", true, false);
+        catalog.Add("MTX_A", "A", true, false);
+        catalog.Add("MTX_B", "B", true, false);
 
         Assert.Equal(new[] { "MTX_B", "MTX_A" }, catalog.KeptIds);
     }
@@ -59,11 +95,11 @@ public sealed class CosmeticCatalogTests
     public void RemovedBy_CountsDistinctIdsPerReason()
     {
         var catalog = new CosmeticCatalog();
-        catalog.Add(null, "Foo");
-        catalog.Add("", "Foo");
-        catalog.Add("TestHelmet", "Foo");
-        catalog.Add("Foo", "Foo");
-        catalog.Add("MTX_X_Test", "Foo");
+        catalog.Add(null, "Foo", true, false);
+        catalog.Add("", "Foo", true, false);
+        catalog.Add("TestHelmet", "Foo", true, false);
+        catalog.Add("Foo", "Foo", true, false);
+        catalog.Add("MTX_X_Test", "Foo", true, false);
 
         Assert.Equal(1, catalog.RemovedBy(CosmeticVerdict.EmptyId));
         Assert.Equal(2, catalog.RemovedBy(CosmeticVerdict.UnknownPrefix));
@@ -78,8 +114,8 @@ public sealed class CosmeticCatalogTests
     public void Contains_NullEmptyOrUnknown_False()
     {
         var catalog = new CosmeticCatalog();
-        catalog.Add("MTX_K", "K");
-        catalog.Add("Foo", "Foo");
+        catalog.Add("MTX_K", "K", true, false);
+        catalog.Add("Foo", "Foo", true, false);
 
         Assert.False(catalog.Contains(null));
         Assert.False(catalog.Contains(""));
@@ -94,32 +130,33 @@ public sealed class CosmeticCatalogTests
         var catalog = new CosmeticCatalog();
         foreach (char letter in "ABCDEFG")
         {
-            catalog.Add("MTX_" + letter, "Foo");
+            catalog.Add("MTX_" + letter, "Foo", true, false);
         }
-        catalog.Add("", "Foo");
-        catalog.Add("Foo", "Foo");
-        catalog.Add("Bar", "Foo");
-        catalog.Add("MTX_X_Test", "Foo");
-        catalog.Add("MTX_Y_Test", "Foo");
-        catalog.Add("MTX_Z_Test", "Foo");
+        catalog.Add("", "Foo", true, false);
+        catalog.Add("Foo", "Foo", true, false);
+        catalog.Add("Bar", "Foo", true, false);
+        catalog.Add("MTX_X_Test", "Foo", true, false);
+        catalog.Add("MTX_Y_Test", "Foo", true, false);
+        catalog.Add("MTX_Z_Test", "Foo", true, false);
+        catalog.Add("MTX_N", "Foo", false, false);
 
         int[] numbers = Regex
             .Matches(catalog.SummaryLine(), @"\d+")
             .Select(m => int.Parse(m.Value))
             .ToArray();
 
-        Assert.Equal(new[] { 7, 6, 1, 2, 0, 3 }, numbers);
+        Assert.Equal(new[] { 7, 7, 1, 2, 0, 3, 1 }, numbers);
     }
 
     [Fact]
     public void IsJunk_SeenId_UsesStoredVerdict()
     {
         var catalog = new CosmeticCatalog();
-        catalog.Add("MTX_A", "Test A");
-        catalog.Add("MTX_B", "B");
+        catalog.Add("MTX_A", "Test A", true, false);
+        catalog.Add("MTX_B", "B", true, false);
 
-        Assert.True(catalog.IsJunk("MTX_A", "A"));
-        Assert.False(catalog.IsJunk("MTX_B", "Test B"));
+        Assert.True(catalog.IsJunk("MTX_A", "A", true, false));
+        Assert.False(catalog.IsJunk("MTX_B", "Test B", true, false));
     }
 
     [Fact]
@@ -127,8 +164,8 @@ public sealed class CosmeticCatalogTests
     {
         var catalog = new CosmeticCatalog();
 
-        Assert.True(catalog.IsJunk("MTX_C", "Test C"));
-        Assert.Equal(CosmeticVerdict.Keep, catalog.Add("MTX_C", "C"));
+        Assert.True(catalog.IsJunk("MTX_C", "Test C", true, false));
+        Assert.Equal(CosmeticVerdict.Keep, catalog.Add("MTX_C", "C", true, false));
         Assert.Equal(1, catalog.KeptCount);
         Assert.Equal(0, catalog.RemovedCount);
     }
@@ -138,7 +175,7 @@ public sealed class CosmeticCatalogTests
     {
         var catalog = new CosmeticCatalog();
 
-        Assert.True(catalog.IsJunk("TestHelmet", "x"));
-        Assert.False(catalog.IsJunk("MTX_Real", "Real"));
+        Assert.True(catalog.IsJunk("TestHelmet", "x", true, false));
+        Assert.False(catalog.IsJunk("MTX_Real", "Real", true, false));
     }
 }

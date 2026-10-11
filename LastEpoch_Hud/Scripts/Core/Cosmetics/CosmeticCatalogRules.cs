@@ -23,8 +23,13 @@ public static class CosmeticCatalogRules
 
     private static readonly char[] _separators = { '_', ' ', '-' };
 
-    /// <summary>Verdict for one entry; precedence EmptyId, UnknownPrefix, Blocklisted, TestEntry, Keep.</summary>
-    public static CosmeticVerdict Judge(string id, string displayName)
+    /// <summary>Verdict for one entry; precedence EmptyId, UnknownPrefix, Blocklisted, TestEntry, NoStoreIcon, Keep.</summary>
+    public static CosmeticVerdict Judge(
+        string id,
+        string displayName,
+        bool hasStoreIcon,
+        bool isTitle
+    )
     {
         if (string.IsNullOrEmpty(id))
         {
@@ -42,12 +47,16 @@ public static class CosmeticCatalogRules
         {
             return CosmeticVerdict.TestEntry;
         }
+        if (!hasStoreIcon && !isTitle)
+        {
+            return CosmeticVerdict.NoStoreIcon;
+        }
         return CosmeticVerdict.Keep;
     }
 
     /// <summary>True when the entry is not a real MTX cosmetic.</summary>
-    public static bool IsJunk(string id, string displayName) =>
-        Judge(id, displayName) != CosmeticVerdict.Keep;
+    public static bool IsJunk(string id, string displayName, bool hasStoreIcon, bool isTitle) =>
+        Judge(id, displayName, hasStoreIcon, isTitle) != CosmeticVerdict.Keep;
 
     private static bool HasRealPrefix(string id)
     {

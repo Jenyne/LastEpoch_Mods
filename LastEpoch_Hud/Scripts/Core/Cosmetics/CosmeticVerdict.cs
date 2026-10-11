@@ -8,4 +8,5 @@ public enum CosmeticVerdict
     UnknownPrefix,
     Blocklisted,
     TestEntry,
+    NoStoreIcon,
 }

@@ -20,7 +20,7 @@ public sealed class CountingCatalogBuilder
         var catalog = new CosmeticCatalog();
         for (int i = 0; i < _keptIds; i++)
         {
-            catalog.Add("MTX_" + i, "Foo");
+            catalog.Add("MTX_" + i, "Foo", true, false);
         }
         return catalog;
     }

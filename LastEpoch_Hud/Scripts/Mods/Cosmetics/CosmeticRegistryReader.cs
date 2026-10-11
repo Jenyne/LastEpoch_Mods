@@ -1,3 +1,5 @@
+using Il2Cpp;
+using Il2CppLE.AssetBundles;
 using Il2CppLE.Services.Cosmetics;
 using LastEpoch_Hud.Scripts.Core.Cosmetics;
 
@@ -9,26 +11,34 @@ internal static class CosmeticRegistryReader
     public static CosmeticCatalog Read(CosmeticResources registry)
     {
         var catalog = new CosmeticCatalog();
-        AddList(registry.ItemCosmetics, catalog);
-        AddList(registry.AbilityCosmetics, catalog);
-        AddList(registry.BackSlotCosmetics, catalog);
-        AddList(registry.PortalCosmetics, catalog);
-        AddList(registry.PetCosmetics, catalog);
-        AddList(registry.PetEffectCosmetics, catalog);
-        AddList(registry.PortraitCosmetics, catalog);
-        AddList(registry.CharacterTitleCosmetics, catalog);
-        AddList(registry.FootprintCosmetics, catalog);
-        AddList(registry.CharacterFXCosmetics, catalog);
-        AddList(registry.StashCosmetics, catalog);
-        AddList(registry.CosmeticBundles, catalog);
-        AddBundleContents(registry.CosmeticBundles, catalog);
-        AddLookupPairs(registry.CosmeticLookupPairs, catalog);
+        LEAssetBundlesCatalog bundles = CosmeticStoreIcon.CurrentBundles();
+        if (bundles.IsNullOrDestroyed())
+        {
+            Main.logger_instance?.Msg(
+                "Offline cosmetics: asset bundle catalog not ready, store icon check uses GUID only"
+            );
+        }
+        AddList(registry.ItemCosmetics, catalog, bundles);
+        AddList(registry.AbilityCosmetics, catalog, bundles);
+        AddList(registry.BackSlotCosmetics, catalog, bundles);
+        AddList(registry.PortalCosmetics, catalog, bundles);
+        AddList(registry.PetCosmetics, catalog, bundles);
+        AddList(registry.PetEffectCosmetics, catalog, bundles);
+        AddList(registry.PortraitCosmetics, catalog, bundles);
+        AddList(registry.CharacterTitleCosmetics, catalog, bundles);
+        AddList(registry.FootprintCosmetics, catalog, bundles);
+        AddList(registry.CharacterFXCosmetics, catalog, bundles);
+        AddList(registry.StashCosmetics, catalog, bundles);
+        AddList(registry.CosmeticBundles, catalog, bundles);
+        AddBundleContents(registry.CosmeticBundles, catalog, bundles);
+        AddLookupPairs(registry.CosmeticLookupPairs, catalog, bundles);
         return catalog;
     }
 
     private static void AddList<T>(
         Il2CppSystem.Collections.Generic.List<T> list,
-        CosmeticCatalog catalog
+        CosmeticCatalog catalog,
+        LEAssetBundlesCatalog bundles
     )
         where T : Cosmetic
     {
@@ -43,33 +53,40 @@ internal static class CosmeticRegistryReader
             {
                 continue;
             }
-            catalog.Add(cosmetic.BackendID, cosmetic.DisplayName);
+            catalog.Add(
+                cosmetic.BackendID,
+                cosmetic.DisplayName,
+                CosmeticStoreIcon.HasStoreIcon(cosmetic, bundles),
+                CosmeticStoreIcon.IsTitle(cosmetic)
+            );
         }
     }
 
     private static void AddBundleContents(
-        Il2CppSystem.Collections.Generic.List<CosmeticBundle> bundles,
-        CosmeticCatalog catalog
+        Il2CppSystem.Collections.Generic.List<CosmeticBundle> cosmeticBundles,
+        CosmeticCatalog catalog,
+        LEAssetBundlesCatalog bundles
     )
     {
-        if (bundles.IsNullOrDestroyed())
+        if (cosmeticBundles.IsNullOrDestroyed())
         {
             return;
         }
-        for (int i = 0; i < bundles.Count; i++)
+        for (int i = 0; i < cosmeticBundles.Count; i++)
         {
-            CosmeticBundle bundle = bundles[i];
+            CosmeticBundle bundle = cosmeticBundles[i];
             if (bundle.IsNullOrDestroyed())
             {
                 continue;
             }
-            AddList(bundle.bundledCosmetics, catalog);
+            AddList(bundle.bundledCosmetics, catalog, bundles);
         }
     }
 
     private static void AddLookupPairs(
         Il2CppSystem.Collections.Generic.Dictionary<string, Cosmetic> pairs,
-        CosmeticCatalog catalog
+        CosmeticCatalog catalog,
+        LEAssetBundlesCatalog bundles
     )
     {
         if (pairs.IsNullOrDestroyed())
@@ -78,8 +95,21 @@ internal static class CosmeticRegistryReader
         }
         foreach (Il2CppSystem.Collections.Generic.KeyValuePair<string, Cosmetic> pair in pairs)
         {
-            string displayName = pair.Value.IsNullOrDestroyed() ? null : pair.Value.DisplayName;
-            catalog.Add(pair.Key, displayName);
+            catalog.Add(
+                pair.Key,
+                DisplayNameOf(pair.Value),
+                HasStoreIcon(pair.Value, bundles),
+                IsTitle(pair.Value)
+            );
         }
     }
+
+    private static string DisplayNameOf(Cosmetic cosmetic) =>
+        cosmetic.IsNullOrDestroyed() ? null : cosmetic.DisplayName;
+
+    private static bool HasStoreIcon(Cosmetic cosmetic, LEAssetBundlesCatalog bundles) =>
+        !cosmetic.IsNullOrDestroyed() && CosmeticStoreIcon.HasStoreIcon(cosmetic, bundles);
+
+    private static bool IsTitle(Cosmetic cosmetic) =>
+        !cosmetic.IsNullOrDestroyed() && CosmeticStoreIcon.IsTitle(cosmetic);
 }

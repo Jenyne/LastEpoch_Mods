@@ -15,13 +15,16 @@ public sealed class CosmeticCatalogRulesTests
     [InlineData("MTX_Skills_Gauntlet_of_Fury_JudgementV2")]
     public void Judge_RealPrefix_Keeps(string id)
     {
-        Assert.Equal(CosmeticVerdict.Keep, CosmeticCatalogRules.Judge(id, "Foo"));
+        Assert.Equal(CosmeticVerdict.Keep, CosmeticCatalogRules.Judge(id, "Foo", true, false));
     }
 
     [Fact]
     public void Judge_NullDisplayName_Keeps()
     {
-        Assert.Equal(CosmeticVerdict.Keep, CosmeticCatalogRules.Judge("MTX_Foo", null));
+        Assert.Equal(
+            CosmeticVerdict.Keep,
+            CosmeticCatalogRules.Judge("MTX_Foo", null, true, false)
+        );
     }
 
     [Theory]
@@ -29,7 +32,7 @@ public sealed class CosmeticCatalogRulesTests
     [InlineData("")]
     public void Judge_NullOrEmptyId_EmptyId(string id)
     {
-        Assert.Equal(CosmeticVerdict.EmptyId, CosmeticCatalogRules.Judge(id, "Foo"));
+        Assert.Equal(CosmeticVerdict.EmptyId, CosmeticCatalogRules.Judge(id, "Foo", true, false));
     }
 
     [Theory]
@@ -40,7 +43,10 @@ public sealed class CosmeticCatalogRulesTests
     [InlineData("AshTribeHelmet")]
     public void Judge_UnknownPrefix_Removes(string id)
     {
-        Assert.Equal(CosmeticVerdict.UnknownPrefix, CosmeticCatalogRules.Judge(id, "Foo"));
+        Assert.Equal(
+            CosmeticVerdict.UnknownPrefix,
+            CosmeticCatalogRules.Judge(id, "Foo", true, false)
+        );
     }
 
     [Fact]
@@ -48,7 +54,7 @@ public sealed class CosmeticCatalogRulesTests
     {
         Assert.Equal(
             CosmeticVerdict.Blocklisted,
-            CosmeticCatalogRules.Judge("MTX_Chest_TemporalGuardianFix", "Foo")
+            CosmeticCatalogRules.Judge("MTX_Chest_TemporalGuardianFix", "Foo", true, false)
         );
     }
 
@@ -62,7 +68,7 @@ public sealed class CosmeticCatalogRulesTests
     [InlineData("MTX_Foo-_Test")]
     public void Judge_TestSegmentInId_Removes(string id)
     {
-        Assert.Equal(CosmeticVerdict.TestEntry, CosmeticCatalogRules.Judge(id, "Foo"));
+        Assert.Equal(CosmeticVerdict.TestEntry, CosmeticCatalogRules.Judge(id, "Foo", true, false));
     }
 
     [Theory]
@@ -74,7 +80,10 @@ public sealed class CosmeticCatalogRulesTests
     [InlineData("Test-")]
     public void Judge_TestWordInDisplayName_Removes(string displayName)
     {
-        Assert.Equal(CosmeticVerdict.TestEntry, CosmeticCatalogRules.Judge("MTX_Foo", displayName));
+        Assert.Equal(
+            CosmeticVerdict.TestEntry,
+            CosmeticCatalogRules.Judge("MTX_Foo", displayName, true, false)
+        );
     }
 
     [Theory]
@@ -93,16 +102,43 @@ public sealed class CosmeticCatalogRulesTests
     [InlineData("MTX_Foo", "-")]
     public void Judge_TestInsideWord_Keeps(string id, string displayName)
     {
-        Assert.Equal(CosmeticVerdict.Keep, CosmeticCatalogRules.Judge(id, displayName));
+        Assert.Equal(
+            CosmeticVerdict.Keep,
+            CosmeticCatalogRules.Judge(id, displayName, true, false)
+        );
     }
 
     [Theory]
-    [InlineData("", "Test", CosmeticVerdict.EmptyId)]
-    [InlineData("TestFoo", "Test", CosmeticVerdict.UnknownPrefix)]
-    [InlineData("MTX_Chest_TemporalGuardianFix", "Test", CosmeticVerdict.Blocklisted)]
-    public void Judge_Precedence(string id, string displayName, CosmeticVerdict expected)
+    [InlineData("", "Test", true, false, CosmeticVerdict.EmptyId)]
+    [InlineData("TestFoo", "Test", true, false, CosmeticVerdict.UnknownPrefix)]
+    [InlineData("MTX_Chest_TemporalGuardianFix", "Test", true, false, CosmeticVerdict.Blocklisted)]
+    [InlineData(null, "Foo", false, false, CosmeticVerdict.EmptyId)]
+    [InlineData("TestHelmet", "Foo", false, false, CosmeticVerdict.UnknownPrefix)]
+    [InlineData("MTX_Chest_TemporalGuardianFix", "Foo", false, false, CosmeticVerdict.Blocklisted)]
+    [InlineData("MTX_X_Test", "Foo", false, false, CosmeticVerdict.TestEntry)]
+    public void Judge_Precedence(
+        string id,
+        string displayName,
+        bool hasStoreIcon,
+        bool isTitle,
+        CosmeticVerdict expected
+    )
     {
-        Assert.Equal(expected, CosmeticCatalogRules.Judge(id, displayName));
+        Assert.Equal(expected, CosmeticCatalogRules.Judge(id, displayName, hasStoreIcon, isTitle));
+    }
+
+    [Theory]
+    [InlineData(null, "Foo", CosmeticVerdict.EmptyId)]
+    [InlineData("TestHelmet", "Foo", CosmeticVerdict.UnknownPrefix)]
+    [InlineData("MTX_Chest_TemporalGuardianFix", "Foo", CosmeticVerdict.Blocklisted)]
+    [InlineData("MTX_X_Test", "Foo", CosmeticVerdict.TestEntry)]
+    public void Judge_Title_StillRemovesJunk(
+        string id,
+        string displayName,
+        CosmeticVerdict expected
+    )
+    {
+        Assert.Equal(expected, CosmeticCatalogRules.Judge(id, displayName, false, true));
     }
 
     [Theory]
@@ -116,18 +152,51 @@ public sealed class CosmeticCatalogRulesTests
     [InlineData("MTX_Foo", "Test Foo", true)]
     public void IsJunk_ReturnsExpected(string id, string displayName, bool expected)
     {
-        Assert.Equal(expected, CosmeticCatalogRules.IsJunk(id, displayName));
+        Assert.Equal(expected, CosmeticCatalogRules.IsJunk(id, displayName, true, false));
+    }
+
+    [Fact]
+    public void Judge_NoStoreIcon_NotTitle_IsNoStoreIcon()
+    {
+        Assert.Equal(
+            CosmeticVerdict.NoStoreIcon,
+            CosmeticCatalogRules.Judge("MTX_Foo", "Foo", false, false)
+        );
+    }
+
+    [Fact]
+    public void Judge_NoStoreIcon_Title_Keep()
+    {
+        Assert.Equal(
+            CosmeticVerdict.Keep,
+            CosmeticCatalogRules.Judge("MTX_Foo", "Foo", false, true)
+        );
+    }
+
+    [Fact]
+    public void Judge_TestEntryBeatsNoStoreIcon()
+    {
+        Assert.Equal(
+            CosmeticVerdict.TestEntry,
+            CosmeticCatalogRules.Judge("MTX_X_Test", "Foo", false, false)
+        );
+    }
+
+    [Fact]
+    public void IsJunk_NoStoreIcon_True()
+    {
+        Assert.True(CosmeticCatalogRules.IsJunk("MTX_Foo", "Foo", false, false));
     }
 
     [Fact]
     public void IsJunk_DoesNotAllocate()
     {
-        CosmeticCatalogRules.IsJunk("MTX_Foo_Bar-Baz", "Foo Bar Baz");
+        CosmeticCatalogRules.IsJunk("MTX_Foo_Bar-Baz", "Foo Bar Baz", true, false);
 
         long before = GC.GetAllocatedBytesForCurrentThread();
         for (int i = 0; i < 100; i++)
         {
-            CosmeticCatalogRules.IsJunk("MTX_Foo_Bar-Baz", "Foo Bar Baz");
+            CosmeticCatalogRules.IsJunk("MTX_Foo_Bar-Baz", "Foo Bar Baz", true, false);
         }
         long after = GC.GetAllocatedBytesForCurrentThread();
 

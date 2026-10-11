@@ -17,6 +17,6 @@ public class CosmeticItemSlotMatchesPatch
             return;
         }
 
-        __result = !OfflineCosmeticCatalog.IsJunk(c.BackendID, c.DisplayName);
+        __result = !OfflineCosmeticCatalog.IsJunk(c);
     }
 }

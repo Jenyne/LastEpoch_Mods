@@ -18,28 +18,37 @@ public sealed class CosmeticCatalog
     public IReadOnlyList<string> KeptIds => _keptIds;
 
     /// <summary>Judges an entry on first sighting; a repeat returns the stored verdict.</summary>
-    public CosmeticVerdict Add(string id, string displayName)
+    public CosmeticVerdict Add(string id, string displayName, bool hasStoreIcon, bool isTitle)
     {
         id ??= "";
         if (_verdicts.TryGetValue(id, out CosmeticVerdict known))
         {
             return known;
         }
-        CosmeticVerdict verdict = CosmeticCatalogRules.Judge(id, displayName);
+        CosmeticVerdict verdict = CosmeticCatalogRules.Judge(
+            id,
+            displayName,
+            hasStoreIcon,
+            isTitle
+        );
         _verdicts[id] = verdict;
         Count(id, verdict);
         return verdict;
     }
 
     /// <summary>Stored verdict for a seen id; the rules decide for an unseen one. Stores nothing.</summary>
-    public bool IsJunk(string id, string displayName)
+    public bool IsJunk(string id, string displayName, bool hasStoreIcon, bool isTitle)
     {
         if (_verdicts.TryGetValue(id ?? "", out CosmeticVerdict known))
         {
             return known != CosmeticVerdict.Keep;
         }
-        return CosmeticCatalogRules.IsJunk(id, displayName);
+        return CosmeticCatalogRules.IsJunk(id, displayName, hasStoreIcon, isTitle);
     }
+
+    /// <summary>Stored verdict for a seen id only; no rule fallback, stores nothing.</summary>
+    public bool TryGetVerdict(string id, out CosmeticVerdict verdict) =>
+        _verdicts.TryGetValue(id ?? "", out verdict);
 
     public bool Contains(string id) => id != null && _kept.Contains(id);
 
@@ -50,7 +59,8 @@ public sealed class CosmeticCatalog
     public string SummaryLine() =>
         $"Offline cosmetics: {KeptCount} unlocked, {RemovedCount} removed "
         + $"(EmptyId {RemovedBy(CosmeticVerdict.EmptyId)}, UnknownPrefix {RemovedBy(CosmeticVerdict.UnknownPrefix)}, "
-        + $"Blocklisted {RemovedBy(CosmeticVerdict.Blocklisted)}, TestEntry {RemovedBy(CosmeticVerdict.TestEntry)})";
+        + $"Blocklisted {RemovedBy(CosmeticVerdict.Blocklisted)}, TestEntry {RemovedBy(CosmeticVerdict.TestEntry)}, "
+        + $"NoStoreIcon {RemovedBy(CosmeticVerdict.NoStoreIcon)})";
 
     private void Count(string id, CosmeticVerdict verdict)
     {

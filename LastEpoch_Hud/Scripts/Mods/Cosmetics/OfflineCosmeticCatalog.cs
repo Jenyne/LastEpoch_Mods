@@ -34,13 +34,21 @@ internal static class OfflineCosmeticCatalog
     }
 
     /// <summary>True for junk. Without a ready catalog the rules decide, so junk never shows.</summary>
-    public static bool IsJunk(string id, string displayName)
+    public static bool IsJunk(Cosmetic c)
     {
-        if (TryGetCatalog(out CosmeticCatalog catalog))
+        string id = c.BackendID;
+        if (
+            TryGetCatalog(out CosmeticCatalog catalog)
+            && catalog.TryGetVerdict(id, out CosmeticVerdict verdict)
+        )
         {
-            return catalog.IsJunk(id, displayName);
+            return verdict != CosmeticVerdict.Keep;
         }
-        return CosmeticCatalogRules.IsJunk(id, displayName);
+        if (!TryReadFacts(c, out bool hasIcon, out bool isTitle))
+        {
+            return CosmeticCatalogRules.IsJunk(id, c.DisplayName, true, false);
+        }
+        return CosmeticCatalogRules.IsJunk(id, c.DisplayName, hasIcon, isTitle);
     }
 
     /// <summary>Shared list of owned ids, or null when not ready. Callers must not store or mutate it.</summary>
@@ -69,6 +77,27 @@ internal static class OfflineCosmeticCatalog
         catch (Exception ex)
         {
             Break(ex);
+        }
+    }
+
+    private static bool TryReadFacts(Cosmetic c, out bool hasIcon, out bool isTitle)
+    {
+        hasIcon = true;
+        isTitle = false;
+        if (_cache.Broken)
+        {
+            return false;
+        }
+        try
+        {
+            hasIcon = CosmeticStoreIcon.HasStoreIcon(c, CosmeticStoreIcon.CurrentBundles());
+            isTitle = CosmeticStoreIcon.IsTitle(c);
+            return true;
+        }
+        catch (Exception ex)
+        {
+            Break(ex);
+            return false;
         }
     }
 
