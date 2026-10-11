@@ -17,7 +17,6 @@ public sealed class HeadhunterProbeLogTests
             HeadhunterProbeLog.EmergeEnd(FakeScene, FakeActor, KillKind.Boss, 2f, 3f, false),
             HeadhunterProbeLog.Cinematic(FakeScene, "src", 5f, true, false, false),
             HeadhunterProbeLog.Cutscene(FakeScene, "id", 12f),
-            HeadhunterProbeLog.BossEngaged(FakeScene, FakeActor, false, false),
             HeadhunterProbeLog.VoiceStart(FakeScene, FakeActor, "death", 1, "abc", "k", true),
             HeadhunterProbeLog.VoiceLength(FakeScene, FakeActor, 1f),
             HeadhunterProbeLog.Bark(FakeScene, FakeActor, "abc", 1f),
@@ -120,14 +119,6 @@ public sealed class HeadhunterProbeLogTests
     }
 
     [Fact]
-    public void BossEngaged_HasActorAndFlags()
-    {
-        string line = HeadhunterProbeLog.BossEngaged(FakeScene, FakeActor, true, false);
-
-        Assert.Contains($"actor={FakeActor} calledToArms=yes diedBefore=no", line);
-    }
-
-    [Fact]
     public void VoiceStart_HasSpeakerTriggerPriorityTextKeyPlaying()
     {
         string line = HeadhunterProbeLog.VoiceStart(
@@ -191,7 +182,7 @@ public sealed class HeadhunterProbeLogTests
     [Fact]
     public void EmptyText_ShowsQuestionMark()
     {
-        string line = HeadhunterProbeLog.BossEngaged("", null, false, false);
+        string line = HeadhunterProbeLog.EmergeStart("", null, KillKind.Boss, 3f);
 
         Assert.Contains("scene=?", line);
         Assert.Contains("actor=?", line);

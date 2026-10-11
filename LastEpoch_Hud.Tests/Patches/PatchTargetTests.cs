@@ -1,16 +1,11 @@
 using System.Text.RegularExpressions;
 using LastEpoch_Hud.Tests.Support;
-using Mono.Cecil;
 
 namespace LastEpoch_Hud.Tests.Patches;
 
 /// <summary>Every Harmony patch must hit a method the current game declares.</summary>
 public sealed partial class PatchTargetTests
 {
-    private static readonly Lazy<IReadOnlyList<PatchDeclaration>> _cache = new(() =>
-        PatchScanner.Scan(GameEnvironment.ReadGameModule(GameEnvironment.ModDll))
-    );
-
     [Fact]
     public void Patches_ResolveToOneGameMethod()
     {
@@ -44,7 +39,7 @@ public sealed partial class PatchTargetTests
             .Select(path => BlockComment().Replace(File.ReadAllText(path), ""))
             .Sum(code => PatchAttribute().Count(code));
 
-        Assert.Equal(inSource, Load().Count);
+        Assert.Equal(inSource, ModPatches.Load().Count);
     }
 
     [GeneratedRegex(@"^[ \t]*\[HarmonyPatch\(\s*typeof", RegexOptions.Multiline)]
@@ -54,18 +49,12 @@ public sealed partial class PatchTargetTests
     private static partial Regex BlockComment();
 
     private static List<(PatchDeclaration Patch, string Problem)> Problems() =>
-        Load()
+        ModPatches
+            .Load()
             .Select(p => (Patch: p, Problem: PatchTargetResolver.Problem(p)))
             .Where(p => p.Problem != null)
             .Select(p => (p.Patch, p.Problem))
             .ToList();
-
-    private static IReadOnlyList<PatchDeclaration> Load()
-    {
-        GameEnvironment.SkipWithoutGame();
-        GameEnvironment.SkipWithoutModBuild();
-        return _cache.Value;
-    }
 
     private static string Report(
         string title,

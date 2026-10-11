@@ -25,6 +25,8 @@ internal static class GameEnvironment
             "cpp2il_out"
         );
 
+    public static string GameAssemblyDll => Path.Combine(GameDir, "GameAssembly.dll");
+
     public static string ModProjectDir => Path.Combine(RepoRoot, "LastEpoch_Hud");
 
     public static string ModDll =>
@@ -43,11 +45,17 @@ internal static class GameEnvironment
             $"No mod build at {ModDll}; build the mod or set LAST_EPOCH_MOD_DLL"
         );
 
-    public static void SkipWithoutCpp2IlOut() =>
+    public static void SkipWithoutCpp2IlOut()
+    {
         Assert.SkipUnless(
             Directory.Exists(Cpp2IlOutDir),
             $"No Cpp2IL output at {Cpp2IlOutDir}; set LAST_EPOCH_PATH"
         );
+        Assert.SkipUnless(
+            File.Exists(GameAssemblyDll),
+            $"No game code at {GameAssemblyDll}; set LAST_EPOCH_PATH"
+        );
+    }
 
     public static ModuleDefinition ReadGameModule(string path)
     {
@@ -67,6 +75,7 @@ internal static class GameEnvironment
         {
             dir = dir.Parent;
         }
+
         return dir?.FullName
             ?? throw new InvalidOperationException(
                 "LastEpoch_Hud.sln not found above the test output"
