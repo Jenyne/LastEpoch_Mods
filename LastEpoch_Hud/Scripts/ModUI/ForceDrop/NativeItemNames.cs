@@ -223,7 +223,7 @@ internal static class NativeItemNames
 
     static string Raw(string display, string internalName)
     {
-        return !string.IsNullOrWhiteSpace(display) ? display : internalName ?? "";
+        return ForceDropSelection.CatalogLabel(display, internalName);
     }
 
     public static string RarityName(string raw)
@@ -319,7 +319,7 @@ internal static class NativeItemNames
                 if (unique.baseType == baseType && unique.isSetItem == (rarity == 8))
                 {
                     if (unique.subTypes.IsNullOrDestroyed() || unique.subTypes.Count == 0)
-                        return result;
+                        continue;
                     entries.Add(UniqueItem(unique));
                 }
         if (dropdown.options.Count != entries.Count + 1)

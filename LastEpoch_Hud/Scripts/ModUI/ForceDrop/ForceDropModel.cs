@@ -1,4 +1,6 @@
+using System.Collections.Generic;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.ForceDrop;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -27,6 +29,10 @@ internal static class ForceDropModel
     public static UniqueList.LegendaryType ItemLegendaryType = UniqueList
         .LegendaryType
         .LegendaryPotential;
+
+    private static List<int> _typeOptions = new();
+    private static List<ForceDropRarity> _rarityOptions = new();
+    private static List<ForceDropItemOption> _itemOptions = new();
 
     public static void GetRefs()
     {
@@ -124,341 +130,271 @@ internal static class ForceDropModel
 
     public static void InitForceDrop()
     {
-        if ((!TypeInitialized) && (!InitializingType))
+        if (TypeInitialized || InitializingType)
         {
-            InitializingType = true;
-            try
-            {
-                TypeDropdown.ClearOptions();
-                var options = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
-                options.Add(new Dropdown.OptionData { text = "Select" });
-                foreach (ItemList.BaseEquipmentItem item in ItemList.get().EquippableItems)
-                {
-                    options.Add(new Dropdown.OptionData { text = item.BaseTypeName });
-                }
-                foreach (ItemList.BaseNonEquipmentItem item in ItemList.get().nonEquippableItems)
-                {
-                    options.Add(new Dropdown.OptionData { text = item.BaseTypeName });
-                }
-                TypeDropdown.options = options;
-                TypeDropdown.value = 0;
-
-                RarityDropdown.ClearOptions();
-                RarityDropdown.enabled = false;
-
-                ItemsDropdown.ClearOptions();
-                ItemsDropdown.enabled = false;
-
-                TypeInitialized = true;
-            }
-            catch (System.Exception ex)
-            {
-                Main.logger_instance.Error("Force drop list init error : " + ex.Message);
-            }
-            InitializingType = false;
+            return;
         }
+        InitializingType = true;
+        try
+        {
+            TypeDropdown.ClearOptions();
+            Il2CppSystem.Collections.Generic.List<Dropdown.OptionData> options =
+                PlaceholderOptions();
+            List<int> types = new();
+            foreach (ItemList.BaseEquipmentItem item in ItemList.get().EquippableItems)
+            {
+                options.Add(new Dropdown.OptionData { text = item.BaseTypeName });
+                types.Add(item.baseTypeID);
+            }
+            foreach (ItemList.BaseNonEquipmentItem item in ItemList.get().nonEquippableItems)
+            {
+                options.Add(new Dropdown.OptionData { text = item.BaseTypeName });
+                types.Add(item.baseTypeID);
+            }
+            TypeDropdown.options = options;
+            _typeOptions = types;
+            TypeDropdown.value = 0;
+
+            RarityDropdown.ClearOptions();
+            RarityDropdown.enabled = false;
+
+            ItemsDropdown.ClearOptions();
+            ItemsDropdown.enabled = false;
+
+            TypeInitialized = true;
+        }
+        catch (System.Exception ex)
+        {
+            ErrorLog.Report(ex, "ForceDropModel.InitForceDrop");
+        }
+        InitializingType = false;
     }
 
     public static void SelectType()
     {
-        if (TypeInitialized)
+        if (!TypeInitialized)
         {
-            int index = TypeDropdown.value;
-            if (index < TypeDropdown.options.Count)
-            {
-                string typeStr = TypeDropdown.options[TypeDropdown.value].text;
-                ItemType = -1;
-                bool found = false;
-                foreach (ItemList.BaseEquipmentItem item in ItemList.get().EquippableItems)
-                {
-                    if (item.BaseTypeName == typeStr)
-                    {
-                        ItemType = item.baseTypeID;
-                        found = true;
-                        break;
-                    }
-                }
-                if (!found)
-                {
-                    foreach (
-                        ItemList.BaseNonEquipmentItem item in ItemList.get().nonEquippableItems
-                    )
-                    {
-                        if (item.BaseTypeName == typeStr)
-                        {
-                            ItemType = item.baseTypeID;
-                            break;
-                        }
-                    }
-                }
-                UpdateRarity();
-                UpdateItems();
-            }
+            return;
         }
+        ItemType = ForceDropSelection.TryOptionAt(_typeOptions, TypeDropdown.value, out int type)
+            ? type
+            : -1;
+        UpdateRarity();
+        UpdateItems();
     }
 
     public static void UpdateRarity()
     {
-        if (
-            (Enabled)
-            && (LastEpoch_Hud.Scenes.IsGameScene())
-            && (!Refs_Manager.item_list.IsNullOrDestroyed())
-            && (TypeInitialized)
-            && (!TypeDropdown.IsNullOrDestroyed())
-            && (!RarityDropdown.IsNullOrDestroyed())
-            && (!ItemsDropdown.IsNullOrDestroyed())
-        )
+        if (!CanUpdateCatalog())
         {
-            RarityDropdown.ClearOptions();
-            var options = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
-            options.Add(new Dropdown.OptionData { text = "Select" });
-            if ((TypeDropdown.value > 0) && (ItemType > -1))
-            {
-                bool hasUnique = false;
-                bool hasSet = false;
-                if (UniqueList.instance.IsNullOrDestroyed())
-                {
-                    UniqueList.getUnique(0);
-                }
-                if (!UniqueList.instance.IsNullOrDestroyed())
-                {
-                    foreach (UniqueList.Entry unique in UniqueList.instance.uniques)
-                    {
-                        if (unique.baseType == ItemType)
-                        {
-                            if (unique.isSetItem)
-                            {
-                                hasSet = true;
-                            }
-                            else
-                            {
-                                hasUnique = true;
-                            }
-                        }
-                    }
-                }
-                options.Add(new Dropdown.OptionData { text = "Base Item" });
-                if (hasUnique)
-                {
-                    options.Add(new Dropdown.OptionData { text = "Unique" });
-                }
-                if (hasSet)
-                {
-                    options.Add(new Dropdown.OptionData { text = "Set" });
-                }
-                RarityDropdown.enabled = true;
-            }
-            else
-            {
-                RarityDropdown.enabled = false;
-            }
-            RarityDropdown.options = options;
-            RarityDropdown.value = 0;
-            ItemRarity = -1;
+            return;
         }
+        List<ForceDropRarity> rarities = ForceDropSelection.Rarities(ItemType, SnapshotUniques());
+        Il2CppSystem.Collections.Generic.List<Dropdown.OptionData> options = PlaceholderOptions();
+        foreach (ForceDropRarity rarity in rarities)
+        {
+            options.Add(new Dropdown.OptionData { text = RarityLabel(rarity) });
+        }
+        RarityDropdown.options = options;
+        _rarityOptions = rarities;
+        RarityDropdown.enabled = rarities.Count > 0;
+        RarityDropdown.value = 0;
+        ItemRarity = -1;
     }
 
     public static void SelectRarity()
     {
-        if (TypeInitialized)
+        if (!TypeInitialized)
         {
-            int index = RarityDropdown.value;
-            if (index < RarityDropdown.options.Count)
-            {
-                string rarityStr = RarityDropdown.options[index].text;
-                ItemRarity = RarityFromLabel(rarityStr);
-                UpdateItems();
-            }
+            return;
         }
+        ItemRarity = ForceDropSelection.TryOptionAt(
+            _rarityOptions,
+            RarityDropdown.value,
+            out ForceDropRarity rarity
+        )
+            ? ForceDropSelection.GameRarity(rarity)
+            : -1;
+        UpdateItems();
     }
 
     public static void UpdateItems()
     {
+        if (!CanUpdateCatalog())
+        {
+            return;
+        }
         if (
-            (Enabled)
-            && (LastEpoch_Hud.Scenes.IsGameScene())
-            && (!Refs_Manager.item_list.IsNullOrDestroyed())
-            && (TypeInitialized)
-            && (!ItemsDropdown.IsNullOrDestroyed())
+            !ForceDropSelection.TryOptionAt(
+                _rarityOptions,
+                RarityDropdown.value,
+                out ForceDropRarity rarity
+            )
         )
         {
-            ItemsDropdown.ClearOptions();
-
-            var options = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
-            options.Add(new Dropdown.OptionData { text = "Select" });
-            if ((ItemType > -1) && (ItemRarity > -1))
-            {
-                if (ItemRarity == 0)
-                {
-                    bool typeFound = false;
-                    foreach (ItemList.BaseEquipmentItem baseItem in ItemList.get().EquippableItems)
-                    {
-                        if (baseItem.baseTypeID == ItemType)
-                        {
-                            foreach (ItemList.EquipmentItem item in baseItem.subItems)
-                            {
-                                string name = item.displayName;
-                                if (name == "")
-                                {
-                                    name = item.name;
-                                }
-                                options.Add(new Dropdown.OptionData { text = name });
-                            }
-                            typeFound = true;
-                        }
-                    }
-                    if (!typeFound)
-                    {
-                        foreach (
-                            ItemList.BaseNonEquipmentItem baseItem in ItemList
-                                .get()
-                                .nonEquippableItems
-                        )
-                        {
-                            if (baseItem.baseTypeID == ItemType)
-                            {
-                                foreach (ItemList.NonEquipmentItem item in baseItem.subItems)
-                                {
-                                    string name = item.displayName;
-                                    if (name == "")
-                                    {
-                                        name = item.name;
-                                    }
-                                    options.Add(new Dropdown.OptionData { text = name });
-                                }
-                            }
-                        }
-                    }
-                }
-                if ((ItemRarity == 7) || (ItemRarity == 8))
-                {
-                    if (UniqueList.instance.IsNullOrDestroyed())
-                    {
-                        UniqueList.getUnique(0);
-                    }
-                    if (!UniqueList.instance.IsNullOrDestroyed())
-                    {
-                        foreach (UniqueList.Entry unique in UniqueList.instance.uniques)
-                        {
-                            if (
-                                (unique.baseType == ItemType)
-                                && (
-                                    ((ItemRarity == 7) && (!unique.isSetItem))
-                                    || ((ItemRarity == 8) && (unique.isSetItem))
-                                )
-                            )
-                            {
-                                string name = unique.displayName;
-                                if (name == "")
-                                {
-                                    name = unique.name;
-                                }
-                                options.Add(new Dropdown.OptionData { text = name });
-                            }
-                        }
-                    }
-                }
-                ItemsDropdown.enabled = true;
-            }
-            else
-            {
-                ItemsDropdown.enabled = false;
-            }
-            ItemsDropdown.options = options;
+            ItemsDropdown.options = PlaceholderOptions();
+            ItemsDropdown.enabled = false;
+            _itemOptions.Clear();
             ItemsDropdown.value = 0;
+            return;
         }
+        List<ForceDropItemOption> items = ForceDropSelection.Items(
+            ItemType,
+            rarity,
+            SnapshotBaseItems(),
+            SnapshotUniques()
+        );
+        Il2CppSystem.Collections.Generic.List<Dropdown.OptionData> options = PlaceholderOptions();
+        foreach (ForceDropItemOption item in items)
+        {
+            options.Add(new Dropdown.OptionData { text = item.Label });
+        }
+        ItemsDropdown.options = options;
+        _itemOptions = items;
+        ItemsDropdown.enabled = true;
+        ItemsDropdown.value = 0;
     }
 
     public static void SelectItem()
     {
-        if (TypeInitialized)
+        if (!TypeInitialized)
         {
-            int index = ItemsDropdown.value;
-            if (index < ItemsDropdown.options.Count)
-            {
-                string itemStr = ItemsDropdown.options[ItemsDropdown.value].text;
-
-                ItemSubtype = -1;
-                ItemUniqueId = 0;
-
-                bool itemFound = false;
-                if (ItemRarity == 0)
-                {
-                    foreach (ItemList.BaseEquipmentItem baseItem in ItemList.get().EquippableItems)
-                    {
-                        if (baseItem.baseTypeID == ItemType)
-                        {
-                            foreach (ItemList.EquipmentItem item in baseItem.subItems)
-                            {
-                                if ((itemStr == item.displayName) || (itemStr == item.name))
-                                {
-                                    ItemSubtype = item.subTypeID;
-                                    itemFound = true;
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                    if (!itemFound)
-                    {
-                        foreach (
-                            ItemList.BaseNonEquipmentItem baseItem in ItemList
-                                .get()
-                                .nonEquippableItems
-                        )
-                        {
-                            if (baseItem.baseTypeID == ItemType)
-                            {
-                                foreach (ItemList.NonEquipmentItem item in baseItem.subItems)
-                                {
-                                    if ((itemStr == item.displayName) || (itemStr == item.name))
-                                    {
-                                        ItemSubtype = item.subTypeID;
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-                if ((ItemRarity == 7) || (ItemRarity == 8))
-                {
-                    if (UniqueList.instance.IsNullOrDestroyed())
-                    {
-                        UniqueList.getUnique(0);
-                    }
-                    if (!UniqueList.instance.IsNullOrDestroyed())
-                    {
-                        foreach (UniqueList.Entry unique in UniqueList.instance.uniques)
-                        {
-                            if ((itemStr == unique.displayName) || (itemStr == unique.name))
-                            {
-                                ItemSubtype = unique.subTypes[0]; //need to be fix here
-                                ItemUniqueId = unique.uniqueID;
-                                ItemLegendaryType = unique.legendaryType;
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
+            return;
         }
+        ItemSubtype = -1;
+        ItemUniqueId = 0;
+        if (
+            !ForceDropSelection.TryOptionAt(
+                _itemOptions,
+                ItemsDropdown.value,
+                out ForceDropItemOption item
+            )
+        )
+        {
+            return;
+        }
+        ItemSubtype = item.SubType;
+        ItemUniqueId = item.UniqueId;
+        if (item.Rarity == ForceDropRarity.Base)
+        {
+            return;
+        }
+        ItemLegendaryType = LegendaryTypeOf(item.UniqueId);
     }
 
-    private static int RarityFromLabel(string label)
+    private static bool CanUpdateCatalog()
     {
-        if (label == "Base Item")
+        return Enabled
+            && LastEpoch_Hud.Scenes.IsGameScene()
+            && !Refs_Manager.item_list.IsNullOrDestroyed()
+            && TypeInitialized
+            && !TypeDropdown.IsNullOrDestroyed()
+            && !RarityDropdown.IsNullOrDestroyed()
+            && !ItemsDropdown.IsNullOrDestroyed();
+    }
+
+    private static Il2CppSystem.Collections.Generic.List<Dropdown.OptionData> PlaceholderOptions()
+    {
+        var options = new Il2CppSystem.Collections.Generic.List<Dropdown.OptionData>();
+        options.Add(new Dropdown.OptionData { text = "Select" });
+        return options;
+    }
+
+    private static string RarityLabel(ForceDropRarity rarity)
+    {
+        return rarity switch
         {
-            return 0;
-        }
-        if (label == "Unique")
+            ForceDropRarity.Unique => "Unique",
+            ForceDropRarity.Set => "Set",
+            _ => "Base Item",
+        };
+    }
+
+    private static List<ForceDropItemOption> SnapshotBaseItems()
+    {
+        var result = new List<ForceDropItemOption>();
+        foreach (ItemList.BaseEquipmentItem baseItem in ItemList.get().EquippableItems)
         {
-            return 7;
+            foreach (ItemList.EquipmentItem item in baseItem.subItems)
+            {
+                result.Add(
+                    BaseOption(baseItem.baseTypeID, item.subTypeID, item.displayName, item.name)
+                );
+            }
         }
-        if (label == "Set")
+        foreach (ItemList.BaseNonEquipmentItem baseItem in ItemList.get().nonEquippableItems)
         {
-            return 8;
+            foreach (ItemList.NonEquipmentItem item in baseItem.subItems)
+            {
+                result.Add(
+                    BaseOption(baseItem.baseTypeID, item.subTypeID, item.displayName, item.name)
+                );
+            }
         }
-        return -1;
+        return result;
+    }
+
+    private static ForceDropItemOption BaseOption(
+        int baseType,
+        int subType,
+        string display,
+        string internalName
+    )
+    {
+        return new ForceDropItemOption(
+            baseType,
+            subType,
+            ForceDropRarity.Base,
+            0,
+            ForceDropSelection.CatalogLabel(display, internalName)
+        );
+    }
+
+    private static List<ForceDropUniqueEntry> SnapshotUniques()
+    {
+        var result = new List<ForceDropUniqueEntry>();
+        if (UniqueList.instance.IsNullOrDestroyed())
+        {
+            UniqueList.getUnique(0);
+        }
+        if (UniqueList.instance.IsNullOrDestroyed())
+        {
+            return result;
+        }
+        foreach (UniqueList.Entry unique in UniqueList.instance.uniques)
+        {
+            result.Add(
+                new ForceDropUniqueEntry(
+                    unique.uniqueID,
+                    unique.baseType,
+                    unique.isSetItem,
+                    SubTypesOf(unique),
+                    ForceDropSelection.CatalogLabel(unique.displayName, unique.name)
+                )
+            );
+        }
+        return result;
+    }
+
+    private static int[] SubTypesOf(UniqueList.Entry unique)
+    {
+        if (unique.subTypes.IsNullOrDestroyed())
+        {
+            return System.Array.Empty<int>();
+        }
+        int[] result = new int[unique.subTypes.Count];
+        for (int i = 0; i < result.Length; i++)
+        {
+            result[i] = unique.subTypes[i];
+        }
+        return result;
+    }
+
+    private static UniqueList.LegendaryType LegendaryTypeOf(int uniqueId)
+    {
+        UniqueList.Entry entry = UniqueList.getUnique((ushort)uniqueId);
+        return entry.IsNullOrDestroyed()
+            ? UniqueList.LegendaryType.LegendaryPotential
+            : entry.legendaryType;
     }
 }

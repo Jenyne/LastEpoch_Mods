@@ -933,10 +933,7 @@ public static class ForceDropBuilder
         {
             int option = itemIndexes[i];
             FD.ItemsDropdown.SetValueWithoutNotify(option);
-            if (nativeItems.TryGetValue(option, out var item))
-                NativeItemNames.SelectItem(item);
-            else
-                FD.SelectItem();
+            FD.SelectItem();
         }
         ResetRage();
         RefreshItems();
