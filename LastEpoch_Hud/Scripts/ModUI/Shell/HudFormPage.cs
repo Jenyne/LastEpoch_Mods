@@ -646,6 +646,62 @@ internal sealed class HudFormPage : IHudSearchPage
         }
     }
 
+    /// <summary>Clones the HUD input template as a themed numeric input; null without a template.</summary>
+    public TMP_InputField BuildInput(GameObject parent)
+    {
+        if (inputTemplate.IsNullOrDestroyed())
+            return null;
+        var clone = UnityEngine.Object.Instantiate(
+            inputTemplate.gameObject,
+            parent.transform,
+            false
+        );
+        clone.name = "ValueInput";
+        var input = clone.GetComponent<TMP_InputField>();
+        var rect = clone.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(1f, 1f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(1f, 1f);
+        rect.anchoredPosition = new Vector2(-4f, -4f);
+        rect.sizeDelta = new Vector2(HudTheme.SliderValueWidth, 34f);
+        rect.localScale = Vector3.one;
+        var layout = clone.GetComponent<LayoutElement>();
+        if (!layout.IsNullOrDestroyed())
+            layout.ignoreLayout = true;
+        var background = clone.GetComponent<Image>();
+        if (!background.IsNullOrDestroyed())
+        {
+            background.sprite = null;
+            background.type = Image.Type.Simple;
+            background.color = HudTheme.ControlBox;
+        }
+        HudStyler.AddPrimaryBorder(clone, 1f);
+        input.colors = HudTheme.ButtonColors(HudTheme.ControlBox, HudTheme.Selection);
+        input.onValueChanged.RemoveAllListeners();
+        input.contentType = TMP_InputField.ContentType.DecimalNumber;
+        input.characterLimit = 12;
+        input.readOnly = false;
+        input.interactable = true;
+        if (!input.placeholder.IsNullOrDestroyed())
+            input.placeholder.gameObject.SetActive(false);
+        if (!input.textViewport.IsNullOrDestroyed())
+        {
+            input.textViewport.anchorMin = Vector2.zero;
+            input.textViewport.anchorMax = Vector2.one;
+            input.textViewport.offsetMin = new Vector2(8f, 0f);
+            input.textViewport.offsetMax = new Vector2(-10f, 0f);
+        }
+        if (!input.textComponent.IsNullOrDestroyed())
+        {
+            input.textComponent.color = HudTheme.TextPrimary;
+            input.textComponent.fontSize = HudTheme.BodyFontSize;
+            input.textComponent.horizontalAlignment = HorizontalAlignmentOptions.Right;
+            input.textComponent.verticalAlignment = VerticalAlignmentOptions.Middle;
+        }
+        clone.SetActive(true);
+        return input;
+    }
+
     // The direct child of a card body that holds the control, or null.
     private GameObject RowOf(Component control)
     {
@@ -1176,61 +1232,6 @@ internal sealed class HudFormPage : IHudSearchPage
         if (TryParse(text, out float value))
             binding.Control.value = Mathf.Clamp(value, binding.Minimum, binding.Maximum);
         SetInputText(binding, binding.Control.value);
-    }
-
-    private TMP_InputField BuildInput(GameObject parent)
-    {
-        if (inputTemplate.IsNullOrDestroyed())
-            return null;
-        var clone = UnityEngine.Object.Instantiate(
-            inputTemplate.gameObject,
-            parent.transform,
-            false
-        );
-        clone.name = "ValueInput";
-        var input = clone.GetComponent<TMP_InputField>();
-        var rect = clone.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(1f, 1f);
-        rect.anchorMax = new Vector2(1f, 1f);
-        rect.pivot = new Vector2(1f, 1f);
-        rect.anchoredPosition = new Vector2(-4f, -4f);
-        rect.sizeDelta = new Vector2(HudTheme.SliderValueWidth, 34f);
-        rect.localScale = Vector3.one;
-        var layout = clone.GetComponent<LayoutElement>();
-        if (!layout.IsNullOrDestroyed())
-            layout.ignoreLayout = true;
-        var background = clone.GetComponent<Image>();
-        if (!background.IsNullOrDestroyed())
-        {
-            background.sprite = null;
-            background.type = Image.Type.Simple;
-            background.color = HudTheme.ControlBox;
-        }
-        HudStyler.AddPrimaryBorder(clone, 1f);
-        input.colors = HudTheme.ButtonColors(HudTheme.ControlBox, HudTheme.Selection);
-        input.onValueChanged.RemoveAllListeners();
-        input.contentType = TMP_InputField.ContentType.DecimalNumber;
-        input.characterLimit = 12;
-        input.readOnly = false;
-        input.interactable = true;
-        if (!input.placeholder.IsNullOrDestroyed())
-            input.placeholder.gameObject.SetActive(false);
-        if (!input.textViewport.IsNullOrDestroyed())
-        {
-            input.textViewport.anchorMin = Vector2.zero;
-            input.textViewport.anchorMax = Vector2.one;
-            input.textViewport.offsetMin = new Vector2(8f, 0f);
-            input.textViewport.offsetMax = new Vector2(-10f, 0f);
-        }
-        if (!input.textComponent.IsNullOrDestroyed())
-        {
-            input.textComponent.color = HudTheme.TextPrimary;
-            input.textComponent.fontSize = HudTheme.BodyFontSize;
-            input.textComponent.horizontalAlignment = HorizontalAlignmentOptions.Right;
-            input.textComponent.verticalAlignment = VerticalAlignmentOptions.Middle;
-        }
-        clone.SetActive(true);
-        return input;
     }
 
     private Scrollbar BuildScrollbar(GameObject parent)

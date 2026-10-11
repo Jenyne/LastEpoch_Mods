@@ -7,11 +7,10 @@ using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-/// <summary>World &gt; Monoliths HUD page. Page and Timelines card reset on HUD re-bind (Build).</summary>
+/// <summary>World &gt; Monoliths HUD page. Page and the timeline editor reset on HUD re-bind (Build).</summary>
 internal static class WorldMonolithsPage
 {
     private static HudFormPage page;
-    private static HudFormPage.Card timelines;
 
     public static void Build(HudPageId pageId, GameObject parent, GameObject hud, Font font)
     {
@@ -156,17 +155,13 @@ internal static class WorldMonolithsPage
             "Warning: echoes have a limited number of encounter spots. High Rune Prison or Favour Cache counts can crowd out other spawns such as shrines, champions and Nemesis."
         );
 
-        timelines = page.AddCard("Timelines", "Timelines");
-        MonolithTimelineEditor.AttachTo(timelines.Body);
+        MonolithTimelineEditor.Build(page, page.AddCard("Timelines", "Timelines").Body, font);
     }
 
     public static void Show()
     {
-        if (timelines != null)
-            MonolithTimelineEditor.AttachTo(timelines.Body);
         page?.Show();
-        Hud_Manager.Content.Character.Update_Monoliths_Data();
-        MonolithTimelineEditor.RefreshSelection();
+        MonolithTimelineEditor.Reload();
     }
 
     public static void Hide() => page?.Hide();
@@ -174,7 +169,6 @@ internal static class WorldMonolithsPage
     public static void Refresh()
     {
         page?.RefreshValues();
-        MonolithTimelineEditor.RefreshSelection();
     }
 
     private static void AddToggle(

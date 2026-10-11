@@ -16,6 +16,9 @@ public readonly record struct MonolithTimelineView(
     /// <summary>Value of a field that is not shown.</summary>
     public const int Hidden = -1;
 
+    /// <summary>True when the timeline has a saved run.</summary>
+    public bool HasRun => HasBasic || HasEmpowered;
+
     /// <summary>View of the first saved basic and empowered runs of a timeline.</summary>
     public static MonolithTimelineView Of(IReadOnlyList<MonolithRunSnapshot> runs, int timelineId)
     {

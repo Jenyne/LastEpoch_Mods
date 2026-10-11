@@ -338,6 +338,7 @@ ModUI/
     Items*Page.cs         Drop, Force Drop bridge, and crafting slot
     World*Page.cs         Difficulty, monoliths, misc, and camera
     MonolithTimelineEditor.cs  Timeline editor used by WorldMonolithsPage
+    MonolithValueRow.cs  One value row of the timeline editor
     Skills*Page.cs        Minions, companions, summon, and QOL
   Shell/                 Window, navigation, search and reusable view components
     HudTheme.cs             Visual tokens, palettes, and saved theme preferences

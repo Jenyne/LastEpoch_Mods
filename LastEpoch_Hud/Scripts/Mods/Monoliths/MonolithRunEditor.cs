@@ -57,20 +57,16 @@ internal static class MonolithRunEditor
         Main.logger_instance?.Msg("Copied selected values to " + edits.Count + " run values");
     }
 
-    /// <summary>First timeline to select: the current one, else the first saved run's.</summary>
-    public static int InitialTimelineId(int current, int maxTimelineId)
+    /// <summary>First timeline to select: the first saved run's, else the first option.</summary>
+    public static int InitialTimelineId()
     {
         CharacterData data = Refs_Manager.player_data;
         if (data.IsNullOrDestroyed())
         {
-            return MonolithTimelineSelection.Initial(
-                current,
-                new List<MonolithRunSnapshot>(),
-                maxTimelineId
-            );
+            return MonolithTimelineSelection.Initial(Array.Empty<MonolithRunSnapshot>());
         }
 
-        return MonolithTimelineSelection.Initial(current, Snapshot(data), maxTimelineId);
+        return MonolithTimelineSelection.Initial(Snapshot(data));
     }
 
     private static List<MonolithRunSnapshot> Snapshot(CharacterData data)

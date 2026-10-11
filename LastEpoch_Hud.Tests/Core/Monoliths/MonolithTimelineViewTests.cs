@@ -118,6 +118,24 @@ public sealed class MonolithTimelineViewTests
         AssertShowsNothing(MonolithTimelineView.Of(runs, 1));
     }
 
+    [Theory]
+    [InlineData(false, false, false)]
+    [InlineData(true, false, true)]
+    [InlineData(false, true, true)]
+    [InlineData(true, true, true)]
+    public void HasRun_TrueWhenBasicOrEmpowered(bool basic, bool empowered, bool expected)
+    {
+        MonolithTimelineView view = new(basic, 0, empowered, 0, false, 0, 0);
+
+        Assert.Equal(expected, view.HasRun);
+    }
+
+    [Fact]
+    public void Default_HasNoRun()
+    {
+        Assert.False(default(MonolithTimelineView).HasRun);
+    }
+
     [Fact]
     public void Default_ShowsNothing()
     {

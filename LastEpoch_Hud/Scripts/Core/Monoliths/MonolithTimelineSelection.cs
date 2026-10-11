@@ -5,27 +5,17 @@ namespace LastEpoch_Hud.Scripts.Core.Monoliths;
 /// <summary>Picks the first timeline the editor selects.</summary>
 public static class MonolithTimelineSelection
 {
-    /// <summary>Current if set, else the first saved run timeline in 1..max, else 1.</summary>
-    public static int Initial(
-        int current,
-        IReadOnlyList<MonolithRunSnapshot> runs,
-        int maxTimelineId
-    )
+    /// <summary>The first saved run's timeline that the catalog offers, else the first option.</summary>
+    public static int Initial(IReadOnlyList<MonolithRunSnapshot> runs)
     {
-        if (current > 0)
-        {
-            return current;
-        }
-
         for (int i = 0; i < runs.Count; i++)
         {
-            int id = runs[i].TimelineId;
-            if (id >= 1 && id <= maxTimelineId)
+            if (MonolithTimelineCatalog.TryGet(runs[i].TimelineId, out MonolithTimelineOption _))
             {
-                return id;
+                return runs[i].TimelineId;
             }
         }
 
-        return 1;
+        return MonolithTimelineCatalog.All[0].TimelineId;
     }
 }
