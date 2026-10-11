@@ -4,121 +4,49 @@ using Il2Cpp;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.AI;
-using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.Mods.Summon;
 
 [RegisterTypeInIl2Cpp]
 public class Summon_Options : MonoBehaviour
 {
+    private readonly Dictionary<BaseHealth, bool> _health = new Dictionary<BaseHealth, bool>();
+    private readonly Dictionary<NavMeshAgent, float> _radii = new Dictionary<NavMeshAgent, float>();
+
     public Summon_Options(IntPtr ptr)
         : base(ptr) { }
 
-    static Toggle godMode,
-        forever,
-        dontCollide;
-
-    // Read the control itself: callback arguments can report true when toggled off.
-    static readonly Action<bool> GodModeChanged = value =>
+    private void RestoreHealth()
     {
-        if (!Save_Manager.instance.IsNullOrDestroyed() && !godMode.IsNullOrDestroyed())
-        {
-            Save_Manager.instance.data.Summon.Enable_GodMode = godMode.isOn;
-        }
-    };
-    static readonly Action<bool> ForeverChanged = value =>
-    {
-        if (!Save_Manager.instance.IsNullOrDestroyed() && !forever.IsNullOrDestroyed())
-        {
-            Save_Manager.instance.data.Summon.Enable_Forever = forever.isOn;
-        }
-    };
-    static readonly Action<bool> DontCollideChanged = value =>
-    {
-        if (!Save_Manager.instance.IsNullOrDestroyed() && !dontCollide.IsNullOrDestroyed())
-        {
-            Save_Manager.instance.data.Summon.Enable_DontCollide = dontCollide.isOn;
-        }
-    };
-
-    public static void BindUI(GameObject content)
-    {
-        godMode = Bind(content, "SummonGodMode", GodModeChanged);
-        forever = Bind(content, "SummonForever", ForeverChanged);
-        dontCollide = Bind(content, "SummonDontCollide", DontCollideChanged);
-    }
-
-    static Toggle Bind(GameObject content, string rowName, Action<bool> action)
-    {
-        GameObject row = Functions.GetChild(content, rowName);
-        if (row.IsNullOrDestroyed())
-        {
-            return null;
-        }
-        row.SetActive(true);
-        Toggle toggle = row.GetComponentInChildren<Toggle>(true);
-        if (!toggle.IsNullOrDestroyed())
-        {
-            Hud_Manager.Events.Set_Toggle_Event(toggle, action);
-        }
-        return toggle;
-    }
-
-    public static void RefreshUI()
-    {
-        if (Save_Manager.instance.IsNullOrDestroyed())
-        {
-            return;
-        }
-        var options = Save_Manager.instance.data.Summon;
-        if (!godMode.IsNullOrDestroyed())
-        {
-            godMode.SetIsOnWithoutNotify(options.Enable_GodMode);
-        }
-        if (!forever.IsNullOrDestroyed())
-        {
-            forever.SetIsOnWithoutNotify(options.Enable_Forever);
-        }
-        if (!dontCollide.IsNullOrDestroyed())
-        {
-            dontCollide.SetIsOnWithoutNotify(options.Enable_DontCollide);
-        }
-    }
-
-    readonly Dictionary<BaseHealth, bool> health = new Dictionary<BaseHealth, bool>();
-    readonly Dictionary<NavMeshAgent, float> radii = new Dictionary<NavMeshAgent, float>();
-
-    void RestoreHealth()
-    {
-        foreach (var entry in health)
+        foreach (KeyValuePair<BaseHealth, bool> entry in _health)
         {
             if (!entry.Key.IsNullOrDestroyed())
             {
                 entry.Key.damageable = entry.Value;
             }
         }
-        health.Clear();
+        _health.Clear();
     }
 
-    void RestoreRadii()
+    private void RestoreRadii()
     {
-        foreach (var entry in radii)
+        foreach (KeyValuePair<NavMeshAgent, float> entry in _radii)
         {
             if (!entry.Key.IsNullOrDestroyed())
             {
                 entry.Key.radius = entry.Value;
             }
         }
-        radii.Clear();
+        _radii.Clear();
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
         RestoreHealth();
         RestoreRadii();
     }
 
-    void Update()
+    private void Update()
     {
         bool ready =
             Scenes.IsGameScene()
@@ -130,7 +58,7 @@ public class Summon_Options : MonoBehaviour
             OnDisable();
             return;
         }
-        var options = Save_Manager.instance.data.Summon;
+        Save_Manager.Data.Summon options = Save_Manager.instance.data.Summon;
         if (!options.Enable_GodMode)
         {
             RestoreHealth();
@@ -143,7 +71,7 @@ public class Summon_Options : MonoBehaviour
         {
             return;
         }
-        SummonTracker tracker = null;
+        SummonTracker tracker;
         if (
             !Refs_Manager.player_actor.TryGetExistingSummonTracker(out tracker)
             || tracker.IsNullOrDestroyed()
@@ -167,9 +95,9 @@ public class Summon_Options : MonoBehaviour
                 BaseHealth target = unit.IsNullOrDestroyed() ? null : unit.TryCast<BaseHealth>();
                 if (!target.IsNullOrDestroyed())
                 {
-                    if (!health.ContainsKey(target))
+                    if (!_health.ContainsKey(target))
                     {
-                        health.Add(target, target.damageable);
+                        _health.Add(target, target.damageable);
                     }
                     target.damageable = false;
                 }
@@ -179,9 +107,9 @@ public class Summon_Options : MonoBehaviour
                 NavMeshAgent agent = summoned.gameObject.GetComponent<NavMeshAgent>();
                 if (!agent.IsNullOrDestroyed())
                 {
-                    if (!radii.ContainsKey(agent))
+                    if (!_radii.ContainsKey(agent))
                     {
-                        radii.Add(agent, agent.radius);
+                        _radii.Add(agent, agent.radius);
                     }
                     agent.radius = 0f;
                 }
