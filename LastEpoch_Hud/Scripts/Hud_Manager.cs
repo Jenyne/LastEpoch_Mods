@@ -6,6 +6,7 @@ using Il2Cpp;
 using Il2CppLE.Data;
 using Il2CppRewired.Components;
 using Il2CppSystem.Collections.Generic;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.UI;
@@ -32,7 +33,7 @@ public partial class Hud_Manager : MonoBehaviour
     private bool hud_initializing = false;
     private bool data_initializing = false;
 
-    private bool updating = false;
+    private readonly MenuInputLock _inputLock = new();
     private float nextPauseMenuProbe = 0f;
     private bool exit = false;
     public static bool enable = false; //Used to wait loading (Fix_PlayerLoopHelper)
@@ -101,85 +102,124 @@ public partial class Hud_Manager : MonoBehaviour
                 {
                     Init_UserData();
                 } //set once
-                if ((IsPauseOpen() || mod_menu_open) && (!updating))
-                {
-                    updating = true;
-                    Update_Hud_Content();
-                    hud_object.active = true;
-                    Content.Set_Active();
-                    ModUI.Settings.NumericSliderInputs.Tick(hud_object);
-                    if (!Refs_Manager.epoch_input_manager.IsNullOrDestroyed())
-                    {
-                        if (!Refs_Manager.epoch_input_manager.isControllerActive) //Keyboard
-                        {
-                            if (!Refs_Manager.epoch_input_manager.forceDisableInput)
-                            {
-                                Refs_Manager.epoch_input_manager.forceDisableInput = true;
-                            }
-                            if (!Hud_Base.Btn_Resume.IsNullOrDestroyed())
-                            {
-                                if (Input.GetKeyDown(KeyCode.Escape))
-                                {
-                                    exit = true;
-                                }
-                                if ((Input.GetKeyUp(KeyCode.Escape)) && (exit))
-                                {
-                                    Hud_Base.Btn_Resume.onClick.Invoke();
-                                    exit = false;
-                                }
-                            }
-                        }
-                        else //Controller
-                        {
-                            if (Refs_Manager.epoch_input_manager.forceDisableInput)
-                            {
-                                Refs_Manager.epoch_input_manager.forceDisableInput = false;
-                            }
-                            if (virtual_mouse.IsNullOrDestroyed())
-                            {
-                                virtual_mouse = null;
-                            }
-                            if (
-                                (Input.GetKeyDown(KeyCode.Joystick1Button0))
-                                && (!virtual_mouse.IsNullOrDestroyed())
-                            ) //A
-                            {
-                                if (RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
-                                {
-                                    mouse_event(
-                                        MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP,
-                                        (uint)virtual_mouse.screenPosition.x,
-                                        (uint)virtual_mouse.screenPosition.y,
-                                        0,
-                                        0
-                                    );
-                                }
-                                else if (RuntimeInformation.IsOSPlatform(OSPlatform.Linux)) { }
-                                else if (RuntimeInformation.IsOSPlatform(OSPlatform.OSX)) { }
-                            }
-                        }
-                    }
-                    updating = false;
-                }
-                else if (!updating)
-                {
-                    updating = true;
-                    if (hud_object.active)
-                    {
-                        hud_object.active = false;
-                    }
-                    if (!Refs_Manager.epoch_input_manager.IsNullOrDestroyed())
-                    {
-                        if (Refs_Manager.epoch_input_manager.forceDisableInput)
-                        {
-                            Refs_Manager.epoch_input_manager.forceDisableInput = false;
-                        }
-                    }
-                    Content.Character.need_update = true;
-                    updating = false;
-                }
+                Update_Menu(IsPauseOpen() || mod_menu_open);
             }
         }
+    }
+
+    private void Update_Menu(bool menuOpen)
+    {
+        try
+        {
+            Apply_InputLock(menuOpen);
+            if (!menuOpen)
+            {
+                Hide_Menu();
+                return;
+            }
+            Show_Menu();
+        }
+        catch (System.Exception ex)
+        {
+            ErrorLog.Report(ex, "Hud_Manager.Update");
+        }
+    }
+
+    private void Apply_InputLock(bool menuOpen)
+    {
+        EpochInputManager manager = Refs_Manager.epoch_input_manager;
+        if (manager.IsNullOrDestroyed())
+        {
+            return;
+        }
+        switch (_inputLock.Next(menuOpen, manager.isControllerActive, manager.forceDisableInput))
+        {
+            case InputLockAction.Take:
+                manager.forceDisableInput = true;
+                break;
+            case InputLockAction.Release:
+                manager.forceDisableInput = false;
+                break;
+        }
+    }
+
+    private void Refresh_Hud_Content()
+    {
+        try
+        {
+            Update_Hud_Content();
+        }
+        catch (System.Exception ex)
+        {
+            ErrorLog.Report(ex, "Hud_Manager.Update_Hud_Content");
+        }
+    }
+
+    private void Show_Menu()
+    {
+        Refresh_Hud_Content();
+        hud_object.active = true;
+        Content.Set_Active();
+        ModUI.Settings.NumericSliderInputs.Tick(hud_object);
+        if (Refs_Manager.epoch_input_manager.IsNullOrDestroyed())
+        {
+            return;
+        }
+        if (Refs_Manager.epoch_input_manager.isControllerActive)
+        {
+            Update_Controller_Click();
+            return;
+        }
+        Update_Keyboard_Exit();
+    }
+
+    private void Update_Keyboard_Exit()
+    {
+        if (Hud_Base.Btn_Resume.IsNullOrDestroyed())
+        {
+            return;
+        }
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            exit = true;
+        }
+        if ((Input.GetKeyUp(KeyCode.Escape)) && (exit))
+        {
+            Hud_Base.Btn_Resume.onClick.Invoke();
+            exit = false;
+        }
+    }
+
+    private void Update_Controller_Click()
+    {
+        if (virtual_mouse.IsNullOrDestroyed())
+        {
+            virtual_mouse = null;
+        }
+        if (!Input.GetKeyDown(KeyCode.Joystick1Button0) || virtual_mouse.IsNullOrDestroyed())
+        {
+            return;
+        }
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            return;
+        }
+        mouse_event(
+            MOUSEEVENTF_LEFTDOWN | MOUSEEVENTF_LEFTUP,
+            (uint)virtual_mouse.screenPosition.x,
+            (uint)virtual_mouse.screenPosition.y,
+            0,
+            0
+        );
+    }
+
+    private void Hide_Menu()
+    {
+        if (hud_object.active)
+        {
+            hud_object.active = false;
+        }
+        Content.Character.need_update = true;
     }
 
     void Init_Hud()
@@ -372,34 +412,44 @@ public partial class Hud_Manager : MonoBehaviour
         }
         catch (System.Exception ex)
         {
-            Main.logger_instance.Error(name + " Init Error : " + ex.Message);
+            ErrorLog.Report(ex, name + " Init");
         }
     }
 
     void Init_UserData()
     {
         data_initializing = true;
-        if (!Save_Manager.instance.IsNullOrDestroyed())
+        try
         {
-            if (Main.debug)
-            {
-                Main.logger_instance.Msg("Hud Manager : Initialize user config");
-            }
-            bool character = Content.Character.Init_UserData();
-            bool items = Content.Items.Init_UserData();
-            bool scenes = Content.Scenes.Init_UserData();
-            bool skills = Content.Skills.Init_UserData();
-            bool headhunter = Content.Headhunter.Init_Data();
-            if ((character) && (items) && (scenes) && (skills)) // && (headhunter))
+            if (!Save_Manager.instance.IsNullOrDestroyed())
             {
                 if (Main.debug)
                 {
-                    Main.logger_instance.Msg("Hud Manager : Initialized");
+                    Main.logger_instance.Msg("Hud Manager : Initialize user config");
                 }
-                data_initialized = true;
+                bool character = Content.Character.Init_UserData();
+                bool items = Content.Items.Init_UserData();
+                bool scenes = Content.Scenes.Init_UserData();
+                bool skills = Content.Skills.Init_UserData();
+                bool headhunter = Content.Headhunter.Init_Data();
+                if ((character) && (items) && (scenes) && (skills)) // && (headhunter))
+                {
+                    if (Main.debug)
+                    {
+                        Main.logger_instance.Msg("Hud Manager : Initialized");
+                    }
+                    data_initialized = true;
+                }
             }
         }
-        data_initializing = false;
+        catch (System.Exception ex)
+        {
+            ErrorLog.Report(ex, "Hud_Manager.Init_UserData");
+        }
+        finally
+        {
+            data_initializing = false;
+        }
     }
 
     static void RemoveUnusedButtons()
@@ -1294,19 +1344,25 @@ public partial class Hud_Manager : MonoBehaviour
                             {
                                 var woven = Save_Manager.instance.data.Factions.TheWoven;
                                 Data.suppressWeaverSlider = true;
-                                if (!Data.weaver_points_toggle.IsNullOrDestroyed())
+                                try
                                 {
-                                    Data.weaver_points_toggle.isOn = woven.Enable_TreePoints;
+                                    if (!Data.weaver_points_toggle.IsNullOrDestroyed())
+                                    {
+                                        Data.weaver_points_toggle.isOn = woven.Enable_TreePoints;
+                                    }
+                                    if (!Data.weaver_points_slider.IsNullOrDestroyed())
+                                    {
+                                        Data.weaver_points_slider.value = woven.TreePoints;
+                                    }
+                                    if (!Data.weaver_points_text.IsNullOrDestroyed())
+                                    {
+                                        Data.weaver_points_text.text = woven.TreePoints.ToString();
+                                    }
                                 }
-                                if (!Data.weaver_points_slider.IsNullOrDestroyed())
+                                finally
                                 {
-                                    Data.weaver_points_slider.value = woven.TreePoints;
+                                    Data.suppressWeaverSlider = false;
                                 }
-                                if (!Data.weaver_points_text.IsNullOrDestroyed())
-                                {
-                                    Data.weaver_points_text.text = woven.TreePoints.ToString();
-                                }
-                                Data.suppressWeaverSlider = false;
                             }
                             SettingRow.AddMultiplier(
                                 character_data_content,
@@ -3908,10 +3964,16 @@ public partial class Hud_Manager : MonoBehaviour
                         return;
                     }
                     suppressWeaverSlider = true;
-                    weaver_points_slider.wholeNumbers = true;
-                    weaver_points_slider.minValue = 0f;
-                    weaver_points_slider.maxValue = max;
-                    suppressWeaverSlider = false;
+                    try
+                    {
+                        weaver_points_slider.wholeNumbers = true;
+                        weaver_points_slider.minValue = 0f;
+                        weaver_points_slider.maxValue = max;
+                    }
+                    finally
+                    {
+                        suppressWeaverSlider = false;
+                    }
                 }
 
                 public static void SetWeaverTreePointsEnabled(bool on)
@@ -4583,19 +4645,37 @@ public partial class Hud_Manager : MonoBehaviour
                         row.active = show;
                     }
                     suppress_monolith_input = true;
+                    try
+                    {
+                        SetMonolithInputOrSlider(input, slider, value);
+
+                        if (!label.IsNullOrDestroyed())
+                        {
+                            label.text = value.ToString();
+                        }
+                    }
+                    finally
+                    {
+                        suppress_monolith_input = false;
+                    }
+                }
+
+                private static void SetMonolithInputOrSlider(
+                    Il2CppTMPro.TMP_InputField input,
+                    Slider slider,
+                    int value
+                )
+                {
                     if (!input.IsNullOrDestroyed())
                     {
                         input.text = value.ToString();
+                        return;
                     }
-                    else if (!slider.IsNullOrDestroyed())
+                    if (slider.IsNullOrDestroyed())
                     {
-                        slider.value = value;
+                        return;
                     }
-                    if (!label.IsNullOrDestroyed())
-                    {
-                        label.text = value.ToString();
-                    }
-                    suppress_monolith_input = false;
+                    slider.value = value;
                 }
 
                 static bool TryReadMonolithValue(string text, out int value)
@@ -4639,8 +4719,9 @@ public partial class Hud_Manager : MonoBehaviour
                     {
                         manager.loadRuns();
                     }
-                    catch
+                    catch (System.Exception ex)
                     {
+                        ErrorLog.Report(ex, "Monoliths.loadRuns");
                         return null;
                     }
                     if (
@@ -4735,7 +4816,10 @@ public partial class Hud_Manager : MonoBehaviour
                             {
                                 manager.updateHighestCorruptionOfAnyRun();
                             }
-                            catch { }
+                            catch (System.Exception ex)
+                            {
+                                ErrorLog.Report(ex, "Monoliths.updateHighestCorruptionOfAnyRun");
+                            }
                         }
                         LocalPlayer localPlayer =
                             Refs_Manager.player_actor.GetComponent<LocalPlayer>();

@@ -40,7 +40,10 @@ public partial class Hud_Manager
                             Text shard_name = shard_name_object.GetComponent<Text>();
                             Content.OdlForceDrop.SelectShard(i, shard_name.text);
                         }
-                        catch { }
+                        catch (System.Exception ex)
+                        {
+                            ErrorLog.Report(ex, "Button_Press.SelectShard");
+                        }
                     }
                 }
             }
