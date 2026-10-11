@@ -10,6 +10,17 @@ namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Probe;
 [HarmonyPatch(typeof(Emerging), "onExit")]
 public class HeadhunterProbeEmergeEndPatch
 {
+    // Diagnostic branch only: leave the native emergence method unpatched.
+    [HarmonyPrepare]
+    private static bool Prepare(System.Reflection.MethodBase original)
+    {
+        if (original == null)
+        {
+            Main.logger_instance?.Msg("[Yrun Isolation] Disabled HeadhunterProbeEmergeEndPatch.");
+        }
+        return false;
+    }
+
     [HarmonyPrefix]
     private static void Prefix(Emerging __instance)
     {

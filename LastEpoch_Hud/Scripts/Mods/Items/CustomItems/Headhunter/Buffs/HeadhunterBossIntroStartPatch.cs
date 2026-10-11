@@ -10,6 +10,17 @@ namespace LastEpoch_Hud.Scripts.Mods.Items.CustomItems.Headhunter.Buffs;
 [HarmonyPatch(typeof(Emerging), "onEnter")]
 public class HeadhunterBossIntroStartPatch
 {
+    // Diagnostic branch only: leave the native emergence method unpatched.
+    [HarmonyPrepare]
+    private static bool Prepare(System.Reflection.MethodBase original)
+    {
+        if (original == null)
+        {
+            Main.logger_instance?.Msg("[Yrun Isolation] Disabled HeadhunterBossIntroStartPatch.");
+        }
+        return false;
+    }
+
     [HarmonyPostfix]
     private static void Postfix(Emerging __instance)
     {
