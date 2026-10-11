@@ -1680,8 +1680,8 @@ public static class ForceDropBuilder
                             row.tier.value - 1,
                             ResolvedRoll(row.roll),
                             slot == 4 ? ForceDropSeal.Regular
-                            : slot == 5 ? ForceDropSeal.Primordial
-                            : ForceDropSeal.None
+                                : slot == 5 ? ForceDropSeal.Primordial
+                                : ForceDropSeal.None
                         )
                     );
             }

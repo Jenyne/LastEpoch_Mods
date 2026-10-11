@@ -53,7 +53,8 @@ public static class ForceDropClassSearch
             throw new ArgumentNullException(nameof(textMatches));
         if (classMask < 0)
             return textMatches(query);
-        int included = 0, excluded = 0;
+        int included = 0,
+            excluded = 0;
         var textTerms = new List<string>();
         string[] words = (query ?? "").Split(
             new[] { ' ', '\t', '\r', '\n' },
