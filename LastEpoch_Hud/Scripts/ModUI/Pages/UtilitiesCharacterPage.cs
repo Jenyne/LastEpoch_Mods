@@ -94,6 +94,19 @@ internal static class UtilitiesCharacterPage
 
         _page.AddToggle(
             card,
+            "UnlockAllIdolSlots",
+            "Unlock All Idol Slots",
+            () => HasSave() && Save_Manager.instance.data.Character.Cheats.Enable_UnlockAllIdolsSlots,
+            value =>
+            {
+                if (!HasSave())
+                    return;
+                Save_Manager.instance.data.Character.Cheats.Enable_UnlockAllIdolsSlots = value;
+                Mods.Character.Character_UnlockAllIdols.Update();
+            }
+        );
+        _page.AddToggle(
+            card,
             "GodMode",
             "God Mode",
             () => HasSave() && Save_Manager.instance.data.Character.Cheats.Enable_GodMode,
