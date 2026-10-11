@@ -10,7 +10,7 @@ public class Items_Drop_UniqueMods
     {
         if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()))
         {
-            if ((Hud_Manager.IsPauseOpen()) && (Hud_Manager.Content.OdlForceDrop.enable))
+            if ((Hud_Manager.IsPauseOpen()) && (ModUI.ForceDrop.ForceDropModel.Enabled))
             {
                 return false;
             }

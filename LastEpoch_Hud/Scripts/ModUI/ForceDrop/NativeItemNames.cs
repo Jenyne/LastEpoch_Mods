@@ -4,7 +4,7 @@ using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.ForceDrop;
 using LastEpoch_Hud.Scripts.ModUI.Settings;
 using UnityEngine.UI;
-using FD = LastEpoch_Hud.Scripts.Hud_Manager.Content.OdlForceDrop;
+using FD = LastEpoch_Hud.Scripts.ModUI.ForceDrop.ForceDropModel;
 
 namespace LastEpoch_Hud.Scripts.ModUI.ForceDrop;
 
@@ -141,26 +141,38 @@ internal static class NativeItemNames
     public static bool SelectSearchChoice(SearchChoice choice)
     {
         int categoryIndex = -1;
-        foreach (var entry in Categories(FD.type_dropdown))
+        foreach (KeyValuePair<int, Category> entry in Categories(FD.TypeDropdown))
+        {
             if (entry.Value.baseType == choice.category.baseType)
+            {
                 categoryIndex = entry.Key;
+            }
+        }
         if (categoryIndex < 1)
             return false;
         // Clear the old identity before rebuilding dependent catalogs. Failure
         // cannot leave a previous item's id attached to the new category.
-        FD.item_subtype = -1;
-        FD.item_unique_id = 0;
-        FD.type_dropdown.SetValueWithoutNotify(categoryIndex);
+        FD.ItemSubtype = -1;
+        FD.ItemUniqueId = 0;
+        FD.TypeDropdown.SetValueWithoutNotify(categoryIndex);
         SelectCategory(choice.category);
         int rarityIndex = -1;
-        for (int i = 1; i < FD.rarity_dropdown.options.Count; i++)
-            if (FD.rarity_dropdown.options[i].text == choice.RarityLabel)
+        for (int i = 1; i < FD.RarityDropdown.options.Count; i++)
+        {
+            if (FD.RarityDropdown.options[i].text == choice.RarityLabel)
+            {
                 rarityIndex = i;
+            }
+        }
         if (rarityIndex < 1)
             return false;
-        FD.rarity_dropdown.SetValueWithoutNotify(rarityIndex);
+        FD.RarityDropdown.SetValueWithoutNotify(rarityIndex);
         FD.SelectRarity();
-        var items = Items(FD.items_dropdown, choice.category.baseType, choice.rarity);
+        Dictionary<int, ItemChoice> items = Items(
+            FD.ItemsDropdown,
+            choice.category.baseType,
+            choice.rarity
+        );
         var identities = new List<(int, ForceDropItemIdentity)>();
         foreach (var entry in items)
             identities.Add(
@@ -177,7 +189,7 @@ internal static class NativeItemNames
         int option = ForceDropItemSearch.FindOption(choice.Identity, identities);
         if (option < 1)
             return false;
-        FD.items_dropdown.SetValueWithoutNotify(option);
+        FD.ItemsDropdown.SetValueWithoutNotify(option);
         SelectItem(items[option]);
         return true;
     }
@@ -356,16 +368,16 @@ internal static class NativeItemNames
 
     public static void SelectCategory(Category category)
     {
-        FD.item_type = category.baseType;
+        FD.ItemType = category.baseType;
         FD.UpdateRarity();
         FD.UpdateItems();
     }
 
     public static void SelectItem(ItemChoice item)
     {
-        FD.item_subtype = item.subType;
-        FD.item_unique_id = item.uniqueId;
-        FD.item_legendary_type = item.legendaryType;
+        FD.ItemSubtype = item.subType;
+        FD.ItemUniqueId = item.uniqueId;
+        FD.ItemLegendaryType = item.legendaryType;
     }
 
     public static bool Matches(string query, string translated, string aliases)

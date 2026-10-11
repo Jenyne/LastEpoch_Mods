@@ -1,6 +1,6 @@
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
-using FD = LastEpoch_Hud.Scripts.Hud_Manager.Content.OdlForceDrop;
+using FD = LastEpoch_Hud.Scripts.ModUI.ForceDrop.ForceDropModel;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
@@ -11,16 +11,18 @@ internal static class ItemsForceDropPage
 {
     public static void Show()
     {
-        if (FD.content_obj.IsNullOrDestroyed())
+        if (FD.ContentObject.IsNullOrDestroyed())
+        {
             return;
+        }
 
-        FD.Set_Active(true);
+        FD.SetActive(true);
         Hud_Manager.Content.Set_Active();
     }
 
     public static void Hide()
     {
-        FD.Set_Active(false);
+        FD.SetActive(false);
         Hud_Manager.Content.Set_Active();
     }
 }

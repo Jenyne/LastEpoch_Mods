@@ -20,7 +20,7 @@ public class Items_Drop_Rarity
     public static bool CanRun()
     {
         bool res = false;
-        if ((Hud_Manager.IsPauseOpen()) && (Hud_Manager.Content.OdlForceDrop.enable))
+        if ((Hud_Manager.IsPauseOpen()) && (ModUI.ForceDrop.ForceDropModel.Enabled))
         {
             return false;
         }
