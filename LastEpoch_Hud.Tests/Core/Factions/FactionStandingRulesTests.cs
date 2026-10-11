@@ -16,6 +16,12 @@ public sealed class FactionStandingRulesTests
     }
 
     [Fact]
+    public void MaxRank_UnknownKind_ReturnsLowestMax()
+    {
+        Assert.Equal(10, FactionStandingRules.MaxRank((FactionKind)99));
+    }
+
+    [Fact]
     public void ClampRank_WithinRange_ReturnsRequested()
     {
         Assert.Equal(7, FactionStandingRules.ClampRank(FactionKind.ForgottenKnights, 7));

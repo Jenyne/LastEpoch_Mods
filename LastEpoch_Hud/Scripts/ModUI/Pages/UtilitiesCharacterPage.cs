@@ -1,7 +1,9 @@
 using System;
+using System.Collections.Generic;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.Factions;
 using LastEpoch_Hud.Scripts.Core.ModUI;
+using LastEpoch_Hud.Scripts.Core.ModUI.Sliders;
 using LastEpoch_Hud.Scripts.Mods.Factions;
 using LastEpoch_Hud.Scripts.ModUI.Settings;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
@@ -12,8 +14,8 @@ namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 /// <summary>
 /// Utilities &gt; Character. The legacy Character, Skills, Data, Blessings, and
-/// Factions controls are represented here; factions edit through Core rules.
-/// Page, class source and faction inputs re-seed from the legacy controls on HUD re-bind (Build).
+/// Factions controls are represented here; factions use their own controls and edit through Core rules.
+/// The page and class source re-seed from the legacy controls on HUD re-bind (Build); faction inputs reset then.
 /// </summary>
 internal static class UtilitiesCharacterPage
 {
@@ -23,6 +25,8 @@ internal static class UtilitiesCharacterPage
     private static float _factionRank;
     private static float _factionReputation;
     private static Dropdown _classSource;
+    private static Dropdown _factionDropdown;
+    private static Dictionary<string, string> _factionOptionsLocale;
 
     public static void Build(HudPageId pageId, GameObject parent, GameObject hud, Font font)
     {
@@ -52,6 +56,7 @@ internal static class UtilitiesCharacterPage
     public static void Show()
     {
         RefreshClassOptions();
+        RefreshFactionOptions();
         _page?.Show();
     }
 
@@ -60,6 +65,7 @@ internal static class UtilitiesCharacterPage
     public static void Refresh()
     {
         RefreshClassOptions();
+        RefreshFactionOptions();
         _page?.RefreshValues();
     }
 
@@ -622,67 +628,106 @@ internal static class UtilitiesCharacterPage
 
     private static void BuildFactions()
     {
-        Dropdown dropdownSource = Hud_Manager.Content.Character.Faction_Tracker.factions_dropdown;
-        Slider favorSource = Hud_Manager.Content.Character.Faction_Tracker.factions_favor_slider;
-        Slider rankSource = Hud_Manager.Content.Character.Faction_Tracker.factions_rank_slider;
-        Slider reputationSource = Hud_Manager
-            .Content
-            .Character
-            .Faction_Tracker
-            .factions_reputation_slider;
-        _factionSelection = dropdownSource.IsNullOrDestroyed() ? 0 : dropdownSource.value;
-        _factionFavor = favorSource.IsNullOrDestroyed() ? 0f : favorSource.value;
-        _factionRank = rankSource.IsNullOrDestroyed() ? 0f : rankSource.value;
-        _factionReputation = reputationSource.IsNullOrDestroyed() ? 0f : reputationSource.value;
+        _factionSelection = 0;
+        _factionFavor = 0f;
+        _factionRank = 0f;
+        _factionReputation = 0f;
 
         HudFormPage.Card card = _page.AddCard("Factions", "Factions");
-        Dropdown dropdown = _page.AddDropdown(
+        _factionDropdown = _page.AddOptionsDropdown(
             card,
             "Faction",
-            "Faction",
-            dropdownSource,
+            FactionCardLabels.Faction,
+            FactionOptionTexts(),
             () => _factionSelection,
             value => _factionSelection = value
         );
+        _factionOptionsLocale = Locales.current_dictionary;
 
-        _page.AddSlider(
+        AddFactionSlider(
             card,
             "Favor",
-            "Favor",
-            string.Empty,
-            SliderMinimum(favorSource, 0f),
-            SliderMaximum(favorSource, 999999f),
-            true,
+            FactionCardLabels.Favor,
+            CharacterSliderLimits.FactionFavor,
             () => _factionFavor,
             value => _factionFavor = value
         );
-        _page.AddButton(card, "GainFavor", "Gain Favor", GainFavorClicked);
+        _page.AddButton(card, "GainFavor", FactionCardLabels.GainFavor, GainFavorClicked);
 
-        _page.AddSlider(
+        AddFactionSlider(
             card,
             "Rank",
-            "Rank",
-            string.Empty,
-            SliderMinimum(rankSource, 0f),
-            SliderMaximum(rankSource, 12f),
-            true,
+            FactionCardLabels.Rank,
+            CharacterSliderLimits.FactionRank,
             () => _factionRank,
             value => _factionRank = value
         );
-        _page.AddButton(card, "SetRank", "Set Rank", SetRankClicked);
+        _page.AddButton(card, "SetRank", FactionCardLabels.SetRank, SetRankClicked);
 
-        _page.AddSlider(
+        AddFactionSlider(
             card,
             "Reputation",
-            "Reputation",
-            string.Empty,
-            SliderMinimum(reputationSource, 0f),
-            SliderMaximum(reputationSource, 999999f),
-            true,
+            FactionCardLabels.Reputation,
+            CharacterSliderLimits.FactionReputation,
             () => _factionReputation,
             value => _factionReputation = value
         );
-        _page.AddButton(card, "SetReputation", "Set Reputation", SetReputationClicked);
+        _page.AddButton(
+            card,
+            "SetReputation",
+            FactionCardLabels.SetReputation,
+            SetReputationClicked
+        );
+    }
+
+    private static void AddFactionSlider(
+        HudFormPage.Card card,
+        string id,
+        string label,
+        SliderRange range,
+        Func<float> read,
+        Action<float> write
+    )
+    {
+        _page.AddSlider(
+            card,
+            id,
+            label,
+            string.Empty,
+            range.Min,
+            range.Max,
+            range.WholeNumbers,
+            read,
+            write
+        );
+    }
+
+    private static string[] FactionOptionTexts()
+    {
+        string[] texts = new string[FactionSelection.OptionLabels.Count];
+        for (int i = 0; i < texts.Length; i++)
+        {
+            texts[i] = LocaleRegistry.Translate(FactionSelection.OptionLabels[i]);
+        }
+
+        return texts;
+    }
+
+    /// <summary>Re-translates the faction options after a language change.</summary>
+    private static void RefreshFactionOptions()
+    {
+        if (_factionDropdown.IsNullOrDestroyed())
+        {
+            return;
+        }
+
+        if (ReferenceEquals(_factionOptionsLocale, Locales.current_dictionary))
+        {
+            return;
+        }
+
+        SettingsBuilder.ApplyDropdownOptions(_factionDropdown, FactionOptionTexts());
+        _factionOptionsLocale = Locales.current_dictionary;
     }
 
     private static void GainFavorClicked()
@@ -714,12 +759,6 @@ internal static class UtilitiesCharacterPage
 
     private static bool TrySelectedKind(out FactionKind kind) =>
         FactionSelection.TryKindAt(_factionSelection, out kind);
-
-    private static float SliderMinimum(Slider slider, float fallback) =>
-        slider.IsNullOrDestroyed() ? fallback : slider.minValue;
-
-    private static float SliderMaximum(Slider slider, float fallback) =>
-        slider.IsNullOrDestroyed() ? fallback : slider.maxValue;
 
     private static void RefreshClassOptions()
     {

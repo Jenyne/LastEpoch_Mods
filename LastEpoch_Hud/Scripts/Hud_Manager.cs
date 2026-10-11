@@ -607,39 +607,6 @@ public partial class Hud_Manager : MonoBehaviour
                             }
                             Data.SetupCorruptionAllButton();
                         }
-
-                        //Faction Tracker
-                        GameObject character_faction_content = Functions.GetViewportContent(
-                            content_obj,
-                            "Character_Factions",
-                            "Character_Factions_Content"
-                        );
-                        if (!character_faction_content.IsNullOrDestroyed())
-                        {
-                            Faction_Tracker.factions_dropdown = Functions.Get_DopboxInPanel(
-                                character_faction_content,
-                                "Factions_Dropdown",
-                                "Dropdown",
-                                // Hidden control: the page clones it; removed with Faction_Tracker.
-                                new System.Action<int>(_ => { })
-                            );
-                            Faction_Tracker.factions_favor_slider = Functions.Get_SliderInPanel(
-                                character_faction_content,
-                                "Factions_Values",
-                                "Slider_Character_Factions_Favor"
-                            );
-                            Faction_Tracker.factions_rank_slider = Functions.Get_SliderInPanel(
-                                character_faction_content,
-                                "Factions_Values",
-                                "Slider_Character_Factions_Rank"
-                            );
-                            Faction_Tracker.factions_reputation_slider =
-                                Functions.Get_SliderInPanel(
-                                    character_faction_content,
-                                    "Factions_Values",
-                                    "Slider_Character_Factions_Reputation"
-                                );
-                        }
                     }
                     else
                     {
@@ -1760,14 +1727,6 @@ public partial class Hud_Manager : MonoBehaviour
                         Refs_Manager.player_data.SaveData();
                     }
                 }
-            }
-
-            public class Faction_Tracker
-            {
-                public static Dropdown factions_dropdown = null;
-                public static Slider factions_favor_slider = null;
-                public static Slider factions_rank_slider = null;
-                public static Slider factions_reputation_slider = null;
             }
         }
 
