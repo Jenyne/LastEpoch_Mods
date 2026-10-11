@@ -72,6 +72,8 @@ try {
     Copy-Item -LiteralPath $modDll -Destination $installedDll -Force
     Write-Host "Installed Yrun emergence isolation test build $localHead."
     Write-Host "At startup, confirm four [Yrun Isolation] Disabled messages in the MelonLoader log."
+    Write-Host "In World > Monoliths, enable Unlock Echo Entry before opening the echo map to revisit the completed Yrun echo."
+    Write-Host "Turn Unlock Echo Entry off after testing; it also permits other locked echo nodes."
     Write-Host "Enter Morditas second echo with the SAME settings/equipment and approach Yrun."
     Write-Host "Report whether Yrun becomes visible without crashing. Capture the new MelonLoader and Player logs."
 } finally {

@@ -18,6 +18,18 @@ internal static class WorldMonolithsPage
         if (page == null)
             return;
         var card = page.AddCard("Monoliths", "Monoliths");
+        AddToggle(
+            card,
+            "UnlockEchoEntry",
+            "Unlock Echo Entry",
+            () => Save_Manager.instance.data.Scenes.Monoliths.Enable_Islands,
+            v => Save_Manager.instance.data.Scenes.Monoliths.Enable_Islands = v
+        );
+        page.AddText(
+            card,
+            "UnlockEchoEntryNote",
+            "Allows entry to locked echo nodes, including completed echoes. Turn off after testing."
+        );
         AddSlider(
             card,
             "MaxStability",

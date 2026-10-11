@@ -140,6 +140,8 @@
   "Max Zoom Out": "无限缩小",
   "Remove Fog of War": "移除战争迷雾",
   "Monoliths": "命运巨石",
+  "Unlock Echo Entry": "解锁回响入口",
+  "Allows entry to locked echo nodes, including completed echoes. Turn off after testing.": "允许进入锁定的回响节点，包括已完成的回响。测试后请关闭。",
   "Max Stability": "稳定值上限",
   "Stability = Max Stability": "稳定值设为上限",
   "Mobs Density": "敌人刷新倍率",

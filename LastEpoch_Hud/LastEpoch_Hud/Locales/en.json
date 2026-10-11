@@ -129,6 +129,8 @@
   "Max Zoom Out": "Max Zoom Out",
   "Remove Fog of War": "Remove Fog of War",
   "Monoliths": "Monoliths",
+  "Unlock Echo Entry": "Unlock Echo Entry",
+  "Allows entry to locked echo nodes, including completed echoes. Turn off after testing.": "Allows entry to locked echo nodes, including completed echoes. Turn off after testing.",
   "Max Stability": "Max Stability",
   "Stability = Max Stability": "Stability = Max Stability",
   "Mobs Density": "Mobs Density",

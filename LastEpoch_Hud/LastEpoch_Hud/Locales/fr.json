@@ -129,6 +129,8 @@
   "Max Zoom Out": "Dézoom maximal",
   "Remove Fog of War": "Retirer le brouillard de guerre",
   "Monoliths": "Monolithes",
+  "Unlock Echo Entry": "Déverrouiller l’accès aux échos",
+  "Allows entry to locked echo nodes, including completed echoes. Turn off after testing.": "Permet d’entrer dans les échos verrouillés, y compris les échos terminés. Désactivez après les tests.",
   "Max Stability": "Stabilité maximale",
   "Stability = Max Stability": "Stabilité = Stabilité maximale",
   "Mobs Density": "Densité des monstres",

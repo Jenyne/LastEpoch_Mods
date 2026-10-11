@@ -136,6 +136,8 @@
   "Max Zoom Out": "최대 축소",
   "Remove Fog of War": "전장의 안개 제거",
   "Monoliths": "모노리스",
+  "Unlock Echo Entry": "에코 입장 잠금 해제",
+  "Allows entry to locked echo nodes, including completed echoes. Turn off after testing.": "완료된 에코를 포함한 잠긴 에코에 입장할 수 있습니다. 테스트 후 끄세요.",
   "Max Stability": "최대 안정도",
   "Stability = Max Stability": "안정도 최대값으로 설정",
   "Mobs Density": "적 밀도",
