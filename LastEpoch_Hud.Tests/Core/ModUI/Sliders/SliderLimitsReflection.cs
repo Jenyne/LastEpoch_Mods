@@ -3,21 +3,18 @@ using LastEpoch_Hud.Scripts.Core.ModUI.Sliders;
 
 namespace LastEpoch_Hud.Tests.Core.ModUI.Sliders;
 
-internal static class ItemSliderLimitsReflection
+internal static class SliderLimitsReflection
 {
-    public static SliderRange[] AllRanges() =>
-        typeof(ItemSliderLimits)
+    public static SliderRange[] AllRanges(Type limits) =>
+        limits
             .GetFields(BindingFlags.Public | BindingFlags.Static)
             .Where(field => field.FieldType == typeof(SliderRange))
             .Select(field => (SliderRange)field.GetValue(null))
             .ToArray();
 
-    public static SliderRange? Find(string fieldName)
+    public static SliderRange? Find(Type limits, string fieldName)
     {
-        FieldInfo field = typeof(ItemSliderLimits).GetField(
-            fieldName,
-            BindingFlags.Public | BindingFlags.Static
-        );
+        FieldInfo field = limits.GetField(fieldName, BindingFlags.Public | BindingFlags.Static);
         return field == null ? null : (SliderRange)field.GetValue(null);
     }
 }

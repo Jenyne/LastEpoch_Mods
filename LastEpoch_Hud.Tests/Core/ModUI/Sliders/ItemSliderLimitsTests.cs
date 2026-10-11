@@ -9,7 +9,7 @@ public sealed class ItemSliderLimitsTests
     [Fact]
     public void EveryRange_HasMinBelowMax()
     {
-        SliderRange[] ranges = ItemSliderLimitsReflection.AllRanges();
+        SliderRange[] ranges = SliderLimitsReflection.AllRanges(typeof(ItemSliderLimits));
 
         Assert.Equal(RangeCount, ranges.Length);
         Assert.All(ranges, range => Assert.True(range.Min < range.Max));

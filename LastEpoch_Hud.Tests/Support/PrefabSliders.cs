@@ -9,6 +9,16 @@ internal static class PrefabSliders
     private const string DocumentStart = "--- !u!";
     private const string GameObjectHeader = "--- !u!1 &";
 
+    public static string HudPrefabPath =>
+        Path.Combine(
+            GameEnvironment.RepoRoot,
+            "AssetBundleExport",
+            "Assets",
+            "Hud",
+            "Prefab",
+            "Hud.prefab"
+        );
+
     public static IReadOnlyDictionary<string, SliderRange> Load(string prefabPath)
     {
         var names = new Dictionary<string, string>();

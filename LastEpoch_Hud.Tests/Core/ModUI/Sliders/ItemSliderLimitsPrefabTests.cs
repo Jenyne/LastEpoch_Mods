@@ -5,15 +5,6 @@ namespace LastEpoch_Hud.Tests.Core.ModUI.Sliders;
 
 public sealed class ItemSliderLimitsPrefabTests
 {
-    private static readonly string _prefabPath = Path.Combine(
-        GameEnvironment.RepoRoot,
-        "AssetBundleExport",
-        "Assets",
-        "Hud",
-        "Prefab",
-        "Hud.prefab"
-    );
-
     // User decision 2026-10-12: drop code uses whole affix counts, so the prefab's fractional slider is overridden.
     private static readonly Dictionary<string, bool> _wholeNumbersOverrides = new()
     {
@@ -88,7 +79,9 @@ public sealed class ItemSliderLimitsPrefabTests
     )]
     public void Range_MatchesPrefab(string field, string minSlider, string maxSlider)
     {
-        IReadOnlyDictionary<string, SliderRange> prefab = PrefabSliders.Load(_prefabPath);
+        IReadOnlyDictionary<string, SliderRange> prefab = PrefabSliders.Load(
+            PrefabSliders.HudPrefabPath
+        );
 
         Assert.True(prefab.ContainsKey(minSlider), $"Prefab slider missing: {minSlider}");
         Assert.True(prefab.ContainsKey(maxSlider), $"Prefab slider missing: {maxSlider}");
@@ -97,7 +90,7 @@ public sealed class ItemSliderLimitsPrefabTests
             prefab[minSlider].WholeNumbers
         );
         var expected = new SliderRange(prefab[minSlider].Min, prefab[maxSlider].Max, whole);
-        SliderRange? actual = ItemSliderLimitsReflection.Find(field);
+        SliderRange? actual = SliderLimitsReflection.Find(typeof(ItemSliderLimits), field);
         Assert.True(actual.HasValue, $"Limits field missing: {field}");
         Assert.Equal(expected, actual.Value);
     }
@@ -147,8 +140,10 @@ public sealed class ItemSliderLimitsPrefabTests
     [InlineData(nameof(ItemSliderLimits.CraftingSlotWeaverWill), "Slider_Items_Craft_WeaverWill")]
     public void CraftingSlotRange_MatchesPrefab(string field, params string[] sliders)
     {
-        IReadOnlyDictionary<string, SliderRange> prefab = PrefabSliders.Load(_prefabPath);
-        SliderRange? actual = ItemSliderLimitsReflection.Find(field);
+        IReadOnlyDictionary<string, SliderRange> prefab = PrefabSliders.Load(
+            PrefabSliders.HudPrefabPath
+        );
+        SliderRange? actual = SliderLimitsReflection.Find(typeof(ItemSliderLimits), field);
         Assert.True(actual.HasValue, $"Limits field missing: {field}");
 
         foreach (string slider in sliders)

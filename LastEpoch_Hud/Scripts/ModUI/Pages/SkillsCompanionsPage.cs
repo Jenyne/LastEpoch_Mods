@@ -1,8 +1,8 @@
 using System;
 using LastEpoch_Hud.Scripts.Core.ModUI;
+using LastEpoch_Hud.Scripts.Core.ModUI.Sliders;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
@@ -21,13 +21,11 @@ internal static class SkillsCompanionsPage
             general,
             "MaximumCompanions",
             "Maximum Companions",
-            Hud_Manager.Content.Skills.Companions.maximum_companions_slider,
+            SkillSliderLimits.CompanionsMaximum,
             () => Save_Manager.instance.data.Skills.Companion.Enable_Limit,
             v => Save_Manager.instance.data.Skills.Companion.Enable_Limit = v,
             () => Save_Manager.instance.data.Skills.Companion.Limit,
-            v => Save_Manager.instance.data.Skills.Companion.Limit = (int)v,
-            1f,
-            20f
+            v => Save_Manager.instance.data.Skills.Companion.Limit = (int)v
         );
 
         var wolves = page.AddCard("Wolves", "Wolves");
@@ -42,13 +40,11 @@ internal static class SkillsCompanionsPage
             wolves,
             "SummonLimit",
             "Summon Limit",
-            Hud_Manager.Content.Skills.Companions.wolf_summon_limit_slider,
+            SkillSliderLimits.WolfSummonLimit,
             () => Save_Manager.instance.data.Skills.Companion.Wolf.Enable_SummonLimit,
             v => Save_Manager.instance.data.Skills.Companion.Wolf.Enable_SummonLimit = v,
             () => Save_Manager.instance.data.Skills.Companion.Wolf.SummonLimit,
-            v => Save_Manager.instance.data.Skills.Companion.Wolf.SummonLimit = (int)v,
-            1f,
-            20f
+            v => Save_Manager.instance.data.Skills.Companion.Wolf.SummonLimit = (int)v
         );
         AddToggle(
             wolves,
@@ -63,13 +59,11 @@ internal static class SkillsCompanionsPage
             scorpions,
             "BabyQuantity",
             "Baby Scorpion Quantity",
-            Hud_Manager.Content.Skills.Companions.scorpion_summon_limit_slider,
+            SkillSliderLimits.ScorpionBabyQuantity,
             () => Save_Manager.instance.data.Skills.Companion.Scorpion.Enable_BabyQuantity,
             v => Save_Manager.instance.data.Skills.Companion.Scorpion.Enable_BabyQuantity = v,
             () => Save_Manager.instance.data.Skills.Companion.Scorpion.BabyQuantity,
-            v => Save_Manager.instance.data.Skills.Companion.Scorpion.BabyQuantity = (int)v,
-            0f,
-            20f
+            v => Save_Manager.instance.data.Skills.Companion.Scorpion.BabyQuantity = (int)v
         );
     }
 
@@ -102,33 +96,28 @@ internal static class SkillsCompanionsPage
         HudFormPage.Card card,
         string id,
         string label,
-        Slider source,
+        SliderRange range,
         Func<bool> readEnabled,
         Action<bool> writeEnabled,
         Func<float> read,
-        Action<float> write,
-        float fallbackMin,
-        float fallbackMax
+        Action<float> write
     )
     {
-        float min = source.IsNullOrDestroyed() ? fallbackMin : source.minValue;
-        float max = source.IsNullOrDestroyed() ? fallbackMax : source.maxValue;
-        bool whole = source.IsNullOrDestroyed() || source.wholeNumbers;
         page.AddToggleSlider(
             card,
             id,
             label,
             string.Empty,
-            min,
-            max,
-            whole,
+            range.Min,
+            range.Max,
+            range.WholeNumbers,
             () => HasSave() && readEnabled(),
             v =>
             {
                 if (HasSave())
                     writeEnabled(v);
             },
-            () => HasSave() ? read() : min,
+            () => HasSave() ? read() : range.Min,
             v =>
             {
                 if (HasSave())
