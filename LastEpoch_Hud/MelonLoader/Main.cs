@@ -37,6 +37,7 @@ public class Main : MelonLoader.MelonMod
     public override void OnSceneWasLoaded(int buildIndex, string sceneName)
     {
         Scenes.SceneName = SceneManager.GetActiveScene().name;
+        Scripts.Mods.Cosmetics.OfflineCosmeticCatalog.OnSceneLoaded();
     }
 
     public override void OnSceneWasUnloaded(int buildIndex, string sceneName)
