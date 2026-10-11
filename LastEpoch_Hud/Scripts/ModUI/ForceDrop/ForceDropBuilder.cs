@@ -86,7 +86,7 @@ public static class ForceDropBuilder
     static bool SearchAllItems => !string.IsNullOrWhiteSpace(search.text);
     static int VisibleItemCount => SearchAllItems ? itemMatches.Count : itemIndexes.Count;
     static readonly List<Number> numbers = new List<Number>();
-    static readonly AffixRow[] rows = new AffixRow[5];
+    static readonly AffixRow[] rows = new AffixRow[6];
     static Number forging,
         quantity,
         lp,
@@ -439,7 +439,8 @@ public static class ForceDropBuilder
                 rows[slot].slotLabel,
                 allowIllegal && slot < 4 ? "Affix " + (slot + 1)
                     : enchantment ? "Enchantment " + (slot == 1 ? 1 : 2)
-                    : slot == 4 ? (rows[slot].tier.value == 8 ? "Primordial" : "Sealed")
+                    : slot == 4 ? "Sealed"
+                    : slot == 5 ? "Primordial"
                     : slot < 2 ? "Prefix " + (slot + 1)
                     : "Suffix " + (slot - 1)
             );
@@ -590,36 +591,37 @@ public static class ForceDropBuilder
         Label(affixPage, "Affix", .03f, .93f, .55f, .99f, 13);
         Label(affixPage, "Tier", .59f, .93f, .72f, .99f, 13);
         Label(affixPage, "Roll %", .75f, .93f, .88f, .99f, 13);
-        for (int i = 0; i < 5; i++)
+        for (int i = 0; i < rows.Length; i++)
         {
             int index = i;
-            float y = .79f - i * .17f;
+            float y = .80f - i * .13f;
             var row = new AffixRow();
             rows[i] = row;
             string slot =
                 i == 4 ? "Sealed"
+                : i == 5 ? "Primordial"
                 : i < 2 ? "Prefix " + (i + 1)
                 : "Suffix " + (i - 1);
-            row.slotLabel = Label(affixPage, slot, .03f, y, .17f, y + .12f, 12);
+            row.slotLabel = Label(affixPage, slot, .03f, y, .17f, y + .105f, 12);
             row.select = Button(
                 affixPage,
                 "None",
                 .18f,
                 y,
                 .57f,
-                y + .13f,
+                y + .11f,
                 () => AffixPicker(index)
             );
             row.selectedLabel = row.select.GetComponentInChildren<Text>(true);
-            row.tier = NumericCompact(affixPage, .59f, y, .72f, y + .13f, 1, 7, 7);
-            row.roll = NumericCompact(affixPage, .75f, y, .86f, y + .13f, 0, 100, 100);
+            row.tier = NumericCompact(affixPage, .59f, y, .72f, y + .11f, i == 5 ? 8 : 1, i == 5 ? 8 : 7, i == 5 ? 8 : 7);
+            row.roll = NumericCompact(affixPage, .75f, y, .86f, y + .11f, 0, 100, 100);
             row.roll.mode = Button(
                 affixPage,
                 "Fixed",
                 .88f,
                 y,
                 .98f,
-                y + .13f,
+                y + .11f,
                 () =>
                 {
                     row.roll.random = !row.roll.random;
@@ -1199,6 +1201,7 @@ public static class ForceDropBuilder
             allowIllegal && slot < 4 ? "Affix " + (slot + 1)
                 : idolEnchantment ? "Idol enchantment"
                 : slot == 4 ? "Sealed affix"
+                : slot == 5 ? "Primordial affix"
                 : slot < 2 ? "Prefix"
                 : "Suffix",
             true,
@@ -1222,7 +1225,7 @@ public static class ForceDropBuilder
             return "Unavailable slot";
         string reason = context.OrdinaryReason(
             a,
-            slot == 4,
+            slot >= 4,
             context.IsHereticalIdol && (slot == 1 || slot == 3)
         );
         if (!allowIllegal && reason.Length > 0)
@@ -1236,6 +1239,17 @@ public static class ForceDropBuilder
             && a.type != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX)
         )
             return "Placement or duplicate exclusion";
+        if (
+            slot == 5
+            && !ForceDropModeRules.CanSealPrimordial(
+                FD.item_type,
+                FD.item_rarity,
+                ForceDropLegalAffixes.Family(a),
+                ForceDropCatalog.MaximumTier(a, 8),
+                allowIllegal ? ForceDropMode.Illegal : ForceDropMode.Legal
+            )
+        )
+            return "Not eligible for a T8 Primordial seal";
         int id = a.affixId;
         for (int other = 0; other < rows.Length; other++)
             if (other != slot && rows[other].id == id)
@@ -1300,75 +1314,22 @@ public static class ForceDropBuilder
         return mask;
     }
 
-    static bool MatchesPickerSearch(Choice choice, string query)
-    {
-        if (choice.id < 0)
-            return true;
-        // Non-affix pickers keep the existing plain-text search.
-        if (choice.classMask < 0)
-            return NativeItemNames.Matches(query, choice.name, choice.aliases);
-        var terms = new List<string>();
-        int includeMask = 0,
-            excludeMask = 0;
-        foreach (
-            string word in (query ?? "").Split(
-                new[] { ' ', '\t' },
-                StringSplitOptions.RemoveEmptyEntries
-            )
-        )
-        {
-            string token = word.ToLowerInvariant();
-            if (token == "class:all")
-                continue;
-            bool exclude = token.StartsWith("-", StringComparison.Ordinal);
-            string cls = exclude ? token.Substring(1) : token;
-            if (cls.StartsWith("class:", StringComparison.Ordinal))
-                cls = cls.Substring(6);
-            int index = Array.FindIndex(
-                affixClasses,
-                name => string.Equals(name, cls, StringComparison.OrdinalIgnoreCase)
-            );
-            if (index >= 0)
-            {
-                if (exclude)
-                    excludeMask |= 1 << index;
-                else
-                    includeMask |= 1 << index;
-            }
-            else
-                terms.Add(word);
-        }
-        bool generic = choice.classMask == 31;
-        if (includeMask != 0 && !generic && (choice.classMask & includeMask) == 0)
-            return false;
-        if (!generic && (choice.classMask & excludeMask) != 0)
-            return false;
-        return NativeItemNames.Matches(
-            string.Join(" ", terms.ToArray()),
-            choice.name,
-            choice.aliases
+    static bool MatchesPickerSearch(Choice choice, string query) =>
+        ForceDropClassSearch.Matches(
+            query,
+            choice.classMask,
+            text => NativeItemNames.Matches(text, choice.name, choice.aliases)
         );
-    }
 
     static AffixList.Affix FindAffix(int id) => ForceDropCatalog.Find(id);
 
     static int RowMaximum(int slot, AffixList.Affix definition)
     {
-        if (
-            slot == 4
-            && (
-                definition.IsNullOrDestroyed()
-                    ? allowIllegal
-                        || (FD.item_type >= 0 && FD.item_type <= 24 && FD.item_rarity < 7)
-                    : ForceDropModeRules.CanSealPrimordial(
-                        FD.item_type,
-                        FD.item_rarity,
-                        ForceDropLegalAffixes.Family(definition),
-                        ForceDropCatalog.MaximumTier(definition, 8),
-                        allowIllegal ? ForceDropMode.Illegal : ForceDropMode.Legal
-                    )
-            )
-        )
+        // Native storage has independent regular and Primordial seals.
+        // A regular seal stays within T1-T7; the Primordial slot is T8 only.
+        if (slot == 4)
+            return 7;
+        if (slot == 5)
             return 8;
         return RouteMaximum;
     }
@@ -1380,10 +1341,23 @@ public static class ForceDropBuilder
             var row = rows[slot];
             var definition = FindAffix(row.id);
             int maximum = RowMaximum(slot, definition);
-            SetTierLimit(
-                row.tier,
-                row.id < 0 ? maximum : ForceDropCatalog.MaximumTier(definition, maximum)
-            );
+            if (slot == 5)
+            {
+                // Primordial is an evolution to T8, not another ordinary tier slider.
+                row.tier.min = 8;
+                row.tier.max = 8;
+                row.tier.value = 8;
+                if (!row.tier.input.isFocused)
+                    row.tier.input.SetTextWithoutNotify("8");
+            }
+            else
+            {
+                row.tier.min = 1;
+                SetTierLimit(
+                    row.tier,
+                    row.id < 0 ? maximum : ForceDropCatalog.MaximumTier(definition, maximum)
+                );
+            }
             row.selectedLabel.color = SelectedAffixColor(row.id);
         }
         corruptionSelectedLabel.color = SelectedAffixColor(corruptionId);
@@ -1512,7 +1486,7 @@ public static class ForceDropBuilder
                 return "This item has no legal affix slot here. Clear the selection.";
             string reason = context.OrdinaryReason(
                 definition,
-                slot == 4,
+                slot >= 4,
                 context.IsHereticalIdol && (slot == 1 || slot == 3)
             );
             if (!allowIllegal && reason.Length > 0)
@@ -1525,6 +1499,20 @@ public static class ForceDropBuilder
                     != (slot < 2 ? AffixList.AffixType.PREFIX : AffixList.AffixType.SUFFIX)
             )
                 return "Affix type does not match its slot.";
+            if (
+                slot == 5
+                && (
+                    row.tier.value != 8
+                    || !ForceDropModeRules.CanSealPrimordial(
+                        FD.item_type,
+                        FD.item_rarity,
+                        ForceDropLegalAffixes.Family(definition),
+                        ForceDropCatalog.MaximumTier(definition, 8),
+                        allowIllegal ? ForceDropMode.Illegal : ForceDropMode.Legal
+                    )
+                )
+            )
+                return "The Primordial slot requires an eligible T8 affix.";
             if (
                 row.tier.value
                 > ForceDropCatalog.MaximumTier(definition, RowMaximum(slot, definition))
@@ -1598,9 +1586,9 @@ public static class ForceDropBuilder
                 if (r.id >= 0)
                     s.Append("\n\n")
                         .Append(
-                            r == rows[4]
-                                ? L(r.tier.value == 8 ? "Primordial" : "Sealed") + ": "
-                                : ""
+                            r == rows[4] ? L("Sealed") + ": "
+                            : r == rows[5] ? L("Primordial") + ": "
+                            : ""
                         )
                         .Append(r.name)
                         .Append("\nT")
@@ -1681,13 +1669,9 @@ public static class ForceDropBuilder
                             row.id,
                             row.tier.value - 1,
                             ResolvedRoll(row.roll),
-                            slot == 4
-                                ? (
-                                    row.tier.value == 8
-                                        ? ForceDropSeal.Primordial
-                                        : ForceDropSeal.Regular
-                                )
-                                : ForceDropSeal.None
+                            slot == 4 ? ForceDropSeal.Regular
+                            : slot == 5 ? ForceDropSeal.Primordial
+                            : ForceDropSeal.None
                         )
                     );
             }
