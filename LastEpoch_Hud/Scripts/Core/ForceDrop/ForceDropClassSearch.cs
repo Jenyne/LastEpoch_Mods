@@ -4,10 +4,14 @@ using System.Text;
 
 namespace LastEpoch_Hud.Scripts.Core.ForceDrop;
 
-// Masteries inherit their base class's affix compatibility. Only the base-class
-// mask is tested against the game's native CanRollOn metadata.
+// Masteries inherit their base class's specificity. Item compatibility belongs
+// to Legal mode validation; the search mask must never depend on the selected item.
 public static class ForceDropClassSearch
 {
+    // Order matches the Force Drop picker masks: Acolyte, Mage, Primalist,
+    // Rogue, Sentinel. A fully generic affix belongs to every class search.
+    public const int AllClasses = 31;
+
     static readonly Dictionary<string, int> ClassIndices = BuildAliases();
 
     static Dictionary<string, int> BuildAliases()
@@ -15,7 +19,7 @@ public static class ForceDropClassSearch
         var result = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         string[][] names =
         {
-            new[] { "Acolyte", "Lich", "Necromancer", "Warlock" },
+            new[] { "Acolyte", "Aco", "Lich", "Necromancer", "Warlock" },
             new[] { "Mage", "Sorcerer", "Spellblade", "Rune Master", "Runemaster" },
             new[] { "Primalist", "Beastmaster", "Beast Master", "Shaman", "Druid" },
             new[] { "Rogue", "Bladedancer", "Blade Dancer", "Marksman", "Falconer" },
@@ -46,6 +50,37 @@ public static class ForceDropClassSearch
 
     public static bool TryBaseClass(string mastery, out int classIndex) =>
         ClassIndices.TryGetValue(Compact(mastery), out classIndex);
+
+    // Il2Cpp AffixList.Affix.classSpecificity is an enum, passed in as its
+    // untranslated name. If metadata is missing or unfamiliar, preserve the
+    // affix as generic rather than excluding it from all class searches.
+    public static int MaskFromSpecificity(string specificity)
+    {
+        if (string.IsNullOrWhiteSpace(specificity))
+            return AllClasses;
+        string normalized = Compact(specificity);
+        if (
+            normalized == "none"
+            || normalized == "any"
+            || normalized == "all"
+            || normalized.Contains("nonspecific")
+        )
+            return AllClasses;
+
+        int mask = 0;
+        foreach (
+            string name in specificity.Split(
+                new[] { ',', '|', '+' },
+                StringSplitOptions.RemoveEmptyEntries
+            )
+        )
+        {
+            if (!TryBaseClass(name, out int index))
+                return AllClasses;
+            mask |= 1 << index;
+        }
+        return mask == 0 ? AllClasses : mask;
+    }
 
     public static bool Matches(string query, int classMask, Func<string, bool> textMatches)
     {
@@ -87,7 +122,7 @@ public static class ForceDropClassSearch
             else
                 included |= 1 << index;
         }
-        bool generic = classMask == 31;
+        bool generic = classMask == AllClasses;
         if (!generic && included != 0 && (classMask & included) == 0)
             return false;
         if (!generic && (classMask & excluded) != 0)

@@ -1304,24 +1304,24 @@ public static class ForceDropBuilder
         return "";
     }
 
-    static readonly string[] affixClasses = { "Acolyte", "Mage", "Primalist", "Rogue", "Sentinel" };
-
-    // Probe native compatibility for each class; never infer it from translated names.
+    // Search by the definition's native class specificity, not CanRollOn for
+    // the currently selected base/subtype. The latter wrongly hides affixes in
+    // Illegal mode (even +Skeletons while browsing an Acolyte-unrelated item).
     static int AffixClassMask(AffixList.Affix affix)
     {
-        int mask = 0;
-        for (int i = 0; i < affixClasses.Length; i++)
+        if (affix.IsNullOrDestroyed())
+            return ForceDropClassSearch.AllClasses;
+        try
         {
-            if (!Enum.TryParse(affixClasses[i], true, out ItemList.ClassRequirement requirement))
-                continue;
-            try
-            {
-                if (affix.CanRollOn(FD.item_type, FD.item_subtype, requirement))
-                    mask |= 1 << i;
-            }
-            catch (Exception) { }
+            return ForceDropClassSearch.MaskFromSpecificity(
+                affix.classSpecificity.ToString()
+            );
         }
-        return mask;
+        catch (Exception)
+        {
+            // Unknown metadata must not silently shrink the unrestricted pool.
+            return ForceDropClassSearch.AllClasses;
+        }
     }
 
     static bool MatchesPickerSearch(Choice choice, string query) =>
