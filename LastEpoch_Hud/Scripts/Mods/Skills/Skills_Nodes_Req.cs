@@ -40,6 +40,8 @@ internal class Skills_Nodes_Req
         [HarmonyPrefix]
         static bool Prefix(ref bool __result)
         {
+            // Bypass only the prerequisite predicate. Native spending still owns
+            // the point budget and node cap; do not inflate skill point capacity.
             if (CanRun())
             {
                 __result = true;
