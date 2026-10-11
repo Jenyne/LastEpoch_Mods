@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using LastEpoch_Hud.Scripts.Core.ModUI;
+using LastEpoch_Hud.Scripts.ModUI.Settings;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Shell;
 
@@ -22,6 +23,19 @@ internal static class HudSearch
         _pages[page.PageId] = page;
     }
 
+    public static int Score(string query, string label, string card, string tab, string section) =>
+        HudSearchText.ScoreEither(
+            query,
+            label,
+            card,
+            tab,
+            section,
+            LocaleRegistry.Translate(label),
+            LocaleRegistry.Translate(card),
+            LocaleRegistry.Translate(tab),
+            LocaleRegistry.Translate(section)
+        );
+
     public static IReadOnlyList<HudSearchMatch> Find(string query)
     {
         if (string.IsNullOrWhiteSpace(query))
@@ -34,13 +48,11 @@ internal static class HudSearch
                 continue;
             foreach (var entry in pair.Value.SearchEntries)
             {
-                int score = HudSearchText.Score(
-                    query,
-                    entry.Label,
-                    entry.Card,
-                    page.Label,
-                    section.Label
-                );
+                string localizedLabel = LocaleRegistry.Translate(entry.Label);
+                string localizedCard = LocaleRegistry.Translate(entry.Card);
+                string localizedTab = LocaleRegistry.Translate(page.Label);
+                string localizedSection = LocaleRegistry.Translate(section.Label);
+                int score = Score(query, entry.Label, entry.Card, page.Label, section.Label);
                 if (score < 0)
                     continue;
                 matches.Add(
@@ -48,10 +60,10 @@ internal static class HudSearch
                     {
                         Page = pair.Value,
                         PageId = page.Id,
-                        Section = section.Label,
-                        Tab = page.Label,
-                        Card = entry.Card,
-                        Label = entry.Label,
+                        Section = localizedSection,
+                        Tab = localizedTab,
+                        Card = localizedCard,
+                        Label = localizedLabel,
                         Score = score,
                     }
                 );

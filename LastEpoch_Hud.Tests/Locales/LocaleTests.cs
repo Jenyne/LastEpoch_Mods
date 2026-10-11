@@ -1,6 +1,7 @@
 using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Xml.Linq;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using LastEpoch_Hud.Tests.Support;
 
 namespace LastEpoch_Hud.Tests.Locales;
@@ -13,7 +14,7 @@ public sealed partial class LocaleTests
         "LastEpoch_Hud",
         "Locales"
     );
-    private static readonly string[] _translatedLanguages = ["fr", "zh"];
+    private static readonly string[] _translatedLanguages = ["fr", "ko", "zh"];
     private static readonly string[] _languages = ["en", .. _translatedLanguages];
     private static readonly HashSet<string> _keepEnglish = ListFile.Load("Locales/KeepEnglish.txt");
 
@@ -38,6 +39,35 @@ public sealed partial class LocaleTests
             .ToList();
 
         Assert.True(missing.Count == 0, $"{language}.json misses: {string.Join(", ", missing)}");
+    }
+
+    [Theory]
+    [MemberData(nameof(LanguageData))]
+    public void Language_HasExactlyTheBaseKeys(string language)
+    {
+        HashSet<string> expected = Read("base").Keys.ToHashSet();
+        HashSet<string> actual = Read(language).Keys.ToHashSet();
+
+        Assert.True(
+            expected.SetEquals(actual),
+            $"{language}.json key mismatch. Missing: {string.Join(", ", expected.Except(actual))}; "
+                + $"extra: {string.Join(", ", actual.Except(expected))}"
+        );
+    }
+
+    [Fact]
+    public void LocaleAliases_PointToBaseKeys()
+    {
+        HashSet<string> keys = Read("base").Keys.ToHashSet();
+        var missing = HudLocaleKey
+            .KnownAliases.Where(alias => !keys.Contains(alias.Value))
+            .Select(alias => $"{alias.Key} -> {alias.Value}")
+            .ToList();
+
+        Assert.True(
+            missing.Count == 0,
+            "Locale aliases point to missing base keys: " + string.Join(", ", missing)
+        );
     }
 
     [Theory]
@@ -99,7 +129,7 @@ public sealed partial class LocaleTests
 
         Assert.True(
             broken.Count == 0,
-            "Malformed, unknown or stale KeepEnglish.txt entries (<lang>:<key>, lang is fr or zh); fix or remove them:\n"
+            "Malformed, unknown or stale KeepEnglish.txt entries (<lang>:<key>); fix or remove them:\n"
                 + string.Join("\n", broken)
         );
     }
@@ -114,7 +144,7 @@ public sealed partial class LocaleTests
         var missing = LabelPattern()
             .Matches(source)
             .Select(m => m.Groups[1].Value)
-            .Where(label => !keys.Contains(label))
+            .Where(label => !keys.Contains(HudLocaleKey.Canonicalize(label)))
             .Distinct()
             .ToList();
 

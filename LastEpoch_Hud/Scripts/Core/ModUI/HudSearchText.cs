@@ -1,11 +1,33 @@
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Text;
 
 namespace LastEpoch_Hud.Scripts.Core.ModUI;
 
 public static class HudSearchText
 {
+    public static int ScoreEither(
+        string query,
+        string label,
+        string card,
+        string tab,
+        string section,
+        string alternateLabel,
+        string alternateCard,
+        string alternateTab,
+        string alternateSection
+    )
+    {
+        int canonical = Score(query, label, card, tab, section);
+        int alternate = Score(query, alternateLabel, alternateCard, alternateTab, alternateSection);
+        if (canonical < 0)
+            return alternate;
+        if (alternate < 0)
+            return canonical;
+        return Math.Min(canonical, alternate);
+    }
+
     public static int Score(string query, string label, string card, string tab, string section)
     {
         string needle = Normalize(query);
@@ -50,8 +72,12 @@ public static class HudSearchText
             return string.Empty;
         var output = new StringBuilder(value.Length);
         bool spacing = true;
-        foreach (char character in value.Trim().ToLowerInvariant())
+        foreach (
+            char character in value.Trim().ToLowerInvariant().Normalize(NormalizationForm.FormD)
+        )
         {
+            if (CharUnicodeInfo.GetUnicodeCategory(character) == UnicodeCategory.NonSpacingMark)
+                continue;
             if (char.IsLetterOrDigit(character))
             {
                 output.Append(character);

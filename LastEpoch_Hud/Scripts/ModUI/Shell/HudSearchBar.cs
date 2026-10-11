@@ -119,7 +119,7 @@ internal static class HudSearchBar
             var placeholder = input.placeholder.GetComponent<TMP_Text>();
             if (!placeholder.IsNullOrDestroyed())
             {
-                placeholder.text = "Search settings...";
+                LocaleRegistry.Apply(placeholder, "Search settings...");
                 placeholder.color = HudTheme.TextMuted;
                 placeholder.fontSize = HudTheme.BodyFontSize;
             }
@@ -152,6 +152,7 @@ internal static class HudSearchBar
         searchButton.colors = HudTheme.ButtonColors(HudTheme.Transparent, HudTheme.Selection);
         ButtonHook.Register(searchButton, () => Submit(input?.text));
         var searchLabel = TextNode(searchObject, "Label", "Search", HudTheme.ValueFontSize);
+        LocaleRegistry.Apply(searchLabel, "Search");
         Stretch(searchLabel.GetComponent<RectTransform>());
         searchLabel.alignment = TextAnchor.MiddleCenter;
 
@@ -303,6 +304,8 @@ internal static class HudSearchBar
             if (!show)
                 continue;
             row.Button.interactable = true;
+            LocaleRegistry.Apply(row.Label, string.Empty);
+            LocaleRegistry.Apply(row.Breadcrumb, string.Empty);
             row.Label.text = row.Match.Label;
             row.Breadcrumb.text = row.Match.Breadcrumb;
         }
@@ -313,8 +316,8 @@ internal static class HudSearchBar
             row.Root.SetActive(true);
             row.Match = null;
             row.Button.interactable = false;
-            row.Label.text = "No matching settings";
-            row.Breadcrumb.text = "Try a broader search";
+            LocaleRegistry.Apply(row.Label, "No matching settings");
+            LocaleRegistry.Apply(row.Breadcrumb, "Try a broader search");
             visible = 1;
         }
         resultsRect.sizeDelta = new Vector2(

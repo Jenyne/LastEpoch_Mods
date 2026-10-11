@@ -145,7 +145,9 @@ internal static class KeybindCapture
                 "Binding rejected: AutoCast and Safe Teleport cannot share a key or modifier combination."
             );
             if (displayText != null)
-                displayText.text = "Conflict with AutoCast / Safe Teleport. Press another key.";
+                displayText.text = LocaleRegistry.Translate(
+                    "Conflict with AutoCast / Safe Teleport. Press another key."
+                );
             pendingModifier = KeyCode.None;
             return;
         }

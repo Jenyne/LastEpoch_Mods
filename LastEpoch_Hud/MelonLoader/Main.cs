@@ -101,30 +101,8 @@ public class Locales
         '9',
     };
 
-    // Legacy HUD prefab text contains several spelling mistakes. Keep those
-    // internal object/text identifiers compatible, but normalize them to clean
-    // canonical locale keys for display and translation.
-    private static readonly Dictionary<string, string> key_aliases = new()
-    {
-        { "Choose Masterie", "Choose Mastery" },
-        { "Strenght", "Strength" },
-        { "Forgin Potencial", "Forging Potential" },
-        { "Legendary Potencial", "Legendary Potential" },
-        { "Wolfs", "Wolves" },
-        { "Summon Quantity from Skil lTree", "Summon Quantity from Skill Tree" },
-        { "Self Resurect Chance", "Self Resurrect Chance" },
-        { "Forgin", "Forging" },
-        { "Affixs", "Affixes" },
-    };
-
-    public static string CanonicalKey(string key)
-    {
-        if (string.IsNullOrEmpty(key))
-        {
-            return key;
-        }
-        return key_aliases.TryGetValue(key, out string canonical) ? canonical : key;
-    }
+    public static string CanonicalKey(string key) =>
+        LastEpoch_Hud.Scripts.Core.ModUI.HudLocaleKey.Canonicalize(key);
 
     public static bool TryGetTranslation(string key, out string translated)
     {

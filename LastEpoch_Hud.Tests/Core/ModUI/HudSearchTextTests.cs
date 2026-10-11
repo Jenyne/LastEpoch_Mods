@@ -55,4 +55,46 @@ public sealed class HudSearchTextTests
     {
         Assert.Equal("mana regeneration", HudSearchText.Normalize("  MANA--Regeneration!  "));
     }
+
+    [Fact]
+    public void ScoreEither_MatchesLocalizedKoreanText()
+    {
+        int score = HudSearchText.ScoreEither(
+            "신 모드",
+            "God Mode",
+            "Cheats",
+            "Character",
+            "Utilities",
+            "신 모드",
+            "치트",
+            "캐릭터",
+            "유틸리티"
+        );
+
+        Assert.Equal(0, score);
+    }
+
+    [Fact]
+    public void ScoreEither_KeepsEnglishAsFallbackInLocalizedUi()
+    {
+        int score = HudSearchText.ScoreEither(
+            "god",
+            "God Mode",
+            "Cheats",
+            "Character",
+            "Utilities",
+            "신 모드",
+            "치트",
+            "캐릭터",
+            "유틸리티"
+        );
+
+        Assert.Equal(10, score);
+    }
+
+    [Fact]
+    public void Normalize_IsAccentInsensitive()
+    {
+        Assert.Equal(HudSearchText.Normalize("Dégâts"), HudSearchText.Normalize("degats"));
+    }
 }

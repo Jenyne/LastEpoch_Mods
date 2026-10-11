@@ -194,7 +194,7 @@ internal sealed class HudActionCard : IHudSearchPage
     {
         if (!HudNavigation.TryGetPage(PageId, out var section, out var page))
             return false;
-        return HudSearchText.Score(query, label, title, page.Label, section.Label) >= 0;
+        return HudSearch.Score(query, label, title, page.Label, section.Label) >= 0;
     }
 
     private static GameObject Node(GameObject parent, string name) =>
