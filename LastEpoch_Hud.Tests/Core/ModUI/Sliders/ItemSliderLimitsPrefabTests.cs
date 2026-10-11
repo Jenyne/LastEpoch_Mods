@@ -14,6 +14,12 @@ public sealed class ItemSliderLimitsPrefabTests
         "Hud.prefab"
     );
 
+    // User decision 2026-10-12: drop code uses whole affix counts, so the prefab's fractional slider is overridden.
+    private static readonly Dictionary<string, bool> _wholeNumbersOverrides = new()
+    {
+        [nameof(ItemSliderLimits.DropAffixCount)] = true,
+    };
+
     [Theory]
     [InlineData(
         nameof(ItemSliderLimits.DropImplicits),
@@ -86,11 +92,11 @@ public sealed class ItemSliderLimitsPrefabTests
 
         Assert.True(prefab.ContainsKey(minSlider), $"Prefab slider missing: {minSlider}");
         Assert.True(prefab.ContainsKey(maxSlider), $"Prefab slider missing: {maxSlider}");
-        var expected = new SliderRange(
-            prefab[minSlider].Min,
-            prefab[maxSlider].Max,
+        bool whole = _wholeNumbersOverrides.GetValueOrDefault(
+            field,
             prefab[minSlider].WholeNumbers
         );
+        var expected = new SliderRange(prefab[minSlider].Min, prefab[maxSlider].Max, whole);
         SliderRange? actual = ItemSliderLimitsReflection.Find(field);
         Assert.True(actual.HasValue, $"Limits field missing: {field}");
         Assert.Equal(expected, actual.Value);

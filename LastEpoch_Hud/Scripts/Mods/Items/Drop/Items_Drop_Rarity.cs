@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
 using Il2CppTMPro;
+using LastEpoch_Hud.Scripts.Core.Items;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.Drop;
@@ -156,8 +157,12 @@ public class Items_Drop_Rarity
             {
                 if ((__result < 7) && (Save_Manager.instance.data.Items.Drop.Enable_AffixCount))
                 {
-                    int min = (int)Save_Manager.instance.data.Items.Drop.AffixCount_Min;
-                    int max = (int)Save_Manager.instance.data.Items.Drop.AffixCount_Max;
+                    int min = DropAffixCount.ToWhole(
+                        Save_Manager.instance.data.Items.Drop.AffixCount_Min
+                    );
+                    int max = DropAffixCount.ToWhole(
+                        Save_Manager.instance.data.Items.Drop.AffixCount_Max
+                    );
                     if ((min != 0) || (max != 4))
                     {
                         if (min < 0)

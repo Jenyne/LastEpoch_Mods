@@ -16,7 +16,8 @@ public static class ItemSliderLimits
     public static readonly SliderRange DropSealValue = new(0f, 255f, false);
 
     // Source: Slider_Items_Drop_NbAffixes_Min / _Max
-    public static readonly SliderRange DropAffixCount = new(0f, 6f, false);
+    // Prefab says fractional; whole on purpose (user decision 2026-10-12).
+    public static readonly SliderRange DropAffixCount = new(0f, 6f, true);
 
     // Source: no prefab slider; former ItemsDropPage fallback (0..2, whole), commit 99141da
     public static readonly SliderRange DropIdolAffixCount = new(0f, 2f, true);
