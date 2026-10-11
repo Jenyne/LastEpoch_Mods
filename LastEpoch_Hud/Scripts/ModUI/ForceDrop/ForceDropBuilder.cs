@@ -9,6 +9,7 @@ using LastEpoch_Hud.Scripts.Core.ForceDrop;
 using LastEpoch_Hud.Scripts.ModUI.Settings;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 using FD = LastEpoch_Hud.Scripts.Hud_Manager.Content.OdlForceDrop;
 
@@ -307,6 +308,7 @@ public static class ForceDropBuilder
         }
         if (!IsReady)
             return false;
+        RedirectTypingToSearch();
         RefreshNativeLocale();
         RefreshTierLimits();
         foreach (var n in numbers)
@@ -1902,6 +1904,72 @@ public static class ForceDropBuilder
         picker.SetActive(true);
         picker.transform.SetAsLastSibling();
         RefreshPicker();
+        FocusSearch(pickerSearch);
+    }
+
+    // The picker search is shared by affixes, corruption, unique variants,
+    // categories and rarity. Focus it as soon as any picker is opened.
+    static void FocusSearch(TMP_InputField target)
+    {
+        if (target.IsNullOrDestroyed() || !target.gameObject.activeInHierarchy)
+            return;
+        target.Select();
+        target.ActivateInputField();
+        target.caretPosition = target.text.Length;
+    }
+
+    // Unity's inputString preserves the first typed character even if a picker
+    // button/scrollbar was selected instead of its text field. Redirect only when
+    // Force Drop is visible, and never take focus from another edited input.
+    static void RedirectTypingToSearch()
+    {
+        if (root.IsNullOrDestroyed() || !root.activeInHierarchy)
+            return;
+        bool pickerOpen = !picker.IsNullOrDestroyed() && picker.activeInHierarchy;
+        TMP_InputField target = pickerOpen ? pickerSearch : search;
+        if (
+            target.IsNullOrDestroyed()
+            || !target.gameObject.activeInHierarchy
+            || !target.interactable
+            || target.isFocused
+        )
+            return;
+
+        var eventSystem = EventSystem.current;
+        if (!eventSystem.IsNullOrDestroyed())
+        {
+            var selected = eventSystem.currentSelectedGameObject;
+            if (!selected.IsNullOrDestroyed())
+            {
+                var tmp = selected.GetComponent<TMP_InputField>();
+                if (!tmp.IsNullOrDestroyed() && tmp.isFocused)
+                    return;
+                var legacy = selected.GetComponent<InputField>();
+                if (!legacy.IsNullOrDestroyed() && legacy.isFocused)
+                    return;
+            }
+        }
+
+        // Do not hijack hotkeys such as Ctrl+A/C/V, Alt+F4, or the Windows key.
+        // AltGr (RightAlt+Ctrl) is allowed for locale-specific printable text.
+        bool control = UnityEngine.Input.GetKey(KeyCode.LeftControl)
+            || UnityEngine.Input.GetKey(KeyCode.RightControl);
+        bool alt = UnityEngine.Input.GetKey(KeyCode.LeftAlt)
+            || UnityEngine.Input.GetKey(KeyCode.RightAlt);
+        bool altGr = UnityEngine.Input.GetKey(KeyCode.RightAlt) && control;
+        if (
+            (control || alt) && !altGr
+            || UnityEngine.Input.GetKey(KeyCode.LeftWindows)
+            || UnityEngine.Input.GetKey(KeyCode.RightWindows)
+        )
+            return;
+
+        string typed = ForceDropSearchTyping.Printable(UnityEngine.Input.inputString);
+        if (typed.Length == 0)
+            return;
+        FocusSearch(target);
+        target.text += typed;
+        target.caretPosition = target.text.Length;
     }
 
     static void RefreshNativeLocale()
