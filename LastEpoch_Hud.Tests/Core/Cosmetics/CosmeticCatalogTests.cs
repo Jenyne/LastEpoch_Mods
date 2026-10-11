@@ -41,17 +41,6 @@ public sealed class CosmeticCatalogTests
         Assert.True(catalog.Contains("MTX_A"));
     }
 
-    [Theory]
-    [InlineData(false, false, true)]
-    [InlineData(false, true, false)]
-    [InlineData(true, false, false)]
-    public void IsJunk_UnseenId_UsesIconAndTitleFacts(bool hasIcon, bool isTitle, bool expected)
-    {
-        var catalog = new CosmeticCatalog();
-
-        Assert.Equal(expected, catalog.IsJunk("MTX_A", "A", hasIcon, isTitle));
-    }
-
     [Fact]
     public void Add_FirstSightingDecides()
     {
@@ -149,33 +138,29 @@ public sealed class CosmeticCatalogTests
     }
 
     [Fact]
-    public void IsJunk_SeenId_UsesStoredVerdict()
+    public void TryGetVerdict_SeenId_ReturnsStored()
     {
         var catalog = new CosmeticCatalog();
         catalog.Add("MTX_A", "Test A", true, false);
-        catalog.Add("MTX_B", "B", true, false);
+        catalog.Add("MTX_B", "B", false, false);
+        catalog.Add("MTX_C", "C", true, false);
 
-        Assert.True(catalog.IsJunk("MTX_A", "A", true, false));
-        Assert.False(catalog.IsJunk("MTX_B", "Test B", true, false));
+        Assert.True(catalog.TryGetVerdict("MTX_A", out CosmeticVerdict a));
+        Assert.Equal(CosmeticVerdict.TestEntry, a);
+        Assert.True(catalog.TryGetVerdict("MTX_B", out CosmeticVerdict b));
+        Assert.Equal(CosmeticVerdict.NoStoreIcon, b);
+        Assert.True(catalog.TryGetVerdict("MTX_C", out CosmeticVerdict c));
+        Assert.Equal(CosmeticVerdict.Keep, c);
     }
 
     [Fact]
-    public void IsJunk_UnseenId_StoresNothing()
+    public void TryGetVerdict_UnseenId_FalseAndStoresNothing()
     {
         var catalog = new CosmeticCatalog();
 
-        Assert.True(catalog.IsJunk("MTX_C", "Test C", true, false));
-        Assert.Equal(CosmeticVerdict.Keep, catalog.Add("MTX_C", "C", true, false));
-        Assert.Equal(1, catalog.KeptCount);
+        Assert.False(catalog.TryGetVerdict("MTX_D", out _));
+        Assert.False(catalog.TryGetVerdict(null, out _));
+        Assert.Equal(0, catalog.KeptCount);
         Assert.Equal(0, catalog.RemovedCount);
-    }
-
-    [Fact]
-    public void IsJunk_UnseenId_FallsBackToRules()
-    {
-        var catalog = new CosmeticCatalog();
-
-        Assert.True(catalog.IsJunk("TestHelmet", "x", true, false));
-        Assert.False(catalog.IsJunk("MTX_Real", "Real", true, false));
     }
 }

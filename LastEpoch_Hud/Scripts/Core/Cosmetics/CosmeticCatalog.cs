@@ -36,16 +36,6 @@ public sealed class CosmeticCatalog
         return verdict;
     }
 
-    /// <summary>Stored verdict for a seen id; the rules decide for an unseen one. Stores nothing.</summary>
-    public bool IsJunk(string id, string displayName, bool hasStoreIcon, bool isTitle)
-    {
-        if (_verdicts.TryGetValue(id ?? "", out CosmeticVerdict known))
-        {
-            return known != CosmeticVerdict.Keep;
-        }
-        return CosmeticCatalogRules.IsJunk(id, displayName, hasStoreIcon, isTitle);
-    }
-
     /// <summary>Stored verdict for a seen id only; no rule fallback, stores nothing.</summary>
     public bool TryGetVerdict(string id, out CosmeticVerdict verdict) =>
         _verdicts.TryGetValue(id ?? "", out verdict);

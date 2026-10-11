@@ -182,10 +182,13 @@ public sealed class CosmeticCatalogRulesTests
         );
     }
 
-    [Fact]
-    public void IsJunk_NoStoreIcon_True()
+    [Theory]
+    [InlineData(false, false, true)]
+    [InlineData(false, true, false)]
+    [InlineData(true, false, false)]
+    public void IsJunk_UsesIconAndTitleFacts(bool hasIcon, bool isTitle, bool expected)
     {
-        Assert.True(CosmeticCatalogRules.IsJunk("MTX_Foo", "Foo", false, false));
+        Assert.Equal(expected, CosmeticCatalogRules.IsJunk("MTX_Foo", "Foo", hasIcon, isTitle));
     }
 
     [Fact]
