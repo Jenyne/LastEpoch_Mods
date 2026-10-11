@@ -1961,8 +1961,7 @@ public static class ForceDropBuilder
             UnityEngine.Input.GetKey(KeyCode.LeftControl)
             || UnityEngine.Input.GetKey(KeyCode.RightControl);
         bool alt =
-            UnityEngine.Input.GetKey(KeyCode.LeftAlt)
-            || UnityEngine.Input.GetKey(KeyCode.RightAlt);
+            UnityEngine.Input.GetKey(KeyCode.LeftAlt) || UnityEngine.Input.GetKey(KeyCode.RightAlt);
         bool altGr = UnityEngine.Input.GetKey(KeyCode.RightAlt) && control;
         if (
             ((control || alt) && !altGr)
