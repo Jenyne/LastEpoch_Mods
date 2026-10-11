@@ -1,8 +1,8 @@
 using System;
 using LastEpoch_Hud.Scripts.Core.ModUI;
+using LastEpoch_Hud.Scripts.Core.ModUI.Sliders;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
@@ -44,8 +44,7 @@ internal static class ItemsDropPage
             card,
             "Implicits",
             "Implicit Value",
-            Hud_Manager.Content.Items.Drop.implicits_slider_min,
-            Hud_Manager.Content.Items.Drop.implicits_slider_max,
+            ItemSliderLimits.DropImplicits,
             () => Save_Manager.instance.data.Items.Drop.Enable_Implicits,
             value => Save_Manager.instance.data.Items.Drop.Enable_Implicits = value,
             () => Save_Manager.instance.data.Items.Drop.Implicits_Min,
@@ -57,8 +56,7 @@ internal static class ItemsDropPage
             card,
             "ForgingPotential",
             "Forging Potential",
-            Hud_Manager.Content.Items.Drop.forgin_potencial_slider_min,
-            Hud_Manager.Content.Items.Drop.forgin_potencial_slider_max,
+            ItemSliderLimits.DropForgingPotential,
             () => Save_Manager.instance.data.Items.Drop.Enable_ForginPotencial,
             value => Save_Manager.instance.data.Items.Drop.Enable_ForginPotencial = value,
             () => Save_Manager.instance.data.Items.Drop.ForginPotencial_Min,
@@ -70,8 +68,7 @@ internal static class ItemsDropPage
             card,
             "SealTier",
             "Seal Tier",
-            Hud_Manager.Content.Items.Drop.seal_tier_slider_min,
-            Hud_Manager.Content.Items.Drop.seal_tier_slider_max,
+            ItemSliderLimits.DropSealTier,
             () => Save_Manager.instance.data.Items.Drop.Enable_SealTier,
             v => Save_Manager.instance.data.Items.Drop.Enable_SealTier = v,
             () => Save_Manager.instance.data.Items.Drop.SealTier_Min,
@@ -83,8 +80,7 @@ internal static class ItemsDropPage
             card,
             "SealValue",
             "Seal Value",
-            Hud_Manager.Content.Items.Drop.seal_value_slider_min,
-            Hud_Manager.Content.Items.Drop.seal_value_slider_max,
+            ItemSliderLimits.DropSealValue,
             () => Save_Manager.instance.data.Items.Drop.Enable_SealValue,
             v => Save_Manager.instance.data.Items.Drop.Enable_SealValue = v,
             () => Save_Manager.instance.data.Items.Drop.SealValue_Min,
@@ -96,8 +92,7 @@ internal static class ItemsDropPage
             card,
             "AffixCount",
             "Affix Count",
-            Hud_Manager.Content.Items.Drop.affix_count_slider_min,
-            Hud_Manager.Content.Items.Drop.affix_count_slider_max,
+            ItemSliderLimits.DropAffixCount,
             () => Save_Manager.instance.data.Items.Drop.Enable_AffixCount,
             v => Save_Manager.instance.data.Items.Drop.Enable_AffixCount = v,
             () => Save_Manager.instance.data.Items.Drop.AffixCount_Min,
@@ -109,23 +104,19 @@ internal static class ItemsDropPage
             card,
             "IdolAffixCount",
             "Idol Affix Count",
-            null,
-            null,
+            ItemSliderLimits.DropIdolAffixCount,
             () => Save_Manager.instance.data.Items.Drop.Enable_IdolAffixCount,
             v => Save_Manager.instance.data.Items.Drop.Enable_IdolAffixCount = v,
             () => Save_Manager.instance.data.Items.Drop.IdolAffixCount_Min,
             v => Save_Manager.instance.data.Items.Drop.IdolAffixCount_Min = v,
             () => Save_Manager.instance.data.Items.Drop.IdolAffixCount_Max,
-            v => Save_Manager.instance.data.Items.Drop.IdolAffixCount_Max = v,
-            0f,
-            2f
+            v => Save_Manager.instance.data.Items.Drop.IdolAffixCount_Max = v
         );
         AddRange(
             card,
             "AffixTiers",
             "Affix Tier",
-            Hud_Manager.Content.Items.Drop.affix_tiers_slider_min,
-            Hud_Manager.Content.Items.Drop.affix_tiers_slider_max,
+            ItemSliderLimits.DropAffixTiers,
             () => Save_Manager.instance.data.Items.Drop.Enable_AffixTiers,
             v => Save_Manager.instance.data.Items.Drop.Enable_AffixTiers = v,
             () => Save_Manager.instance.data.Items.Drop.AffixTiers_Min,
@@ -137,8 +128,7 @@ internal static class ItemsDropPage
             card,
             "AffixValues",
             "Affix Value",
-            Hud_Manager.Content.Items.Drop.affix_values_slider_min,
-            Hud_Manager.Content.Items.Drop.affix_values_slider_max,
+            ItemSliderLimits.DropAffixValues,
             () => Save_Manager.instance.data.Items.Drop.Enable_AffixValues,
             v => Save_Manager.instance.data.Items.Drop.Enable_AffixValues = v,
             () => Save_Manager.instance.data.Items.Drop.AffixValues_Min,
@@ -150,8 +140,7 @@ internal static class ItemsDropPage
             card,
             "UniqueMods",
             "Unique Mod Value",
-            Hud_Manager.Content.Items.Drop.unique_mods_slider_min,
-            Hud_Manager.Content.Items.Drop.unique_mods_slider_max,
+            ItemSliderLimits.DropUniqueMods,
             () => Save_Manager.instance.data.Items.Drop.Enable_UniqueMods,
             v => Save_Manager.instance.data.Items.Drop.Enable_UniqueMods = v,
             () => Save_Manager.instance.data.Items.Drop.UniqueMods_Min,
@@ -163,8 +152,7 @@ internal static class ItemsDropPage
             card,
             "LegendaryPotential",
             "Legendary Potential",
-            Hud_Manager.Content.Items.Drop.legendary_potencial_slider_min,
-            Hud_Manager.Content.Items.Drop.legendary_potencial_slider_max,
+            ItemSliderLimits.DropLegendaryPotential,
             () => Save_Manager.instance.data.Items.Drop.Enable_LegendaryPotencial,
             v => Save_Manager.instance.data.Items.Drop.Enable_LegendaryPotencial = v,
             () => Save_Manager.instance.data.Items.Drop.LegendaryPotencial_Min,
@@ -176,8 +164,7 @@ internal static class ItemsDropPage
             card,
             "WeaverWill",
             "Weaver Will",
-            Hud_Manager.Content.Items.Drop.weaver_will_slider_min,
-            Hud_Manager.Content.Items.Drop.weaver_will_slider_max,
+            ItemSliderLimits.DropWeaverWill,
             () => Save_Manager.instance.data.Items.Drop.Enable_WeaverWill,
             v => Save_Manager.instance.data.Items.Drop.Enable_WeaverWill = v,
             () => Save_Manager.instance.data.Items.Drop.WeaverWill_Min,
@@ -255,42 +242,32 @@ internal static class ItemsDropPage
         HudFormPage.Card card,
         string id,
         string label,
-        Slider minimumSource,
-        Slider maximumSource,
+        SliderRange range,
         Func<bool> readEnabled,
         Action<bool> writeEnabled,
         Func<float> readMinimum,
         Action<float> writeMinimum,
         Func<float> readMaximum,
-        Action<float> writeMaximum,
-        float fallbackMinimum = 0f,
-        float fallbackMaximum = 255f
+        Action<float> writeMaximum
     )
     {
         AddToggle(card, id, label, readEnabled, writeEnabled);
-        float minimum = minimumSource.IsNullOrDestroyed()
-            ? fallbackMinimum
-            : minimumSource.minValue;
-        float maximum = maximumSource.IsNullOrDestroyed()
-            ? fallbackMaximum
-            : maximumSource.maxValue;
-        bool whole = minimumSource.IsNullOrDestroyed() || minimumSource.wholeNumbers;
         var minimumSlider = page.AddSlider(
             card,
             id + "Minimum",
             "Minimum",
             string.Empty,
-            minimum,
-            maximum,
-            whole,
-            () => HasSave() ? readMinimum() : minimum,
+            range.Min,
+            range.Max,
+            range.WholeNumbers,
+            () => HasSave() ? readMinimum() : range.Min,
             value =>
             {
                 if (!HasSave())
                     return;
-                writeMinimum(value);
-                if (value > readMaximum())
-                    writeMaximum(value);
+                MinMaxPair pair = new MinMaxPair(readMinimum(), readMaximum()).WithMin(value);
+                writeMinimum(pair.Min);
+                writeMaximum(pair.Max);
                 page.RefreshValues();
             }
         );
@@ -299,17 +276,17 @@ internal static class ItemsDropPage
             id + "Maximum",
             "Maximum",
             string.Empty,
-            minimum,
-            maximum,
-            whole,
-            () => HasSave() ? readMaximum() : maximum,
+            range.Min,
+            range.Max,
+            range.WholeNumbers,
+            () => HasSave() ? readMaximum() : range.Max,
             value =>
             {
                 if (!HasSave())
                     return;
-                writeMaximum(value);
-                if (value < readMinimum())
-                    writeMinimum(value);
+                MinMaxPair pair = new MinMaxPair(readMinimum(), readMaximum()).WithMax(value);
+                writeMinimum(pair.Min);
+                writeMaximum(pair.Max);
                 page.RefreshValues();
             }
         );

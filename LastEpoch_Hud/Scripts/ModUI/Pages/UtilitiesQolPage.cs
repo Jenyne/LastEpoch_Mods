@@ -1,8 +1,8 @@
 using System;
 using LastEpoch_Hud.Scripts.Core.ModUI;
+using LastEpoch_Hud.Scripts.Core.ModUI.Sliders;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
@@ -149,9 +149,6 @@ internal static class UtilitiesQolPage
 
     private static void BuildAutoShatter()
     {
-        var chanceSource = Hud_Manager.Content.Items.Pickup.autoshatter_chance_slider;
-        var affixSource = Hud_Manager.Content.Items.Pickup.autoshatter_affix_slider;
-        var quantitySource = Hud_Manager.Content.Items.Pickup.autoshatter_quantity_slider;
         var card = page.AddCard("AutoShatter", "Auto-Shatter");
         AddToggle(
             card,
@@ -171,7 +168,7 @@ internal static class UtilitiesQolPage
             card,
             "Chance",
             "Shatter Chance",
-            chanceSource,
+            ItemSliderLimits.AutoShatterChance,
             () => Save_Manager.instance.data.Items.Pickup.AutoShatter_Chance,
             value => Save_Manager.instance.data.Items.Pickup.AutoShatter_Chance = (int)value
         );
@@ -179,7 +176,7 @@ internal static class UtilitiesQolPage
             card,
             "AffixChance",
             "Affix Obtained From Shatter Chance",
-            affixSource,
+            ItemSliderLimits.AutoShatterAffixChance,
             () => Save_Manager.instance.data.Items.Pickup.AutoShatter_AffixChance,
             value => Save_Manager.instance.data.Items.Pickup.AutoShatter_AffixChance = (int)value
         );
@@ -187,7 +184,7 @@ internal static class UtilitiesQolPage
             card,
             "QuantityChance",
             "Affix Quantity Chance",
-            quantitySource,
+            ItemSliderLimits.AutoShatterQuantityChance,
             () => Save_Manager.instance.data.Items.Pickup.AutoShatter_QuantityChance,
             value => Save_Manager.instance.data.Items.Pickup.AutoShatter_QuantityChance = (int)value
         );
@@ -276,7 +273,7 @@ internal static class UtilitiesQolPage
         HudFormPage.Card card,
         string id,
         string label,
-        Slider source,
+        SliderRange range,
         Func<int> read,
         Action<float> write
     )
@@ -286,9 +283,9 @@ internal static class UtilitiesQolPage
             id,
             label,
             "%",
-            source.IsNullOrDestroyed() ? 0f : source.minValue,
-            source.IsNullOrDestroyed() ? 100f : source.maxValue,
-            source.IsNullOrDestroyed() || source.wholeNumbers,
+            range.Min,
+            range.Max,
+            range.WholeNumbers,
             () => HasSave() ? read() : 0f,
             value =>
             {
