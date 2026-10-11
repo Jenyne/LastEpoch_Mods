@@ -167,10 +167,6 @@ public class Save_Manager : MonoBehaviour
                     AoE_Buff_Value = 1f,
                 },
             },
-            Cosmetics =
-            {
-                Portal = 0, //0 to 38
-            },
             Items =
             {
                 Drop =
@@ -581,7 +577,6 @@ public class Save_Manager : MonoBehaviour
             public KeyBinds KeyBinds;
             public ModsNotInHud modsNotInHud;
             public Character Character;
-            public Cosmetics Cosmetics;
             public Items Items;
             public Factions Factions;
             public Scenes Scenes;
@@ -626,11 +621,6 @@ public class Save_Manager : MonoBehaviour
         {
             public Cheats Cheats;
             public PermanentBuffs PermanentBuffs;
-        }
-
-        public struct Cosmetics
-        {
-            public ushort Portal;
         }
 
         public struct Cheats

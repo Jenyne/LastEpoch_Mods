@@ -13,6 +13,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Cosmetics;
 )]
 public class CosmeticFlyoutPopulatePatch
 {
+    private const string ErrorContext = "Offline cosmetic flyout";
+
     [HarmonyFinalizer]
     private static Exception Finalizer(
         Exception __exception,
@@ -29,13 +31,18 @@ public class CosmeticFlyoutPopulatePatch
             return null;
         }
 
-        Main.logger_instance?.Warning(
-            "PopulateFlyoutWindowAsync exception suppressed: " + __exception.Message
-        );
-        if (!__instance.IsNullOrDestroyed() && !__instance._loadingOverlay.IsNullOrDestroyed())
-        {
-            __instance._loadingOverlay.SetActive(false);
-        }
+        // Offline, the async populate chain hits backend calls; a throw would leave the overlay up forever.
+        HideLoadingOverlay(__instance);
+        ErrorLog.Report(__exception, ErrorContext);
         return null;
+    }
+
+    private static void HideLoadingOverlay(CosmeticSelectionFlyoutPanelUI panel)
+    {
+        if (panel.IsNullOrDestroyed() || panel._loadingOverlay.IsNullOrDestroyed())
+        {
+            return;
+        }
+        panel._loadingOverlay.SetActive(false);
     }
 }

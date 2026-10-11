@@ -3,6 +3,7 @@ using Il2CppCysharp.Threading.Tasks;
 using Il2CppLE.AssetManagement;
 using Il2CppLE.Services.Cosmetics;
 using LastEpoch_Hud.Scripts.Core.Cosmetics;
+using LastEpoch_Hud.Scripts.Core.Diagnostics;
 
 namespace LastEpoch_Hud.Scripts.Mods.Cosmetics;
 
@@ -57,6 +58,22 @@ internal static class OfflineCosmeticCatalog
     /// <summary>Allows one retry after a failure and drops the cache when the registry changed or is gone.</summary>
     public static void OnSceneLoaded()
     {
+        if (_cache.Broken)
+        {
+            return;
+        }
+        try
+        {
+            RefreshForScene();
+        }
+        catch (Exception ex)
+        {
+            Break(ex);
+        }
+    }
+
+    private static void RefreshForScene()
+    {
         bool available = GlobalAssets.CosmeticsAvailable;
         long key = available ? KeyOf(GlobalAssets.Cosmetics) : 0;
         _cache.OnSceneLoaded(key, available);
@@ -68,6 +85,34 @@ internal static class OfflineCosmeticCatalog
     }
 
     private static bool TryGetCatalog(out CosmeticCatalog catalog)
+    {
+        catalog = null;
+        if (_cache.Broken)
+        {
+            return false;
+        }
+        try
+        {
+            return ReadCatalog(out catalog);
+        }
+        catch (Exception ex)
+        {
+            Break(ex);
+            catalog = null;
+            return false;
+        }
+    }
+
+    private static void Break(Exception ex)
+    {
+        _cache.MarkBroken();
+        _registry = null;
+        _ownedIds = null;
+        _ownedTask = default;
+        ErrorLog.Report(ex, ErrorContext);
+    }
+
+    private static bool ReadCatalog(out CosmeticCatalog catalog)
     {
         catalog = null;
         if (!_registry.IsNullOrDestroyed())
@@ -92,7 +137,7 @@ internal static class OfflineCosmeticCatalog
         {
             return ReadRegistry(GlobalAssets.Cosmetics);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (!ApiMismatch.Is(ex))
         {
             ErrorLog.Report(ex, ErrorContext);
             return new CosmeticCatalog();

@@ -9,7 +9,7 @@ namespace LastEpoch_Hud.Scripts.Mods.Cosmetics;
 public class SupporterPackLivePatch
 {
     [HarmonyPrefix]
-    private static bool Prefix(string backendId, ref bool __result)
+    private static bool Prefix(ref bool __result)
     {
         if (GameplayEnvironment.IsOnlinePlay)
         {

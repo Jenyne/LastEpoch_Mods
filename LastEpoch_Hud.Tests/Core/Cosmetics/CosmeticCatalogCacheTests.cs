@@ -103,6 +103,52 @@ public sealed class CosmeticCatalogCacheTests
     }
 
     [Fact]
+    public void MarkBroken_WithCachedCatalog_NotReadyAndNoBuild()
+    {
+        var builder = new CountingCatalogBuilder(2);
+        var cache = new CosmeticCatalogCache(builder.Build);
+        cache.TryGet(Key, true, out CosmeticCatalog _);
+
+        cache.MarkBroken();
+        bool ready = cache.TryGet(Key, true, out CosmeticCatalog catalog);
+
+        Assert.False(ready);
+        Assert.Null(catalog);
+        Assert.Equal(1, builder.Calls);
+        Assert.False(cache.HasCatalog);
+    }
+
+    [Fact]
+    public void MarkBroken_BeforeBuild_NeverBuilds()
+    {
+        var builder = new CountingCatalogBuilder(2);
+        var cache = new CosmeticCatalogCache(builder.Build);
+
+        cache.MarkBroken();
+        bool ready = cache.TryGet(Key, false, out CosmeticCatalog _);
+
+        Assert.False(ready);
+        Assert.Equal(0, builder.Calls);
+        Assert.True(cache.Failed);
+        Assert.True(cache.Broken);
+    }
+
+    [Fact]
+    public void OnSceneLoaded_AfterMarkBroken_StaysBroken()
+    {
+        var builder = new CountingCatalogBuilder(2);
+        var cache = new CosmeticCatalogCache(builder.Build);
+        cache.MarkBroken();
+
+        cache.OnSceneLoaded(Key, true);
+        bool ready = cache.TryGet(Key, true, out CosmeticCatalog _);
+
+        Assert.False(ready);
+        Assert.Equal(0, builder.Calls);
+        Assert.True(cache.Broken);
+    }
+
+    [Fact]
     public void OnSceneLoaded_NothingCached_DoesNotBuild()
     {
         var builder = new CountingCatalogBuilder(2);
