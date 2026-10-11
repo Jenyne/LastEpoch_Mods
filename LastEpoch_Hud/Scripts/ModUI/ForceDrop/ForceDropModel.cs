@@ -30,20 +30,19 @@ internal static class ForceDropModel
         .LegendaryType
         .LegendaryPotential;
 
+    private static GameObject _legacyRoot;
     private static List<int> _typeOptions = new();
     private static List<ForceDropRarity> _rarityOptions = new();
     private static List<ForceDropItemOption> _itemOptions = new();
 
-    public static void GetRefs()
+    public static void GetRefs(GameObject hud)
     {
-        if (Hud_Manager.Content.content_obj.IsNullOrDestroyed())
+        _legacyRoot = Functions.GetChild(hud, "Content");
+        if (_legacyRoot.IsNullOrDestroyed())
         {
             return;
         }
-        ContentObject = Functions.GetChild(
-            Hud_Manager.Content.content_obj,
-            "Old_ForceDrop_Content"
-        );
+        ContentObject = Functions.GetChild(_legacyRoot, "Old_ForceDrop_Content");
         if (ContentObject.IsNullOrDestroyed())
         {
             Main.logger_instance.Error("content_obj is null");
@@ -119,13 +118,12 @@ internal static class ForceDropModel
         }
     }
 
+    /// <summary>Shows or hides the Force Drop panel and the legacy root around it.</summary>
     public static void SetActive(bool show)
     {
-        if (!ContentObject.IsNullOrDestroyed())
-        {
-            ContentObject.active = show;
-            Enabled = show;
-        }
+        Enabled = show && !ContentObject.IsNullOrDestroyed();
+        SetObjectActive(_legacyRoot, Enabled);
+        SetObjectActive(ContentObject, Enabled);
     }
 
     public static void InitForceDrop()
@@ -396,5 +394,15 @@ internal static class ForceDropModel
         return entry.IsNullOrDestroyed()
             ? UniqueList.LegendaryType.LegendaryPotential
             : entry.legendaryType;
+    }
+
+    private static void SetObjectActive(GameObject target, bool show)
+    {
+        if (target.IsNullOrDestroyed())
+        {
+            return;
+        }
+
+        target.SetActive(show);
     }
 }

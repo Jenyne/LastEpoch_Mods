@@ -45,6 +45,7 @@ public static class HudLayout
         HudSidebar.Build(menu, font, page => ActivateNavigationOnly(page));
         Main.logger_instance?.Msg("[Startup] HudLayout building pages.");
         PlaceLegacyContent(content);
+        HideLegacyPanels(content);
         foreach (var page in HudNavigation.Pages)
             page.Build(window, hud, font);
 
@@ -181,7 +182,6 @@ public static class HudLayout
         }
         foreach (var candidate in HudNavigation.Pages)
             candidate.Hide();
-        HideLegacyContent();
         page.Show();
         HudSidebar.SetSelected(page.Id);
         activePage = page;
@@ -215,14 +215,13 @@ public static class HudLayout
         activePage?.Refresh();
     }
 
-    private static void HideLegacyContent()
+    /// <summary>Hides every prefab panel under the legacy Content root once.</summary>
+    private static void HideLegacyPanels(GameObject content)
     {
-        Hud_Manager.Content.Character.Set_Active(false);
-        Hud_Manager.Content.Items.Set_Active(false);
-        Hud_Manager.Content.Scenes.Set_Active(false);
-        Hud_Manager.Content.Skills.Set_Active(false);
-        ForceDrop.ForceDropModel.SetActive(false);
-        Hud_Manager.Content.Set_Active();
+        foreach (GameObject child in Functions.GetAllChild(content))
+        {
+            child.SetActive(false);
+        }
     }
 
     private static void Close()

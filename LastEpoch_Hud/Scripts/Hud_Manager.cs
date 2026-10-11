@@ -7,7 +7,6 @@ using Il2CppSystem.Collections.Generic;
 using LastEpoch_Hud.Scripts.Core.ModUI;
 using MelonLoader;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts;
 
@@ -131,7 +130,6 @@ public partial class Hud_Manager : MonoBehaviour
     {
         Refresh_Hud_Content();
         hud_object.active = true;
-        Content.Set_Active();
         ModUI.Settings.NumericSliderInputs.Tick(hud_object);
         if (Refs_Manager.epoch_input_manager.IsNullOrDestroyed())
         {
@@ -223,44 +221,11 @@ public partial class Hud_Manager : MonoBehaviour
                     {
                         Main.logger_instance.Msg("Hud Manager : Initialize hud refs");
                     }
-                    Content.content_obj = Functions.GetChild(hud_object, "Content");
-                    SafeInit(
-                        "Content.Character",
-                        () =>
-                        {
-                            Content.Character.Get_Refs();
-                            Content.Character.Set_Active(false);
-                        }
-                    );
-                    SafeInit(
-                        "Content.Items",
-                        () =>
-                        {
-                            Content.Items.Get_Refs();
-                            Content.Items.Set_Active(false);
-                        }
-                    );
-                    SafeInit(
-                        "Content.Scenes",
-                        () =>
-                        {
-                            Content.Scenes.Get_Refs();
-                            Content.Scenes.Set_Active(false);
-                        }
-                    );
-                    SafeInit(
-                        "Content.Skills",
-                        () =>
-                        {
-                            Content.Skills.Get_Refs();
-                            Content.Skills.Set_Active(false);
-                        }
-                    );
                     SafeInit(
                         "ForceDropModel",
                         () =>
                         {
-                            ModUI.ForceDrop.ForceDropModel.GetRefs();
+                            ModUI.ForceDrop.ForceDropModel.GetRefs(hud_object);
                             ModUI.ForceDrop.ForceDropModel.HideLegacyControls();
                             ModUI.ForceDrop.ForceDropModel.SetActive(false);
                         }
@@ -414,216 +379,6 @@ public partial class Hud_Manager : MonoBehaviour
         else
         {
             return false;
-        }
-    }
-
-    public class Content
-    {
-        public static GameObject content_obj = null;
-
-        public static void Set_Active()
-        {
-            if (!content_obj.IsNullOrDestroyed())
-            {
-                bool show = ModUI.ForceDrop.ForceDropModel.Enabled;
-                if (content_obj.active != show)
-                {
-                    content_obj.active = show;
-                }
-            }
-        }
-
-        public class Character
-        {
-            public static GameObject content_obj = null;
-
-            public static void Get_Refs()
-            {
-                if (!Content.content_obj.IsNullOrDestroyed())
-                {
-                    content_obj = Functions.GetChild(Content.content_obj, "Character_Content");
-                    if (!content_obj.IsNullOrDestroyed())
-                    {
-                        //Data
-                        GameObject character_data_content = Functions.GetViewportContent(
-                            content_obj,
-                            "Character_Data",
-                            "Character_Data_Content"
-                        );
-                        if (!character_data_content.IsNullOrDestroyed())
-                        {
-                            Data.class_dropdown = Functions.Get_DopboxInPanel(
-                                character_data_content,
-                                "Classe",
-                                "Dropdown_Character_Data_Classes",
-                                new System.Action<int>(
-                                    (_) =>
-                                    {
-                                        if (
-                                            (!Refs_Manager.player_data.IsNullOrDestroyed())
-                                            && (!Data.class_dropdown.IsNullOrDestroyed())
-                                        )
-                                        {
-                                            Refs_Manager.player_data.CharacterClass =
-                                                Data.class_dropdown.value;
-                                        }
-                                    }
-                                )
-                            );
-                        }
-                        else
-                        {
-                            Main.logger_instance.Error(
-                                "Hud Manager : character_data_content is null"
-                            );
-                        }
-                    }
-                    else
-                    {
-                        Main.logger_instance.Error("Hud Manager : Character_Content is null");
-                    }
-                }
-            }
-
-            public static void Set_Active(bool show)
-            {
-                if (!content_obj.IsNullOrDestroyed())
-                {
-                    content_obj.active = show;
-                }
-            }
-
-            public class Data
-            {
-                public static Dropdown class_dropdown = null;
-
-                public static void Save_Click()
-                {
-                    Main.logger_instance.Msg("Save Character Data");
-                    if (!Refs_Manager.player_data.IsNullOrDestroyed())
-                    {
-                        Refs_Manager.player_data.SaveData();
-                    }
-                }
-            }
-        }
-
-        public class Items
-        {
-            public static GameObject content_obj = null;
-
-            public static void Get_Refs()
-            {
-                if (Content.content_obj.IsNullOrDestroyed())
-                {
-                    return;
-                }
-
-                content_obj = Functions.GetChild(Content.content_obj, "Items_Content");
-            }
-
-            public static void Set_Active(bool show)
-            {
-                if (!content_obj.IsNullOrDestroyed())
-                {
-                    content_obj.active = show;
-                }
-            }
-        }
-
-        public class Scenes
-        {
-            public static GameObject content_obj = null;
-
-            public static void Get_Refs()
-            {
-                if (Content.content_obj.IsNullOrDestroyed())
-                {
-                    return;
-                }
-
-                content_obj = Functions.GetChild(Content.content_obj, "Scenes_Content");
-                if (content_obj.IsNullOrDestroyed())
-                {
-                    return;
-                }
-
-                GameObject scene_dungeons_content = Functions.GetViewportContent(
-                    content_obj,
-                    "Center",
-                    "Scenes_Dungeons_Content"
-                );
-                if (!scene_dungeons_content.IsNullOrDestroyed())
-                {
-                    Dungeons.enter_without_key_toggle = Functions.Get_ToggleInPanel(
-                        scene_dungeons_content,
-                        "EnterWithoutKey",
-                        "Toggle_Scenes_Dungeons_EnterWithoutKey"
-                    );
-                    HideSceneTeleport(scene_dungeons_content, "Teleport_Dropdown");
-                    HideSceneTeleport(scene_dungeons_content, "Border (1)");
-                    HideSceneTeleport(scene_dungeons_content, "Teleport_Btn");
-                    HideSceneTeleport(scene_dungeons_content, "Border (2)");
-                }
-            }
-
-            public static void Set_Active(bool show)
-            {
-                if (!content_obj.IsNullOrDestroyed())
-                {
-                    content_obj.active = show;
-                }
-            }
-
-            public class Camera
-            {
-                public static void Reset()
-                {
-                    Mods.Camera.Camera_Override.ResetToDefault();
-                }
-
-                public static void Set()
-                {
-                    Mods.Camera.Camera_Override.Set();
-                }
-            }
-
-            public class Dungeons
-            {
-                public static Toggle enter_without_key_toggle = null;
-            }
-
-            static void HideSceneTeleport(GameObject content, string child_name)
-            {
-                GameObject child = Functions.GetChild(content, child_name);
-                if (!child.IsNullOrDestroyed())
-                {
-                    child.SetActive(false);
-                }
-            }
-        }
-
-        public class Skills
-        {
-            public static GameObject content_obj = null;
-
-            public static void Get_Refs()
-            {
-                if (Content.content_obj.IsNullOrDestroyed())
-                {
-                    return;
-                }
-
-                content_obj = Functions.GetChild(Content.content_obj, "Skill_Tree_Content");
-            }
-
-            public static void Set_Active(bool show)
-            {
-                if (!content_obj.IsNullOrDestroyed())
-                {
-                    content_obj.active = show;
-                }
-            }
         }
     }
 }

@@ -17,8 +17,8 @@ internal static class WorldCameraPage
         if (page == null)
             return;
         var card = page.AddCard("Camera", "Camera");
-        page.AddButton(card, "Set", "Set", Hud_Manager.Content.Scenes.Camera.Set);
-        page.AddButton(card, "Reset", "Reset", Hud_Manager.Content.Scenes.Camera.Reset);
+        page.AddButton(card, "Set", "Set", Mods.Camera.Camera_Override.Set);
+        page.AddButton(card, "Reset", "Reset", Mods.Camera.Camera_Override.ResetToDefault);
         AddToggle(
             card,
             "Enable",

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.Character;
 using LastEpoch_Hud.Scripts.Core.Factions;
 using LastEpoch_Hud.Scripts.Core.ModUI;
 using LastEpoch_Hud.Scripts.Core.ModUI.Sliders;
@@ -15,7 +16,7 @@ namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 /// <summary>
 /// Utilities &gt; Character. The legacy Character, Skills, Data, Blessings, and
 /// Factions controls are represented here; factions use their own controls and edit through Core rules.
-/// The page and class source re-seed from the legacy controls on HUD re-bind (Build); faction inputs reset then.
+/// The page re-builds on HUD re-bind (Build); faction inputs reset then.
 /// </summary>
 internal static class UtilitiesCharacterPage
 {
@@ -24,7 +25,6 @@ internal static class UtilitiesCharacterPage
     private static float _factionFavor;
     private static float _factionRank;
     private static float _factionReputation;
-    private static Dropdown _classSource;
     private static Dropdown _factionDropdown;
     private static Dictionary<string, string> _factionOptionsLocale;
 
@@ -55,7 +55,6 @@ internal static class UtilitiesCharacterPage
 
     public static void Show()
     {
-        RefreshClassOptions();
         RefreshFactionOptions();
         _page?.Show();
     }
@@ -64,7 +63,6 @@ internal static class UtilitiesCharacterPage
 
     public static void Refresh()
     {
-        RefreshClassOptions();
         RefreshFactionOptions();
         _page?.RefreshValues();
     }
@@ -462,23 +460,13 @@ internal static class UtilitiesCharacterPage
     private static void BuildData()
     {
         HudFormPage.Card card = _page.AddCard("Data", "Data");
-        _classSource = Hud_Manager.Content.Character.Data.class_dropdown;
-        _page.AddDropdown(
+        _page.AddOptionsDropdown(
             card,
             "Class",
             "Class",
-            _classSource,
-            () =>
-                Refs_Manager.player_data.IsNullOrDestroyed()
-                    ? 0
-                    : Refs_Manager.player_data.CharacterClass,
-            value =>
-            {
-                if (!Refs_Manager.player_data.IsNullOrDestroyed())
-                {
-                    Refs_Manager.player_data.CharacterClass = value;
-                }
-            }
+            CharacterClassSelection.OptionLabels,
+            ReadClassOption,
+            SetClass
         );
         _page.AddToggle(
             card,
@@ -589,12 +577,7 @@ internal static class UtilitiesCharacterPage
                 }
             }
         );
-        _page.AddButton(
-            card,
-            "Save",
-            "Save Character Data",
-            Hud_Manager.Content.Character.Data.Save_Click
-        );
+        _page.AddButton(card, "Save", "Save Character Data", Mods.Character.Character_Data.Save);
     }
 
     private static void BuildBlessings()
@@ -760,21 +743,29 @@ internal static class UtilitiesCharacterPage
     private static bool TrySelectedKind(out FactionKind kind) =>
         FactionSelection.TryKindAt(_factionSelection, out kind);
 
-    private static void RefreshClassOptions()
+    private static int ReadClassOption()
     {
-        if (
-            _classSource.IsNullOrDestroyed()
-            || Refs_Manager.character_class_list.IsNullOrDestroyed()
-        )
+        if (Refs_Manager.player_data.IsNullOrDestroyed())
+        {
+            return 0;
+        }
+
+        return CharacterClassSelection.OptionIndexOf(Refs_Manager.player_data.CharacterClass);
+    }
+
+    private static void SetClass(int optionIndex)
+    {
+        if (Refs_Manager.player_data.IsNullOrDestroyed())
         {
             return;
         }
-        Il2CppSystem.Collections.Generic.List<Dropdown.OptionData> options = new();
-        foreach (CharacterClass characterClass in Refs_Manager.character_class_list.classes)
+
+        if (!CharacterClassSelection.TryClassIdAt(optionIndex, out int classId))
         {
-            options.Add(new Dropdown.OptionData { text = characterClass.className });
+            return;
         }
-        _classSource.options = options;
+
+        Refs_Manager.player_data.CharacterClass = classId;
     }
 
     private static bool HasSave() =>

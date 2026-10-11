@@ -63,7 +63,6 @@ internal sealed class HudFormPage : IHudSearchPage
     private sealed class DropdownBinding
     {
         public Dropdown Control;
-        public Dropdown Source;
         public Func<int> Read;
     }
 
@@ -896,18 +895,6 @@ internal sealed class HudFormPage : IHudSearchPage
         return slider;
     }
 
-    public Dropdown AddDropdown(
-        Card card,
-        string id,
-        string label,
-        Dropdown source,
-        Func<int> read,
-        Action<int> write
-    )
-    {
-        return AddDropdownRow(card, id, label, source, source, read, write);
-    }
-
     /// <summary>A dropdown row with its own options, cloned from the first dropdown in the hud.</summary>
     public Dropdown AddOptionsDropdown(
         Card card,
@@ -918,15 +905,7 @@ internal sealed class HudFormPage : IHudSearchPage
         Action<int> write
     )
     {
-        Dropdown dropdown = AddDropdownRow(
-            card,
-            id,
-            label,
-            FindDropdownTemplate(),
-            null,
-            read,
-            write
-        );
+        Dropdown dropdown = AddDropdownRow(card, id, label, FindDropdownTemplate(), read, write);
         if (dropdown.IsNullOrDestroyed())
         {
             return null;
@@ -959,7 +938,6 @@ internal sealed class HudFormPage : IHudSearchPage
         string id,
         string label,
         Dropdown template,
-        Dropdown optionsSource,
         Func<int> read,
         Action<int> write
     )
@@ -1031,14 +1009,7 @@ internal sealed class HudFormPage : IHudSearchPage
                 write?.Invoke(dropdown.value);
             })
         );
-        dropdowns.Add(
-            new DropdownBinding
-            {
-                Control = dropdown,
-                Source = optionsSource,
-                Read = read,
-            }
-        );
+        dropdowns.Add(new DropdownBinding { Control = dropdown, Read = read });
         Register(card, label, row);
         return dropdown;
     }
@@ -1181,8 +1152,6 @@ internal sealed class HudFormPage : IHudSearchPage
             {
                 if (binding.Control.IsNullOrDestroyed())
                     continue;
-                if (!binding.Source.IsNullOrDestroyed())
-                    binding.Control.options = binding.Source.options;
                 binding.Control.value = Mathf.Clamp(
                     binding.Read?.Invoke() ?? 0,
                     0,

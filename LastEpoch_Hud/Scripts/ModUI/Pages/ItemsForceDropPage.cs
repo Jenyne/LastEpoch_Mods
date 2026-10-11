@@ -17,12 +17,10 @@ internal static class ItemsForceDropPage
         }
 
         FD.SetActive(true);
-        Hud_Manager.Content.Set_Active();
     }
 
     public static void Hide()
     {
         FD.SetActive(false);
-        Hud_Manager.Content.Set_Active();
     }
 }
