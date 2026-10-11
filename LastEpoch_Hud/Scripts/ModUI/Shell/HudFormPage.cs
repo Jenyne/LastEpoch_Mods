@@ -392,7 +392,7 @@ internal sealed class HudFormPage : IHudSearchPage
             capture,
             new Action(() =>
             {
-                display.text = "Press a key...";
+                display.text = LocaleRegistry.Translate(KeybindStrings.CapturePrompt);
                 KeybindCapture.Begin(setting, display);
             })
         );
@@ -1331,7 +1331,7 @@ internal sealed class HudFormPage : IHudSearchPage
     {
         if (!HudNavigation.TryGetPage(PageId, out var section, out var page))
             return false;
-        return HudSearchText.Score(query, label, card, page.Label, section.Label) >= 0;
+        return HudSearch.Score(query, label, card, page.Label, section.Label) >= 0;
     }
 
     private void RebuildAfterSearch()

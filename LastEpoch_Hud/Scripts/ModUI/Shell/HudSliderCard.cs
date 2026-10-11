@@ -536,7 +536,7 @@ internal sealed class HudSliderCard : IHudSearchPage
     {
         if (!HudNavigation.TryGetPage(PageId, out var section, out var page))
             return false;
-        return HudSearchText.Score(query, label, title, page.Label, section.Label) >= 0;
+        return HudSearch.Score(query, label, title, page.Label, section.Label) >= 0;
     }
 
     private void RebuildAfterSearch()

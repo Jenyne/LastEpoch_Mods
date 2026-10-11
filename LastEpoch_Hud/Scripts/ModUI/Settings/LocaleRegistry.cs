@@ -19,6 +19,9 @@ internal static class LocaleRegistry
     private static readonly string[] formats =
     {
         "Implicit {0}",
+        "Affix {0} Tier",
+        "Affix {0} Value",
+        "Unique Mod {0}",
         "Roll {0}",
         "Prefix {0}",
         "Suffix {0}",
