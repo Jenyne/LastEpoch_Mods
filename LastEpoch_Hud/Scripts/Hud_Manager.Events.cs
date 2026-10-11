@@ -43,14 +43,5 @@ public partial class Hud_Manager
             input.onEndEdit = new Il2CppTMPro.TMP_InputField.SubmitEvent();
             input.onEndEdit.AddListener(action);
         }
-
-        public static void Set_Toggle_Event(
-            Toggle toggle,
-            UnityEngine.Events.UnityAction<bool> action
-        )
-        {
-            toggle.onValueChanged = new Toggle.ToggleEvent();
-            toggle.onValueChanged.AddListener(action);
-        }
     }
 }

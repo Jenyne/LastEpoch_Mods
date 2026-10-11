@@ -563,88 +563,6 @@ public partial class Hud_Manager : MonoBehaviour
                                 "Slider_Character_Data_SoulEmbers"
                             );
 
-                            Data.weaver_points_toggle = Functions.Get_ToggleInPanel(
-                                character_data_content,
-                                "TreePoints",
-                                "Toggle_Weaver_TreePoints"
-                            );
-                            Data.weaver_points_text = Functions.Get_TextInToggle(
-                                character_data_content,
-                                "TreePoints",
-                                "Toggle_Weaver_TreePoints",
-                                "Value"
-                            );
-                            Data.weaver_points_slider = Functions.Get_SliderInPanel(
-                                character_data_content,
-                                "TreePoints",
-                                "Slider_Weaver_TreePoints"
-                            );
-                            if (!Data.weaver_points_slider.IsNullOrDestroyed())
-                            {
-                                Data.weaver_points_slider.interactable = true;
-                                Data.EnsureWeaverRange();
-                            }
-                            if (!Save_Manager.instance.IsNullOrDestroyed())
-                            {
-                                var woven = Save_Manager.instance.data.Factions.TheWoven;
-                                Data.suppressWeaverSlider = true;
-                                try
-                                {
-                                    if (!Data.weaver_points_toggle.IsNullOrDestroyed())
-                                    {
-                                        Data.weaver_points_toggle.isOn = woven.Enable_TreePoints;
-                                    }
-                                    if (!Data.weaver_points_slider.IsNullOrDestroyed())
-                                    {
-                                        Data.weaver_points_slider.value = woven.TreePoints;
-                                    }
-                                    if (!Data.weaver_points_text.IsNullOrDestroyed())
-                                    {
-                                        Data.weaver_points_text.text = woven.TreePoints.ToString();
-                                    }
-                                }
-                                finally
-                                {
-                                    Data.suppressWeaverSlider = false;
-                                }
-                            }
-                            SettingRow.AddMultiplier(
-                                character_data_content,
-                                "TreePoints",
-                                "TreePointMultiplier",
-                                "Toggle_Weaver_TreePoints",
-                                "Toggle_Weaver_PointMultiplier",
-                                "Slider_Weaver_TreePoints",
-                                "Slider_Weaver_PointMultiplier",
-                                "Weaver Point Multiplier"
-                            );
-                            Data.weaver_multiplier_toggle = Functions.Get_ToggleInPanel(
-                                character_data_content,
-                                "TreePointMultiplier",
-                                "Toggle_Weaver_PointMultiplier"
-                            );
-                            Data.weaver_multiplier_slider = Functions.Get_SliderInPanel(
-                                character_data_content,
-                                "TreePointMultiplier",
-                                "Slider_Weaver_PointMultiplier"
-                            );
-                            if (!Save_Manager.instance.IsNullOrDestroyed())
-                            {
-                                int multiplier = SettingRow.Clamp(
-                                    Save_Manager.instance.data.Factions.TheWoven.PointMultiplier
-                                );
-                                SettingRow.PrepareSlider(Data.weaver_multiplier_slider, multiplier);
-                                if (!Data.weaver_multiplier_toggle.IsNullOrDestroyed())
-                                {
-                                    Data.weaver_multiplier_toggle.isOn = Save_Manager
-                                        .instance
-                                        .data
-                                        .Factions
-                                        .TheWoven
-                                        .Enable_PointMultiplier;
-                                }
-                            }
-
                             Data.monolith_stability_basic_go = Functions.GetChild(
                                 character_data_content,
                                 "Monolith_Stability_Basic"
@@ -1003,13 +921,6 @@ public partial class Hud_Manager : MonoBehaviour
                             Data.monolith_gaze_slider_Action
                         );
                     }
-                }
-                if (!Data.weaver_points_toggle.IsNullOrDestroyed())
-                {
-                    Events.Set_Toggle_Event(
-                        Data.weaver_points_toggle,
-                        Data.weaver_points_toggle_Action
-                    );
                 }
 
                 if (!Data.soul_add_button.IsNullOrDestroyed())
@@ -1571,14 +1482,6 @@ public partial class Hud_Manager : MonoBehaviour
                 public static readonly System.Action SoulEmbers_Add_Action = new System.Action(
                     AddSoulEmbers
                 );
-                public static Toggle weaver_points_toggle = null;
-                public static Text weaver_points_text = null;
-                public static Slider weaver_points_slider = null;
-                public static Toggle weaver_multiplier_toggle = null;
-                public static Slider weaver_multiplier_slider = null;
-                public static bool suppressWeaverSlider = false;
-                public static readonly System.Action<bool> weaver_points_toggle_Action =
-                    new System.Action<bool>(SetWeaverTreePointsEnabled);
 
                 public static void SetupSoulEmberControls()
                 {
@@ -1615,94 +1518,6 @@ public partial class Hud_Manager : MonoBehaviour
                         soul_text.gameObject.SetActive(true);
                         soul_text.text = balance.ToString();
                     }
-                }
-
-                public static void EnsureWeaverRange()
-                {
-                    if (suppressWeaverSlider || weaver_points_slider.IsNullOrDestroyed())
-                    {
-                        return;
-                    }
-                    int max = Mods.Factions.TheWoven.Faction_Woven_TreePoints.SliderMax;
-                    if (
-                        weaver_points_slider.wholeNumbers
-                        && weaver_points_slider.minValue == 0f
-                        && (int)weaver_points_slider.maxValue == max
-                    )
-                    {
-                        return;
-                    }
-                    suppressWeaverSlider = true;
-                    try
-                    {
-                        weaver_points_slider.wholeNumbers = true;
-                        weaver_points_slider.minValue = 0f;
-                        weaver_points_slider.maxValue = max;
-                    }
-                    finally
-                    {
-                        suppressWeaverSlider = false;
-                    }
-                }
-
-                public static void SetWeaverTreePointsEnabled(bool on)
-                {
-                    if (suppressWeaverSlider || Save_Manager.instance.IsNullOrDestroyed())
-                    {
-                        return;
-                    }
-                    if (!weaver_points_toggle.IsNullOrDestroyed())
-                    {
-                        on = weaver_points_toggle.isOn;
-                    }
-                    Save_Manager.instance.data.Factions.TheWoven.Enable_TreePoints = on;
-                    EnsureWeaverRange();
-                    if (on && !weaver_points_slider.IsNullOrDestroyed())
-                    {
-                        Save_Manager.instance.data.Factions.TheWoven.TreePoints = (int)
-                            weaver_points_slider.value;
-                    }
-                    if (
-                        !weaver_points_text.IsNullOrDestroyed()
-                        && !weaver_points_slider.IsNullOrDestroyed()
-                    )
-                    {
-                        weaver_points_text.text = ((int)weaver_points_slider.value).ToString();
-                    }
-                    if (on)
-                    {
-                        Mods.Factions.TheWoven.Faction_Woven_TreePoints.ApplyToPlayer();
-                    }
-                    else
-                    {
-                        Mods.Factions.TheWoven.Faction_Woven_TreePoints.ReleaseToRealPoints();
-                    }
-                }
-
-                public static void SetWeaverTreePoints(float value)
-                {
-                    if (suppressWeaverSlider || Save_Manager.instance.IsNullOrDestroyed())
-                    {
-                        return;
-                    }
-                    if (!weaver_points_toggle.IsNullOrDestroyed() && !weaver_points_toggle.isOn)
-                    {
-                        return;
-                    }
-                    EnsureWeaverRange();
-                    int points = (int)value;
-                    int max = Mods.Factions.TheWoven.Faction_Woven_TreePoints.SliderMax;
-                    if (points > max)
-                    {
-                        points = max;
-                    }
-                    Save_Manager.instance.data.Factions.TheWoven.TreePoints = points;
-                    Save_Manager.instance.data.Factions.TheWoven.Enable_TreePoints = true;
-                    if (!weaver_points_text.IsNullOrDestroyed())
-                    {
-                        weaver_points_text.text = points.ToString();
-                    }
-                    Mods.Factions.TheWoven.Faction_Woven_TreePoints.ApplyToPlayer();
                 }
 
                 public static Dropdown monolith_dropdown = null;

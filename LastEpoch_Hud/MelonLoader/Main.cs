@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using HarmonyLib;
@@ -561,31 +561,6 @@ public static class Functions
         if (!panel.IsNullOrDestroyed())
         {
             result = panel.GetComponent<Button>();
-        }
-
-        return result;
-    }
-
-    public static Text Get_TextInToggle(
-        GameObject obj,
-        string panel_name,
-        string toggle_name,
-        string obj_name
-    )
-    {
-        Text result = null; // new Text();
-        GameObject panel = GetChild(obj, panel_name);
-        if (!panel.IsNullOrDestroyed())
-        {
-            GameObject toogle = GetChild(panel, toggle_name);
-            if (!toogle.IsNullOrDestroyed())
-            {
-                GameObject child = GetChild(toogle, obj_name, false);
-                if (!child.IsNullOrDestroyed())
-                {
-                    result = child.GetComponent<Text>();
-                }
-            }
         }
 
         return result;
