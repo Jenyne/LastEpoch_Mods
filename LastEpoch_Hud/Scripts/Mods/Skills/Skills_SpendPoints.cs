@@ -5,25 +5,6 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills;
 
 public class Skills_SpendPoints
 {
-    public static bool CanRun()
-    {
-        if ((Scenes.IsGameScene()) && (!Save_Manager.instance.IsNullOrDestroyed()))
-        {
-            if (!Save_Manager.instance.data.IsNullOrDestroyed())
-            {
-                return true;
-            }
-            else
-            {
-                return false;
-            }
-        }
-        else
-        {
-            return false;
-        }
-    }
-
     [HarmonyPatch(typeof(SkillTreeNode), "Clicked", new System.Type[] { })]
     public class SkillTreeNode_Clicked_ShiftMax
     {
@@ -83,9 +64,4 @@ public class Skills_SpendPoints
             return false;
         }
     }
-
-    // Deliberately do not override LocalTreeData.tryToSpendSkillPoint.
-    // Raising additionalMaxPointsFromStats to 255 during allocation bypasses
-    // native skill-tree limits and can destabilize already assigned nodes.
-
 }
