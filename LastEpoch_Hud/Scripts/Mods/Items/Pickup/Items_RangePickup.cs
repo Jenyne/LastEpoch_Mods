@@ -53,7 +53,8 @@ public class Items_RangePickup
                         GroundItemManager.instance.pickupItem(
                             Refs_Manager.player_actor,
                             ground_item.id,
-                            StackableItemFlags.None
+                            // Same flags as the game's click (GroundItemLabel.requestPickup): stackables go to storage.
+                            StackableItemFlags.All
                         );
                         break;
                     }

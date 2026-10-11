@@ -6,4 +6,7 @@ public enum LootRoute
     Ignore,
     PickUp,
     Filter,
+
+    /// <summary>Let the game drop it, then pick it up like a click so it lands in storage.</summary>
+    Store,
 }

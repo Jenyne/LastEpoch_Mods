@@ -3,16 +3,24 @@ using HarmonyLib;
 using Il2Cpp;
 using Il2CppItemFiltering;
 using LastEpoch_Hud.Scripts.Core.Items.AutoLoot;
+using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.AutoLoot;
 
-/// <summary>Auto-pickup, auto-sell and auto-shatter of dropped items, driven by the game's loot filter.</summary>
+/// <summary>Auto-pickup, auto-sell and auto-shatter of dropped items, driven by the game's loot filter; materials go to storage via the game's click pickup.</summary>
 [HarmonyPatch(typeof(GroundItemManager), "dropItemForPlayer")]
 public class AutoLootDropPatch
 {
     [HarmonyPrefix]
-    private static bool Prefix(Actor __0, ItemData __1)
+    private static bool Prefix(
+        Actor __0,
+        ItemData __1,
+        ref Vector3 __2,
+        ref bool __3,
+        out bool __state
+    )
     {
+        __state = false;
         AutoLootSettings settings = AutoLootRules.ForOrigin(
             ReadSettings(),
             ModItemDrop.CurrentOrigin
@@ -24,12 +32,39 @@ public class AutoLootDropPatch
 
         try
         {
-            return Run(__0, __1, settings);
+            LootRoute route = ReadRoute(__0, __1, settings);
+            if (route != LootRoute.Store)
+            {
+                return Run(__0, __1, route, settings);
+            }
+
+            __2 = __0.position();
+            __3 = false;
+            __state = true;
+            return true;
         }
         catch (Exception ex)
         {
             ErrorLog.Report(ex, "AutoLoot drop");
             return true;
+        }
+    }
+
+    [HarmonyPostfix]
+    private static void Postfix(GroundItemManager __instance, Actor __0, ItemData __1, bool __state)
+    {
+        if (!__state)
+        {
+            return;
+        }
+
+        try
+        {
+            PickUpNewGroundItem(__instance, __0, __1);
+        }
+        catch (Exception ex)
+        {
+            ErrorLog.Report(ex, "AutoLoot store");
         }
     }
 
@@ -51,19 +86,27 @@ public class AutoLootDropPatch
         );
     }
 
-    private static bool Run(Actor actor, ItemData item, AutoLootSettings settings)
+    private static LootRoute ReadRoute(Actor actor, ItemData item, AutoLootSettings settings)
     {
         if (actor.IsNullOrDestroyed() || item.IsNullOrDestroyed())
         {
-            return true;
+            return LootRoute.Ignore;
         }
 
         if (!Scenes.IsGameScene() || item.isTutorialItem())
         {
-            return true;
+            return LootRoute.Ignore;
         }
 
-        LootRoute route = AutoLootRules.Route(LootKindReader.Read(item), settings);
+        return AutoLootRules.Route(
+            LootKindReader.Read(item),
+            item.MatchesStackableItemFlags(StackableItemFlags.All),
+            settings
+        );
+    }
+
+    private static bool Run(Actor actor, ItemData item, LootRoute route, AutoLootSettings settings)
+    {
         if (route == LootRoute.Ignore)
         {
             return true;
@@ -75,6 +118,52 @@ public class AutoLootDropPatch
         }
 
         return RunFilter(actor, item, settings);
+    }
+
+    private static void PickUpNewGroundItem(GroundItemManager ground, Actor actor, ItemData item)
+    {
+        if (TryFindNewGroundItemId(ground, actor, item, out uint id))
+        {
+            ground.pickupItem(actor, id, StackableItemFlags.All);
+        }
+    }
+
+    private static bool TryFindNewGroundItemId(
+        GroundItemManager ground,
+        Actor actor,
+        ItemData item,
+        out uint id
+    )
+    {
+        id = 0;
+        if (ground.IsNullOrDestroyed() || actor.IsNullOrDestroyed() || item.IsNullOrDestroyed())
+        {
+            return false;
+        }
+
+        if (!ground.TryGetGroundItemList(actor, out GroundItemManager.GroundItemList list))
+        {
+            return false;
+        }
+
+        if (list.IsNullOrDestroyed() || list.items.IsNullOrDestroyed() || list.items.Count == 0)
+        {
+            return false;
+        }
+
+        GroundItemManager.GroundItem last = list.items[list.items.Count - 1];
+        if (last.IsNullOrDestroyed() || last.itemData.IsNullOrDestroyed())
+        {
+            return false;
+        }
+
+        if (last.itemData.Pointer != item.Pointer)
+        {
+            return false;
+        }
+
+        id = last.id;
+        return true;
     }
 
     private static bool RunFilter(Actor actor, ItemData item, AutoLootSettings settings)

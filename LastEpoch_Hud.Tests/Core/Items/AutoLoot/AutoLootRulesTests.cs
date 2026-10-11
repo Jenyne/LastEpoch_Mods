@@ -10,7 +10,7 @@ public sealed class AutoLootRulesTests
     [InlineData(LootKind.Key, true, false, false)]
     [InlineData(LootKind.WovenEcho, false, true, false)]
     [InlineData(LootKind.Material, false, false, true)]
-    public void Route_DirectKindToggleOn_PickUp(
+    public void Route_DirectKindToggleOn_GoesToStorage_Store(
         LootKind kind,
         bool keys,
         bool echoes,
@@ -18,48 +18,82 @@ public sealed class AutoLootRulesTests
     )
     {
         var settings = new AutoLootSettings(keys, echoes, materials, false, false, false);
-        Assert.Equal(LootRoute.PickUp, AutoLootRules.Route(kind, settings));
+        Assert.Equal(LootRoute.Store, AutoLootRules.Route(kind, true, settings));
     }
 
     [Theory]
-    [InlineData(LootKind.Key, false, true, true)]
-    [InlineData(LootKind.WovenEcho, true, false, true)]
-    [InlineData(LootKind.Material, true, true, false)]
-    public void Route_DirectKindToggleOff_IgnoreEvenWithFilterToggles(
+    [InlineData(LootKind.Key, true, false, false)]
+    [InlineData(LootKind.WovenEcho, false, true, false)]
+    [InlineData(LootKind.Material, false, false, true)]
+    public void Route_DirectKindToggleOn_NotToStorage_PickUp(
         LootKind kind,
         bool keys,
         bool echoes,
         bool materials
     )
     {
-        var settings = new AutoLootSettings(keys, echoes, materials, true, true, true);
-        Assert.Equal(LootRoute.Ignore, AutoLootRules.Route(kind, settings));
+        var settings = new AutoLootSettings(keys, echoes, materials, false, false, false);
+        Assert.Equal(LootRoute.PickUp, AutoLootRules.Route(kind, false, settings));
     }
 
     [Theory]
-    [InlineData(true, false, false)]
-    [InlineData(false, true, false)]
-    [InlineData(false, false, true)]
-    public void Route_GearAnyFilterToggle_Filter(bool pickUp, bool sell, bool shatter)
+    [InlineData(LootKind.Key, false, true, true, true)]
+    [InlineData(LootKind.WovenEcho, true, false, true, true)]
+    [InlineData(LootKind.Material, true, true, false, true)]
+    [InlineData(LootKind.Key, false, true, true, false)]
+    [InlineData(LootKind.WovenEcho, true, false, true, false)]
+    [InlineData(LootKind.Material, true, true, false, false)]
+    public void Route_DirectKindToggleOff_IgnoreWhateverStorage(
+        LootKind kind,
+        bool keys,
+        bool echoes,
+        bool materials,
+        bool goesToStorage
+    )
     {
-        var settings = new AutoLootSettings(false, false, false, pickUp, sell, shatter);
-        Assert.Equal(LootRoute.Filter, AutoLootRules.Route(LootKind.Gear, settings));
+        var settings = new AutoLootSettings(keys, echoes, materials, true, true, true);
+        Assert.Equal(LootRoute.Ignore, AutoLootRules.Route(kind, goesToStorage, settings));
     }
 
-    [Fact]
-    public void Route_GearFilterTogglesOff_Ignore()
+    [Theory]
+    [InlineData(true, false, false, true)]
+    [InlineData(false, true, false, true)]
+    [InlineData(false, false, true, true)]
+    [InlineData(true, false, false, false)]
+    [InlineData(false, true, false, false)]
+    [InlineData(false, false, true, false)]
+    public void Route_GearAnyFilterToggle_FilterWhateverStorage(
+        bool pickUp,
+        bool sell,
+        bool shatter,
+        bool goesToStorage
+    )
     {
-        var settings = new AutoLootSettings(true, true, true, false, false, false);
-        Assert.Equal(LootRoute.Ignore, AutoLootRules.Route(LootKind.Gear, settings));
+        var settings = new AutoLootSettings(false, false, false, pickUp, sell, shatter);
+        Assert.Equal(LootRoute.Filter, AutoLootRules.Route(LootKind.Gear, goesToStorage, settings));
     }
 
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public void Route_Other_AlwaysIgnore(bool allOn)
+    public void Route_GearFilterTogglesOff_Ignore(bool goesToStorage)
+    {
+        var settings = new AutoLootSettings(true, true, true, false, false, false);
+        Assert.Equal(LootRoute.Ignore, AutoLootRules.Route(LootKind.Gear, goesToStorage, settings));
+    }
+
+    [Theory]
+    [InlineData(true, true)]
+    [InlineData(true, false)]
+    [InlineData(false, true)]
+    [InlineData(false, false)]
+    public void Route_Other_IgnoreWhateverStorage(bool allOn, bool goesToStorage)
     {
         AutoLootSettings settings = allOn ? _allOn : default;
-        Assert.Equal(LootRoute.Ignore, AutoLootRules.Route(LootKind.Other, settings));
+        Assert.Equal(
+            LootRoute.Ignore,
+            AutoLootRules.Route(LootKind.Other, goesToStorage, settings)
+        );
     }
 
     [Fact]
@@ -214,16 +248,25 @@ public sealed class AutoLootRulesTests
     }
 
     [Theory]
-    [InlineData(LootKind.Key, LootRoute.PickUp)]
-    [InlineData(LootKind.WovenEcho, LootRoute.PickUp)]
-    [InlineData(LootKind.Material, LootRoute.PickUp)]
-    [InlineData(LootKind.Gear, LootRoute.Filter)]
-    [InlineData(LootKind.Other, LootRoute.Ignore)]
-    public void Route_ModOrigin_SameAsGame(LootKind kind, LootRoute expected)
+    [InlineData(LootKind.Key, false, LootRoute.PickUp)]
+    [InlineData(LootKind.WovenEcho, false, LootRoute.PickUp)]
+    [InlineData(LootKind.Material, false, LootRoute.PickUp)]
+    [InlineData(LootKind.Gear, false, LootRoute.Filter)]
+    [InlineData(LootKind.Other, false, LootRoute.Ignore)]
+    [InlineData(LootKind.Key, true, LootRoute.Store)]
+    [InlineData(LootKind.WovenEcho, true, LootRoute.Store)]
+    [InlineData(LootKind.Material, true, LootRoute.Store)]
+    [InlineData(LootKind.Gear, true, LootRoute.Filter)]
+    [InlineData(LootKind.Other, true, LootRoute.Ignore)]
+    public void Route_ModOrigin_SameAsGame(LootKind kind, bool goesToStorage, LootRoute expected)
     {
         Assert.Equal(
             expected,
-            AutoLootRules.Route(kind, AutoLootRules.ForOrigin(_allOn, DropOrigin.Mod))
+            AutoLootRules.Route(
+                kind,
+                goesToStorage,
+                AutoLootRules.ForOrigin(_allOn, DropOrigin.Mod)
+            )
         );
     }
 }
