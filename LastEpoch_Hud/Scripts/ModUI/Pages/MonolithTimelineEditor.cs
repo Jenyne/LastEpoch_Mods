@@ -1,3 +1,4 @@
+using LastEpoch_Hud.Scripts.Mods.Monoliths;
 using LastEpoch_Hud.Scripts.ModUI.Settings;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
@@ -152,19 +153,12 @@ internal static class MonolithTimelineEditor
         {
             Data.monolith_selector_go.SetActive(false);
         }
-        int selected = Data.monolith_dropdown.value;
-        if (selected <= 0 && !Refs_Manager.player_data.IsNullOrDestroyed())
-        {
-            foreach (var run in Refs_Manager.player_data.MonolithRuns)
-            {
-                if (run.TimelineID > 0 && run.TimelineID < Data.monolith_dropdown.options.Count)
-                {
-                    selected = run.TimelineID;
-                    break;
-                }
-            }
-        }
-        Select(selected > 0 ? selected : 1);
+        Select(
+            MonolithRunEditor.InitialTimelineId(
+                Data.monolith_dropdown.value,
+                Data.monolith_dropdown.options.Count - 1
+            )
+        );
     }
 
     static void Select(int id)
