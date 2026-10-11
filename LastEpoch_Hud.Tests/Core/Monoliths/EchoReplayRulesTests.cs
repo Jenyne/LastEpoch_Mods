@@ -13,35 +13,35 @@ public sealed class EchoReplayRulesTests
         Assert.Equal(expected, EchoReplayRules.CanReplayIsland(enabled, completed));
 
     [Fact]
-    public void QuestReplay_AllowsCompletedNormalNonBossWithRequirementsMet() =>
-        Assert.True(EchoReplayRules.CanReplayQuest(true, true, false, false, true, true, true));
+    public void YrunReplay_AllowsCompletedEncounterWithRequirementsMet() =>
+        Assert.True(EchoReplayRules.CanReplayYrun(true, true, true, true, 100, 100, false));
 
     [Theory]
-    [InlineData(false, true, false, false, true, true, true)]
-    [InlineData(true, false, false, false, true, true, true)]
-    [InlineData(true, true, true, false, true, true, true)]
-    [InlineData(true, true, false, true, true, true, true)]
-    [InlineData(true, true, false, false, false, true, true)]
-    [InlineData(true, true, false, false, true, false, true)]
-    [InlineData(true, true, false, false, true, true, false)]
-    public void QuestReplay_PreservesEachRestriction(
+    [InlineData(false, true, true, true, 100, 100, false)]
+    [InlineData(true, false, true, true, 100, 100, false)]
+    [InlineData(true, true, false, true, 100, 100, false)]
+    [InlineData(true, true, true, false, 100, 100, false)]
+    [InlineData(true, true, true, true, 99, 100, false)]
+    [InlineData(true, true, true, true, 100, -1, false)]
+    [InlineData(true, true, true, true, 100, 100, true)]
+    public void YrunReplay_PreservesEachRestriction(
         bool enabled,
+        bool isYrun,
         bool completed,
-        bool empowered,
-        bool boss,
-        bool completionRequirementMet,
-        bool branchRequirementMet,
-        bool enoughStability
+        bool waveCompleted,
+        int storedKills,
+        int requiredKills,
+        bool enteringEcho
     ) =>
         Assert.False(
-            EchoReplayRules.CanReplayQuest(
+            EchoReplayRules.CanReplayYrun(
                 enabled,
+                isYrun,
                 completed,
-                empowered,
-                boss,
-                completionRequirementMet,
-                branchRequirementMet,
-                enoughStability
+                waveCompleted,
+                storedKills,
+                requiredKills,
+                enteringEcho
             )
         );
 }

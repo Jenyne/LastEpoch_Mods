@@ -72,10 +72,10 @@ try {
     Copy-Item -LiteralPath $modDll -Destination $installedDll -Force
     Write-Host "Installed Yrun emergence isolation test build $localHead."
     Write-Host "At startup, confirm four [Yrun Isolation] Disabled messages in the MelonLoader log."
-    Write-Host "In World > Monoliths, enable Replay Completed Echoes before opening the echo map to revisit the completed Yrun quest echo."
-    Write-Host "Quest replay requires a completed normal non-boss quest, the matching branch and enough stability. Incomplete echoes should retain their locks."
-    Write-Host "For replay diagnostics, toggle Replay Completed Echoes OFF then ON, reopen the map, and try one completed normal echo plus Morditas second quest echo."
-    Write-Host "Send the new MelonLoader log with [Echo Replay] lines, even if entry stays blocked."
+    Write-Host "In World > Monoliths, enable Replay Completed Echoes before opening the echo map or the Rage of Morditas activity panel."
+    Write-Host "Yrun replay requires Yrun already completed, its preceding wave fight completed, and the existing kill threshold."
+    Write-Host "For replay diagnostics, toggle Replay Completed Echoes OFF then ON, reopen the map/activity panel, and click one completed normal echo plus the second Morditas activity orb (Yrun)."
+    Write-Host "Send the new MelonLoader log with [Echo Replay] and [Yrun Replay] lines, even if entry stays blocked."
     Write-Host "Enter Morditas second echo with the SAME settings/equipment and approach Yrun."
     Write-Host "Report whether Yrun becomes visible without crashing. Capture the new MelonLoader and Player logs."
 } finally {

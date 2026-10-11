@@ -19,6 +19,7 @@ public class Monoliths_Islands
     {
         replayTrace.Clear();
         islandTraceCount = 0;
+        Monoliths_YrunReplay.ResetTrace();
         Main.logger_instance?.Msg($"[Echo Replay] Toggle={enabled}, scene={Scenes.SceneName}.");
     }
 
@@ -50,47 +51,6 @@ public class Monoliths_Islands
         return r;
     }
 
-    private static bool CanReplayQuest(MonolithRun run, int questEchoIndex)
-    {
-        if (!CanRun() || run.IsNullOrDestroyed() || run.timeline.IsNullOrDestroyed())
-            return false;
-
-        var quests = run.timeline.questZones;
-        if (quests.IsNullOrDestroyed() || questEchoIndex < 0 || questEchoIndex >= quests.Count)
-            return false;
-
-        var quest = quests[questEchoIndex];
-        if (quest.IsNullOrDestroyed())
-            return false;
-
-        // Never rewind questCompletion or questBranch to make a replay available.
-        // Empowered timelines and the timeline boss retain their native rules.
-        bool completed = run.IsQuestEchoCompleted(questEchoIndex);
-        bool empowered = run.IsEmpowered;
-        bool boss = run.IsBossQuestEcho(questEchoIndex);
-        bool completionMet = run.questCompletion >= quest.requiredQuestCompletion;
-        bool branchMet = !quest.requiresBranch || run.questBranch == quest.requiredBranch;
-        bool stabilityMet = run.HasEnoughStabilityForQuestEcho(questEchoIndex);
-        bool replay = EchoReplayRules.CanReplayQuest(
-            true,
-            completed,
-            empowered,
-            boss,
-            completionMet,
-            branchMet,
-            stabilityMet
-        );
-        Trace(
-            $"Quest timeline={run.timelineID}, index={questEchoIndex}, scene={quest.sceneName}, "
-                + $"completed={completed}, empowered={empowered}, boss={boss}, "
-                + $"completion={run.questCompletion}/{quest.requiredQuestCompletion}, "
-                + $"branch={run.questBranch}/{quest.requiredBranch}, requiresBranch={quest.requiresBranch}, "
-                + $"stability={run.stability}, needed={run.GetStabilityRequiredForQuestEcho(questEchoIndex)}, "
-                + $"stabilityMet={stabilityMet}, replay={replay}."
-        );
-        return replay;
-    }
-
     [HarmonyPatch(typeof(EchoWeb), "islandCanBeRun", new[] { typeof(EchoWebIsland) })]
     public class EchoWeb_islandCanBeRun
     {
@@ -120,59 +80,6 @@ public class Monoliths_Islands
         }
     }
 
-    [HarmonyPatch(typeof(QuestEcho), "GetAvailability", new[] { typeof(MonolithRun), typeof(int) })]
-    public class QuestEcho_GetAvailability
-    {
-        [HarmonyPrepare]
-        static bool Prepare(System.Reflection.MethodBase original) => TracePatch(original);
-
-        [HarmonyPostfix]
-        static void Postfix(MonolithRun __0, int __1, ref QuestEcho.QuestEchoAvailability __result)
-        {
-            var native = __result;
-            // Only the native Completed state is eligible, never Locked or Unavailable.
-            if (__result == QuestEcho.QuestEchoAvailability.Completed && CanReplayQuest(__0, __1))
-                __result = QuestEcho.QuestEchoAvailability.UnlockedAvailable;
-            Trace(
-                $"Quest availability index={__1}, native={native}, enabled={CanRun()}, final={__result}."
-            );
-        }
-    }
-
-    [HarmonyPatch(typeof(MonolithRun), "CanStartQuestEcho", new[] { typeof(int) })]
-    public class MonolithRun_CanStartQuestEcho
-    {
-        [HarmonyPrepare]
-        static bool Prepare(System.Reflection.MethodBase original) => TracePatch(original);
-
-        [HarmonyPostfix]
-        static void Postfix(MonolithRun __instance, int __0, ref bool __result)
-        {
-            bool native = __result;
-            if (!__result && CanReplayQuest(__instance, __0))
-                __result = true;
-            Trace(
-                $"Quest start index={__0}, native={native}, enabled={CanRun()}, final={__result}."
-            );
-        }
-    }
-
-    [HarmonyPatch(typeof(QuestEcho), "Init", new[] { typeof(MonolithRun), typeof(int) })]
-    public class QuestEcho_InitTrace
-    {
-        [HarmonyPrepare]
-        static bool Prepare(System.Reflection.MethodBase original) => TracePatch(original);
-
-        [HarmonyPostfix]
-        static void Postfix(QuestEcho __instance, int __1, QuestEcho.QuestEchoAvailability __result)
-        {
-            if (!__instance.IsNullOrDestroyed())
-                Trace(
-                    $"Quest UI index={__1}, availability={__result}, isAvailable={__instance.IsAvailable}."
-                );
-        }
-    }
-
     [HarmonyPatch(typeof(EchoWebIslandUI), "clicked", new System.Type[0])]
     public class EchoWebIslandUI_ClickTrace
     {
@@ -180,14 +87,55 @@ public class Monoliths_Islands
         static bool Prepare(System.Reflection.MethodBase original) => TracePatch(original);
 
         [HarmonyPrefix]
-        static void Prefix(EchoWebIslandUI __instance)
+        static bool Prefix(EchoWebIslandUI __instance)
         {
             if (__instance.IsNullOrDestroyed() || __instance.island.IsNullOrDestroyed())
-                return;
+                return true;
             var island = __instance.island;
             Trace(
                 $"Clicked island hex={island.hexIndex}, completed={island.completed}, entered={island.hasEnteredEcho}."
             );
+            if (!EchoReplayRules.CanReplayIsland(CanRun(), island.completed))
+                return true;
+            var panel = __instance._timelinePanel;
+            if (
+                panel.IsNullOrDestroyed()
+                || panel.run.IsNullOrDestroyed()
+                || panel.web.IsNullOrDestroyed()
+            )
+                return true;
+            // Submit through the game's normal entry request instead of its UI's
+            // completed-node selection gate. Do not clear island.completed.
+            Trace(
+                $"Requesting completed island timeline={panel.timelineID}, hex={island.hexIndex}."
+            );
+            Il2CppLE.Networking.Monolith.MonolithNetworkManager.SendStartRun(
+                panel.timelineID,
+                island.hexIndex
+            );
+            return false;
         }
+    }
+
+    [HarmonyPatch(
+        typeof(MonolithRunsManager),
+        "StartRun",
+        new[] { typeof(TimelineID), typeof(int), typeof(int) }
+    )]
+    public class MonolithRunsManager_StartRunTrace
+    {
+        [HarmonyPostfix]
+        static void Postfix(
+            TimelineID __0,
+            int __1,
+            int __2,
+            Il2CppOperationResult.Result<Il2CppSystem.ValueTuple<
+                MonolithRun,
+                EchoWebIsland
+            >> __result
+        ) =>
+            Trace(
+                $"Entry result timeline={__0}, difficulty={__1}, hex={__2}, success={__result.IsSuccess}."
+            );
     }
 }

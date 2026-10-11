@@ -4,20 +4,20 @@ internal static class EchoReplayRules
 {
     public static bool CanReplayIsland(bool enabled, bool completed) => enabled && completed;
 
-    public static bool CanReplayQuest(
+    public static bool CanReplayYrun(
         bool enabled,
+        bool isYrun,
         bool completed,
-        bool empowered,
-        bool boss,
-        bool completionRequirementMet,
-        bool branchRequirementMet,
-        bool enoughStability
+        bool waveCompleted,
+        int storedKills,
+        int requiredKills,
+        bool enteringEcho
     ) =>
         enabled
+        && isYrun
         && completed
-        && !empowered
-        && !boss
-        && completionRequirementMet
-        && branchRequirementMet
-        && enoughStability;
+        && waveCompleted
+        && requiredKills >= 0
+        && storedKills >= requiredKills
+        && !enteringEcho;
 }

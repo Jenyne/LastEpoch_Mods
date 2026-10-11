@@ -33,7 +33,7 @@ internal static class WorldMonolithsPage
         page.AddText(
             card,
             "ReplayCompletedEchoesNote",
-            "Replays completed echoes and normal non-boss quest echoes. Quest branch and stability requirements still apply."
+            "Replays completed echo nodes and Yrun. Yrun requires wave completion and its kill threshold."
         );
         AddSlider(
             card,

@@ -130,7 +130,7 @@
   "Remove Fog of War": "Retirer le brouillard de guerre",
   "Monoliths": "Monolithes",
   "Replay Completed Echoes": "Rejouer les échos terminés",
-  "Replays completed echoes and normal non-boss quest echoes. Quest branch and stability requirements still apply.": "Permet de rejouer les échos terminés et les échos de quête normaux hors boss. Les conditions de branche et de stabilité restent requises.",
+  "Replays completed echo nodes and Yrun. Yrun requires wave completion and its kill threshold.": "Permet de rejouer les échos terminés et Yrun. Yrun nécessite de terminer le combat de vagues et d’atteindre son seuil de victimes.",
   "Max Stability": "Stabilité maximale",
   "Stability = Max Stability": "Stabilité = Stabilité maximale",
   "Mobs Density": "Densité des monstres",
