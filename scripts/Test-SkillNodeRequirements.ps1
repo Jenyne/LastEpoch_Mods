@@ -3,11 +3,25 @@ param([string]$GamePath = "D:\SteamLibrary\steamapps\common\Last Epoch")
 $ErrorActionPreference = "Stop"
 $branch = "fix/skill-node-requirements"
 $repoPath = Split-Path -Parent $PSScriptRoot
+
+function Assert-LastEpochExited {
+    foreach ($gameProcess in @(Get-Process -Name "Last Epoch" -ErrorAction SilentlyContinue)) {
+        try {
+            $gameProcess.Refresh()
+            # Windows can retain a process entry after it has exited.
+            # Check termination state instead of treating the name as proof of life.
+            if (!$gameProcess.HasExited) {
+                throw "Close Last Epoch before installing the testing build. Active PID: $($gameProcess.Id)."
+            }
+        } finally {
+            $gameProcess.Dispose()
+        }
+    }
+}
+
 Push-Location $repoPath
 try {
-    if (Get-Process -Name "Last Epoch" -ErrorAction SilentlyContinue) {
-        throw "Close Last Epoch before installing the testing build."
-    }
+    Assert-LastEpochExited
     if (!(Test-Path -LiteralPath (Join-Path $GamePath "Mods") -PathType Container)) {
         throw "The game Mods folder was not found. Check -GamePath."
     }
@@ -49,9 +63,7 @@ try {
     if (!(Test-Path -LiteralPath $modDll -PathType Leaf)) {
         throw "Built DLL was not found; nothing was installed."
     }
-    if (Get-Process -Name "Last Epoch" -ErrorAction SilentlyContinue) {
-        throw "Close Last Epoch before installing the testing build."
-    }
+    Assert-LastEpochExited
     $installedDll = Join-Path $GamePath "Mods\LastEpoch_Hud.dll"
     if (Test-Path -LiteralPath $installedDll) {
         $stamp = Get-Date -Format "yyyyMMdd_HHmmss"
