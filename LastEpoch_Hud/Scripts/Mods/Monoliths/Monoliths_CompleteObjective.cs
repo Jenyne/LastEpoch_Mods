@@ -338,17 +338,22 @@ public class Monoliths_CompleteObjective : MonoBehaviour
         [HarmonyPostfix]
         static void Postfix(ref MonolithZoneManager __instance, StatefulQuestList __0)
         {
-            bool enabled = CanRun();
+            if (!CanRun())
+            {
+                // The hook remains installed, but it must not inspect encounter
+                // objects when the feature is disabled.
+                return;
+            }
+
             bool protectedEncounter = MonolithEncounterGuard.ShouldSkip(
                 __instance,
                 out string sceneName
             );
             Main.logger_instance?.Msg(
                 "[Monolith Guard] initialise scene=" + sceneName
-                + " CompleteObjective=" + enabled
-                + " protected=" + protectedEncounter
+                + " CompleteObjective=true protected=" + protectedEncounter
             );
-            if (!enabled || protectedEncounter)
+            if (protectedEncounter)
             {
                 return;
             }
