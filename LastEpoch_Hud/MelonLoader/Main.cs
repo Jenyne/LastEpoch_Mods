@@ -640,30 +640,6 @@ public static class Functions
         return result;
     }
 
-    public static Toggle Get_ToggleInLabel(
-        GameObject obj,
-        string panel_name,
-        string obj_name,
-        bool makeSureItsActive = false
-    )
-    {
-        Toggle result = null; // new Toggle();
-        GameObject panel = GetChild(obj, panel_name);
-        if (!panel.IsNullOrDestroyed())
-        {
-            GameObject label = GetChild(panel, "Title");
-            if (!label.IsNullOrDestroyed())
-            {
-                var temp = Functions.GetChild(label, obj_name);
-                if (makeSureItsActive)
-                    temp.SetActive(true);
-                result = temp.GetComponent<Toggle>();
-            }
-        }
-
-        return result;
-    }
-
     public static bool Check_Texture(string name)
     {
         if (

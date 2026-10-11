@@ -64,14 +64,14 @@ public static class ModSettings
 
     public static class InfiniteForgingPotential
     {
-        // Runtime checkbox is bound by Hud_Manager after the crafting panel is ready.
+        // Bound by Items > Crafting Slot (ItemsCraftingSlotPage).
         public static readonly SettingsGroup Group = new SettingsGroup("InfiniteForgingPotential");
         public static readonly BoolSetting Enabled = Group.Bool("Enabled");
     }
 
     public static class AdvancedForge
     {
-        // Runtime controls are injected beside Infinite Forging Potential in Items > Crafting.
+        // Bound by the Advanced Forge card in Items > Crafting Slot.
         public static readonly SettingsGroup Group = new SettingsGroup("AdvancedForge");
         public static readonly BoolSetting AllowT7Crafting = Group.Bool("AllowT7Crafting");
         public static readonly FloatSetting AffixRoll = Group.Float(
