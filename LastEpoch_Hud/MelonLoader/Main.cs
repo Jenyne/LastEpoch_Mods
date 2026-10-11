@@ -3,7 +3,6 @@ using System.IO;
 using System.Linq;
 using HarmonyLib;
 using Il2Cpp;
-using Il2CppLE.AssetBundles;
 using Newtonsoft.Json;
 using UnityEngine;
 using UnityEngine.Events;
@@ -482,30 +481,6 @@ public static class Functions
         return null;
     }
 
-    public static GameObject Get_Along(GameObject root, params string[] path)
-    {
-        GameObject current = root;
-        for (int i = 0; i < path.Length; i++)
-        {
-            if (current.IsNullOrDestroyed())
-            {
-                return null;
-            }
-            current = GetChild(current, path[i], false);
-        }
-        return current;
-    }
-
-    public static Text Get_TextAlong(GameObject root, params string[] path)
-    {
-        GameObject obj = Get_Along(root, path);
-        if (obj.IsNullOrDestroyed())
-        {
-            return null;
-        }
-        return obj.GetComponent<Text>();
-    }
-
     public static Toggle Get_ToggleInPanel(GameObject obj, string panel_name, string obj_name)
     {
         Toggle result = null; // new Toggle();
@@ -516,22 +491,6 @@ public static class Functions
             if (!child.IsNullOrDestroyed())
             {
                 result = child.GetComponent<Toggle>();
-            }
-        }
-
-        return result;
-    }
-
-    public static Text Get_TextInPanel(GameObject obj, string panel_name, string obj_name)
-    {
-        Text result = null; // new Text();
-        GameObject panel = GetChild(obj, panel_name);
-        if (!panel.IsNullOrDestroyed())
-        {
-            GameObject child = GetChild(panel, obj_name, false);
-            if (!child.IsNullOrDestroyed())
-            {
-                result = child.GetComponent<Text>();
             }
         }
 
@@ -549,18 +508,6 @@ public static class Functions
             {
                 result = child.GetComponent<Slider>();
             }
-        }
-
-        return result;
-    }
-
-    public static Button Get_ButtonInPanel(GameObject obj, string obj_name)
-    {
-        Button result = null; // new Button();
-        GameObject panel = GetChild(obj, obj_name);
-        if (!panel.IsNullOrDestroyed())
-        {
-            result = panel.GetComponent<Button>();
         }
 
         return result;
@@ -636,82 +583,11 @@ public static class Functions
         }
     }
 
-    public static bool Check_Json(string name)
-    {
-        if (
-            name.Substring(name.Length - Extensions.json.Length, Extensions.json.Length).ToLower()
-            == Extensions.json
-        )
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
     public static bool Check_Prefab(string name)
     {
         if (
             name.Substring(name.Length - Extensions.prefab.Length, Extensions.prefab.Length)
                 .ToLower() == Extensions.prefab
-        )
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
-    }
-
-    public static Sprite GetItemIcon(ItemDataUnpacked item)
-    {
-        if (item == null)
-        {
-            return null;
-        }
-
-        LoadRef<Sprite> loadRef = null;
-        try
-        {
-            SoftRef<Sprite> softRef = item.GetItemSpriteFromData(ItemUIContext.Default);
-            if (softRef == null || !softRef)
-            {
-                return null;
-            }
-
-            loadRef = SoftRefExtensions.CreateLoadRef(softRef, "LastEpoch_Hud", 0);
-            if (loadRef == null)
-            {
-                return null;
-            }
-
-            loadRef.BlockForLoad();
-            return loadRef.AssetOrNull;
-        }
-        catch
-        {
-            Main.logger_instance?.Error("Error GetItemIcon");
-            return null;
-        }
-        finally
-        {
-            loadRef?.Dispose();
-        }
-    }
-
-    public static bool CheckClass(int classe, ItemList.ClassRequirement req)
-    {
-        if (
-            (req == ItemList.ClassRequirement.Any)
-            || (req == ItemList.ClassRequirement.None)
-            || ((req == ItemList.ClassRequirement.Primalist) && (classe == 0))
-            || ((req == ItemList.ClassRequirement.Mage) && (classe == 1))
-            || ((req == ItemList.ClassRequirement.Sentinel) && (classe == 2))
-            || ((req == ItemList.ClassRequirement.Acolyte) && (classe == 3))
-            || ((req == ItemList.ClassRequirement.Rogue) && (classe == 4))
         )
         {
             return true;

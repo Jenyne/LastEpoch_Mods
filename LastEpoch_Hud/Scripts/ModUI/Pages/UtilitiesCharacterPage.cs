@@ -314,9 +314,8 @@ internal static class UtilitiesCharacterPage
                 Save_Manager.instance.data.Skills.Enable_PassivePointMultiplier = enabled;
                 if (enabled)
                 {
-                    Save_Manager.instance.data.Skills.PassivePointMultiplier = SettingRow.Clamp(
-                        value
-                    );
+                    Save_Manager.instance.data.Skills.PassivePointMultiplier =
+                        PointMultiplier.Clamp(value);
                 }
                 Mods.Skills.Passives_Points.Sync();
             }
@@ -370,7 +369,7 @@ internal static class UtilitiesCharacterPage
                 Save_Manager.instance.data.Skills.Enable_SkillLevelMultiplier = enabled;
                 if (enabled)
                 {
-                    Save_Manager.instance.data.Skills.SkillLevelMultiplier = SettingRow.Clamp(
+                    Save_Manager.instance.data.Skills.SkillLevelMultiplier = PointMultiplier.Clamp(
                         value
                     );
                 }
@@ -430,9 +429,8 @@ internal static class UtilitiesCharacterPage
                 Save_Manager.instance.data.Factions.TheWoven.Enable_PointMultiplier = enabled;
                 if (enabled)
                 {
-                    Save_Manager.instance.data.Factions.TheWoven.PointMultiplier = SettingRow.Clamp(
-                        value
-                    );
+                    Save_Manager.instance.data.Factions.TheWoven.PointMultiplier =
+                        PointMultiplier.Clamp(value);
                 }
                 Mods.Factions.TheWoven.Faction_Woven_TreePoints.ApplyToPlayer();
             }
