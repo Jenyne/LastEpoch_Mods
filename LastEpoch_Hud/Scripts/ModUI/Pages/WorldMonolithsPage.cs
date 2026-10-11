@@ -20,15 +20,15 @@ internal static class WorldMonolithsPage
         var card = page.AddCard("Monoliths", "Monoliths");
         AddToggle(
             card,
-            "UnlockEchoEntry",
-            "Unlock Echo Entry",
+            "ReplayCompletedEchoes",
+            "Replay Completed Echoes",
             () => Save_Manager.instance.data.Scenes.Monoliths.Enable_Islands,
             v => Save_Manager.instance.data.Scenes.Monoliths.Enable_Islands = v
         );
         page.AddText(
             card,
-            "UnlockEchoEntryNote",
-            "Allows entry to locked echo nodes, including completed echoes. Turn off after testing."
+            "ReplayCompletedEchoesNote",
+            "Replays completed echoes and normal non-boss quest echoes. Quest branch and stability requirements still apply."
         );
         AddSlider(
             card,
