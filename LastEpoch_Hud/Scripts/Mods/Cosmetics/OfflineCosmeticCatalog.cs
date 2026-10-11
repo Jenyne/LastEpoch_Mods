@@ -32,6 +32,16 @@ internal static class OfflineCosmeticCatalog
         return true;
     }
 
+    /// <summary>True for junk. Without a ready catalog the rules decide, so junk never shows.</summary>
+    public static bool IsJunk(string id, string displayName)
+    {
+        if (TryGetCatalog(out CosmeticCatalog catalog))
+        {
+            return catalog.IsJunk(id, displayName);
+        }
+        return CosmeticCatalogRules.IsJunk(id, displayName);
+    }
+
     /// <summary>Shared list of owned ids, or null when not ready. Callers must not store or mutate it.</summary>
     public static Il2CppSystem.Collections.Generic.List<string> OwnedIds()
     {

@@ -45,6 +45,10 @@ public static class CosmeticCatalogRules
         return CosmeticVerdict.Keep;
     }
 
+    /// <summary>True when the entry is not a real MTX cosmetic.</summary>
+    public static bool IsJunk(string id, string displayName) =>
+        Judge(id, displayName) != CosmeticVerdict.Keep;
+
     private static bool HasRealPrefix(string id)
     {
         foreach (string prefix in _realPrefixes)
@@ -63,30 +67,41 @@ public static class CosmeticCatalogRules
         {
             return false;
         }
-        foreach (string segment in text.Split(_separators))
+        int start = 0;
+        while (start <= text.Length)
         {
-            if (IsTestWord(segment))
+            int end = text.IndexOfAny(_separators, start);
+            if (end < 0)
+            {
+                end = text.Length;
+            }
+            if (IsTestWord(text, start, end - start))
             {
                 return true;
             }
+            start = end + 1;
         }
         return false;
     }
 
-    private static bool IsTestWord(string segment)
+    private static bool IsTestWord(string text, int start, int length)
     {
+        if (length < 4)
+        {
+            return false;
+        }
         if (
-            !segment.StartsWith("Test", StringComparison.Ordinal)
-            && !segment.StartsWith("test", StringComparison.Ordinal)
+            string.CompareOrdinal(text, start, "Test", 0, 4) != 0
+            && string.CompareOrdinal(text, start, "test", 0, 4) != 0
         )
         {
             return false;
         }
-        if (segment.Length == 4)
+        if (length == 4)
         {
             return true;
         }
-        char next = segment[4];
+        char next = text[start + 4];
         return char.IsDigit(next) || char.IsUpper(next);
     }
 }

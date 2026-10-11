@@ -31,6 +31,16 @@ public sealed class CosmeticCatalog
         return verdict;
     }
 
+    /// <summary>Stored verdict for a seen id; the rules decide for an unseen one. Stores nothing.</summary>
+    public bool IsJunk(string id, string displayName)
+    {
+        if (_verdicts.TryGetValue(id ?? "", out CosmeticVerdict known))
+        {
+            return known != CosmeticVerdict.Keep;
+        }
+        return CosmeticCatalogRules.IsJunk(id, displayName);
+    }
+
     public bool Contains(string id) => id != null && _kept.Contains(id);
 
     /// <summary>Distinct ids removed for a reason; Keep gives 0.</summary>

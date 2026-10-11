@@ -110,4 +110,35 @@ public sealed class CosmeticCatalogTests
 
         Assert.Equal(new[] { 7, 6, 1, 2, 0, 3 }, numbers);
     }
+
+    [Fact]
+    public void IsJunk_SeenId_UsesStoredVerdict()
+    {
+        var catalog = new CosmeticCatalog();
+        catalog.Add("MTX_A", "Test A");
+        catalog.Add("MTX_B", "B");
+
+        Assert.True(catalog.IsJunk("MTX_A", "A"));
+        Assert.False(catalog.IsJunk("MTX_B", "Test B"));
+    }
+
+    [Fact]
+    public void IsJunk_UnseenId_StoresNothing()
+    {
+        var catalog = new CosmeticCatalog();
+
+        Assert.True(catalog.IsJunk("MTX_C", "Test C"));
+        Assert.Equal(CosmeticVerdict.Keep, catalog.Add("MTX_C", "C"));
+        Assert.Equal(1, catalog.KeptCount);
+        Assert.Equal(0, catalog.RemovedCount);
+    }
+
+    [Fact]
+    public void IsJunk_UnseenId_FallsBackToRules()
+    {
+        var catalog = new CosmeticCatalog();
+
+        Assert.True(catalog.IsJunk("TestHelmet", "x"));
+        Assert.False(catalog.IsJunk("MTX_Real", "Real"));
+    }
 }
