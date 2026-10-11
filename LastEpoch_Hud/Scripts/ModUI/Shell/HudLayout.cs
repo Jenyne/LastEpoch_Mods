@@ -19,6 +19,7 @@ public static class HudLayout
         if (hud.IsNullOrDestroyed() || boundHud == hud)
             return;
 
+        Main.logger_instance?.Msg("[Startup] HudLayout.Initialize entered.");
         boundHud = hud;
         HudSidebar.Reset();
         HudSearch.Reset();
@@ -35,11 +36,14 @@ public static class HudLayout
             return;
         }
 
+        Main.logger_instance?.Msg("[Startup] HudLayout building window.");
         window = BuildWindow(hud);
         menu.transform.SetParent(window.transform, false);
         content.transform.SetParent(window.transform, false);
+        Main.logger_instance?.Msg("[Startup] HudLayout building header and sidebar.");
         BuildHeader(window);
         HudSidebar.Build(menu, font, page => ActivateNavigationOnly(page));
+        Main.logger_instance?.Msg("[Startup] HudLayout building pages.");
         PlaceLegacyContent(content);
         foreach (var page in HudNavigation.Pages)
             page.Build(window, hud, font);
@@ -47,6 +51,7 @@ public static class HudLayout
         var defaultPage = HudNavigation.Sections[0].Pages[0];
         HudSidebar.ExpandSection(HudNavigation.Sections[0].Id, true);
         ActivateNavigationOnly(defaultPage);
+        Main.logger_instance?.Msg("[Startup] HudLayout applying styles.");
         HudStyler.NormalizeSelectableGraphics(window);
         HudStyler.ApplyFontScale(window);
         HudSettingsPanel.Refresh();

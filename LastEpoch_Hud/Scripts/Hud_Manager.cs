@@ -58,18 +58,17 @@ public partial class Hud_Manager : MonoBehaviour
     {
         instance = this;
         enable = true;
-        AssetBundleCreateRequest bundleLoadRequest = AssetBundle.LoadFromFileAsync(
-            Path.Combine(asset_path, asset_bundle_name)
-        );
-        asset_bundle = bundleLoadRequest.assetBundle;
-        if (asset_bundle == null)
+        // Do not read AssetBundleCreateRequest.assetBundle before async loading
+        // completes. A fresh process can hit this race while Unity is starting.
+        string bundlePath = Path.Combine(asset_path, asset_bundle_name);
+        asset_bundle = AssetBundle.LoadFromFile(bundlePath);
+        if (asset_bundle.IsNullOrDestroyed())
         {
-            Main.logger_instance.Error("AssetBundle Error");
+            Main.logger_instance?.Error("[Startup] HUD asset bundle unavailable: " + bundlePath);
+            return;
         }
-        else
-        {
-            Object.DontDestroyOnLoad(asset_bundle);
-        }
+        Object.DontDestroyOnLoad(asset_bundle);
+        Main.logger_instance?.Msg("[Startup] HUD asset bundle loaded.");
     }
 
     void Update()
@@ -186,6 +185,7 @@ public partial class Hud_Manager : MonoBehaviour
     void Init_Hud()
     {
         hud_initializing = true;
+        Main.logger_instance?.Msg("[Startup] HUD prefab initialization started.");
         if (Main.debug)
         {
             Main.logger_instance.Msg("Hud Manager : Load hud object in assets");
@@ -304,6 +304,7 @@ public partial class Hud_Manager : MonoBehaviour
                             ModUI.Settings.SaveManager.BindHud(hud_object);
                         }
                     );
+                    Main.logger_instance?.Msg("[Startup] HUD binding completed.");
                     SafeInit(
                         "ModUI.HudLayout.Initialize",
                         () =>
@@ -360,6 +361,7 @@ public partial class Hud_Manager : MonoBehaviour
         }
 
         hud_initializing = false;
+        Main.logger_instance?.Msg("[Startup] HUD prefab initialization finished.");
     }
 
     void SafeInit(string name, System.Action action)
@@ -448,10 +450,15 @@ public partial class Hud_Manager : MonoBehaviour
                 Hud_Base.Toogle_DefaultPauseMenu(false);
             }
         }
+        // The UI is an in-game overlay. Building Unity UI while the client
+        // transitions through splash/login can race native scene initialization.
+        // The player reference is populated independently by Refs_Manager.
         if (
-            !(asset_bundle.IsNullOrDestroyed())
-            && (hud_object.IsNullOrDestroyed())
-            && (!hud_initializing)
+            Scenes.IsGameScene()
+            && !Refs_Manager.player_actor.IsNullOrDestroyed()
+            && !(asset_bundle.IsNullOrDestroyed())
+            && hud_object.IsNullOrDestroyed()
+            && !hud_initializing
         )
         {
             Init_Hud();
