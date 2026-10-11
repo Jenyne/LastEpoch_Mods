@@ -11,21 +11,23 @@ public class Character_UnlockAllIdols
         {
             if (CanRun())
             {
+                // Refresh the explicit cheat override; never write an invented
+                // zero unlock state when no legitimate progress was captured.
                 Refs_Manager.item_containers_manager.setIdolUnlockState(99, true);
             }
-            else if (backup_idx < 10)
+            else if (overrideApplied)
             {
-                Refs_Manager.item_containers_manager.setIdolUnlockState(98, true);
-            }
-            else
-            {
-                Refs_Manager.item_containers_manager.setIdolUnlockState(0, true);
+                // Revert only an override that this mod actually applied.
+                overrideApplied = false;
+                if (backup_idx < 10)
+                    Refs_Manager.item_containers_manager.setIdolUnlockState(98, true);
             }
         }
     }
 
     private static byte backup_idx = 99;
     private static byte unlock_idx = 9;
+    private static bool overrideApplied;
 
     private static bool CanRun()
     {
@@ -58,11 +60,13 @@ public class Character_UnlockAllIdols
                 if (CanRun())
                 {
                     __0 = unlock_idx;
+                    overrideApplied = true;
                 }
             }
             else if (__0 == 99)
             {
                 __0 = unlock_idx;
+                overrideApplied = true;
             }
             else if (__0 == 98)
             {
