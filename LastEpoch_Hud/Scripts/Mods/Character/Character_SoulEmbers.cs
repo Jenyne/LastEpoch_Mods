@@ -11,8 +11,9 @@ internal static class Character_SoulEmbers
             DungeonRunManager manager = PlayerFinder.getDungeonRunManagerInSingleplayerOrOnClient();
             return manager.IsNullOrDestroyed() ? null : manager;
         }
-        catch
+        catch (System.Exception ex)
         {
+            ErrorLog.Report(ex, "Character_SoulEmbers.GetManager");
             return null;
         }
     }

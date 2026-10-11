@@ -445,26 +445,6 @@ public partial class Hud_Manager : MonoBehaviour
                     content_obj = Functions.GetChild(Content.content_obj, "Character_Content");
                     if (!content_obj.IsNullOrDestroyed())
                     {
-                        GameObject character_cheats_content = Functions.GetViewportContent(
-                            content_obj,
-                            "Character_Cheats",
-                            "Character_Cheats_Content"
-                        );
-                        if (!character_cheats_content.IsNullOrDestroyed())
-                        {
-                            Cheats.masterie_text = Functions.Get_TextInButton(
-                                character_cheats_content,
-                                "Btn_Character_Cheats_Masterie",
-                                "Label"
-                            );
-                        }
-                        else
-                        {
-                            Main.logger_instance.Error(
-                                "Hud Manager : character_cheats_content is null"
-                            );
-                        }
-
                         //Data
                         GameObject character_data_content = Functions.GetViewportContent(
                             content_obj,
@@ -960,11 +940,6 @@ public partial class Hud_Manager : MonoBehaviour
             public static void Update_Faction_Data()
             {
                 Faction_Tracker.selected_faction = Faction_Tracker.GetFaction();
-            }
-
-            public class Cheats
-            {
-                public static Text masterie_text = null;
             }
 
             public class Data
