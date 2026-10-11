@@ -3,6 +3,7 @@ using HarmonyLib;
 using Il2Cpp;
 using Il2CppItemFiltering;
 using LastEpoch_Hud.Scripts.Core.Items.AutoLoot;
+using LastEpoch_Hud.Scripts.ModUI;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Items.AutoLoot;
@@ -32,10 +33,25 @@ public class AutoLootDropPatch
 
         try
         {
-            LootRoute route = ReadRoute(__0, __1, settings);
+            if (!IsLootable(__0, __1))
+            {
+                return true;
+            }
+
+            LootKind kind = LootKindReader.Read(__1);
+            LootRoute route = AutoLootRules.Route(
+                kind,
+                __1.MatchesStackableItemFlags(StackableItemFlags.All),
+                settings
+            );
+            if (route == LootRoute.Filter)
+            {
+                return RunFilter(__0, __1, kind, settings);
+            }
+
             if (route != LootRoute.Store)
             {
-                return Run(__0, __1, route, settings);
+                return RunDirect(__0, __1, kind, route);
             }
 
             __2 = __0.position();
@@ -60,7 +76,8 @@ public class AutoLootDropPatch
 
         try
         {
-            PickUpNewGroundItem(__instance, __0, __1);
+            bool stored = TryPickUpNewGroundItem(__instance, __0, __1);
+            LogStored(__1, stored);
         }
         catch (Exception ex)
         {
@@ -86,46 +103,38 @@ public class AutoLootDropPatch
         );
     }
 
-    private static LootRoute ReadRoute(Actor actor, ItemData item, AutoLootSettings settings)
+    private static bool IsLootable(Actor actor, ItemData item)
     {
         if (actor.IsNullOrDestroyed() || item.IsNullOrDestroyed())
         {
-            return LootRoute.Ignore;
+            return false;
         }
 
-        if (!Scenes.IsGameScene() || item.isTutorialItem())
-        {
-            return LootRoute.Ignore;
-        }
-
-        return AutoLootRules.Route(
-            LootKindReader.Read(item),
-            item.MatchesStackableItemFlags(StackableItemFlags.All),
-            settings
-        );
+        return Scenes.IsGameScene() && !item.isTutorialItem();
     }
 
-    private static bool Run(Actor actor, ItemData item, LootRoute route, AutoLootSettings settings)
+    private static bool RunDirect(Actor actor, ItemData item, LootKind kind, LootRoute route)
     {
-        if (route == LootRoute.Ignore)
-        {
-            return true;
-        }
-
-        if (route == LootRoute.PickUp)
-        {
-            return !TryPickUp(actor, item);
-        }
-
-        return RunFilter(actor, item, settings);
+        AutoLootAction action =
+            route == LootRoute.PickUp ? PickUp(actor, item) : AutoLootAction.Kept;
+        LogDirect(item, kind, action);
+        return action == AutoLootAction.Kept;
     }
 
-    private static void PickUpNewGroundItem(GroundItemManager ground, Actor actor, ItemData item)
+    private static AutoLootAction PickUp(Actor actor, ItemData item)
     {
-        if (TryFindNewGroundItemId(ground, actor, item, out uint id))
+        return TryPickUp(actor, item) ? AutoLootAction.Picked : AutoLootAction.Kept;
+    }
+
+    private static bool TryPickUpNewGroundItem(GroundItemManager ground, Actor actor, ItemData item)
+    {
+        if (!TryFindNewGroundItemId(ground, actor, item, out uint id))
         {
-            ground.pickupItem(actor, id, StackableItemFlags.All);
+            return false;
         }
+
+        ground.pickupItem(actor, id, StackableItemFlags.All);
+        return true;
     }
 
     private static bool TryFindNewGroundItemId(
@@ -166,33 +175,121 @@ public class AutoLootDropPatch
         return true;
     }
 
-    private static bool RunFilter(Actor actor, ItemData item, AutoLootSettings settings)
+    private static bool RunFilter(
+        Actor actor,
+        ItemData item,
+        LootKind kind,
+        AutoLootSettings settings
+    )
     {
-        ItemFilter filter = LootFilterReader.ActiveFilter();
         ItemDataUnpacked unpacked = item.getAsUnpacked();
-        LootVisibility visibility = LootFilterReader.Read(filter, unpacked);
+        LootVisibility visibility = LootFilterReader.Read(
+            LootFilterReader.ActiveFilter(),
+            unpacked
+        );
         FilterLootPlan plan = AutoLootRules.ForFilter(visibility, settings);
+        AutoLootAction action = ApplyPlan(actor, item, unpacked, plan);
+        LogFilter(item, kind, visibility, action);
+        return action == AutoLootAction.Kept;
+    }
+
+    private static AutoLootAction ApplyPlan(
+        Actor actor,
+        ItemData item,
+        ItemDataUnpacked unpacked,
+        FilterLootPlan plan
+    )
+    {
         if (plan.IsEmpty)
         {
-            return true;
+            return AutoLootAction.Kept;
         }
 
         if (plan.PickUp)
         {
-            return !TryPickUp(actor, item);
+            return PickUp(actor, item);
         }
 
         if (plan.Shatter && AutoShatter.TryShatter(unpacked))
         {
-            return false;
+            return AutoLootAction.Shattered;
         }
 
-        if (plan.Sell)
+        return plan.Sell && TrySell(actor, unpacked) ? AutoLootAction.Sold : AutoLootAction.Kept;
+    }
+
+    private static void LogDirect(ItemData item, LootKind kind, AutoLootAction action)
+    {
+        if (!ModSettings.Debug.Enabled.Value)
         {
-            return !TrySell(actor, unpacked);
+            return;
         }
 
-        return true;
+        try
+        {
+            Main.logger_instance?.Msg(
+                AutoLootLog.Direct(item.itemType, kind, ModItemDrop.CurrentOrigin, action)
+            );
+        }
+        catch (Exception ex)
+        {
+            ErrorLog.Report(ex, "AutoLoot log");
+        }
+    }
+
+    private static void LogFilter(
+        ItemData item,
+        LootKind kind,
+        LootVisibility visibility,
+        AutoLootAction action
+    )
+    {
+        if (!ModSettings.Debug.Enabled.Value)
+        {
+            return;
+        }
+
+        try
+        {
+            Main.logger_instance?.Msg(
+                AutoLootLog.Filter(
+                    item.itemType,
+                    kind,
+                    ModItemDrop.CurrentOrigin,
+                    visibility,
+                    action
+                )
+            );
+        }
+        catch (Exception ex)
+        {
+            ErrorLog.Report(ex, "AutoLoot log");
+        }
+    }
+
+    private static void LogStored(ItemData item, bool stored)
+    {
+        if (!ModSettings.Debug.Enabled.Value)
+        {
+            return;
+        }
+
+        try
+        {
+            AutoLootAction action = stored ? AutoLootAction.Stored : AutoLootAction.Kept;
+            Main.logger_instance?.Msg(
+                AutoLootLog.Direct(
+                    item.itemType,
+                    LootKindReader.Read(item),
+                    ModItemDrop.CurrentOrigin,
+                    action
+                )
+            );
+        }
+        catch (Exception ex)
+        {
+            ErrorLog.Report(ex, "AutoLoot log");
+        }
     }
 
     private static bool TryPickUp(Actor actor, ItemData item)

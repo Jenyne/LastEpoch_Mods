@@ -7,11 +7,11 @@ namespace LastEpoch_Hud.Scripts.Mods.Items.AutoLoot;
 /// <summary>Reads the player's active loot filter and its verdict on an item.</summary>
 public static class LootFilterReader
 {
-    /// <summary>The filter the game applies to ground labels, or null when none is active.</summary>
+    /// <summary>The player's loaded loot filter, or null when none is loaded; the in-game filter toggle (ManualFilterDisable) only hides labels, auto-loot keeps the rules.</summary>
     public static ItemFilter ActiveFilter()
     {
         ItemFilterManager manager = ItemFilterManager.Instance;
-        if (manager.IsNullOrDestroyed() || manager.ManualFilterDisable)
+        if (manager.IsNullOrDestroyed())
         {
             return null;
         }
