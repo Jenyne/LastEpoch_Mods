@@ -84,49 +84,8 @@ public class Skills_SpendPoints
         }
     }
 
-    [HarmonyPatch(typeof(LocalTreeData), "tryToSpendSkillPoint")]
-    public class TryToSpendSkillPoint
-    {
-        private static bool Added_MaxPoint = false;
-        private static byte Backup_MaxPoint = 0;
+    // Deliberately do not override LocalTreeData.tryToSpendSkillPoint.
+    // Raising additionalMaxPointsFromStats to 255 during allocation bypasses
+    // native skill-tree limits and can destabilize already assigned nodes.
 
-        [HarmonyPrefix]
-        static void Prefix(ref LocalTreeData __instance, bool __result, Ability __0, byte __1)
-        {
-            if (CanRun())
-            {
-                Added_MaxPoint = false;
-                if ((!__result) && (Save_Manager.instance.data.Skills.Disable_NodeRequirement))
-                {
-                    foreach (LocalTreeData.SkillTreeData tree in __instance.specialisedSkillTrees)
-                    {
-                        if (tree.ability == __0)
-                        {
-                            Added_MaxPoint = true;
-                            Backup_MaxPoint = tree.additionalMaxPointsFromStats;
-                            tree.additionalMaxPointsFromStats = 255;
-                            break;
-                        }
-                    }
-                }
-            }
-        }
-
-        [HarmonyPostfix]
-        static void Postfix(ref LocalTreeData __instance, bool __result, Ability __0, byte __1)
-        {
-            if ((CanRun()) && (Added_MaxPoint))
-            {
-                foreach (LocalTreeData.SkillTreeData tree in __instance.specialisedSkillTrees)
-                {
-                    if (tree.ability == __0)
-                    {
-                        tree.additionalMaxPointsFromStats = Backup_MaxPoint;
-                        Added_MaxPoint = false;
-                        break;
-                    }
-                }
-            }
-        }
-    }
 }

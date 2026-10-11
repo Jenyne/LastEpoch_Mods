@@ -23,7 +23,14 @@ internal static class ItemsDropPage
         var card = page.AddCard("Drop", "Drop");
         AddExclusiveRarity(card, "ForceUnique", "Force Unique", 0);
         AddExclusiveRarity(card, "ForceSet", "Force Set", 1);
-        AddExclusiveRarity(card, "ForceLegendary", "Force Legendary", 2);
+        // The legacy rarity-9 override produces unrelated unique identities.
+        // Do not expose it as a working item-generation feature until a proper
+        // native legendary creation path has been implemented.
+        card.AddText(
+            "ForceLegendaryUnavailable",
+            "Force Legendary is temporarily unavailable: forcing rarity 9 creates invalid unique identities. Use Force Drop for explicit legendary items.",
+            76f
+        );
         AddToggle(
             card,
             "ForceSeal",

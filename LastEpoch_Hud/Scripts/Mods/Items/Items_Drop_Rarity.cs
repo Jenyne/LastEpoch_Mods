@@ -7,6 +7,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Items;
 
 public class Items_Drop_Rarity
 {
+    private static bool warnedUnsafeLegendary;
+
     public static float R = 1f;
     public static float G = 0.416666f;
     public static float B = 0f;
@@ -123,8 +125,18 @@ public class Items_Drop_Rarity
                 }
                 else if (Save_Manager.instance.data.Items.Drop.Enable_ForceLegendary)
                 {
-                    __result = 9;
-                    return false;
+                    // Rarity 9 is not a valid legendary conversion by itself.
+                    // It leaves the game's generated base with an unrelated
+                    // unique ID (commonly Calamity). Never persist these drops.
+                    Save_Manager.instance.data.Items.Drop.Enable_ForceLegendary = false;
+                    if (!warnedUnsafeLegendary)
+                    {
+                        warnedUnsafeLegendary = true;
+                        Main.logger_instance?.Warning(
+                            "Force Legendary is temporarily disabled: the old rarity-9 override creates malformed items. Use Force Drop's explicit item construction instead."
+                        );
+                    }
+                    return true;
                 }
                 else
                 {

@@ -79,6 +79,19 @@ internal static class UtilitiesCharacterPage
 
         _page.AddToggle(
             card,
+            "UnlockAllIdols",
+            "Unlock All Idol Slots",
+            () => HasSave() && Save_Manager.instance.data.Character.Cheats.Enable_UnlockAllIdolsSlots,
+            value =>
+            {
+                if (!HasSave())
+                    return;
+                Save_Manager.instance.data.Character.Cheats.Enable_UnlockAllIdolsSlots = value;
+                Mods.Character.Character_UnlockAllIdols.Update();
+            }
+        );
+        _page.AddToggle(
+            card,
             "IdolRerollFreeAmber",
             "No Memory Amber Cost",
             () => ModSettings.IdolReroll.FreeMemoryAmber.Value,
