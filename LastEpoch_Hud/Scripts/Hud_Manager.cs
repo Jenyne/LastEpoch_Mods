@@ -452,67 +452,11 @@ public partial class Hud_Manager : MonoBehaviour
                         );
                         if (!character_cheats_content.IsNullOrDestroyed())
                         {
-                            Cheats.level_once_button = Functions
-                                .GetChild(
-                                    character_cheats_content,
-                                    "Btn_Character_Cheats_LevelOnce"
-                                )
-                                .GetComponent<Button>();
-                            Cheats.level_max_button = Functions
-                                .GetChild(
-                                    character_cheats_content,
-                                    "Btn_Character_Cheats_LevelToMax"
-                                )
-                                .GetComponent<Button>();
-                            Cheats.complete_quest_button = Functions
-                                .GetChild(
-                                    character_cheats_content,
-                                    "Btn_Character_Cheats_CompleteQuest"
-                                )
-                                .GetComponent<Button>();
-                            Cheats.masterie_buttons = Functions
-                                .GetChild(character_cheats_content, "Btn_Character_Cheats_Masterie")
-                                .GetComponent<Button>();
                             Cheats.masterie_text = Functions.Get_TextInButton(
                                 character_cheats_content,
                                 "Btn_Character_Cheats_Masterie",
                                 "Label"
                             );
-                            Cheats.add_runes_button = Functions
-                                .GetChild(character_cheats_content, "Btn_Character_Cheats_AddRunes")
-                                .GetComponent<Button>();
-                            Cheats.add_glyphs_button = Functions
-                                .GetChild(
-                                    character_cheats_content,
-                                    "Btn_Character_Cheats_AddGlyphs"
-                                )
-                                .GetComponent<Button>();
-                            Cheats.add_shards_button = Functions
-                                .GetChild(
-                                    character_cheats_content,
-                                    "Btn_Character_Cheats_AddAffixs"
-                                )
-                                .GetComponent<Button>();
-                            GameObject ancient_bones_button = Functions.FindDescendant(
-                                character_cheats_content,
-                                "Btn_Character_Cheats_AddAncienBone"
-                            );
-                            if (!ancient_bones_button.IsNullOrDestroyed())
-                            {
-                                Cheats.add_ancient_bones_button =
-                                    ancient_bones_button.GetComponent<Button>();
-                                Mods.Character.Character_MemoryAmber.BuildButton(
-                                    Cheats.add_ancient_bones_button
-                                );
-                            }
-                            Cheats.discover_blessings_button = Functions
-                                .GetChild(
-                                    character_cheats_content,
-                                    "Btn_Character_Cheats_DicoverAllBlessings"
-                                )
-                                .GetComponent<Button>();
-                            Cheats.BuildChooseBlessingsButton(character_cheats_content);
-                            Cheats.BuildUnlockBlessingSlotsButton();
                         }
                         else
                         {
@@ -546,21 +490,6 @@ public partial class Hud_Manager : MonoBehaviour
                                         }
                                     }
                                 )
-                            );
-
-                            Data.soul_row = Functions.GetChild(
-                                character_data_content,
-                                "Soul Embers"
-                            );
-                            Data.soul_text = Functions.Get_TextInButton(
-                                character_data_content,
-                                "Soul Embers",
-                                "Value"
-                            );
-                            Data.soul_slider = Functions.Get_SliderInPanel(
-                                character_data_content,
-                                "Soul Embers",
-                                "Slider_Character_Data_SoulEmbers"
                             );
 
                             Data.monolith_stability_basic_go = Functions.GetChild(
@@ -696,12 +625,7 @@ public partial class Hud_Manager : MonoBehaviour
                                     .GetChild(panel_save, "Btn_Character_Data_Save")
                                     .GetComponent<Button>();
                             }
-                            Data.SetupSoulEmberControls();
                             Data.SetupCorruptionAllButton();
-                            ModUI.Settings.CharacterActionControls.Bind(
-                                character_cheats_content,
-                                character_data_content
-                            );
                         }
 
                         //Faction Tracker
@@ -723,53 +647,15 @@ public partial class Hud_Manager : MonoBehaviour
                                     }
                                 )
                             );
-                            Faction_Tracker.factions_go = Functions.GetChild(
-                                character_faction_content,
-                                "Factions_Values"
-                            );
-                            if (!Faction_Tracker.factions_go.IsNullOrDestroyed())
-                            {
-                                Faction_Tracker.factions_go.active = false;
-                            }
-
-                            Faction_Tracker.factions_favor_text = Functions.Get_TextInButton(
-                                character_faction_content,
-                                "Factions_Values",
-                                "FavorValue"
-                            );
                             Faction_Tracker.factions_favor_slider = Functions.Get_SliderInPanel(
                                 character_faction_content,
                                 "Factions_Values",
                                 "Slider_Character_Factions_Favor"
                             );
-                            Faction_Tracker.factions_gain_favor_button = Functions
-                                .GetChild(
-                                    Faction_Tracker.factions_go,
-                                    "Btn_Character_Factions_Gain_Favor"
-                                )
-                                .GetComponent<Button>();
-
-                            Faction_Tracker.factions_rank_text = Functions.Get_TextInButton(
-                                character_faction_content,
-                                "Factions_Values",
-                                "RankValue"
-                            );
                             Faction_Tracker.factions_rank_slider = Functions.Get_SliderInPanel(
                                 character_faction_content,
                                 "Factions_Values",
                                 "Slider_Character_Factions_Rank"
-                            );
-                            Faction_Tracker.factions_set_rank_button = Functions
-                                .GetChild(
-                                    Faction_Tracker.factions_go,
-                                    "Btn_Character_Factions_Set_Rang"
-                                )
-                                .GetComponent<Button>();
-
-                            Faction_Tracker.factions_reputation_text = Functions.Get_TextInButton(
-                                character_faction_content,
-                                "Factions_Values",
-                                "ReputationValue"
                             );
                             Faction_Tracker.factions_reputation_slider =
                                 Functions.Get_SliderInPanel(
@@ -777,12 +663,6 @@ public partial class Hud_Manager : MonoBehaviour
                                     "Factions_Values",
                                     "Slider_Character_Factions_Reputation"
                                 );
-                            Faction_Tracker.factions_set_reputation_button = Functions
-                                .GetChild(
-                                    Faction_Tracker.factions_go,
-                                    "Btn_Character_Factions_Set_Reputation"
-                                )
-                                .GetComponent<Button>();
                         }
                     }
                     else
@@ -794,84 +674,6 @@ public partial class Hud_Manager : MonoBehaviour
 
             public static void Set_Events()
             {
-                if (!Cheats.max_blessings_button.IsNullOrDestroyed())
-                    Events.Set_Button_Event(
-                        Cheats.max_blessings_button,
-                        Cheats.MaxOutBlessings_OnClick_Action
-                    );
-                if (!Cheats.unlock_blessing_slots_button.IsNullOrDestroyed())
-                    Events.Set_Button_Event(
-                        Cheats.unlock_blessing_slots_button,
-                        Cheats.UnlockBlessingSlots_OnClick_Action
-                    );
-                if (!Cheats.choose_blessings_button.IsNullOrDestroyed())
-                    Events.Set_Button_Event(
-                        Cheats.choose_blessings_button,
-                        Cheats.ChooseBlessings_OnClick_Action
-                    );
-                if (!Cheats.level_once_button.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(
-                        Cheats.level_once_button,
-                        Cheats.LevelUpOnce_OnClick_Action
-                    );
-                }
-                if (!Cheats.level_max_button.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(
-                        Cheats.level_max_button,
-                        Cheats.LevelUpMax_OnClick_Action
-                    );
-                }
-                if (!Cheats.complete_quest_button.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(
-                        Cheats.complete_quest_button,
-                        Cheats.CompleteQuest_OnClick_Action
-                    );
-                }
-                if (!Cheats.masterie_buttons.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(
-                        Cheats.masterie_buttons,
-                        Cheats.Masteries_OnClick_Action
-                    );
-                }
-                if (!Cheats.add_runes_button.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(
-                        Cheats.add_runes_button,
-                        Cheats.AddRunes_OnClick_Action
-                    );
-                }
-                if (!Cheats.add_glyphs_button.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(
-                        Cheats.add_glyphs_button,
-                        Cheats.AddGlyphs_OnClick_Action
-                    );
-                }
-                if (!Cheats.add_shards_button.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(
-                        Cheats.add_shards_button,
-                        Cheats.AddAffixs_OnClick_Action
-                    );
-                }
-                if (!Cheats.add_ancient_bones_button.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(
-                        Cheats.add_ancient_bones_button,
-                        Cheats.AddAncientBones_OnClick_Action
-                    );
-                }
-                if (!Cheats.discover_blessings_button.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(
-                        Cheats.discover_blessings_button,
-                        Cheats.DiscoverAllBlessings_OnClick_Action
-                    );
-                }
                 if (Data.monolith_inputs_ready)
                 {
                     Events.Set_Input_Event(
@@ -923,72 +725,11 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                if (!Data.soul_add_button.IsNullOrDestroyed())
-                {
-                    // This runtime button owns its listeners. Rebinding must not
-                    // stack a second currency grant onto the existing click.
-                    Data.soul_add_button.onClick.RemoveAllListeners();
-                    Events.Set_Button_Event(Data.soul_add_button, Data.SoulEmbers_Add_Action);
-                }
                 if (!Data.monolith_corruption_all_button.IsNullOrDestroyed())
                 {
                     Events.Set_Button_Event(
                         Data.monolith_corruption_all_button,
                         Data.MonolithCorruptionAll_Action
-                    );
-                }
-                if (!Data.save_button.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(Data.save_button, Data.Save_OnClick_Action);
-                }
-
-                if (!Faction_Tracker.factions_favor_slider.IsNullOrDestroyed())
-                {
-                    Events.Set_Slider_Event(
-                        Faction_Tracker.factions_favor_slider,
-                        Faction_Tracker.factions_favor_slider_Action
-                    );
-                }
-                if (!Faction_Tracker.factions_gain_favor_button.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(
-                        Faction_Tracker.factions_gain_favor_button,
-                        Faction_Tracker.factions_gain_favor_OnClick_Action
-                    );
-                }
-                if (!Faction_Tracker.factions_set_favor_button.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(
-                        Faction_Tracker.factions_set_favor_button,
-                        Faction_Tracker.factions_set_favor_OnClick_Action
-                    );
-                }
-                if (!Faction_Tracker.factions_rank_slider.IsNullOrDestroyed())
-                {
-                    Events.Set_Slider_Event(
-                        Faction_Tracker.factions_rank_slider,
-                        Faction_Tracker.factions_rank_slider_Action
-                    );
-                }
-                if (!Faction_Tracker.factions_set_rank_button.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(
-                        Faction_Tracker.factions_set_rank_button,
-                        Faction_Tracker.factions_set_rank_OnClick_Action
-                    );
-                }
-                if (!Faction_Tracker.factions_reputation_slider.IsNullOrDestroyed())
-                {
-                    Events.Set_Slider_Event(
-                        Faction_Tracker.factions_reputation_slider,
-                        Faction_Tracker.factions_reputation_slider_Action
-                    );
-                }
-                if (!Faction_Tracker.factions_set_reputation_button.IsNullOrDestroyed())
-                {
-                    Events.Set_Button_Event(
-                        Faction_Tracker.factions_set_reputation_button,
-                        Faction_Tracker.factions_set_reputation_OnClick_Action
                     );
                 }
             }
@@ -1218,308 +959,17 @@ public partial class Hud_Manager : MonoBehaviour
 
             public static void Update_Faction_Data()
             {
-                Faction_Tracker.factions_favor_text.text =
-                    Faction_Tracker.factions_favor_slider.value.ToString();
-                Faction_Tracker.factions_rank_text.text =
-                    Faction_Tracker.factions_rank_slider.value.ToString();
-                Faction_Tracker.factions_reputation_text.text =
-                    Faction_Tracker.factions_reputation_slider.value.ToString();
-                if (Faction_Tracker.factions_dropdown.value > 0)
-                {
-                    Faction_Tracker.factions_go.active = true;
-                }
-                else
-                {
-                    Faction_Tracker.factions_go.active = false;
-                }
                 Faction_Tracker.selected_faction = Faction_Tracker.GetFaction();
             }
 
             public class Cheats
             {
-                public static Button max_blessings_button = null;
-                public static readonly System.Action MaxOutBlessings_OnClick_Action =
-                    new System.Action(Mods.Character.Character_Blessings.MaxOutBlessings);
-
-                public static Button unlock_blessing_slots_button = null;
-                public static readonly System.Action UnlockBlessingSlots_OnClick_Action =
-                    new System.Action(Mods.Character.Character_Blessings.UnlockBlessingSlots);
-
-                public static void BuildUnlockBlessingSlotsButton()
-                {
-                    if (
-                        !unlock_blessing_slots_button.IsNullOrDestroyed()
-                        || discover_blessings_button.IsNullOrDestroyed()
-                    )
-                        return;
-                    var original = discover_blessings_button.gameObject;
-                    var rect = original.GetComponent<RectTransform>();
-                    var row = new GameObject("Blessing discovery actions");
-                    var rowRect = row.AddComponent<RectTransform>();
-                    row.transform.SetParent(original.transform.parent, false);
-                    row.transform.SetSiblingIndex(original.transform.GetSiblingIndex());
-                    rowRect.anchorMin = rect.anchorMin;
-                    rowRect.anchorMax = rect.anchorMax;
-                    rowRect.pivot = rect.pivot;
-                    rowRect.anchoredPosition = rect.anchoredPosition;
-                    rowRect.sizeDelta = rect.sizeDelta;
-                    var layout = original.GetComponent<LayoutElement>();
-                    if (!layout.IsNullOrDestroyed())
-                    {
-                        var copy = row.AddComponent<LayoutElement>();
-                        copy.minWidth = layout.minWidth;
-                        copy.minHeight = layout.minHeight;
-                        copy.preferredWidth = layout.preferredWidth;
-                        copy.preferredHeight = layout.preferredHeight;
-                        copy.flexibleWidth = layout.flexibleWidth;
-                        copy.flexibleHeight = layout.flexibleHeight;
-                    }
-                    var button = UnityEngine.Object.Instantiate(original, row.transform, false);
-                    button.name = "Btn_Character_Cheats_UnlockBlessingSlots";
-                    unlock_blessing_slots_button = button.GetComponent<Button>();
-                    unlock_blessing_slots_button.onClick = new Button.ButtonClickedEvent();
-                    foreach (var label in button.GetComponentsInChildren<Text>(true))
-                        ModUI.Settings.LocaleRegistry.Apply(label, "Unlock Blessing Slots");
-                    foreach (
-                        var label in button.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)
-                    )
-                        label.text = "Unlock Blessing Slots";
-                    foreach (var label in original.GetComponentsInChildren<Text>(true))
-                        ModUI.Settings.LocaleRegistry.Apply(label, "Discover All Blessings");
-                    foreach (
-                        var label in original.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true)
-                    )
-                        ModUI.Settings.LocaleRegistry.Apply(label, "Discover All Blessings");
-                    original.transform.SetParent(row.transform, false);
-                    rect.anchorMin = Vector2.zero;
-                    rect.anchorMax = new Vector2(.32f, 1f);
-                    rect.offsetMin = rect.offsetMax = Vector2.zero;
-                    var buttonRect = button.GetComponent<RectTransform>();
-                    buttonRect.anchorMin = new Vector2(.68f, 0f);
-                    buttonRect.anchorMax = Vector2.one;
-                    buttonRect.offsetMin = buttonRect.offsetMax = Vector2.zero;
-                    var maxButtonObject = UnityEngine.Object.Instantiate(
-                        original,
-                        row.transform,
-                        false
-                    );
-                    maxButtonObject.name = "Btn_Character_Cheats_MaxOutBlessings";
-                    max_blessings_button = maxButtonObject.GetComponent<Button>();
-                    max_blessings_button.onClick = new Button.ButtonClickedEvent();
-                    foreach (var label in maxButtonObject.GetComponentsInChildren<Text>(true))
-                        ModUI.Settings.LocaleRegistry.Apply(label, "Max Out Blessings");
-                    foreach (
-                        var label in maxButtonObject.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(
-                            true
-                        )
-                    )
-                        ModUI.Settings.LocaleRegistry.Apply(label, "Max Out Blessings");
-                    var maxRect = maxButtonObject.GetComponent<RectTransform>();
-                    maxRect.anchorMin = new Vector2(.34f, 0f);
-                    maxRect.anchorMax = new Vector2(.66f, 1f);
-                    maxRect.offsetMin = maxRect.offsetMax = Vector2.zero;
-                    foreach (var label in row.GetComponentsInChildren<Text>(true))
-                    {
-                        label.resizeTextForBestFit = true;
-                        label.resizeTextMinSize = 9;
-                        label.resizeTextMaxSize = 14;
-                    }
-                    maxButtonObject.SetActive(true);
-                    button.SetActive(true);
-                }
-
-                public static Button choose_blessings_button = null;
-                public static readonly System.Action ChooseBlessings_OnClick_Action =
-                    new System.Action(Mods.Character.Character_Blessings.ChooseBlessings);
-
-                public static void BuildChooseBlessingsButton(GameObject content)
-                {
-                    var oldRow = Functions.GetChild(content, "AllowChoosingBlessings");
-                    if (oldRow.IsNullOrDestroyed() || discover_blessings_button.IsNullOrDestroyed())
-                        return;
-                    if (choose_blessings_button.IsNullOrDestroyed())
-                    {
-                        var replacement = UnityEngine.Object.Instantiate(
-                            discover_blessings_button.gameObject,
-                            oldRow.transform.parent,
-                            false
-                        );
-                        replacement.name = "Btn_Character_Cheats_ChooseBlessings";
-                        replacement.transform.SetSiblingIndex(oldRow.transform.GetSiblingIndex());
-                        var sourceRect = oldRow.GetComponent<RectTransform>();
-                        var targetRect = replacement.GetComponent<RectTransform>();
-                        targetRect.anchorMin = sourceRect.anchorMin;
-                        targetRect.anchorMax = sourceRect.anchorMax;
-                        targetRect.pivot = sourceRect.pivot;
-                        targetRect.anchoredPosition = sourceRect.anchoredPosition;
-                        targetRect.sizeDelta = sourceRect.sizeDelta;
-                        targetRect.localScale = Vector3.one;
-                        var oldLayout = oldRow.GetComponent<LayoutElement>();
-                        var newLayout = replacement.GetComponent<LayoutElement>();
-                        if (!oldLayout.IsNullOrDestroyed())
-                        {
-                            if (newLayout.IsNullOrDestroyed())
-                                newLayout = replacement.AddComponent<LayoutElement>();
-                            newLayout.minWidth = oldLayout.minWidth;
-                            newLayout.minHeight = oldLayout.minHeight;
-                            newLayout.preferredWidth = oldLayout.preferredWidth;
-                            newLayout.preferredHeight = oldLayout.preferredHeight;
-                            newLayout.flexibleWidth = oldLayout.flexibleWidth;
-                            newLayout.flexibleHeight = oldLayout.flexibleHeight;
-                        }
-                        choose_blessings_button = replacement.GetComponent<Button>();
-                        choose_blessings_button.onClick = new Button.ButtonClickedEvent();
-                        foreach (var label in replacement.GetComponentsInChildren<Text>(true))
-                            ModUI.Settings.LocaleRegistry.Apply(label, "Choose Blessings");
-                        foreach (
-                            var label in replacement.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(
-                                true
-                            )
-                        )
-                            label.text = "Choose Blessings";
-                        replacement.SetActive(true);
-                    }
-                    oldRow.SetActive(false);
-                }
-
-                public static Button level_once_button = null;
-                public static readonly System.Action LevelUpOnce_OnClick_Action = new System.Action(
-                    LevelUpOnce_Click
-                );
-
-                public static void LevelUpOnce_Click()
-                {
-                    Mods.Character.Character_Level.LevelUpOnce();
-                }
-
-                public static Button level_max_button = null;
-                public static readonly System.Action LevelUpMax_OnClick_Action = new System.Action(
-                    LevelUpMax_Click
-                );
-
-                public static void LevelUpMax_Click()
-                {
-                    Mods.Character.Character_Level.LevelUptoMax();
-                }
-
-                public static Button complete_quest_button = null;
-                public static readonly System.Action CompleteQuest_OnClick_Action =
-                    new System.Action(CompleteQuest_Click);
-
-                public static void CompleteQuest_Click()
-                {
-                    Mods.Character.Character_MainQuest.Complete();
-                }
-
-                public static Button masterie_buttons = null;
-                public static readonly System.Action Masteries_OnClick_Action = new System.Action(
-                    Masteries_Click
-                );
-
-                public static void Masteries_Click()
-                {
-                    Mods.Character.Character_Masteries.ResetChooseMasterie();
-                }
-
                 public static Text masterie_text = null;
-
-                public static Button add_runes_button = null;
-                public static readonly System.Action AddRunes_OnClick_Action = new System.Action(
-                    AddRunes_Click
-                );
-
-                public static void AddRunes_Click()
-                {
-                    Mods.Character.Character_Materials.GetAllRunesX99();
-                }
-
-                public static Button add_glyphs_button = null;
-                public static readonly System.Action AddGlyphs_OnClick_Action = new System.Action(
-                    AddGlyphs_Click
-                );
-
-                public static void AddGlyphs_Click()
-                {
-                    Mods.Character.Character_Materials.GetAllGlyphsX99();
-                }
-
-                public static Button add_shards_button = null;
-                public static readonly System.Action AddAffixs_OnClick_Action = new System.Action(
-                    AddAffixs_Click
-                );
-
-                public static void AddAffixs_Click()
-                {
-                    Mods.Character.Character_Materials.GetAllShardsX10();
-                }
-
-                public static Button add_ancient_bones_button = null;
-                public static readonly System.Action AddAncientBones_OnClick_Action =
-                    new System.Action(AddAncientBones_Click);
-
-                public static void AddAncientBones_Click()
-                {
-                    Mods.Character.Character_Materials.AddAncientBones(10000);
-                }
-
-                public static Button discover_blessings_button = null;
-                public static readonly System.Action DiscoverAllBlessings_OnClick_Action =
-                    new System.Action(DiscoverAllBlessings_Click);
-
-                public static void DiscoverAllBlessings_Click()
-                {
-                    Mods.Character.Character_Blessings.DiscoverAllBlessings();
-                }
             }
 
             public class Data
             {
                 public static Dropdown class_dropdown = null;
-                public static GameObject soul_row = null;
-                public static Text soul_text = null;
-                public static Slider soul_slider = null;
-                public static Button soul_add_button = null;
-                public static readonly System.Action SoulEmbers_Add_Action = new System.Action(
-                    AddSoulEmbers
-                );
-
-                public static void SetupSoulEmberControls()
-                {
-                    if (!soul_row.IsNullOrDestroyed())
-                        soul_row.SetActive(false);
-                    if (
-                        !soul_add_button.IsNullOrDestroyed()
-                        || Cheats.add_ancient_bones_button.IsNullOrDestroyed()
-                    )
-                        return;
-                    var clone = Object.Instantiate(
-                        Cheats.add_ancient_bones_button.gameObject,
-                        Cheats.add_ancient_bones_button.transform.parent,
-                        false
-                    );
-                    clone.name = "Btn_Character_Cheats_AddSoulEmbers";
-                    soul_add_button = clone.GetComponent<Button>();
-                    soul_add_button.onClick = new Button.ButtonClickedEvent();
-                    PrepareFullWidthActionButton(clone, soul_add_button, "Add 1,000 Soul Embers");
-                    clone.SetActive(true);
-                }
-
-                public static void AddSoulEmbers()
-                {
-                    if (Mods.Character.Character_SoulEmbers.Add(1000))
-                        UpdateSoulEmberBalance();
-                }
-
-                public static void UpdateSoulEmberBalance()
-                {
-                    int balance = Mods.Character.Character_SoulEmbers.GetBalance();
-                    if (balance >= 0 && !soul_text.IsNullOrDestroyed())
-                    {
-                        soul_text.gameObject.SetActive(true);
-                        soul_text.text = balance.ToString();
-                    }
-                }
-
                 public static Dropdown monolith_dropdown = null;
                 public static GameObject monolith_selector_go = null;
                 public static bool monolith_inputs_ready = false;
@@ -2335,9 +1785,6 @@ public partial class Hud_Manager : MonoBehaviour
                 }
 
                 public static Button save_button = null;
-                public static readonly System.Action Save_OnClick_Action = new System.Action(
-                    Save_Click
-                );
 
                 public static void Save_Click()
                 {
@@ -2393,24 +1840,7 @@ public partial class Hud_Manager : MonoBehaviour
                 }
 
                 public static Dropdown factions_dropdown = null;
-                public static GameObject factions_go = null;
-                public static Text factions_favor_text = null;
                 public static Slider factions_favor_slider = null;
-                public static readonly System.Action<float> factions_favor_slider_Action =
-                    new System.Action<float>(factions_favor);
-
-                public static void factions_favor(float f)
-                {
-                    int result = System.Convert.ToInt32(factions_favor_slider.value);
-                    if (!factions_favor_text.IsNullOrDestroyed())
-                    {
-                        factions_favor_text.text = result.ToString();
-                    }
-                }
-
-                public static Button factions_gain_favor_button = null;
-                public static readonly System.Action factions_gain_favor_OnClick_Action =
-                    new System.Action(factions_gain_favor_Click);
 
                 public static void factions_gain_favor_Click()
                 {
@@ -2446,61 +1876,7 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static Button factions_set_favor_button = null;
-                public static readonly System.Action factions_set_favor_OnClick_Action =
-                    new System.Action(factions_set_favor_Click);
-
-                public static void factions_set_favor_Click()
-                {
-                    if (
-                        (!factions_favor_slider.IsNullOrDestroyed())
-                        && (!selected_faction.IsNullOrDestroyed())
-                    )
-                    {
-                        if (!selected_faction.hasEverJoined)
-                        {
-                            selected_faction.Join(true);
-                        }
-                        if (!selected_faction.IsMember)
-                        {
-                            selected_faction.IsMember = true;
-                        }
-
-                        int added_favor = Il2CppSystem.Convert.ToInt32(factions_favor_slider.value);
-                        int max_favor = 999999;
-                        int max_added_favor = max_favor - selected_faction.Favor;
-                        if (added_favor > max_added_favor)
-                        {
-                            added_favor = max_added_favor;
-                        }
-
-                        using (Mods.UI.SessionGainCounters.SuppressManualGrants())
-                            selected_faction.Favor = added_favor;
-                        selected_faction.SaveAndSync(false);
-                    }
-                    else
-                    {
-                        Main.logger_instance.Error("Faction not found");
-                    }
-                }
-
-                public static Text factions_rank_text = null;
                 public static Slider factions_rank_slider = null;
-                public static readonly System.Action<float> factions_rank_slider_Action =
-                    new System.Action<float>(factions_rank);
-
-                public static void factions_rank(float f)
-                {
-                    int result = System.Convert.ToInt32(factions_rank_slider.value);
-                    if (!factions_rank_text.IsNullOrDestroyed())
-                    {
-                        factions_rank_text.text = result.ToString();
-                    }
-                }
-
-                public static Button factions_set_rank_button = null;
-                public static readonly System.Action factions_set_rank_OnClick_Action =
-                    new System.Action(factions_set_rank_Click);
 
                 public static void factions_set_rank_Click()
                 {
@@ -2538,23 +1914,7 @@ public partial class Hud_Manager : MonoBehaviour
                     }
                 }
 
-                public static Text factions_reputation_text = null;
                 public static Slider factions_reputation_slider = null;
-                public static readonly System.Action<float> factions_reputation_slider_Action =
-                    new System.Action<float>(factions_reputation);
-
-                public static void factions_reputation(float f)
-                {
-                    int result = System.Convert.ToInt32(factions_reputation_slider.value);
-                    if (!factions_reputation_text.IsNullOrDestroyed())
-                    {
-                        factions_reputation_text.text = result.ToString();
-                    }
-                }
-
-                public static Button factions_set_reputation_button = null;
-                public static readonly System.Action factions_set_reputation_OnClick_Action =
-                    new System.Action(factions_set_reputation_Click);
 
                 public static void factions_set_reputation_Click()
                 {

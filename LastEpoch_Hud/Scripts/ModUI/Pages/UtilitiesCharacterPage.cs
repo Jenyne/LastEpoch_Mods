@@ -34,10 +34,10 @@ internal static class UtilitiesCharacterPage
             new[] { "Level Up Once", "Level Up To Level 100", "Skip Campaign", "Reset Mastery" },
             new System.Action[]
             {
-                Hud_Manager.Content.Character.Cheats.LevelUpOnce_Click,
-                Hud_Manager.Content.Character.Cheats.LevelUpMax_Click,
-                Hud_Manager.Content.Character.Cheats.CompleteQuest_Click,
-                Hud_Manager.Content.Character.Cheats.Masteries_Click,
+                Mods.Character.Character_Level.LevelUpOnce,
+                Mods.Character.Character_Level.LevelUptoMax,
+                Mods.Character.Character_MainQuest.Complete,
+                Mods.Character.Character_Masteries.ResetChooseMasterie,
             }
         );
         BuildCheats();
@@ -102,7 +102,10 @@ internal static class UtilitiesCharacterPage
             value =>
             {
                 if (!HasSave())
+                {
                     return;
+                }
+
                 Save_Manager.instance.data.Character.Cheats.Enable_UnlockAllIdolsSlots = value;
                 Mods.Character.Character_UnlockAllIdols.Update();
             }
@@ -600,7 +603,7 @@ internal static class UtilitiesCharacterPage
             card,
             "Discover",
             "Discover All Blessings",
-            Hud_Manager.Content.Character.Cheats.DiscoverAllBlessings_Click
+            Mods.Character.Character_Blessings.DiscoverAllBlessings
         );
         _page.AddButton(
             card,

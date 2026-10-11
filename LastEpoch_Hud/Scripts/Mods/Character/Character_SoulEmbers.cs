@@ -17,24 +17,6 @@ internal static class Character_SoulEmbers
         }
     }
 
-    public static int GetBalance()
-    {
-        DungeonRunManager manager = GetManager();
-        if (manager.IsNullOrDestroyed())
-        {
-            return -1;
-        }
-
-        try
-        {
-            return manager.GetSoulEmbers();
-        }
-        catch
-        {
-            return -1;
-        }
-    }
-
     public static bool Add(int amount)
     {
         if (amount <= 0)

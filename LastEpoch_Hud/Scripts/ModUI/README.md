@@ -372,7 +372,7 @@ ModUI/
     RootKind.cs             Kind of a binding root (generic or Hud with tabs)
     LocaleRegistry.cs       Tracks (Text, English label) pairs for clean language round-trip
     NumericSliderInputs.cs  Typed-value inputs for sliders
-    CharacterActionControls.cs, DungeonRevealControls.cs, SafeTeleportControls.cs,
+    DungeonRevealControls.cs, SafeTeleportControls.cs,
     ScenesSectionControls.cs   Binders for specific legacy-prefab controls
   ForceDrop/             Force Drop page logic and item adapters
     ForceDropBuilder.cs, ForceDropCatalog.cs, ForceDropCorruptionPool.cs,
