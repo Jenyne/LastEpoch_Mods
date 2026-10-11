@@ -59,17 +59,6 @@ public static class HeadhunterProbeLog
             + $"duration={Seconds(durationSeconds)}s";
     }
 
-    public static string BossEngaged(
-        string scene,
-        string actor,
-        bool calledToArms,
-        bool diedBeforeActivating
-    )
-    {
-        return $"{Prefix}boss engaged scene={Text(scene)} actor={Text(actor)} "
-            + $"calledToArms={YesNo(calledToArms)} diedBefore={YesNo(diedBeforeActivating)}";
-    }
-
     public static string VoiceStart(
         string scene,
         string speaker,
