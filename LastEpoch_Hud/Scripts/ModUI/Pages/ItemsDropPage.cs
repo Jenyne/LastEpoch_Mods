@@ -26,7 +26,8 @@ internal static class ItemsDropPage
         // The legacy rarity-9 override produces unrelated unique identities.
         // Do not expose it as a working item-generation feature until a proper
         // native legendary creation path has been implemented.
-        card.AddText(
+        page.AddText(
+            card,
             "ForceLegendaryUnavailable",
             "Force Legendary is temporarily unavailable: forcing rarity 9 creates invalid unique identities. Use Force Drop for explicit legendary items.",
             76f
