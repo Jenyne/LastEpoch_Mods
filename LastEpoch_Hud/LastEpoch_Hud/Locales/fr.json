@@ -132,6 +132,8 @@
   "No Lost When Die": "Aucune perte à la mort",
   "Stability = Max Stability (append on Stability Changed)": "Stabilité = Stabilité maximale (appliqué au changement de stabilité)",
   "Remove Mana Cost": "Retirer le coût en mana",
+  "Cast When Out Of Mana": "Lancer même sans mana",
+  "Allow Negative Mana": "Autoriser le mana négatif",
   "Remove Channel Cost": "Retirer le coût de canalisation",
   "Mana Regen when Channeling": "Régénération de mana en canalisant",
   "Don't stop when Out of Mana": "Ne pas s'arrêter sans mana",

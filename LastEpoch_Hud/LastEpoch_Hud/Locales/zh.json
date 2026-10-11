@@ -132,6 +132,8 @@
   "No Lost When Die": "死亡无损失",
   "Stability = Max Stability (append on Stability Changed)": "稳定值变化时将稳定值设为上限\n",
   "Remove Mana Cost": "移除魔力消耗",
+  "Cast When Out Of Mana": "魔力不足时仍可施放",
+  "Allow Negative Mana": "允许魔力为负",
   "Remove Channel Cost": "移除引导消耗",
   "Mana Regen when Channeling": "引导时魔力再生",
   "Don't stop when Out of Mana": "魔力耗尽时不停下",

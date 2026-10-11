@@ -132,6 +132,8 @@
   "No Lost When Die": "",
   "Stability = Max Stability (append on Stability Changed)": "",
   "Remove Mana Cost": "",
+  "Cast When Out Of Mana": "",
+  "Allow Negative Mana": "",
   "Remove Channel Cost": "",
   "Mana Regen when Channeling": "",
   "Don't stop when Out of Mana": "",

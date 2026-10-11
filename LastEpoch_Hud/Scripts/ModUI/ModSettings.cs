@@ -156,6 +156,21 @@ public static class ModSettings
     }
 #pragma warning restore CA1034
 
+    public static class SkillsMana
+    {
+        public static readonly SettingsGroup Group = new SettingsGroup("SkillsMana");
+        public static readonly BoolSetting CastWhenOutOfMana = Group.Bool(
+            "CastWhenOutOfMana",
+            label: "Cast When Out Of Mana"
+        );
+
+        // Mutually exclusive with CastWhenOutOfMana, which makes the cast free so nothing is charged.
+        public static readonly BoolSetting AllowNegativeMana = Group.Bool(
+            "AllowNegativeMana",
+            label: "Allow Negative Mana"
+        );
+    }
+
     public static class TravelAnywhere
     {
         public static readonly SettingsGroup Group = new SettingsGroup("TravelAnywhere");
