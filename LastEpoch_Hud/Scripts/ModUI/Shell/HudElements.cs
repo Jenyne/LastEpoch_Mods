@@ -47,4 +47,17 @@ internal static class HudElements
         rect.offsetMin = Vector2.zero;
         rect.offsetMax = Vector2.zero;
     }
+
+    /// <summary>First font used by any Text under root, or null.</summary>
+    public static Font FindFont(GameObject root)
+    {
+        foreach (Text text in root.GetComponentsInChildren<Text>(true))
+        {
+            if (!text.font.IsNullOrDestroyed())
+            {
+                return text.font;
+            }
+        }
+        return null;
+    }
 }

@@ -9,37 +9,6 @@ public partial class Hud_Manager
 {
     public class Hooks
     {
-        //Select Shards
-        [HarmonyPatch(typeof(Button), "Press")]
-        public class Button_Press
-        {
-            [HarmonyPostfix]
-            static void Postfix(ref Button __instance)
-            {
-                if (Content.OdlForceDrop.enable)
-                {
-                    if (__instance.name.Contains(Content.OdlForceDrop.shard_btn_name))
-                    {
-                        try
-                        {
-                            int i = System.Convert.ToInt32(__instance.name.Split('_')[1]);
-
-                            GameObject shard_name_object = Functions.GetChild(
-                                __instance.gameObject,
-                                "shard_name"
-                            );
-                            Text shard_name = shard_name_object.GetComponent<Text>();
-                            Content.OdlForceDrop.SelectShard(i, shard_name.text);
-                        }
-                        catch (System.Exception ex)
-                        {
-                            ErrorLog.Report(ex, "Button_Press.SelectShard");
-                        }
-                    }
-                }
-            }
-        }
-
         //All Hooks have to be replace by Unity Actions
         [HarmonyPatch(typeof(Toggle), "OnPointerClick")]
         public class Toggle_OnPointerClick

@@ -26,7 +26,7 @@ public static class HudLayout
         activePage = null;
         HudTheme.LoadPreferences();
         HudStyler.ResetFontBaselines();
-        font = FindFont(hud);
+        font = HudElements.FindFont(hud);
 
         var content = Prefab.Child(hud, "Content");
         var menu = Prefab.Child(hud, "Menu");
@@ -231,14 +231,6 @@ public static class HudLayout
             Hud_Manager.mod_menu_open = false;
         else
             Hud_Manager.Hud_Base.Resume_Click();
-    }
-
-    private static Font FindFont(GameObject hud)
-    {
-        foreach (var text in hud.GetComponentsInChildren<Text>(true))
-            if (!text.font.IsNullOrDestroyed())
-                return text.font;
-        return null;
     }
 
     private static GameObject Node(GameObject parent, string name) =>

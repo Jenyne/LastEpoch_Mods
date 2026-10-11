@@ -109,11 +109,11 @@ public static class ForceDropBuilder
         new Dictionary<int, NativeItemNames.ItemChoice>();
     static bool corrupted,
         allowIllegal,
-        failed,
         metadataLogged;
     static float nextCorruptionCheck;
     static string result = "";
     static Button illegalModeButton;
+    private static readonly ForceDropBuildGate _buildGate = new();
     static int RouteMaximum => allowIllegal ? 8 : 7;
     public static bool IsReady => !root.IsNullOrDestroyed();
 
@@ -123,6 +123,182 @@ public static class ForceDropBuilder
         corruptionPoolKey = "";
     static ForceDropCorruptionPool corruptionPool;
     static string corruptionPoolError = "";
+
+    public static void Tick()
+    {
+        if (_buildGate.ShouldBuild(IsReady))
+        {
+            TryBuild();
+        }
+        if (!IsReady)
+        {
+            return;
+        }
+        RedirectTypingToSearch();
+        RefreshNativeLocale();
+        RefreshTierLimits();
+        foreach (var n in numbers)
+            n.Read();
+        string signature =
+            FD.item_type
+            + ":"
+            + FD.item_rarity
+            + ":"
+            + FD.items_dropdown.options.Count
+            + ":"
+            + NativeItemNames.CatalogKey;
+        if (lastSearch != search.text || lastItems != signature)
+        {
+            lastSearch = search.text;
+            lastItems = signature;
+            ResetItemScroll();
+            RefreshItems();
+        }
+        RefreshItemScrollRows();
+        if (picker.activeSelf && lastPickerSearch != pickerSearch.text)
+        {
+            lastPickerSearch = pickerSearch.text;
+            pickerPage = 0;
+            ResetAffixScrolls();
+            RefreshPicker();
+        }
+        if (picker.activeSelf && scrollAffixPicker)
+            for (int column = 0; column < 2; column++)
+                RefreshAffixScrollRows(column);
+        Caption(typeButton, SelectedCategoryName("Choose category"));
+        Caption(
+            rarityButton,
+            NativeItemNames.RarityName(Selected(FD.rarity_dropdown, "Choose rarity"))
+        );
+        lp.group.SetActive(
+            FD.item_rarity > 6
+                && FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential
+        );
+        ww.group.SetActive(
+            FD.item_rarity > 6
+                && FD.item_legendary_type != UniqueList.LegendaryType.LegendaryPotential
+        );
+        uniquePage.SetActive(FD.item_rarity > 6);
+        var rageEntry = SelectedRageEntry();
+        int variantCount = UniqueVariantAdapter.VariantCount(rageEntry);
+        bool showRage = variantCount > 0;
+        if (rageUniqueId != FD.item_unique_id)
+        {
+            ResetRage();
+            rageUniqueId = (ushort)FD.item_unique_id;
+        }
+        ragePage.SetActive(showRage);
+        if (showRage && rageMetadataId != FD.item_unique_id)
+        {
+            rageMetadataId = FD.item_unique_id;
+            Main.logger_instance.Msg(
+                "Unique variant native pool: unique="
+                    + rageEntry.uniqueID
+                    + ", specific="
+                    + rageEntry.dropsSpecificLegendaryAffixes
+                    + ", count="
+                    + rageEntry.droppableLegendaryAffixCount
+                    + ", excludesSlotLimits="
+                    + rageEntry.excludeSpecificAffixesFromPrefixSuffixLimits
+                    + ", pool="
+                    + (
+                        rageEntry.droppableLegendaryAffixes.IsNullOrDestroyed()
+                            ? "null"
+                            : rageEntry.droppableLegendaryAffixes.Count.ToString()
+                    )
+                    + ", resolved="
+                    + UniqueVariantAdapter.Catalog(rageEntry).Count
+            );
+        }
+        // Keep the exclusive modifier next to the item preview and outside the affix grid.
+        bool twoVariants = variantCount == 2;
+        Rect(ragePage, .04f, .28f, .96f, twoVariants ? .54f : .45f);
+        LocaleRegistry.Apply(variantHeader, "Exclusive unique modifiers");
+        LocaleRegistry.Apply(
+            variantDescription,
+            "Native modifiers · separate from ordinary affixes"
+        );
+        Rect(variantHeader.gameObject, .03f, twoVariants ? .78f : .72f, .97f, .97f);
+        Rect(variantDescription.gameObject, .03f, .02f, .97f, twoVariants ? .22f : .25f);
+        for (int slot = 0; slot < variantSelect.Length; slot++)
+        {
+            variantSelect[slot].gameObject.SetActive(slot < variantCount);
+            variantSelect[slot].interactable = UniqueVariantAdapter.HasVariants(rageEntry);
+            Caption(
+                variantSelect[slot],
+                variantSelect[slot].interactable
+                    ? variantNames[slot]
+                    : "Unique modifier pool unavailable"
+            );
+        }
+        Rect(
+            variantSelect[0].gameObject,
+            .03f,
+            twoVariants ? .51f : .29f,
+            .97f,
+            twoVariants ? .75f : .69f
+        );
+        Rect(preview.gameObject, .04f, showRage ? (twoVariants ? .56f : .47f) : .28f, .96f, .90f);
+        if (Time.unscaledTime >= nextCorruptionCheck)
+        {
+            nextCorruptionCheck = Time.unscaledTime + 2f;
+            corruptionSelect.interactable = CorruptedAffixAdapter.IsSupported;
+            if (corruptionSelect.interactable && corruptionId < 0)
+                Caption(corruptionSelect, "Corrupted affix: None");
+        }
+        forging.input.interactable = !corrupted && !forging.random;
+        if (forging.mode != null)
+            forging.mode.interactable = !corrupted;
+        RefreshPotentialControls();
+        for (int slot = 0; slot < rows.Length; slot++)
+        {
+            var context = LegalContext(slot);
+            bool enchantment = !allowIllegal && context.IsHereticalIdol && (slot == 1 || slot == 3);
+            bool available = allowIllegal
+                ? FD.item_type < 100
+                : ForceDropLegalRules.SlotAllowed(
+                    slot,
+                    context.IsIdol,
+                    context.IsUnique,
+                    context.IsSet,
+                    context.IsHereticalIdol
+                );
+            LocaleRegistry.Apply(
+                rows[slot].slotLabel,
+                allowIllegal && slot < 4 ? "Affix " + (slot + 1)
+                    : enchantment ? "Enchantment " + (slot == 1 ? 1 : 2)
+                    : slot == 4 ? "Sealed"
+                    : slot == 5 ? "Primordial"
+                    : slot < 2 ? "Prefix " + (slot + 1)
+                    : "Suffix " + (slot - 1)
+            );
+            rows[slot].select.interactable = available;
+            rows[slot].tier.input.interactable = available;
+            rows[slot].roll.input.interactable = available && !rows[slot].roll.random;
+            rows[slot].roll.mode.interactable = available;
+        }
+        RefreshPreview();
+    }
+
+    /// <summary>Builds the view; on failure reports it and shows the load error.</summary>
+    private static void TryBuild()
+    {
+        try
+        {
+            Build();
+        }
+        catch (Exception ex)
+        {
+            _buildGate.MarkFailed();
+            if (!root.IsNullOrDestroyed())
+            {
+                UnityEngine.Object.Destroy(root);
+            }
+            root = null;
+            ErrorLog.Report(ex, "ForceDropBuilder.Build");
+            ForceDropLoadError.Show(FD.content_obj);
+        }
+    }
 
     static string SelectionKey()
     {
@@ -275,7 +451,7 @@ public static class ForceDropBuilder
         }
     }
 
-    sealed class AffixRow
+    private sealed class AffixRow
     {
         public int id = -1;
         public string name = "None";
@@ -284,175 +460,6 @@ public static class ForceDropBuilder
         public Text selectedLabel;
         public Number tier,
             roll;
-    }
-
-    public static bool Tick()
-    {
-        if (!IsReady && !failed)
-        {
-            try
-            {
-                Build();
-            }
-            catch (Exception ex)
-            {
-                failed = true;
-                if (!root.IsNullOrDestroyed())
-                    UnityEngine.Object.Destroy(root);
-                root = null;
-                if (!FD.content_obj.IsNullOrDestroyed())
-                    foreach (var child in Functions.GetAllChild(FD.content_obj))
-                        child.SetActive(true);
-                Main.logger_instance.Error("Force Drop builder setup: " + ex.Message);
-            }
-        }
-        if (!IsReady)
-            return false;
-        RedirectTypingToSearch();
-        RefreshNativeLocale();
-        RefreshTierLimits();
-        foreach (var n in numbers)
-            n.Read();
-        string signature =
-            FD.item_type
-            + ":"
-            + FD.item_rarity
-            + ":"
-            + FD.items_dropdown.options.Count
-            + ":"
-            + NativeItemNames.CatalogKey;
-        if (lastSearch != search.text || lastItems != signature)
-        {
-            lastSearch = search.text;
-            lastItems = signature;
-            ResetItemScroll();
-            RefreshItems();
-        }
-        RefreshItemScrollRows();
-        if (picker.activeSelf && lastPickerSearch != pickerSearch.text)
-        {
-            lastPickerSearch = pickerSearch.text;
-            pickerPage = 0;
-            ResetAffixScrolls();
-            RefreshPicker();
-        }
-        if (picker.activeSelf && scrollAffixPicker)
-            for (int column = 0; column < 2; column++)
-                RefreshAffixScrollRows(column);
-        Caption(typeButton, SelectedCategoryName("Choose category"));
-        Caption(
-            rarityButton,
-            NativeItemNames.RarityName(Selected(FD.rarity_dropdown, "Choose rarity"))
-        );
-        lp.group.SetActive(
-            FD.item_rarity > 6
-                && FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential
-        );
-        ww.group.SetActive(
-            FD.item_rarity > 6
-                && FD.item_legendary_type != UniqueList.LegendaryType.LegendaryPotential
-        );
-        uniquePage.SetActive(FD.item_rarity > 6);
-        var rageEntry = SelectedRageEntry();
-        int variantCount = UniqueVariantAdapter.VariantCount(rageEntry);
-        bool showRage = variantCount > 0;
-        if (rageUniqueId != FD.item_unique_id)
-        {
-            ResetRage();
-            rageUniqueId = (ushort)FD.item_unique_id;
-        }
-        ragePage.SetActive(showRage);
-        if (showRage && rageMetadataId != FD.item_unique_id)
-        {
-            rageMetadataId = FD.item_unique_id;
-            Main.logger_instance.Msg(
-                "Unique variant native pool: unique="
-                    + rageEntry.uniqueID
-                    + ", specific="
-                    + rageEntry.dropsSpecificLegendaryAffixes
-                    + ", count="
-                    + rageEntry.droppableLegendaryAffixCount
-                    + ", excludesSlotLimits="
-                    + rageEntry.excludeSpecificAffixesFromPrefixSuffixLimits
-                    + ", pool="
-                    + (
-                        rageEntry.droppableLegendaryAffixes.IsNullOrDestroyed()
-                            ? "null"
-                            : rageEntry.droppableLegendaryAffixes.Count.ToString()
-                    )
-                    + ", resolved="
-                    + UniqueVariantAdapter.Catalog(rageEntry).Count
-            );
-        }
-        // Keep the exclusive modifier next to the item preview and outside the affix grid.
-        bool twoVariants = variantCount == 2;
-        Rect(ragePage, .04f, .28f, .96f, twoVariants ? .54f : .45f);
-        LocaleRegistry.Apply(variantHeader, "Exclusive unique modifiers");
-        LocaleRegistry.Apply(
-            variantDescription,
-            "Native modifiers · separate from ordinary affixes"
-        );
-        Rect(variantHeader.gameObject, .03f, twoVariants ? .78f : .72f, .97f, .97f);
-        Rect(variantDescription.gameObject, .03f, .02f, .97f, twoVariants ? .22f : .25f);
-        for (int slot = 0; slot < variantSelect.Length; slot++)
-        {
-            variantSelect[slot].gameObject.SetActive(slot < variantCount);
-            variantSelect[slot].interactable = UniqueVariantAdapter.HasVariants(rageEntry);
-            Caption(
-                variantSelect[slot],
-                variantSelect[slot].interactable
-                    ? variantNames[slot]
-                    : "Unique modifier pool unavailable"
-            );
-        }
-        Rect(
-            variantSelect[0].gameObject,
-            .03f,
-            twoVariants ? .51f : .29f,
-            .97f,
-            twoVariants ? .75f : .69f
-        );
-        Rect(preview.gameObject, .04f, showRage ? (twoVariants ? .56f : .47f) : .28f, .96f, .90f);
-        if (Time.unscaledTime >= nextCorruptionCheck)
-        {
-            nextCorruptionCheck = Time.unscaledTime + 2f;
-            corruptionSelect.interactable = CorruptedAffixAdapter.IsSupported;
-            if (corruptionSelect.interactable && corruptionId < 0)
-                Caption(corruptionSelect, "Corrupted affix: None");
-        }
-        forging.input.interactable = !corrupted && !forging.random;
-        if (forging.mode != null)
-            forging.mode.interactable = !corrupted;
-        RefreshPotentialControls();
-        for (int slot = 0; slot < rows.Length; slot++)
-        {
-            var context = LegalContext(slot);
-            bool enchantment = !allowIllegal && context.IsHereticalIdol && (slot == 1 || slot == 3);
-            bool available = allowIllegal
-                ? FD.item_type < 100
-                : ForceDropLegalRules.SlotAllowed(
-                    slot,
-                    context.IsIdol,
-                    context.IsUnique,
-                    context.IsSet,
-                    context.IsHereticalIdol
-                );
-            LocaleRegistry.Apply(
-                rows[slot].slotLabel,
-                allowIllegal && slot < 4 ? "Affix " + (slot + 1)
-                    : enchantment ? "Enchantment " + (slot == 1 ? 1 : 2)
-                    : slot == 4 ? "Sealed"
-                    : slot == 5 ? "Primordial"
-                    : slot < 2 ? "Prefix " + (slot + 1)
-                    : "Suffix " + (slot - 1)
-            );
-            rows[slot].select.interactable = available;
-            rows[slot].tier.input.interactable = available;
-            rows[slot].roll.input.interactable = available && !rows[slot].roll.random;
-            rows[slot].roll.mode.interactable = available;
-        }
-        RefreshPreview();
-        return true;
     }
 
     static void Build()
@@ -726,10 +733,6 @@ public static class ForceDropBuilder
         Button(right, "Reset", .04f, .03f, .96f, .09f, Reset);
         status = Label(root, "", .30f, .01f, .99f, .045f, 12);
         BuildPicker();
-        // Hide only after the entire replacement view has been built successfully.
-        foreach (var child in Functions.GetAllChild(FD.content_obj))
-            if (child != root)
-                child.SetActive(false);
         HudStyler.NormalizeSelectableGraphics(root);
         HudStyler.ApplyFontScale(root);
         RefreshItems();
@@ -1090,12 +1093,6 @@ public static class ForceDropBuilder
                 + corruptionPoolError
         );
         OpenPicker("Corrupted affix", true);
-    }
-
-    public static void DropSelection()
-    {
-        if (IsReady)
-            Drop();
     }
 
     static int[] SelectedVariantIds()

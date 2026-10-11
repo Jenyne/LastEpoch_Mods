@@ -325,6 +325,7 @@
   "Drops at your character.": "L’objet apparaît près de votre personnage.",
   "Dropped {0} item(s).": "{0} objet(s) généré(s).",
   "Drop failed: {0}": "Échec de génération : {0}",
+  "Force Drop failed to load. See the log.": "Échec du chargement de Générer un objet. Voir le journal.",
   "Close": "Fermer",
   "Runes": "Runes",
   "Glyphs": "Glyphes",

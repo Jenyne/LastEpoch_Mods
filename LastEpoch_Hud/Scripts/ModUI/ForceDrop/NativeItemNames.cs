@@ -359,8 +359,6 @@ internal static class NativeItemNames
         FD.item_type = category.baseType;
         FD.UpdateRarity();
         FD.UpdateItems();
-        FD.shard_initialized = false;
-        FD.UpdateUI();
     }
 
     public static void SelectItem(ItemChoice item)
@@ -368,8 +366,6 @@ internal static class NativeItemNames
         FD.item_subtype = item.subType;
         FD.item_unique_id = item.uniqueId;
         FD.item_legendary_type = item.legendaryType;
-        FD.shard_initialized = false;
-        FD.UpdateUI();
     }
 
     public static bool Matches(string query, string translated, string aliases)

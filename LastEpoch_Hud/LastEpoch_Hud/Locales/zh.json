@@ -325,6 +325,7 @@
   "Drops at your character.": "物品将在角色所在位置生成。",
   "Dropped {0} item(s).": "已生成 {0} 件物品。",
   "Drop failed: {0}": "物品生成失败：{0}",
+  "Force Drop failed to load. See the log.": "生成物品加载失败。请查看日志。",
   "Close": "关闭",
   "Runes": "符文",
   "Glyphs": "雕文",

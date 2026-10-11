@@ -275,6 +275,7 @@
   "Drops at your character.": "캐릭터 위치에 아이템을 생성합니다.",
   "Dropped {0} item(s).": "아이템 {0}개를 생성했습니다.",
   "Drop failed: {0}": "아이템 생성 실패: {0}",
+  "Force Drop failed to load. See the log.": "아이템 생성을 불러오지 못했습니다. 로그를 확인하세요.",
   "Close": "닫기",
   "Runes": "룬",
   "Glyphs": "글리프",

@@ -325,6 +325,7 @@
   "Drops at your character.": "",
   "Dropped {0} item(s).": "",
   "Drop failed: {0}": "",
+  "Force Drop failed to load. See the log.": "",
   "Close": "",
   "Runes": "",
   "Glyphs": "",
