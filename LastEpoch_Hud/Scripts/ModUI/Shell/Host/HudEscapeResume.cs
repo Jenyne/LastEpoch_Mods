@@ -1,3 +1,4 @@
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Shell.Host;
@@ -5,7 +6,7 @@ namespace LastEpoch_Hud.Scripts.ModUI.Shell.Host;
 /// <summary>Clicks the game's Resume button when Esc is released while a menu is shown.</summary>
 internal static class HudEscapeResume
 {
-    private static bool _escapePressed;
+    private static readonly KeyRelease _escape = new();
 
     public static void Tick()
     {
@@ -21,14 +22,10 @@ internal static class HudEscapeResume
         {
             return;
         }
-        if (Input.GetKeyDown(KeyCode.Escape))
+        if (!_escape.Next(Input.GetKeyDown(KeyCode.Escape), Input.GetKeyUp(KeyCode.Escape)))
         {
-            _escapePressed = true;
+            return;
         }
-        if (Input.GetKeyUp(KeyCode.Escape) && _escapePressed)
-        {
-            GamePauseMenu.Resume();
-            _escapePressed = false;
-        }
+        GamePauseMenu.Resume();
     }
 }

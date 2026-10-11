@@ -36,8 +36,6 @@ internal static class HudPrefab
             return false;
         }
         prefab.active = false; //Hide
-        prefab.AddComponent<UIMouseListener>(); //Block Mouse
-        prefab.AddComponent<WindowFocusManager>();
 
         //Instantiate
         if (Main.debug)
@@ -45,6 +43,8 @@ internal static class HudPrefab
             Main.logger_instance.Msg("Hud Manager : Instantiate hud prefab");
         }
         hud = UnityEngine.Object.Instantiate(prefab, Vector3.zero, Quaternion.identity);
+        hud.AddComponent<UIMouseListener>(); //Block Mouse
+        hud.AddComponent<WindowFocusManager>();
         UnityEngine.Object.DontDestroyOnLoad(hud);
         RemoveUnusedButtons(hud);
         return true;

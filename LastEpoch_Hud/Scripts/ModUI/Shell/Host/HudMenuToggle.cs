@@ -1,3 +1,4 @@
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Shell.Host;
@@ -9,22 +10,12 @@ internal static class HudMenuToggle
 
     public static bool Next(bool open, bool hudReady)
     {
-        if (!Scenes.IsGameScene())
-        {
-            return false;
-        }
-        if (!hudReady)
-        {
-            return open;
-        }
-        if (Input.GetKeyDown(MenuKey))
-        {
-            open = !open;
-        }
-        if (open && Input.GetKeyDown(KeyCode.Escape))
-        {
-            return false;
-        }
-        return open;
+        return MenuToggle.Next(
+            open,
+            Scenes.IsGameScene(),
+            hudReady,
+            Input.GetKeyDown(MenuKey),
+            Input.GetKeyDown(KeyCode.Escape)
+        );
     }
 }
