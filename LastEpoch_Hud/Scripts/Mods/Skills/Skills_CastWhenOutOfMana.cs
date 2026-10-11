@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
-using HarmonyLib;
+﻿using HarmonyLib;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.Skills;
 using LastEpoch_Hud.Scripts.ModUI;
 using UnityEngine;
 
@@ -11,11 +11,8 @@ namespace LastEpoch_Hud.Scripts.Mods.Skills;
 /// - When mana is short, the mod runs the game's own cooldown and remaining checks
 ///   (canUseAbilityChecksAfterManaAndCooldown) and, if they pass, starts the cast with the game's
 ///   ignoreCanUseAbilityChecks, skipping the mana refusal.
-/// - That skips the game's pacing too (Heartseeker cast ~1.8x faster than attack speed), so the
-///   mod waits until the previous cast's animation has ended before starting the next one. A cast
-///   is recorded at its release point, so that is castDuration minus the measured wind-up.
-///   With movement held it also waits until the character has actually moved, so holding both
-///   alternates cast, move, cast like the game does with mana.
+/// - That skips the game's pacing too (Heartseeker cast ~1.8x faster than attack speed), so
+///   OutOfManaCastPacer (Core) paces forced casts to the character's own cast speed.
 /// - The forced cast's spend is skipped (useMana = false); "Allow Negative Mana" charges the cost
 ///   afterwards through the game's reduceMana, with canGoNegative on. Casts the game allows by
 ///   itself (e.g. gear that lets mana go negative) are never changed.
@@ -39,21 +36,11 @@ internal static class Skills_CastWhenOutOfMana
     private static System.IntPtr _overriddenAbility = System.IntPtr.Zero;
     private static float _overrideExpires = 0f;
 
-    // When the player's last cast ran and how long it lasts, to pace forced casts.
-    private static float _lastCastTime = -100f;
-    private static float _lastCastDuration = 0f;
+    // Paces forced casts to the character's own cast speed (see OutOfManaCastPacer).
+    private static readonly OutOfManaCastPacer _pacer = new();
 
-    // A cast is recorded at its release point, partway into the animation, so the next forced
-    // cast starts that wind-up earlier than a full castDuration after it. The wind-up is measured
-    // from each forced start to its release, as a fraction of the cast's duration, per skill.
-    private static float _overrideStarted = 0f;
-    private static readonly Dictionary<System.IntPtr, float> _windupFraction = new();
-    private const float MaxWindupFraction = 0.8f;
-
-    // Where the player was at the last cast, and how far they must move (with movement held)
-    // before the next forced cast.
+    // Where the player was at the last cast, to tell whether they've moved since.
     private static Vector3 _lastCastPosition = Vector3.zero;
-    private const float MinMoveBetweenCasts = 0.5f;
 
     private static bool AnyMode() =>
         ModSettings.SkillsMana.CastWhenOutOfMana.Value
@@ -74,9 +61,6 @@ internal static class Skills_CastWhenOutOfMana
             || input.isMouseMovementButtonHeld
             || input.input.sqrMagnitude > 0.01f;
     }
-
-    private static float WindupFraction(Ability ability) =>
-        _windupFraction.TryGetValue(ability.Pointer, out float fraction) ? fraction : 0f;
 
     private static bool IsShort(BaseMana mana, float cost) =>
         !mana.IsNullOrDestroyed() && mana.currentMana < cost;
@@ -133,21 +117,13 @@ internal static class Skills_CastWhenOutOfMana
                 {
                     return;
                 }
-                // The game's own check, which this bypasses, lets a held movement key win between
-                // casts. While movement is held, the next forced cast waits until the character
-                // has actually moved, so holding both alternates cast, move, cast at the game's
-                // own pace. If movement is held but blocked (e.g. a wall), two cast lengths do.
-                float sinceCast = Time.time - _lastCastTime;
-                float untilNext = _lastCastDuration * (1f - WindupFraction(__0));
-                bool ready = !__instance.midAbilityAnimation && sinceCast >= untilNext;
-                bool moving = MovementHeld();
-                if (ready && moving)
-                {
-                    bool hasMoved =
-                        (__instance.transform.position - _lastCastPosition).sqrMagnitude
-                        >= MinMoveBetweenCasts * MinMoveBetweenCasts;
-                    ready = hasMoved || sinceCast >= _lastCastDuration * 2f;
-                }
+                bool ready = _pacer.IsReady(
+                    __0.Pointer.ToInt64(),
+                    Time.time,
+                    __instance.midAbilityAnimation,
+                    MovementHeld(),
+                    Vector3.Distance(__instance.transform.position, _lastCastPosition)
+                );
                 if (!ready)
                 {
                     return;
@@ -162,7 +138,7 @@ internal static class Skills_CastWhenOutOfMana
                 }
                 __2 = true;
                 _overriddenAbility = __0.Pointer;
-                _overrideStarted = Time.time;
+                _pacer.ForcedCastStarted(Time.time);
                 _overrideExpires = Time.time + 3f;
             }
             catch (System.Exception ex)
@@ -216,7 +192,7 @@ internal static class Skills_CastWhenOutOfMana
             {
                 return;
             }
-            MeasureWindup(__0);
+            _pacer.ForcedCastReleased(__0.Pointer.ToInt64(), Time.time);
             if (!__2 || !AnyMode())
             {
                 return;
@@ -229,22 +205,6 @@ internal static class Skills_CastWhenOutOfMana
             }
         }
 
-        /// <summary>
-        /// The time from the forced start to this release is the cast's wind-up. Values at or
-        /// above the cast's duration aren't a wind-up (the cast was held back), so they're ignored.
-        /// </summary>
-        private static void MeasureWindup(Ability ability)
-        {
-            float windup = Time.time - _overrideStarted;
-            if (_lastCastDuration > 0f && windup >= 0f && windup < _lastCastDuration)
-            {
-                _windupFraction[ability.Pointer] = Mathf.Min(
-                    windup / _lastCastDuration,
-                    MaxWindupFraction
-                );
-            }
-        }
-
         [HarmonyPostfix]
         static void Postfix(UsingAbility __instance, Ability __0, float __state)
         {
@@ -253,8 +213,7 @@ internal static class Skills_CastWhenOutOfMana
                 return;
             }
             // The cast's duration is set once it has started; pace the next forced cast by it.
-            _lastCastTime = Time.time;
-            _lastCastDuration = __instance.castDuration;
+            _pacer.CastReleased(Time.time, __instance.castDuration);
             _lastCastPosition = __instance.transform.position;
             if (__state <= 0f)
             {
