@@ -146,6 +146,20 @@ public sealed class CosmeticCatalogCacheTests
         Assert.False(ready);
         Assert.Equal(0, builder.Calls);
         Assert.True(cache.Broken);
+        Assert.True(cache.Failed);
+    }
+
+    [Fact]
+    public void TryGet_BuildThrows_PropagatesAndStaysUnfailed()
+    {
+        var cache = new CosmeticCatalogCache(() => throw new InvalidOperationException());
+
+        Assert.Throws<InvalidOperationException>(() =>
+            cache.TryGet(Key, true, out CosmeticCatalog _)
+        );
+
+        Assert.False(cache.Failed);
+        Assert.False(cache.HasCatalog);
     }
 
     [Fact]
