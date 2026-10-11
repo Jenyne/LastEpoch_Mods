@@ -58,19 +58,15 @@ public class Monoliths_OnStart
             // Assign the current scene's manager, not an old manager from another echo.
             Refs_Manager.monolith_zone_manager = __instance;
 
-            if (!CanRun())
+            if (CanRun())
             {
-                return;
-            }
-            if (MonolithEncounterGuard.ShouldSkip(__instance, out string sceneName))
-            {
-                Main.logger_instance?.Msg(
-                    "[Monolith Guard] Skipped OnStart changes in " + sceneName
-                );
-                return;
-            }
-
-            {
+                if (MonolithEncounterGuard.ShouldSkip(__instance, out string sceneName))
+                {
+                    Main.logger_instance?.Msg(
+                        "[Monolith Guard] Skipped OnStart changes in " + sceneName
+                    );
+                    return;
+                }
                 if (Save_Manager.instance.data.Scenes.Monoliths.Enable_MaxStability)
                 {
                     __instance.maxBonusStablity = (int)
