@@ -81,7 +81,9 @@ internal static class UtilitiesCharacterPage
             card,
             "UnlockAllIdols",
             "Unlock All Idol Slots",
-            () => HasSave() && Save_Manager.instance.data.Character.Cheats.Enable_UnlockAllIdolsSlots,
+            () =>
+                HasSave()
+                && Save_Manager.instance.data.Character.Cheats.Enable_UnlockAllIdolsSlots,
             value =>
             {
                 if (!HasSave())
