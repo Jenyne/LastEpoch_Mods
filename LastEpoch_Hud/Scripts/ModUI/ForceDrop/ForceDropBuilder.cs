@@ -1935,6 +1935,11 @@ public static class ForceDropBuilder
         )
             return;
 
+        // Avoid per-frame event-system and component queries until typing occurs.
+        string typed = ForceDropSearchTyping.Printable(UnityEngine.Input.inputString);
+        if (typed.Length == 0)
+            return;
+
         var eventSystem = EventSystem.current;
         if (!eventSystem.IsNullOrDestroyed())
         {
@@ -1952,21 +1957,20 @@ public static class ForceDropBuilder
 
         // Do not hijack hotkeys such as Ctrl+A/C/V, Alt+F4, or the Windows key.
         // AltGr (RightAlt+Ctrl) is allowed for locale-specific printable text.
-        bool control = UnityEngine.Input.GetKey(KeyCode.LeftControl)
+        bool control =
+            UnityEngine.Input.GetKey(KeyCode.LeftControl)
             || UnityEngine.Input.GetKey(KeyCode.RightControl);
-        bool alt = UnityEngine.Input.GetKey(KeyCode.LeftAlt)
+        bool alt =
+            UnityEngine.Input.GetKey(KeyCode.LeftAlt)
             || UnityEngine.Input.GetKey(KeyCode.RightAlt);
         bool altGr = UnityEngine.Input.GetKey(KeyCode.RightAlt) && control;
         if (
-            (control || alt) && !altGr
+            ((control || alt) && !altGr)
             || UnityEngine.Input.GetKey(KeyCode.LeftWindows)
             || UnityEngine.Input.GetKey(KeyCode.RightWindows)
         )
             return;
 
-        string typed = ForceDropSearchTyping.Printable(UnityEngine.Input.inputString);
-        if (typed.Length == 0)
-            return;
         FocusSearch(target);
         target.text += typed;
         target.caretPosition = target.text.Length;

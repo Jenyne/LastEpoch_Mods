@@ -11,9 +11,9 @@ public sealed class ForceDropSearchTypingTests
     [InlineData(" Skeleton", " Skeleton")]
     [InlineData("Épée", "Épée")]
     [InlineData("骷髅", "骷髅")]
-    [InlineData("a\\bb\\rc\\nd", "abcd")]
-    [InlineData("\\u001b", "")]
-    [InlineData("\\t", "")]
+    [InlineData("a\bb\rc\nd", "abcd")]
+    [InlineData("\u001b", "")]
+    [InlineData("\t", "")]
     public void RedirectOnlyPrintableText(string incoming, string expected)
     {
         Assert.Equal(expected, ForceDropSearchTyping.Printable(incoming));
