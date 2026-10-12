@@ -70,11 +70,24 @@ try {
         Copy-Item -LiteralPath $installedDll -Destination "$installedDll.before-item-fixes-$stamp"
     }
     Copy-Item -LiteralPath $modDll -Destination $installedDll -Force
+    $nativeProbe = Join-Path $repoPath "Build\ItemNativeProbe.zip"
+    $cppOutput = Join-Path $GamePath "MelonLoader\Dependencies\Il2CppAssemblyGenerator\Cpp2IL\cpp2il_out"
+    if ((Test-Path -LiteralPath $cppOutput -PathType Container) -and
+        (Test-Path -LiteralPath (Join-Path $GamePath "GameAssembly.dll") -PathType Leaf)) {
+        dotnet run --project .\tools\NativeItemProbe\NativeItemProbe.csproj -c Release -- $GamePath $nativeProbe
+        if ($LASTEXITCODE -eq 0) {
+            Write-Host "Attach $nativeProbe to diagnose unique sealed-slot packing."
+        } else {
+            Write-Warning "Native probe export failed. The tested DLL was installed; run scripts/Export-ItemNativeProbe.ps1 separately."
+        }
+    } else {
+        Write-Warning "Native probe needs GameAssembly.dll and cpp2il_out. Unique sealed-slot packing remains under investigation."
+    }
     Write-Host "Installed item-fix test build $localHead."
-    Write-Host "Illegal On: drop a Unique with four affixes + T8 sealed + Primordial + corrupted; pick up and reload."
+    Write-Host "Unique sealed-slot packing is still under investigation; attach Build/ItemNativeProbe.zip. T8 controls and Set fixes are retained."
     Write-Host "Illegal Off: confirm Unique/Set sealed and Primordial slots stay locked, including after Fixed/Random changes."
     Write-Host "Equip distinct illegal Set pieces with Remove Set Requirements OFF; check bonuses, duplicates and reload."
-    Write-Host "Retest the amulet Set-bonus text. Hover ground loot before/during combat; send the [Ground Tooltip] caller traces if it fails."
+    Write-Host "Retest the amulet Set-bonus text. Hover ground loot before/during combat; test pickup and Escape too; send the [Ground Tooltip] pointerOnOpener/kept/allowed lines if it fails."
 } finally {
     Pop-Location
 }

@@ -282,7 +282,6 @@ public static class IllegalItemAdapter
         [HarmonyPostfix]
         static void Postfix(ItemDataUnpacked __instance)
         {
-            IllegalUniqueSealAdapter.Restore(__instance);
             // Native equipment code can read the cached field directly.
             if (AdditionalSetPiece(__instance, out var source))
                 __instance.SetId = source.setID;

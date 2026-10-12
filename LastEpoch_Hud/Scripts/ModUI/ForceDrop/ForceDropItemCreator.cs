@@ -59,7 +59,6 @@ public static class ForceDropItemCreator
         item.forgingPotential = (byte)Math.Min(63, forging);
         UniqueVariantAdapter.PrepareForPacking(item, request.VariantIds, request.IsIllegal);
         item.RefreshIDAndValues();
-        IllegalUniqueSealAdapter.Restore(item);
         try
         {
             // Stamp can rebuild the saved ID and maintain the mod's >63 FP
@@ -89,7 +88,6 @@ public static class ForceDropItemCreator
             var expected = Snapshot(item);
             var packed = item.GetID();
             var restored = new ItemDataUnpacked(packed);
-            IllegalUniqueSealAdapter.Restore(restored);
             string error = expected.Difference(Snapshot(restored), request.IsIllegal);
             if (error.Length != 0)
             {
