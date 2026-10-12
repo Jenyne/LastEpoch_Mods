@@ -1,5 +1,11 @@
+using System;
+using System.Collections.Generic;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.Character;
+using LastEpoch_Hud.Scripts.Core.Factions;
 using LastEpoch_Hud.Scripts.Core.ModUI;
+using LastEpoch_Hud.Scripts.Core.ModUI.Sliders;
+using LastEpoch_Hud.Scripts.Mods.Factions;
 using LastEpoch_Hud.Scripts.ModUI.Settings;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
@@ -9,8 +15,8 @@ namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 /// <summary>
 /// Utilities &gt; Character. The legacy Character, Skills, Data, Blessings, and
-/// Factions controls are represented here without changing their game logic.
-/// Page, class source and faction inputs re-seed from the legacy controls on HUD re-bind (Build).
+/// Factions controls are represented here; factions use their own controls and edit through Core rules.
+/// The page re-builds on HUD re-bind (Build); faction inputs reset then.
 /// </summary>
 internal static class UtilitiesCharacterPage
 {
@@ -19,7 +25,11 @@ internal static class UtilitiesCharacterPage
     private static float _factionFavor;
     private static float _factionRank;
     private static float _factionReputation;
-    private static Dropdown _classSource;
+    private static Dropdown _factionDropdown;
+    private static Dictionary<string, string> _factionOptionsLocale;
+    private static Dropdown _classDropdown;
+    private static Dictionary<string, string> _classOptionsLocale;
+    private static bool _classOptionsFromGame;
 
     public static void Build(HudPageId pageId, GameObject parent, GameObject hud, Font font)
     {
@@ -34,10 +44,10 @@ internal static class UtilitiesCharacterPage
             new[] { "Level Up Once", "Level Up To Level 100", "Skip Campaign", "Reset Mastery" },
             new System.Action[]
             {
-                Hud_Manager.Content.Character.Cheats.LevelUpOnce_Click,
-                Hud_Manager.Content.Character.Cheats.LevelUpMax_Click,
-                Hud_Manager.Content.Character.Cheats.CompleteQuest_Click,
-                Hud_Manager.Content.Character.Cheats.Masteries_Click,
+                Mods.Character.Character_Level.LevelUpOnce,
+                Mods.Character.Character_Level.LevelUptoMax,
+                Mods.Character.Character_MainQuest.Complete,
+                Mods.Character.Character_Masteries.ResetChooseMasterie,
             }
         );
         BuildCheats();
@@ -48,6 +58,7 @@ internal static class UtilitiesCharacterPage
 
     public static void Show()
     {
+        RefreshFactionOptions();
         RefreshClassOptions();
         _page?.Show();
     }
@@ -56,6 +67,7 @@ internal static class UtilitiesCharacterPage
 
     public static void Refresh()
     {
+        RefreshFactionOptions();
         RefreshClassOptions();
         _page?.RefreshValues();
     }
@@ -102,7 +114,10 @@ internal static class UtilitiesCharacterPage
             value =>
             {
                 if (!HasSave())
+                {
                     return;
+                }
+
                 Save_Manager.instance.data.Character.Cheats.Enable_UnlockAllIdolsSlots = value;
                 Mods.Character.Character_UnlockAllIdols.Update();
             }
@@ -311,9 +326,8 @@ internal static class UtilitiesCharacterPage
                 Save_Manager.instance.data.Skills.Enable_PassivePointMultiplier = enabled;
                 if (enabled)
                 {
-                    Save_Manager.instance.data.Skills.PassivePointMultiplier = SettingRow.Clamp(
-                        value
-                    );
+                    Save_Manager.instance.data.Skills.PassivePointMultiplier =
+                        PointMultiplier.Clamp(value);
                 }
                 Mods.Skills.Passives_Points.Sync();
             }
@@ -367,7 +381,7 @@ internal static class UtilitiesCharacterPage
                 Save_Manager.instance.data.Skills.Enable_SkillLevelMultiplier = enabled;
                 if (enabled)
                 {
-                    Save_Manager.instance.data.Skills.SkillLevelMultiplier = SettingRow.Clamp(
+                    Save_Manager.instance.data.Skills.SkillLevelMultiplier = PointMultiplier.Clamp(
                         value
                     );
                 }
@@ -427,9 +441,8 @@ internal static class UtilitiesCharacterPage
                 Save_Manager.instance.data.Factions.TheWoven.Enable_PointMultiplier = enabled;
                 if (enabled)
                 {
-                    Save_Manager.instance.data.Factions.TheWoven.PointMultiplier = SettingRow.Clamp(
-                        value
-                    );
+                    Save_Manager.instance.data.Factions.TheWoven.PointMultiplier =
+                        PointMultiplier.Clamp(value);
                 }
                 Mods.Factions.TheWoven.Faction_Woven_TreePoints.ApplyToPlayer();
             }
@@ -452,24 +465,16 @@ internal static class UtilitiesCharacterPage
     private static void BuildData()
     {
         HudFormPage.Card card = _page.AddCard("Data", "Data");
-        _classSource = Hud_Manager.Content.Character.Data.class_dropdown;
-        _page.AddDropdown(
+        _classDropdown = _page.AddOptionsDropdown(
             card,
             "Class",
             "Class",
-            _classSource,
-            () =>
-                Refs_Manager.player_data.IsNullOrDestroyed()
-                    ? 0
-                    : Refs_Manager.player_data.CharacterClass,
-            value =>
-            {
-                if (!Refs_Manager.player_data.IsNullOrDestroyed())
-                {
-                    Refs_Manager.player_data.CharacterClass = value;
-                }
-            }
+            ClassOptionTexts(),
+            ReadClassOption,
+            SetClass
         );
+        _classOptionsLocale = Locales.current_dictionary;
+        _classOptionsFromGame = GameClassListLoaded();
         _page.AddToggle(
             card,
             "Died",
@@ -579,12 +584,7 @@ internal static class UtilitiesCharacterPage
                 }
             }
         );
-        _page.AddButton(
-            card,
-            "Save",
-            "Save Character Data",
-            Hud_Manager.Content.Character.Data.Save_Click
-        );
+        _page.AddButton(card, "Save", "Save Character Data", Mods.Character.Character_Data.Save);
     }
 
     private static void BuildBlessings()
@@ -600,7 +600,7 @@ internal static class UtilitiesCharacterPage
             card,
             "Discover",
             "Discover All Blessings",
-            Hud_Manager.Content.Character.Cheats.DiscoverAllBlessings_Click
+            Mods.Character.Character_Blessings.DiscoverAllBlessings
         );
         _page.AddButton(
             card,
@@ -618,125 +618,227 @@ internal static class UtilitiesCharacterPage
 
     private static void BuildFactions()
     {
-        Dropdown dropdownSource = Hud_Manager.Content.Character.Faction_Tracker.factions_dropdown;
-        Slider favorSource = Hud_Manager.Content.Character.Faction_Tracker.factions_favor_slider;
-        Slider rankSource = Hud_Manager.Content.Character.Faction_Tracker.factions_rank_slider;
-        Slider reputationSource = Hud_Manager
-            .Content
-            .Character
-            .Faction_Tracker
-            .factions_reputation_slider;
-        _factionSelection = dropdownSource.IsNullOrDestroyed() ? 0 : dropdownSource.value;
-        _factionFavor = favorSource.IsNullOrDestroyed() ? 0f : favorSource.value;
-        _factionRank = rankSource.IsNullOrDestroyed() ? 0f : rankSource.value;
-        _factionReputation = reputationSource.IsNullOrDestroyed() ? 0f : reputationSource.value;
+        _factionSelection = 0;
+        _factionFavor = 0f;
+        _factionRank = 0f;
+        _factionReputation = 0f;
 
         HudFormPage.Card card = _page.AddCard("Factions", "Factions");
-        Dropdown dropdown = _page.AddDropdown(
+        _factionDropdown = _page.AddOptionsDropdown(
             card,
             "Faction",
-            "Faction",
-            dropdownSource,
+            FactionCardLabels.Faction,
+            FactionOptionTexts(),
             () => _factionSelection,
-            value =>
-            {
-                _factionSelection = value;
-                Hud_Manager.Content.Character.Update_Faction_Data();
-            }
+            value => _factionSelection = value
         );
-        if (!dropdown.IsNullOrDestroyed())
-        {
-            Hud_Manager.Content.Character.Faction_Tracker.factions_dropdown = dropdown;
-        }
+        _factionOptionsLocale = Locales.current_dictionary;
 
-        Slider favor = _page.AddSlider(
+        AddFactionSlider(
             card,
             "Favor",
-            "Favor",
-            string.Empty,
-            SliderMinimum(favorSource, 0f),
-            SliderMaximum(favorSource, 999999f),
-            true,
+            FactionCardLabels.Favor,
+            CharacterSliderLimits.FactionFavor,
             () => _factionFavor,
             value => _factionFavor = value
         );
-        if (!favor.IsNullOrDestroyed())
-        {
-            Hud_Manager.Content.Character.Faction_Tracker.factions_favor_slider = favor;
-        }
-        _page.AddButton(
-            card,
-            "GainFavor",
-            "Gain Favor",
-            Hud_Manager.Content.Character.Faction_Tracker.factions_gain_favor_Click
-        );
+        _page.AddButton(card, "GainFavor", FactionCardLabels.GainFavor, GainFavorClicked);
 
-        Slider rank = _page.AddSlider(
+        AddFactionSlider(
             card,
             "Rank",
-            "Rank",
-            string.Empty,
-            SliderMinimum(rankSource, 0f),
-            SliderMaximum(rankSource, 12f),
-            true,
+            FactionCardLabels.Rank,
+            CharacterSliderLimits.FactionRank,
             () => _factionRank,
             value => _factionRank = value
         );
-        if (!rank.IsNullOrDestroyed())
-        {
-            Hud_Manager.Content.Character.Faction_Tracker.factions_rank_slider = rank;
-        }
-        _page.AddButton(
-            card,
-            "SetRank",
-            "Set Rank",
-            Hud_Manager.Content.Character.Faction_Tracker.factions_set_rank_Click
-        );
+        _page.AddButton(card, "SetRank", FactionCardLabels.SetRank, SetRankClicked);
 
-        Slider reputation = _page.AddSlider(
+        AddFactionSlider(
             card,
             "Reputation",
-            "Reputation",
-            string.Empty,
-            SliderMinimum(reputationSource, 0f),
-            SliderMaximum(reputationSource, 999999f),
-            true,
+            FactionCardLabels.Reputation,
+            CharacterSliderLimits.FactionReputation,
             () => _factionReputation,
             value => _factionReputation = value
         );
-        if (!reputation.IsNullOrDestroyed())
-        {
-            Hud_Manager.Content.Character.Faction_Tracker.factions_reputation_slider = reputation;
-        }
         _page.AddButton(
             card,
             "SetReputation",
-            "Set Reputation",
-            Hud_Manager.Content.Character.Faction_Tracker.factions_set_reputation_Click
+            FactionCardLabels.SetReputation,
+            SetReputationClicked
         );
     }
 
-    private static float SliderMinimum(Slider slider, float fallback) =>
-        slider.IsNullOrDestroyed() ? fallback : slider.minValue;
+    private static void AddFactionSlider(
+        HudFormPage.Card card,
+        string id,
+        string label,
+        SliderRange range,
+        Func<float> read,
+        Action<float> write
+    )
+    {
+        _page.AddSlider(
+            card,
+            id,
+            label,
+            string.Empty,
+            range.Min,
+            range.Max,
+            range.WholeNumbers,
+            read,
+            write
+        );
+    }
 
-    private static float SliderMaximum(Slider slider, float fallback) =>
-        slider.IsNullOrDestroyed() ? fallback : slider.maxValue;
+    private static string[] FactionOptionTexts()
+    {
+        string[] texts = new string[FactionSelection.OptionLabels.Count];
+        for (int i = 0; i < texts.Length; i++)
+        {
+            texts[i] = LocaleRegistry.Translate(FactionSelection.OptionLabels[i]);
+        }
 
+        return texts;
+    }
+
+    /// <summary>Re-translates the faction options after a language change.</summary>
+    private static void RefreshFactionOptions()
+    {
+        if (_factionDropdown.IsNullOrDestroyed())
+        {
+            return;
+        }
+
+        if (ReferenceEquals(_factionOptionsLocale, Locales.current_dictionary))
+        {
+            return;
+        }
+
+        SettingsBuilder.ApplyDropdownOptions(_factionDropdown, FactionOptionTexts());
+        // ClearOptions resets the shown value to 0; keep the stored faction selected.
+        _factionDropdown.SetValueWithoutNotify(_factionSelection);
+        _factionOptionsLocale = Locales.current_dictionary;
+    }
+
+    private static void GainFavorClicked()
+    {
+        if (!TrySelectedKind(out FactionKind kind))
+        {
+            return;
+        }
+        FactionStanding.GainFavor(kind, (int)MathF.Round(_factionFavor));
+    }
+
+    private static void SetRankClicked()
+    {
+        if (!TrySelectedKind(out FactionKind kind))
+        {
+            return;
+        }
+        FactionStanding.SetRank(kind, (int)MathF.Round(_factionRank));
+    }
+
+    private static void SetReputationClicked()
+    {
+        if (!TrySelectedKind(out FactionKind kind))
+        {
+            return;
+        }
+        FactionStanding.SetReputation(kind, (int)MathF.Round(_factionReputation));
+    }
+
+    private static bool TrySelectedKind(out FactionKind kind) =>
+        FactionSelection.TryKindAt(_factionSelection, out kind);
+
+    private static bool GameClassListLoaded() =>
+        !Refs_Manager.character_class_list.IsNullOrDestroyed();
+
+    private static string[] ClassOptionTexts()
+    {
+        bool loaded = GameClassListLoaded();
+        string[] texts = new string[CharacterClassSelection.OptionLabels.Count];
+        for (int i = 0; i < texts.Length; i++)
+        {
+            string localized = null;
+            string className = null;
+            if (loaded && CharacterClassSelection.TryClassIdAt(i, out int classId))
+            {
+                ReadGameNames(classId, out localized, out className);
+            }
+
+            texts[i] = CharacterClassSelection.LabelAt(i, localized, className);
+        }
+
+        return texts;
+    }
+
+    private static void ReadGameNames(int classId, out string localized, out string className)
+    {
+        localized = null;
+        className = null;
+        try
+        {
+            localized = CharacterClassList.getLocalizedClassName(classId, 0);
+            className = CharacterClassList.getClass(classId)?.className;
+        }
+        catch (Exception ex)
+        {
+            ErrorLog.Report(ex, "Character.ClassName");
+        }
+    }
+
+    /// <summary>Rebuilds the class options after a language change or once the game names load.</summary>
     private static void RefreshClassOptions()
     {
+        if (_classDropdown.IsNullOrDestroyed())
+        {
+            return;
+        }
+
+        bool localeChanged = !ReferenceEquals(_classOptionsLocale, Locales.current_dictionary);
         if (
-            _classSource.IsNullOrDestroyed()
-            || Refs_Manager.character_class_list.IsNullOrDestroyed()
+            !CharacterClassSelection.ShouldRebuildOptions(
+                localeChanged,
+                _classOptionsFromGame,
+                GameClassListLoaded()
+            )
         )
         {
             return;
         }
-        Il2CppSystem.Collections.Generic.List<Dropdown.OptionData> options = new();
-        foreach (CharacterClass characterClass in Refs_Manager.character_class_list.classes)
+
+        SettingsBuilder.ApplyDropdownOptions(_classDropdown, ClassOptionTexts());
+        // ClearOptions resets the shown value to 0; show the current class again.
+        _classDropdown.SetValueWithoutNotify(ReadClassOption());
+        _classOptionsLocale = Locales.current_dictionary;
+        _classOptionsFromGame = GameClassListLoaded();
+    }
+
+    private static int ReadClassOption()
+    {
+        if (Refs_Manager.player_data.IsNullOrDestroyed())
         {
-            options.Add(new Dropdown.OptionData { text = characterClass.className });
+            return 0;
         }
-        _classSource.options = options;
+
+        return CharacterClassSelection.OptionIndexOf(Refs_Manager.player_data.CharacterClass);
+    }
+
+    private static void SetClass(int optionIndex)
+    {
+        if (Refs_Manager.player_data.IsNullOrDestroyed())
+        {
+            return;
+        }
+
+        if (!CharacterClassSelection.TryClassIdAt(optionIndex, out int classId))
+        {
+            return;
+        }
+
+        Refs_Manager.player_data.CharacterClass = classId;
     }
 
     private static bool HasSave() =>

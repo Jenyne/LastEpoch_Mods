@@ -1,8 +1,8 @@
 using System;
 using LastEpoch_Hud.Scripts.Core.ModUI;
+using LastEpoch_Hud.Scripts.Core.ModUI.Sliders;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
@@ -37,7 +37,7 @@ internal static class SkillsMinionsPage
             c,
             "SkeletonPassive",
             "Additional Skeletons From Passives",
-            Hud_Manager.Content.Skills.Minions.skeleton_passive_summon_slider,
+            SkillSliderLimits.SkeletonFromPassives,
             () =>
                 Save_Manager
                     .instance
@@ -69,7 +69,7 @@ internal static class SkillsMinionsPage
             c,
             "SkeletonTree",
             "Additional Skeletons From Skill Tree",
-            Hud_Manager.Content.Skills.Minions.skeleton_skilltree_summon_slider,
+            SkillSliderLimits.SkeletonFromSkillTree,
             () =>
                 Save_Manager
                     .instance
@@ -107,7 +107,7 @@ internal static class SkillsMinionsPage
             c,
             "SkeletonPerCast",
             "Additional Skeletons Per Cast",
-            Hud_Manager.Content.Skills.Minions.skeleton_quantity_per_cast_slider,
+            SkillSliderLimits.SkeletonPerCast,
             () =>
                 Save_Manager
                     .instance
@@ -133,7 +133,7 @@ internal static class SkillsMinionsPage
             c,
             "SkeletonResummon",
             "Chance To Resummon On Death",
-            Hud_Manager.Content.Skills.Minions.skeleton_resummon_on_death_slider,
+            SkillSliderLimits.SkeletonResummonChance,
             () =>
                 Save_Manager.instance.data.Skills.Minions.Skeletons.Enable_chanceToResummonOnDeath,
             v =>
@@ -172,7 +172,7 @@ internal static class SkillsMinionsPage
             c,
             "WraithMax",
             "Additional Maximum Wraiths",
-            Hud_Manager.Content.Skills.Minions.wraith_summon_limit_slider,
+            SkillSliderLimits.WraithMaximum,
             () => Save_Manager.instance.data.Skills.Minions.Wraiths.Enable_additionalMaxWraiths,
             v => Save_Manager.instance.data.Skills.Minions.Wraiths.Enable_additionalMaxWraiths = v,
             () => Save_Manager.instance.data.Skills.Minions.Wraiths.additionalMaxWraiths,
@@ -182,7 +182,7 @@ internal static class SkillsMinionsPage
             c,
             "WraithDelay",
             "Delayed Wraiths",
-            Hud_Manager.Content.Skills.Minions.wraith_delay_slider,
+            SkillSliderLimits.WraithDelayed,
             () => Save_Manager.instance.data.Skills.Minions.Wraiths.Enable_delayedWraiths,
             v => Save_Manager.instance.data.Skills.Minions.Wraiths.Enable_delayedWraiths = v,
             () => Save_Manager.instance.data.Skills.Minions.Wraiths.delayedWraiths,
@@ -192,7 +192,7 @@ internal static class SkillsMinionsPage
             c,
             "WraithCastSpeed",
             "Increased Cast Speed",
-            Hud_Manager.Content.Skills.Minions.wraith_cast_speed_slider,
+            SkillSliderLimits.WraithCastSpeed,
             () => Save_Manager.instance.data.Skills.Minions.Wraiths.Enable_increasedCastSpeed,
             v => Save_Manager.instance.data.Skills.Minions.Wraiths.Enable_increasedCastSpeed = v,
             () => Save_Manager.instance.data.Skills.Minions.Wraiths.increasedCastSpeed,
@@ -221,7 +221,7 @@ internal static class SkillsMinionsPage
             c,
             "MagePassive",
             "Additional Mages From Passives",
-            Hud_Manager.Content.Skills.Minions.mage_passive_summon_slider,
+            SkillSliderLimits.MageFromPassives,
             () =>
                 Save_Manager
                     .instance
@@ -247,7 +247,7 @@ internal static class SkillsMinionsPage
             c,
             "MageItems",
             "Additional Mages From Items",
-            Hud_Manager.Content.Skills.Minions.mage_items_summon_slider,
+            SkillSliderLimits.MageFromItems,
             () =>
                 Save_Manager.instance.data.Skills.Minions.Mages.Enable_additionalSkeletonsFromItems,
             v =>
@@ -267,7 +267,7 @@ internal static class SkillsMinionsPage
             c,
             "MageTree",
             "Additional Mages From Skill Tree",
-            Hud_Manager.Content.Skills.Minions.mage_skilltree_summon_slider,
+            SkillSliderLimits.MageFromSkillTree,
             () =>
                 Save_Manager
                     .instance
@@ -293,7 +293,7 @@ internal static class SkillsMinionsPage
             c,
             "MagePerCast",
             "Additional Mages Per Cast",
-            Hud_Manager.Content.Skills.Minions.mage_per_cast_summon_slider,
+            SkillSliderLimits.MagePerCast,
             () => Save_Manager.instance.data.Skills.Minions.Mages.Enable_additionalSkeletonsPerCast,
             v =>
                 Save_Manager.instance.data.Skills.Minions.Mages.Enable_additionalSkeletonsPerCast =
@@ -305,7 +305,7 @@ internal static class SkillsMinionsPage
             c,
             "MageProjectile",
             "Chance For Two Extra Projectiles",
-            Hud_Manager.Content.Skills.Minions.mage_projectile_chance_slider,
+            SkillSliderLimits.MageProjectileChance,
             () =>
                 Save_Manager.instance.data.Skills.Minions.Mages.Enable_chanceForTwoExtraProjectiles,
             v =>
@@ -349,7 +349,7 @@ internal static class SkillsMinionsPage
             c,
             "GolemsPerSkeletons",
             "Added Golems Per 4 Skeletons",
-            Hud_Manager.Content.Skills.Minions.bonegolem_per_skeleton_slider,
+            SkillSliderLimits.BoneGolemPerSkeletons,
             () =>
                 Save_Manager
                     .instance
@@ -375,7 +375,7 @@ internal static class SkillsMinionsPage
             c,
             "Resurrect",
             "Self Resurrect Chance",
-            Hud_Manager.Content.Skills.Minions.bonegolem_resurect_chance_slider,
+            SkillSliderLimits.BoneGolemResurrectChance,
             () => Save_Manager.instance.data.Skills.Minions.BoneGolems.Enable_selfResurrectChance,
             v =>
                 Save_Manager.instance.data.Skills.Minions.BoneGolems.Enable_selfResurrectChance = v,
@@ -386,7 +386,7 @@ internal static class SkillsMinionsPage
             c,
             "FireAura",
             "Increased Fire Aura Area",
-            Hud_Manager.Content.Skills.Minions.bonegolem_fire_aura_slider,
+            SkillSliderLimits.BoneGolemFireAura,
             () => Save_Manager.instance.data.Skills.Minions.BoneGolems.Enable_increasedFireAuraArea,
             v =>
                 Save_Manager.instance.data.Skills.Minions.BoneGolems.Enable_increasedFireAuraArea =
@@ -398,7 +398,7 @@ internal static class SkillsMinionsPage
             c,
             "ArmorAura",
             "Undead Armor Aura",
-            Hud_Manager.Content.Skills.Minions.bonegolem_armor_aura_slider,
+            SkillSliderLimits.BoneGolemArmorAura,
             () => Save_Manager.instance.data.Skills.Minions.BoneGolems.Enable_undeadArmorAura,
             v => Save_Manager.instance.data.Skills.Minions.BoneGolems.Enable_undeadArmorAura = v,
             () => Save_Manager.instance.data.Skills.Minions.BoneGolems.undeadArmorAura,
@@ -408,7 +408,7 @@ internal static class SkillsMinionsPage
             c,
             "MoveSpeedAura",
             "Undead Movement Speed Aura",
-            Hud_Manager.Content.Skills.Minions.bonegolem_movespeed_aura_slider,
+            SkillSliderLimits.BoneGolemMoveSpeedAura,
             () => Save_Manager.instance.data.Skills.Minions.BoneGolems.Enable_undeadMovespeedAura,
             v =>
                 Save_Manager.instance.data.Skills.Minions.BoneGolems.Enable_undeadMovespeedAura = v,
@@ -419,7 +419,7 @@ internal static class SkillsMinionsPage
             c,
             "MoveSpeed",
             "Increased Movement Speed",
-            Hud_Manager.Content.Skills.Minions.bonegolem_move_speed_slider,
+            SkillSliderLimits.BoneGolemMoveSpeed,
             () => Save_Manager.instance.data.Skills.Minions.BoneGolems.Enable_increasedMoveSpeed,
             v => Save_Manager.instance.data.Skills.Minions.BoneGolems.Enable_increasedMoveSpeed = v,
             () => Save_Manager.instance.data.Skills.Minions.BoneGolems.increasedMoveSpeed,
@@ -448,7 +448,7 @@ internal static class SkillsMinionsPage
             c,
             "ZombieMinionDeath",
             "Chance To Cast From Minion Death",
-            Hud_Manager.Content.Skills.Minions.volatilezombie_cast_on_death_slider,
+            SkillSliderLimits.ZombieMinionDeathChance,
             () =>
                 Save_Manager
                     .instance
@@ -486,7 +486,7 @@ internal static class SkillsMinionsPage
             c,
             "ZombieInfernalShade",
             "Infernal Shade Chance On Death",
-            Hud_Manager.Content.Skills.Minions.volatilezombie_infernal_shade_slider,
+            SkillSliderLimits.ZombieInfernalShadeChance,
             () =>
                 Save_Manager
                     .instance
@@ -524,7 +524,7 @@ internal static class SkillsMinionsPage
             c,
             "ZombieMarrowShards",
             "Marrow Shards Chance On Death",
-            Hud_Manager.Content.Skills.Minions.volatilezombie_marrow_shards_slider,
+            SkillSliderLimits.ZombieMarrowShardsChance,
             () =>
                 Save_Manager
                     .instance
@@ -567,7 +567,7 @@ internal static class SkillsMinionsPage
             c,
             "DreadDuration",
             "Duration",
-            Hud_Manager.Content.Skills.Minions.dreadShades_duration_slider,
+            SkillSliderLimits.DreadShadeDuration,
             () => Save_Manager.instance.data.Skills.Minions.DreadShades.Enable_Duration,
             v => Save_Manager.instance.data.Skills.Minions.DreadShades.Enable_Duration = v,
             () => Save_Manager.instance.data.Skills.Minions.DreadShades.Duration,
@@ -577,7 +577,7 @@ internal static class SkillsMinionsPage
             c,
             "DreadMax",
             "Maximum Dread Shades",
-            Hud_Manager.Content.Skills.Minions.dreadShades_max_slider,
+            SkillSliderLimits.DreadShadeMaximum,
             () => Save_Manager.instance.data.Skills.Minions.DreadShades.Enable_Max,
             v => Save_Manager.instance.data.Skills.Minions.DreadShades.Enable_Max = v,
             () => Save_Manager.instance.data.Skills.Minions.DreadShades.max,
@@ -587,7 +587,7 @@ internal static class SkillsMinionsPage
             c,
             "DreadDecay",
             "Reduced Decay",
-            Hud_Manager.Content.Skills.Minions.dreadShades_decay_slider,
+            SkillSliderLimits.DreadShadeDecay,
             () => Save_Manager.instance.data.Skills.Minions.DreadShades.Enable_ReduceDecay,
             v => Save_Manager.instance.data.Skills.Minions.DreadShades.Enable_ReduceDecay = v,
             () => Save_Manager.instance.data.Skills.Minions.DreadShades.decay,
@@ -597,7 +597,7 @@ internal static class SkillsMinionsPage
             c,
             "DreadRadius",
             "Radius",
-            Hud_Manager.Content.Skills.Minions.dreadShades_radius_slider,
+            SkillSliderLimits.DreadShadeRadius,
             () => Save_Manager.instance.data.Skills.Minions.DreadShades.Enable_Radius,
             v => Save_Manager.instance.data.Skills.Minions.DreadShades.Enable_Radius = v,
             () => Save_Manager.instance.data.Skills.Minions.DreadShades.radius,
@@ -642,31 +642,28 @@ internal static class SkillsMinionsPage
         HudFormPage.Card card,
         string id,
         string label,
-        Slider source,
+        SliderRange range,
         Func<bool> readEnabled,
         Action<bool> writeEnabled,
         Func<float> read,
         Action<float> write
     )
     {
-        float min = source.IsNullOrDestroyed() ? 0f : source.minValue;
-        float max = source.IsNullOrDestroyed() ? 100f : source.maxValue;
-        bool whole = source.IsNullOrDestroyed() || source.wholeNumbers;
         page.AddToggleSlider(
             card,
             id,
             label,
             string.Empty,
-            min,
-            max,
-            whole,
+            range.Min,
+            range.Max,
+            range.WholeNumbers,
             () => HasSave() && readEnabled(),
             v =>
             {
                 if (HasSave())
                     writeEnabled(v);
             },
-            () => HasSave() ? read() : min,
+            () => HasSave() ? read() : range.Min,
             v =>
             {
                 if (HasSave())

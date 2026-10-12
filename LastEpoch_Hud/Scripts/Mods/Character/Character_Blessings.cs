@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.ModUI.Shell.Host;
 using MelonLoader;
 using UnityEngine;
 
@@ -98,7 +99,7 @@ public class Character_Blessings : MonoBehaviour
             if (openingStage != 0)
                 return;
             EnsureDiscoveredRolls(ItemContainersManager.Instance);
-            Hud_Manager.Hud_Base.Resume_Click();
+            GamePauseMenu.Resume();
             // Let the mod HUD finish closing before opening the game window.
             openingStage = 1;
             openingFrame = Time.frameCount;

@@ -1,17 +1,16 @@
 using System;
 using LastEpoch_Hud.Scripts.Core.ModUI;
+using LastEpoch_Hud.Scripts.Core.ModUI.Sliders;
 using LastEpoch_Hud.Scripts.ModUI.Settings;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
-/// <summary>World &gt; Monoliths HUD page. Page and Timelines card reset on HUD re-bind (Build).</summary>
+/// <summary>World &gt; Monoliths HUD page. Page and the timeline editor reset on HUD re-bind (Build).</summary>
 internal static class WorldMonolithsPage
 {
     private static HudFormPage page;
-    private static HudFormPage.Card timelines;
 
     public static void Build(HudPageId pageId, GameObject parent, GameObject hud, Font font)
     {
@@ -23,13 +22,11 @@ internal static class WorldMonolithsPage
             card,
             "MaxStability",
             "Max Stability",
-            Hud_Manager.Content.Scenes.Monoliths.max_stability_slider,
+            SceneSliderLimits.MonolithMaxStability,
             () => Save_Manager.instance.data.Scenes.Monoliths.Enable_MaxStability,
             v => Save_Manager.instance.data.Scenes.Monoliths.Enable_MaxStability = v,
             () => Save_Manager.instance.data.Scenes.Monoliths.MaxStability,
-            v => Save_Manager.instance.data.Scenes.Monoliths.MaxStability = v,
-            0f,
-            1000f
+            v => Save_Manager.instance.data.Scenes.Monoliths.MaxStability = v
         );
         AddToggle(
             card,
@@ -42,25 +39,21 @@ internal static class WorldMonolithsPage
             card,
             "MobsDensity",
             "Mobs Density",
-            Hud_Manager.Content.Scenes.Monoliths.mob_density_slider,
+            SceneSliderLimits.MonolithMobsDensity,
             () => Save_Manager.instance.data.Scenes.Monoliths.Enable_MobsDensity,
             v => Save_Manager.instance.data.Scenes.Monoliths.Enable_MobsDensity = v,
             () => Save_Manager.instance.data.Scenes.Monoliths.MobsDensity,
-            v => Save_Manager.instance.data.Scenes.Monoliths.MobsDensity = v,
-            0f,
-            100f
+            v => Save_Manager.instance.data.Scenes.Monoliths.MobsDensity = v
         );
         AddSlider(
             card,
             "MobsDefeat",
             "Mobs Defeat",
-            Hud_Manager.Content.Scenes.Monoliths.mob_defeat_slider,
+            SceneSliderLimits.MonolithMobsDefeat,
             () => Save_Manager.instance.data.Scenes.Monoliths.Enable_MobsDefeatOnStart,
             v => Save_Manager.instance.data.Scenes.Monoliths.Enable_MobsDefeatOnStart = v,
             () => Save_Manager.instance.data.Scenes.Monoliths.MobsDefeatOnStart,
-            v => Save_Manager.instance.data.Scenes.Monoliths.MobsDefeatOnStart = v,
-            0f,
-            100f
+            v => Save_Manager.instance.data.Scenes.Monoliths.MobsDefeatOnStart = v
         );
         AddToggle(
             card,
@@ -85,13 +78,11 @@ internal static class WorldMonolithsPage
             card,
             "BlessingSlots",
             "Blessing Slots Reward",
-            Hud_Manager.Content.Scenes.Monoliths.blessing_slot_slider,
+            SceneSliderLimits.MonolithBlessingSlots,
             () => Save_Manager.instance.data.Scenes.Monoliths.Enable_BlessingSlots,
             v => Save_Manager.instance.data.Scenes.Monoliths.Enable_BlessingSlots = v,
             () => Save_Manager.instance.data.Scenes.Monoliths.BlessingSlots,
-            v => Save_Manager.instance.data.Scenes.Monoliths.BlessingSlots = (int)v,
-            0f,
-            10f
+            v => Save_Manager.instance.data.Scenes.Monoliths.BlessingSlots = (int)v
         );
         AddToggle(
             card,
@@ -164,17 +155,13 @@ internal static class WorldMonolithsPage
             "Warning: echoes have a limited number of encounter spots. High Rune Prison or Favour Cache counts can crowd out other spawns such as shrines, champions and Nemesis."
         );
 
-        timelines = page.AddCard("Timelines", "Timelines");
-        MonolithTimelineEditor.AttachTo(timelines.Body);
+        MonolithTimelineEditor.Build(page, page.AddCard("Timelines", "Timelines").Body, font);
     }
 
     public static void Show()
     {
-        if (timelines != null)
-            MonolithTimelineEditor.AttachTo(timelines.Body);
         page?.Show();
-        Hud_Manager.Content.Character.Update_Monoliths_Data();
-        MonolithTimelineEditor.RefreshSelection();
+        MonolithTimelineEditor.Reload();
     }
 
     public static void Hide() => page?.Hide();
@@ -182,7 +169,6 @@ internal static class WorldMonolithsPage
     public static void Refresh()
     {
         page?.RefreshValues();
-        MonolithTimelineEditor.RefreshSelection();
     }
 
     private static void AddToggle(
@@ -208,33 +194,28 @@ internal static class WorldMonolithsPage
         HudFormPage.Card card,
         string id,
         string label,
-        Slider source,
+        SliderRange range,
         Func<bool> readEnabled,
         Action<bool> writeEnabled,
         Func<float> read,
-        Action<float> write,
-        float fallbackMin,
-        float fallbackMax
+        Action<float> write
     )
     {
-        float min = source.IsNullOrDestroyed() ? fallbackMin : source.minValue;
-        float max = source.IsNullOrDestroyed() ? fallbackMax : source.maxValue;
-        bool whole = true;
         page.AddToggleSlider(
             card,
             id,
             label,
             string.Empty,
-            min,
-            max,
-            whole,
+            range.Min,
+            range.Max,
+            range.WholeNumbers,
             () => HasSave() && readEnabled(),
             v =>
             {
                 if (HasSave())
                     writeEnabled(v);
             },
-            () => HasSave() ? read() : min,
+            () => HasSave() ? read() : range.Min,
             v =>
             {
                 if (HasSave())

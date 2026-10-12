@@ -1,4 +1,5 @@
 ﻿using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.Items;
 using MelonLoader;
 using UnityEngine;
 
@@ -34,7 +35,9 @@ public class Items_SocketsNb : MonoBehaviour
         {
             if (Save_Manager.instance.data.Items.Drop.Enable_AffixCount)
             {
-                items_nb_sockets = (int)Save_Manager.instance.data.Items.Drop.AffixCount_Max;
+                items_nb_sockets = DropAffixCount.ToWhole(
+                    Save_Manager.instance.data.Items.Drop.AffixCount_Max
+                );
             }
             else
             {

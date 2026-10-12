@@ -11,7 +11,7 @@ using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
-using FD = LastEpoch_Hud.Scripts.Hud_Manager.Content.OdlForceDrop;
+using FD = LastEpoch_Hud.Scripts.ModUI.ForceDrop.ForceDropModel;
 
 namespace LastEpoch_Hud.Scripts.ModUI.ForceDrop;
 
@@ -109,11 +109,11 @@ public static class ForceDropBuilder
         new Dictionary<int, NativeItemNames.ItemChoice>();
     static bool corrupted,
         allowIllegal,
-        failed,
         metadataLogged;
     static float nextCorruptionCheck;
     static string result = "";
     static Button illegalModeButton;
+    private static readonly ForceDropBuildGate _buildGate = new();
     static int RouteMaximum => allowIllegal ? 8 : 7;
     public static bool IsReady => !root.IsNullOrDestroyed();
 
@@ -124,16 +124,190 @@ public static class ForceDropBuilder
     static ForceDropCorruptionPool corruptionPool;
     static string corruptionPoolError = "";
 
+    public static void Tick()
+    {
+        if (_buildGate.ShouldBuild(IsReady))
+        {
+            TryBuild();
+        }
+        if (!IsReady)
+        {
+            return;
+        }
+        RedirectTypingToSearch();
+        RefreshNativeLocale();
+        RefreshTierLimits();
+        foreach (var n in numbers)
+            n.Read();
+        string signature =
+            FD.ItemType
+            + ":"
+            + FD.ItemRarity
+            + ":"
+            + FD.ItemsDropdown.options.Count
+            + ":"
+            + NativeItemNames.CatalogKey;
+        if (lastSearch != search.text || lastItems != signature)
+        {
+            lastSearch = search.text;
+            lastItems = signature;
+            ResetItemScroll();
+            RefreshItems();
+        }
+        RefreshItemScrollRows();
+        if (picker.activeSelf && lastPickerSearch != pickerSearch.text)
+        {
+            lastPickerSearch = pickerSearch.text;
+            pickerPage = 0;
+            ResetAffixScrolls();
+            RefreshPicker();
+        }
+        if (picker.activeSelf && scrollAffixPicker)
+            for (int column = 0; column < 2; column++)
+                RefreshAffixScrollRows(column);
+        Caption(typeButton, SelectedCategoryName("Choose category"));
+        Caption(
+            rarityButton,
+            NativeItemNames.RarityName(Selected(FD.RarityDropdown, "Choose rarity"))
+        );
+        lp.group.SetActive(
+            FD.ItemRarity > 6 && FD.ItemLegendaryType == UniqueList.LegendaryType.LegendaryPotential
+        );
+        ww.group.SetActive(
+            FD.ItemRarity > 6 && FD.ItemLegendaryType != UniqueList.LegendaryType.LegendaryPotential
+        );
+        uniquePage.SetActive(FD.ItemRarity > 6);
+        var rageEntry = SelectedRageEntry();
+        int variantCount = UniqueVariantAdapter.VariantCount(rageEntry);
+        bool showRage = variantCount > 0;
+        if (rageUniqueId != FD.ItemUniqueId)
+        {
+            ResetRage();
+            rageUniqueId = (ushort)FD.ItemUniqueId;
+        }
+        ragePage.SetActive(showRage);
+        if (showRage && rageMetadataId != FD.ItemUniqueId)
+        {
+            rageMetadataId = FD.ItemUniqueId;
+            Main.logger_instance.Msg(
+                "Unique variant native pool: unique="
+                    + rageEntry.uniqueID
+                    + ", specific="
+                    + rageEntry.dropsSpecificLegendaryAffixes
+                    + ", count="
+                    + rageEntry.droppableLegendaryAffixCount
+                    + ", excludesSlotLimits="
+                    + rageEntry.excludeSpecificAffixesFromPrefixSuffixLimits
+                    + ", pool="
+                    + (
+                        rageEntry.droppableLegendaryAffixes.IsNullOrDestroyed()
+                            ? "null"
+                            : rageEntry.droppableLegendaryAffixes.Count.ToString()
+                    )
+                    + ", resolved="
+                    + UniqueVariantAdapter.Catalog(rageEntry).Count
+            );
+        }
+        // Keep the exclusive modifier next to the item preview and outside the affix grid.
+        bool twoVariants = variantCount == 2;
+        Rect(ragePage, .04f, .28f, .96f, twoVariants ? .54f : .45f);
+        LocaleRegistry.Apply(variantHeader, "Exclusive unique modifiers");
+        LocaleRegistry.Apply(
+            variantDescription,
+            "Native modifiers · separate from ordinary affixes"
+        );
+        Rect(variantHeader.gameObject, .03f, twoVariants ? .78f : .72f, .97f, .97f);
+        Rect(variantDescription.gameObject, .03f, .02f, .97f, twoVariants ? .22f : .25f);
+        for (int slot = 0; slot < variantSelect.Length; slot++)
+        {
+            variantSelect[slot].gameObject.SetActive(slot < variantCount);
+            variantSelect[slot].interactable = UniqueVariantAdapter.HasVariants(rageEntry);
+            Caption(
+                variantSelect[slot],
+                variantSelect[slot].interactable
+                    ? variantNames[slot]
+                    : "Unique modifier pool unavailable"
+            );
+        }
+        Rect(
+            variantSelect[0].gameObject,
+            .03f,
+            twoVariants ? .51f : .29f,
+            .97f,
+            twoVariants ? .75f : .69f
+        );
+        Rect(preview.gameObject, .04f, showRage ? (twoVariants ? .56f : .47f) : .28f, .96f, .90f);
+        if (Time.unscaledTime >= nextCorruptionCheck)
+        {
+            nextCorruptionCheck = Time.unscaledTime + 2f;
+            corruptionSelect.interactable = CorruptedAffixAdapter.IsSupported;
+            if (corruptionSelect.interactable && corruptionId < 0)
+                Caption(corruptionSelect, "Corrupted affix: None");
+        }
+        forging.input.interactable = !corrupted && !forging.random;
+        if (forging.mode != null)
+            forging.mode.interactable = !corrupted;
+        RefreshPotentialControls();
+        for (int slot = 0; slot < rows.Length; slot++)
+        {
+            var context = LegalContext(slot);
+            bool enchantment = !allowIllegal && context.IsHereticalIdol && (slot == 1 || slot == 3);
+            bool available = allowIllegal
+                ? FD.ItemType < 100
+                : ForceDropLegalRules.SlotAllowed(
+                    slot,
+                    context.IsIdol,
+                    context.IsUnique,
+                    context.IsSet,
+                    context.IsHereticalIdol
+                );
+            LocaleRegistry.Apply(
+                rows[slot].slotLabel,
+                allowIllegal && slot < 4 ? "Affix " + (slot + 1)
+                    : enchantment ? "Enchantment " + (slot == 1 ? 1 : 2)
+                    : slot == 4 ? "Sealed"
+                    : slot == 5 ? "Primordial"
+                    : slot < 2 ? "Prefix " + (slot + 1)
+                    : "Suffix " + (slot - 1)
+            );
+            rows[slot].select.interactable = available;
+            rows[slot].tier.input.interactable = available;
+            rows[slot].roll.input.interactable = available && !rows[slot].roll.random;
+            rows[slot].roll.mode.interactable = available;
+        }
+        RefreshPreview();
+    }
+
+    /// <summary>Builds the view; on failure reports it and shows the load error.</summary>
+    private static void TryBuild()
+    {
+        try
+        {
+            Build();
+        }
+        catch (Exception ex)
+        {
+            _buildGate.MarkFailed();
+            if (!root.IsNullOrDestroyed())
+            {
+                UnityEngine.Object.Destroy(root);
+            }
+            root = null;
+            ErrorLog.Report(ex, "ForceDropBuilder.Build");
+            ForceDropLoadError.Show(FD.ContentObject);
+        }
+    }
+
     static string SelectionKey()
     {
         var key = new StringBuilder()
-            .Append(FD.item_type)
+            .Append(FD.ItemType)
             .Append(':')
-            .Append(FD.item_subtype)
+            .Append(FD.ItemSubtype)
             .Append(':')
-            .Append(FD.item_rarity)
+            .Append(FD.ItemRarity)
             .Append(':')
-            .Append(FD.item_unique_id)
+            .Append(FD.ItemUniqueId)
             .Append(':')
             .Append(corrupted)
             .Append(':')
@@ -162,7 +336,7 @@ public static class ForceDropBuilder
             for (int slot = 0; slot < rows.Length; slot++)
                 if (slot != editingSlot && rows[slot].id >= 0)
                     ids.Add(rows[slot].id);
-            context = new ForceDropLegalAffixes(FD.item_type, FD.item_subtype, FD.item_rarity, ids);
+            context = new ForceDropLegalAffixes(FD.ItemType, FD.ItemSubtype, FD.ItemRarity, ids);
             legalContexts[editingSlot] = context;
         }
         return context;
@@ -275,7 +449,7 @@ public static class ForceDropBuilder
         }
     }
 
-    sealed class AffixRow
+    private sealed class AffixRow
     {
         public int id = -1;
         public string name = "None";
@@ -286,179 +460,12 @@ public static class ForceDropBuilder
             roll;
     }
 
-    public static bool Tick()
-    {
-        if (!IsReady && !failed)
-        {
-            try
-            {
-                Build();
-            }
-            catch (Exception ex)
-            {
-                failed = true;
-                if (!root.IsNullOrDestroyed())
-                    UnityEngine.Object.Destroy(root);
-                root = null;
-                if (!FD.content_obj.IsNullOrDestroyed())
-                    foreach (var child in Functions.GetAllChild(FD.content_obj))
-                        child.SetActive(true);
-                Main.logger_instance.Error("Force Drop builder setup: " + ex.Message);
-            }
-        }
-        if (!IsReady)
-            return false;
-        RedirectTypingToSearch();
-        RefreshNativeLocale();
-        RefreshTierLimits();
-        foreach (var n in numbers)
-            n.Read();
-        string signature =
-            FD.item_type
-            + ":"
-            + FD.item_rarity
-            + ":"
-            + FD.items_dropdown.options.Count
-            + ":"
-            + NativeItemNames.CatalogKey;
-        if (lastSearch != search.text || lastItems != signature)
-        {
-            lastSearch = search.text;
-            lastItems = signature;
-            ResetItemScroll();
-            RefreshItems();
-        }
-        RefreshItemScrollRows();
-        if (picker.activeSelf && lastPickerSearch != pickerSearch.text)
-        {
-            lastPickerSearch = pickerSearch.text;
-            pickerPage = 0;
-            ResetAffixScrolls();
-            RefreshPicker();
-        }
-        if (picker.activeSelf && scrollAffixPicker)
-            for (int column = 0; column < 2; column++)
-                RefreshAffixScrollRows(column);
-        Caption(typeButton, SelectedCategoryName("Choose category"));
-        Caption(
-            rarityButton,
-            NativeItemNames.RarityName(Selected(FD.rarity_dropdown, "Choose rarity"))
-        );
-        lp.group.SetActive(
-            FD.item_rarity > 6
-                && FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential
-        );
-        ww.group.SetActive(
-            FD.item_rarity > 6
-                && FD.item_legendary_type != UniqueList.LegendaryType.LegendaryPotential
-        );
-        uniquePage.SetActive(FD.item_rarity > 6);
-        var rageEntry = SelectedRageEntry();
-        int variantCount = UniqueVariantAdapter.VariantCount(rageEntry);
-        bool showRage = variantCount > 0;
-        if (rageUniqueId != FD.item_unique_id)
-        {
-            ResetRage();
-            rageUniqueId = (ushort)FD.item_unique_id;
-        }
-        ragePage.SetActive(showRage);
-        if (showRage && rageMetadataId != FD.item_unique_id)
-        {
-            rageMetadataId = FD.item_unique_id;
-            Main.logger_instance.Msg(
-                "Unique variant native pool: unique="
-                    + rageEntry.uniqueID
-                    + ", specific="
-                    + rageEntry.dropsSpecificLegendaryAffixes
-                    + ", count="
-                    + rageEntry.droppableLegendaryAffixCount
-                    + ", excludesSlotLimits="
-                    + rageEntry.excludeSpecificAffixesFromPrefixSuffixLimits
-                    + ", pool="
-                    + (
-                        rageEntry.droppableLegendaryAffixes.IsNullOrDestroyed()
-                            ? "null"
-                            : rageEntry.droppableLegendaryAffixes.Count.ToString()
-                    )
-                    + ", resolved="
-                    + UniqueVariantAdapter.Catalog(rageEntry).Count
-            );
-        }
-        // Keep the exclusive modifier next to the item preview and outside the affix grid.
-        bool twoVariants = variantCount == 2;
-        Rect(ragePage, .04f, .28f, .96f, twoVariants ? .54f : .45f);
-        LocaleRegistry.Apply(variantHeader, "Exclusive unique modifiers");
-        LocaleRegistry.Apply(
-            variantDescription,
-            "Native modifiers · separate from ordinary affixes"
-        );
-        Rect(variantHeader.gameObject, .03f, twoVariants ? .78f : .72f, .97f, .97f);
-        Rect(variantDescription.gameObject, .03f, .02f, .97f, twoVariants ? .22f : .25f);
-        for (int slot = 0; slot < variantSelect.Length; slot++)
-        {
-            variantSelect[slot].gameObject.SetActive(slot < variantCount);
-            variantSelect[slot].interactable = UniqueVariantAdapter.HasVariants(rageEntry);
-            Caption(
-                variantSelect[slot],
-                variantSelect[slot].interactable
-                    ? variantNames[slot]
-                    : "Unique modifier pool unavailable"
-            );
-        }
-        Rect(
-            variantSelect[0].gameObject,
-            .03f,
-            twoVariants ? .51f : .29f,
-            .97f,
-            twoVariants ? .75f : .69f
-        );
-        Rect(preview.gameObject, .04f, showRage ? (twoVariants ? .56f : .47f) : .28f, .96f, .90f);
-        if (Time.unscaledTime >= nextCorruptionCheck)
-        {
-            nextCorruptionCheck = Time.unscaledTime + 2f;
-            corruptionSelect.interactable = CorruptedAffixAdapter.IsSupported;
-            if (corruptionSelect.interactable && corruptionId < 0)
-                Caption(corruptionSelect, "Corrupted affix: None");
-        }
-        forging.input.interactable = !corrupted && !forging.random;
-        if (forging.mode != null)
-            forging.mode.interactable = !corrupted;
-        RefreshPotentialControls();
-        for (int slot = 0; slot < rows.Length; slot++)
-        {
-            var context = LegalContext(slot);
-            bool enchantment = !allowIllegal && context.IsHereticalIdol && (slot == 1 || slot == 3);
-            bool available = allowIllegal
-                ? FD.item_type < 100
-                : ForceDropLegalRules.SlotAllowed(
-                    slot,
-                    context.IsIdol,
-                    context.IsUnique,
-                    context.IsSet,
-                    context.IsHereticalIdol
-                );
-            LocaleRegistry.Apply(
-                rows[slot].slotLabel,
-                allowIllegal && slot < 4 ? "Affix " + (slot + 1)
-                    : enchantment ? "Enchantment " + (slot == 1 ? 1 : 2)
-                    : slot == 4 ? "Sealed"
-                    : slot == 5 ? "Primordial"
-                    : slot < 2 ? "Prefix " + (slot + 1)
-                    : "Suffix " + (slot - 1)
-            );
-            rows[slot].select.interactable = available;
-            rows[slot].tier.input.interactable = available;
-            rows[slot].roll.input.interactable = available && !rows[slot].roll.random;
-            rows[slot].roll.mode.interactable = available;
-        }
-        RefreshPreview();
-        return true;
-    }
-
     static void Build()
     {
-        if (!FD.Type_Initialized || FD.content_obj.IsNullOrDestroyed())
+        if (!FD.TypeInitialized || FD.ContentObject.IsNullOrDestroyed())
+        {
             return;
+        }
         foreach (
             var candidate in Hud_Manager.hud_object.GetComponentsInChildren<TMP_InputField>(true)
         )
@@ -473,13 +480,14 @@ public static class ForceDropBuilder
             }
         if (template.IsNullOrDestroyed())
             throw new InvalidOperationException("Input template is unavailable");
-        var texts = FD.content_obj.GetComponentsInChildren<Text>(true);
-        foreach (var t in texts)
+        foreach (Text t in FD.ContentObject.GetComponentsInChildren<Text>(true))
+        {
             if (!t.font.IsNullOrDestroyed())
             {
                 font = t.font;
                 break;
             }
+        }
         if (font.IsNullOrDestroyed())
             throw new InvalidOperationException("Menu font is unavailable");
         clicks.Clear();
@@ -489,7 +497,7 @@ public static class ForceDropBuilder
         pickerHeaders.Clear();
         foreach (var buttons in columnButtons)
             buttons.Clear();
-        root = Panel(FD.content_obj, "ForceDropBuilder", 0, 0, 1, 1, false);
+        root = Panel(FD.ContentObject, "ForceDropBuilder", 0, 0, 1, 1, false);
         root.GetComponent<Image>().color = HudTheme.Background;
         Label(root, "Force Drop", 0.02f, 0.955f, 0.64f, 0.995f, HudTheme.SliderCardTitleFontSize);
         // Reserve a footer beneath the panels so panel outlines do not cross status text.
@@ -507,7 +515,7 @@ public static class ForceDropBuilder
             .77f,
             .97f,
             .825f,
-            () => CatalogPicker(FD.type_dropdown, FD.SelectType, true)
+            () => CatalogPicker(FD.TypeDropdown, FD.SelectType, true)
         );
         rarityButton = Button(
             left,
@@ -516,7 +524,7 @@ public static class ForceDropBuilder
             .705f,
             .97f,
             .76f,
-            () => CatalogPicker(FD.rarity_dropdown, FD.SelectRarity, true)
+            () => CatalogPicker(FD.RarityDropdown, FD.SelectRarity, true)
         );
         var itemViewport = Panel(left, "Item scroll viewport", .03f, .16f, .925f, .695f);
         itemViewport.AddComponent<RectMask2D>();
@@ -726,10 +734,6 @@ public static class ForceDropBuilder
         Button(right, "Reset", .04f, .03f, .96f, .09f, Reset);
         status = Label(root, "", .30f, .01f, .99f, .045f, 12);
         BuildPicker();
-        // Hide only after the entire replacement view has been built successfully.
-        foreach (var child in Functions.GetAllChild(FD.content_obj))
-            if (child != root)
-                child.SetActive(false);
         HudStyler.NormalizeSelectableGraphics(root);
         HudStyler.ApplyFontScale(root);
         RefreshItems();
@@ -769,7 +773,7 @@ public static class ForceDropBuilder
         foreach (var row in rows)
             if (row != null && row.id >= 0)
                 selected++;
-        return ForceDropPotentialRules.CreatesLegendary(FD.item_rarity, selected);
+        return ForceDropPotentialRules.CreatesLegendary(FD.ItemRarity, selected);
     }
 
     static void RefreshPotentialControls()
@@ -817,7 +821,7 @@ public static class ForceDropBuilder
 
     static void RefreshItems()
     {
-        nativeItems = NativeItemNames.Items(FD.items_dropdown, FD.item_type, FD.item_rarity);
+        nativeItems = NativeItemNames.Items(FD.ItemsDropdown, FD.ItemType, FD.ItemRarity);
         itemIndexes.Clear();
         itemMatches.Clear();
         if (SearchAllItems)
@@ -833,8 +837,12 @@ public static class ForceDropBuilder
                     itemMatches.Add(item);
         }
         else
-            for (int i = 1; i < FD.items_dropdown.options.Count; i++)
+        {
+            for (int i = 1; i < FD.ItemsDropdown.options.Count; i++)
+            {
                 itemIndexes.Add(i);
+            }
+        }
         itemSearchStatus.text =
             SearchAllItems && VisibleItemCount == 0 ? L("No matching items") : "";
         itemScrollStart = -1;
@@ -867,10 +875,10 @@ public static class ForceDropBuilder
             return;
         itemScrollStart = start;
         var identity = new ForceDropItemIdentity(
-            FD.item_type,
-            FD.item_subtype,
-            FD.item_rarity,
-            FD.item_unique_id
+            FD.ItemType,
+            FD.ItemSubtype,
+            FD.ItemRarity,
+            FD.ItemUniqueId
         );
         for (int slot = 0; slot < itemButtons.Count; slot++)
         {
@@ -889,10 +897,10 @@ public static class ForceDropBuilder
             {
                 var match = SearchAllItems ? itemMatches[index] : null;
                 bool selected =
-                    FD.items_dropdown.value > 0
+                    FD.ItemsDropdown.value > 0
                     && (
                         match == null
-                            ? itemIndexes[index] == FD.items_dropdown.value
+                            ? itemIndexes[index] == FD.ItemsDropdown.value
                             : match.Identity == identity
                     );
                 string name =
@@ -924,11 +932,8 @@ public static class ForceDropBuilder
         else
         {
             int option = itemIndexes[i];
-            FD.items_dropdown.SetValueWithoutNotify(option);
-            if (nativeItems.TryGetValue(option, out var item))
-                NativeItemNames.SelectItem(item);
-            else
-                FD.SelectItem();
+            FD.ItemsDropdown.SetValueWithoutNotify(option);
+            FD.SelectItem();
         }
         ResetRage();
         RefreshItems();
@@ -952,12 +957,12 @@ public static class ForceDropBuilder
     static UniqueList.Entry SelectedRageEntry()
     {
         if (
-            FD.item_rarity < 7
-            || FD.items_dropdown.value <= 0
+            FD.ItemRarity < 7
+            || FD.ItemsDropdown.value <= 0
             || UniqueList.instance.IsNullOrDestroyed()
         )
             return null;
-        return UniqueList.getUnique((ushort)FD.item_unique_id);
+        return UniqueList.getUnique((ushort)FD.ItemUniqueId);
     }
 
     static void ResetRage()
@@ -1079,23 +1084,17 @@ public static class ForceDropBuilder
                     ? "Force Drop illegal corruption pool: base="
                     : "Force Drop legal corruption pool: base="
             )
-                + FD.item_type
+                + FD.ItemType
                 + ", subtype="
-                + FD.item_subtype
+                + FD.ItemSubtype
                 + ", unique="
-                + FD.item_unique_id
+                + FD.ItemUniqueId
                 + ", choices="
                 + (choices.Count - 1)
                 + ", status="
                 + corruptionPoolError
         );
         OpenPicker("Corrupted affix", true);
-    }
-
-    public static void DropSelection()
-    {
-        if (IsReady)
-            Drop();
     }
 
     static int[] SelectedVariantIds()
@@ -1114,13 +1113,13 @@ public static class ForceDropBuilder
             if (string.IsNullOrWhiteSpace(label))
                 continue;
             if (
-                catalog == FD.type_dropdown
+                catalog == FD.TypeDropdown
                 && label.IndexOf("blessing", StringComparison.OrdinalIgnoreCase) >= 0
             )
                 continue;
             nativeCategories.TryGetValue(i, out var category);
             string display =
-                catalog == FD.type_dropdown
+                catalog == FD.TypeDropdown
                     ? CategoryName(i, label)
                     : NativeItemNames.RarityName(label);
             int index = i;
@@ -1133,10 +1132,14 @@ public static class ForceDropBuilder
                     select = () =>
                     {
                         catalog.SetValueWithoutNotify(index);
-                        if (catalog == FD.type_dropdown && category != null)
+                        if (catalog == FD.TypeDropdown && category != null)
+                        {
                             NativeItemNames.SelectCategory(category);
+                        }
                         else
+                        {
                             changed();
+                        }
                         ResetRage();
                         foreach (var r in rows)
                         {
@@ -1151,8 +1154,8 @@ public static class ForceDropBuilder
                 }
             );
         }
-        OpenPicker(catalog == FD.type_dropdown ? "Category" : "Rarity");
-        categoryPicker = catalog == FD.type_dropdown;
+        OpenPicker(catalog == FD.TypeDropdown ? "Category" : "Rarity");
+        categoryPicker = catalog == FD.TypeDropdown;
         rarityPicker = !categoryPicker;
         RefreshPicker();
     }
@@ -1196,11 +1199,11 @@ public static class ForceDropBuilder
                     ? "Force Drop illegal affix pool: base="
                     : "Force Drop legal affix pool: base="
             )
-                + FD.item_type
+                + FD.ItemType
                 + ", subtype="
-                + FD.item_subtype
+                + FD.ItemSubtype
                 + ", unique="
-                + FD.item_unique_id
+                + FD.ItemUniqueId
                 + ", slot="
                 + slot
                 + ", choices="
@@ -1254,8 +1257,8 @@ public static class ForceDropBuilder
         if (
             slot == 5
             && !ForceDropModeRules.CanSealPrimordial(
-                FD.item_type,
-                FD.item_rarity,
+                FD.ItemType,
+                FD.ItemRarity,
                 ForceDropLegalAffixes.Family(a),
                 ForceDropCatalog.MaximumTier(a, 8),
                 allowIllegal ? ForceDropMode.Illegal : ForceDropMode.Legal
@@ -1404,50 +1407,78 @@ public static class ForceDropBuilder
     static bool ValidSelectedItem()
     {
         var list = ItemList.get();
-        if (list.IsNullOrDestroyed() || FD.item_type < 0 || FD.item_subtype < 0)
+        if (list.IsNullOrDestroyed() || FD.ItemType < 0 || FD.ItemSubtype < 0)
+        {
             return false;
+        }
         bool baseExists = false;
         foreach (var type in list.EquippableItems)
-            if (type.baseTypeID == FD.item_type)
+        {
+            if (type.baseTypeID == FD.ItemType)
+            {
                 foreach (var item in type.subItems)
-                    if (item.subTypeID == FD.item_subtype)
+                {
+                    if (item.subTypeID == FD.ItemSubtype)
                     {
                         baseExists = true;
                         break;
                     }
+                }
+            }
+        }
         foreach (var type in list.nonEquippableItems)
-            if (type.baseTypeID == FD.item_type)
+        {
+            if (type.baseTypeID == FD.ItemType)
+            {
                 foreach (var item in type.subItems)
-                    if (item.subTypeID == FD.item_subtype)
+                {
+                    if (item.subTypeID == FD.ItemSubtype)
                     {
                         baseExists = true;
                         break;
                     }
+                }
+            }
+        }
         if (!baseExists)
+        {
             return false;
-        if (FD.item_rarity == 0)
+        }
+        if (FD.ItemRarity == 0)
+        {
             return true;
+        }
         if (UniqueList.instance.IsNullOrDestroyed())
+        {
             return false;
+        }
         foreach (var entry in UniqueList.instance.uniques)
+        {
             if (
-                entry.uniqueID == FD.item_unique_id
-                && entry.baseType == FD.item_type
-                && entry.isSetItem == (FD.item_rarity == 8)
+                entry.uniqueID == FD.ItemUniqueId
+                && entry.baseType == FD.ItemType
+                && entry.isSetItem == (FD.ItemRarity == 8)
             )
+            {
                 foreach (var subType in entry.subTypes)
-                    if (subType == FD.item_subtype)
+                {
+                    if (subType == FD.ItemSubtype)
+                    {
                         return true;
+                    }
+                }
+            }
+        }
         return false;
     }
 
     static string Validate()
     {
         if (
-            FD.type_dropdown.value <= 0
-            || FD.rarity_dropdown.value <= 0
-            || FD.items_dropdown.value <= 0
-            || FD.item_subtype < 0
+            FD.TypeDropdown.value <= 0
+            || FD.RarityDropdown.value <= 0
+            || FD.ItemsDropdown.value <= 0
+            || FD.ItemSubtype < 0
         )
             return "Choose a category, rarity and item.";
         if (
@@ -1514,8 +1545,8 @@ public static class ForceDropBuilder
                 && (
                     row.tier.value != 8
                     || !ForceDropModeRules.CanSealPrimordial(
-                        FD.item_type,
-                        FD.item_rarity,
+                        FD.ItemType,
+                        FD.ItemRarity,
                         ForceDropLegalAffixes.Family(definition),
                         ForceDropCatalog.MaximumTier(definition, 8),
                         allowIllegal ? ForceDropMode.Illegal : ForceDropMode.Legal
@@ -1567,23 +1598,26 @@ public static class ForceDropBuilder
         foreach (var n in numbers)
             if (!int.TryParse(n.input.text, out int value) || value < n.min || value > n.max)
                 return "Use whole numbers within each field's range.";
-        if (FD.item_type >= 100 && corrupted)
+        if (FD.ItemType >= 100 && corrupted)
+        {
             return "Corruption is available for equipment only.";
+        }
         return "";
     }
 
     static void RefreshPreview()
     {
         var s = new StringBuilder(
-            FD.items_dropdown.value > 0 ? ItemName(FD.items_dropdown.value) : L("Choose an item")
+            FD.ItemsDropdown.value > 0 ? ItemName(FD.ItemsDropdown.value) : L("Choose an item")
         );
         s.Append("\n\n")
             .Append(SelectedCategoryName(""))
             .Append("\n")
-            .Append(NativeItemNames.RarityName(Selected(FD.rarity_dropdown, "")));
-        if (FD.item_type < 100)
+            .Append(NativeItemNames.RarityName(Selected(FD.RarityDropdown, "")));
+        if (FD.ItemType < 100)
         {
-            if (FD.item_rarity < 7)
+            if (FD.ItemRarity < 7)
+            {
                 s.Append("\n")
                     .Append(L("Forging potential"))
                     .Append(": ")
@@ -1592,6 +1626,7 @@ public static class ForceDropBuilder
                         : forging.random ? L("Random")
                         : forging.value.ToString()
                     );
+            }
             foreach (var r in rows)
                 if (r.id >= 0)
                     s.Append("\n\n")
@@ -1606,10 +1641,11 @@ public static class ForceDropBuilder
                         .Append(" · ")
                         .Append((r.roll.random ? L("Random") : r.roll.value.ToString()))
                         .Append(" %");
-            if (FD.item_rarity > 6)
+            if (FD.ItemRarity > 6)
+            {
                 s.Append("\n\n")
                     .Append(
-                        FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential
+                        FD.ItemLegendaryType == UniqueList.LegendaryType.LegendaryPotential
                             ? L("LP")
                                 + ": "
                                 + (
@@ -1625,6 +1661,7 @@ public static class ForceDropBuilder
                                     : ww.value.ToString()
                                 )
                     );
+            }
         }
         int variantCount = UniqueVariantAdapter.VariantCount(SelectedRageEntry());
         for (int slot = 0; slot < variantCount; slot++)
@@ -1664,8 +1701,8 @@ public static class ForceDropBuilder
 
     static ResolvedForceDrop ResolveItem(bool previewOnly = false, bool includeCorruption = true)
     {
-        bool equipment = FD.item_type < 100;
-        bool unique = FD.item_rarity >= 7;
+        bool equipment = FD.ItemType < 100;
+        bool unique = FD.ItemRarity >= 7;
         int ResolvedRoll(Number n) => previewOnly ? 255 : Roll(n);
         int ResolvedNumber(Number n) => previewOnly ? n.value : Sample(n);
         var selected = new List<ResolvedForceDropAffix>();
@@ -1692,17 +1729,16 @@ public static class ForceDropBuilder
         if (unique)
             for (int i = 0; i < uniqueValues.Length; i++)
                 uniqueValues[i] = ResolvedRoll(uniqueRolls[i]);
-        bool usesLP =
-            unique && FD.item_legendary_type == UniqueList.LegendaryType.LegendaryPotential;
+        bool usesLP = unique && FD.ItemLegendaryType == UniqueList.LegendaryType.LegendaryPotential;
         return new ResolvedForceDrop(
-            FD.item_type,
-            FD.item_subtype,
-            unique ? FD.item_unique_id : 0,
-            FD.item_rarity,
+            FD.ItemType,
+            FD.ItemSubtype,
+            unique ? FD.ItemUniqueId : 0,
+            FD.ItemRarity,
             equipment && !unique && !corrupted ? ResolvedNumber(forging) : 0,
             usesLP
             && !corrupted
-            && !ForceDropPotentialRules.CreatesLegendary(FD.item_rarity, selected.Count)
+            && !ForceDropPotentialRules.CreatesLegendary(FD.ItemRarity, selected.Count)
                 ? ResolvedNumber(lp)
                 : 0,
             unique && !usesLP && !corrupted ? ResolvedNumber(ww) : 0,
@@ -1936,7 +1972,11 @@ public static class ForceDropBuilder
             return;
 
         // Avoid per-frame event-system and component queries until typing occurs.
-        string typed = ForceDropSearchTyping.Printable(UnityEngine.Input.inputString);
+        string typed = ForceDropSearchTyping.Redirected(
+            UnityEngine.Input.inputString,
+            UnityEngine.Input.GetKeyDown(KeyCode.Return)
+                || UnityEngine.Input.GetKeyDown(KeyCode.KeypadEnter)
+        );
         if (typed.Length == 0)
             return;
 
@@ -1979,7 +2019,7 @@ public static class ForceDropBuilder
     {
         string locale = NativeItemNames.Locale;
         object modLocale = Locales.current_dictionary;
-        int categoryCount = FD.type_dropdown.options.Count;
+        int categoryCount = FD.TypeDropdown.options.Count;
         if (
             lastNativeLocale == locale
             && ReferenceEquals(lastModLocale, modLocale)
@@ -1989,7 +2029,7 @@ public static class ForceDropBuilder
         lastNativeLocale = locale;
         lastModLocale = modLocale;
         lastCategoryCount = categoryCount;
-        nativeCategories = NativeItemNames.Categories(FD.type_dropdown);
+        nativeCategories = NativeItemNames.Categories(FD.TypeDropdown);
         allItems = null;
         lastItems = "";
         lastSearch = "";
@@ -2018,8 +2058,8 @@ public static class ForceDropBuilder
     {
         if (nativeItems.TryGetValue(index, out var item))
             return item.name;
-        return index > 0 && index < FD.items_dropdown.options.Count
-            ? FD.items_dropdown.options[index].text
+        return index > 0 && index < FD.ItemsDropdown.options.Count
+            ? FD.ItemsDropdown.options[index].text
             : L("Choose an item");
     }
 
@@ -2035,8 +2075,8 @@ public static class ForceDropBuilder
 
     static string SelectedCategoryName(string fallback)
     {
-        return FD.type_dropdown.value > 0
-            ? CategoryName(FD.type_dropdown.value, Selected(FD.type_dropdown, fallback))
+        return FD.TypeDropdown.value > 0
+            ? CategoryName(FD.TypeDropdown.value, Selected(FD.TypeDropdown, fallback))
             : L(fallback);
     }
 

@@ -1,4 +1,5 @@
-﻿using MelonLoader;
+﻿using LastEpoch_Hud.Scripts.ModUI.Shell.Host;
+using MelonLoader;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Character;
@@ -26,7 +27,7 @@ public class Character_Bank_Anywhere : MonoBehaviour
         {
             if (
                 Input.GetKeyDown(Save_Manager.instance.data.KeyBinds.BankStashs)
-                && Save_Manager.instance.data.KeyBinds.BankStashs != Hud_Manager.MenuKey
+                && Save_Manager.instance.data.KeyBinds.BankStashs != HudMenuToggle.MenuKey
             )
             {
                 if (IsOpen())

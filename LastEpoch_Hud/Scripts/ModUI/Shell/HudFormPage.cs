@@ -63,7 +63,6 @@ internal sealed class HudFormPage : IHudSearchPage
     private sealed class DropdownBinding
     {
         public Dropdown Control;
-        public Dropdown Source;
         public Func<int> Read;
     }
 
@@ -646,6 +645,62 @@ internal sealed class HudFormPage : IHudSearchPage
         }
     }
 
+    /// <summary>Clones the HUD input template as a themed numeric input; null without a template.</summary>
+    public TMP_InputField BuildInput(GameObject parent)
+    {
+        if (inputTemplate.IsNullOrDestroyed())
+            return null;
+        var clone = UnityEngine.Object.Instantiate(
+            inputTemplate.gameObject,
+            parent.transform,
+            false
+        );
+        clone.name = "ValueInput";
+        var input = clone.GetComponent<TMP_InputField>();
+        var rect = clone.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(1f, 1f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(1f, 1f);
+        rect.anchoredPosition = new Vector2(-4f, -4f);
+        rect.sizeDelta = new Vector2(HudTheme.SliderValueWidth, 34f);
+        rect.localScale = Vector3.one;
+        var layout = clone.GetComponent<LayoutElement>();
+        if (!layout.IsNullOrDestroyed())
+            layout.ignoreLayout = true;
+        var background = clone.GetComponent<Image>();
+        if (!background.IsNullOrDestroyed())
+        {
+            background.sprite = null;
+            background.type = Image.Type.Simple;
+            background.color = HudTheme.ControlBox;
+        }
+        HudStyler.AddPrimaryBorder(clone, 1f);
+        input.colors = HudTheme.ButtonColors(HudTheme.ControlBox, HudTheme.Selection);
+        input.onValueChanged.RemoveAllListeners();
+        input.contentType = TMP_InputField.ContentType.DecimalNumber;
+        input.characterLimit = 12;
+        input.readOnly = false;
+        input.interactable = true;
+        if (!input.placeholder.IsNullOrDestroyed())
+            input.placeholder.gameObject.SetActive(false);
+        if (!input.textViewport.IsNullOrDestroyed())
+        {
+            input.textViewport.anchorMin = Vector2.zero;
+            input.textViewport.anchorMax = Vector2.one;
+            input.textViewport.offsetMin = new Vector2(8f, 0f);
+            input.textViewport.offsetMax = new Vector2(-10f, 0f);
+        }
+        if (!input.textComponent.IsNullOrDestroyed())
+        {
+            input.textComponent.color = HudTheme.TextPrimary;
+            input.textComponent.fontSize = HudTheme.BodyFontSize;
+            input.textComponent.horizontalAlignment = HorizontalAlignmentOptions.Right;
+            input.textComponent.verticalAlignment = VerticalAlignmentOptions.Middle;
+        }
+        clone.SetActive(true);
+        return input;
+    }
+
     // The direct child of a card body that holds the control, or null.
     private GameObject RowOf(Component control)
     {
@@ -840,18 +895,6 @@ internal sealed class HudFormPage : IHudSearchPage
         return slider;
     }
 
-    public Dropdown AddDropdown(
-        Card card,
-        string id,
-        string label,
-        Dropdown source,
-        Func<int> read,
-        Action<int> write
-    )
-    {
-        return AddDropdownRow(card, id, label, source, source, read, write);
-    }
-
     /// <summary>A dropdown row with its own options, cloned from the first dropdown in the hud.</summary>
     public Dropdown AddOptionsDropdown(
         Card card,
@@ -862,15 +905,7 @@ internal sealed class HudFormPage : IHudSearchPage
         Action<int> write
     )
     {
-        Dropdown dropdown = AddDropdownRow(
-            card,
-            id,
-            label,
-            FindDropdownTemplate(),
-            null,
-            read,
-            write
-        );
+        Dropdown dropdown = AddDropdownRow(card, id, label, FindDropdownTemplate(), read, write);
         if (dropdown.IsNullOrDestroyed())
         {
             return null;
@@ -903,7 +938,6 @@ internal sealed class HudFormPage : IHudSearchPage
         string id,
         string label,
         Dropdown template,
-        Dropdown optionsSource,
         Func<int> read,
         Action<int> write
     )
@@ -975,14 +1009,7 @@ internal sealed class HudFormPage : IHudSearchPage
                 write?.Invoke(dropdown.value);
             })
         );
-        dropdowns.Add(
-            new DropdownBinding
-            {
-                Control = dropdown,
-                Source = optionsSource,
-                Read = read,
-            }
-        );
+        dropdowns.Add(new DropdownBinding { Control = dropdown, Read = read });
         Register(card, label, row);
         return dropdown;
     }
@@ -1125,8 +1152,6 @@ internal sealed class HudFormPage : IHudSearchPage
             {
                 if (binding.Control.IsNullOrDestroyed())
                     continue;
-                if (!binding.Source.IsNullOrDestroyed())
-                    binding.Control.options = binding.Source.options;
                 binding.Control.value = Mathf.Clamp(
                     binding.Read?.Invoke() ?? 0,
                     0,
@@ -1176,61 +1201,6 @@ internal sealed class HudFormPage : IHudSearchPage
         if (TryParse(text, out float value))
             binding.Control.value = Mathf.Clamp(value, binding.Minimum, binding.Maximum);
         SetInputText(binding, binding.Control.value);
-    }
-
-    private TMP_InputField BuildInput(GameObject parent)
-    {
-        if (inputTemplate.IsNullOrDestroyed())
-            return null;
-        var clone = UnityEngine.Object.Instantiate(
-            inputTemplate.gameObject,
-            parent.transform,
-            false
-        );
-        clone.name = "ValueInput";
-        var input = clone.GetComponent<TMP_InputField>();
-        var rect = clone.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(1f, 1f);
-        rect.anchorMax = new Vector2(1f, 1f);
-        rect.pivot = new Vector2(1f, 1f);
-        rect.anchoredPosition = new Vector2(-4f, -4f);
-        rect.sizeDelta = new Vector2(HudTheme.SliderValueWidth, 34f);
-        rect.localScale = Vector3.one;
-        var layout = clone.GetComponent<LayoutElement>();
-        if (!layout.IsNullOrDestroyed())
-            layout.ignoreLayout = true;
-        var background = clone.GetComponent<Image>();
-        if (!background.IsNullOrDestroyed())
-        {
-            background.sprite = null;
-            background.type = Image.Type.Simple;
-            background.color = HudTheme.ControlBox;
-        }
-        HudStyler.AddPrimaryBorder(clone, 1f);
-        input.colors = HudTheme.ButtonColors(HudTheme.ControlBox, HudTheme.Selection);
-        input.onValueChanged.RemoveAllListeners();
-        input.contentType = TMP_InputField.ContentType.DecimalNumber;
-        input.characterLimit = 12;
-        input.readOnly = false;
-        input.interactable = true;
-        if (!input.placeholder.IsNullOrDestroyed())
-            input.placeholder.gameObject.SetActive(false);
-        if (!input.textViewport.IsNullOrDestroyed())
-        {
-            input.textViewport.anchorMin = Vector2.zero;
-            input.textViewport.anchorMax = Vector2.one;
-            input.textViewport.offsetMin = new Vector2(8f, 0f);
-            input.textViewport.offsetMax = new Vector2(-10f, 0f);
-        }
-        if (!input.textComponent.IsNullOrDestroyed())
-        {
-            input.textComponent.color = HudTheme.TextPrimary;
-            input.textComponent.fontSize = HudTheme.BodyFontSize;
-            input.textComponent.horizontalAlignment = HorizontalAlignmentOptions.Right;
-            input.textComponent.verticalAlignment = VerticalAlignmentOptions.Middle;
-        }
-        clone.SetActive(true);
-        return input;
     }
 
     private Scrollbar BuildScrollbar(GameObject parent)

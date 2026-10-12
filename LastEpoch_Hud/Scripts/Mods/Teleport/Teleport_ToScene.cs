@@ -1,4 +1,5 @@
 ﻿using Il2Cpp;
+using LastEpoch_Hud.Scripts.ModUI.Shell.Host;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -77,7 +78,7 @@ public class Teleport_ToScene : MonoBehaviour
             {
                 Refs_Manager.player_data.UnlockedWaypointScenes.Add(scene_name);
             }
-            Hud_Manager.Hud_Base.Resume_Click();
+            GamePauseMenu.Resume();
             if (
                 (!Refs_Manager.game_uibase.IsNullOrDestroyed())
                 && (Refs_Manager.game_uibase.IsWorldMapPanelOpen())

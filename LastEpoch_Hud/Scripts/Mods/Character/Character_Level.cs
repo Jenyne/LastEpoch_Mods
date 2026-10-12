@@ -1,4 +1,6 @@
-﻿namespace LastEpoch_Hud.Scripts.Mods.Character;
+﻿using LastEpoch_Hud.Scripts.ModUI.Shell.Host;
+
+namespace LastEpoch_Hud.Scripts.Mods.Character;
 
 public class Character_Level
 {
@@ -10,7 +12,7 @@ public class Character_Level
         {
             if (CanLevelUp())
             {
-                Hud_Manager.Hud_Base.Resume_Click(); //Close Hud
+                GamePauseMenu.Resume(); //Close Hud
                 Refs_Manager.exp_tracker.LevelUp(true);
             }
             else
@@ -26,7 +28,7 @@ public class Character_Level
         {
             if (CanLevelUp())
             {
-                Hud_Manager.Hud_Base.Resume_Click(); //Close Hud
+                GamePauseMenu.Resume(); //Close Hud
                 if (level > max_level)
                 {
                     level = max_level;
@@ -49,7 +51,7 @@ public class Character_Level
         {
             if (CanLevelUp())
             {
-                Hud_Manager.Hud_Base.Resume_Click(); //Close Hud
+                GamePauseMenu.Resume(); //Close Hud
                 for (int i = Refs_Manager.exp_tracker.CurrentLevel; i < max_level; i++)
                 {
                     Refs_Manager.exp_tracker.LevelUp(true);
