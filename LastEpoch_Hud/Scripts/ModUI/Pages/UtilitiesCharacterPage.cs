@@ -710,6 +710,8 @@ internal static class UtilitiesCharacterPage
         }
 
         SettingsBuilder.ApplyDropdownOptions(_factionDropdown, FactionOptionTexts());
+        // ClearOptions resets the shown value to 0; keep the stored faction selected.
+        _factionDropdown.SetValueWithoutNotify(_factionSelection);
         _factionOptionsLocale = Locales.current_dictionary;
     }
 
