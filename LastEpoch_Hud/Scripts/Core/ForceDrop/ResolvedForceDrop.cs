@@ -132,6 +132,10 @@ public sealed class ResolvedForceDrop
             else if (affix.Seal != ForceDropSeal.None)
                 throw new ArgumentException("Corruption must use its separate corruption slot.");
         }
+        if (!IsIllegal && rarity >= 7 && (regularSeals != 0 || primordialSeals != 0))
+            throw new ArgumentException(
+                "Unique and Set items require Illegal mode for regular or Primordial seals."
+            );
         if (primordialSeals > 1)
             throw new ArgumentException("Only one Primordial seal can be represented.");
         if (regularSeals > 1)

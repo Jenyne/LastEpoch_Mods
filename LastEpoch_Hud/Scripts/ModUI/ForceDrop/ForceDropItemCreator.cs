@@ -101,6 +101,7 @@ public static class ForceDropItemCreator
         if (request == null)
             throw new ArgumentNullException(nameof(request));
         ValidateIdentity(request);
+        bool uncheckedUniqueSeal = request.IsIllegal && request.Rarity >= 7;
         var affixes = new Il2CppSystem.Collections.Generic.List<ItemAffix>();
         ItemAffix regularSeal = null,
             primordialSeal = null;
@@ -176,7 +177,10 @@ public static class ForceDropItemCreator
                 ForceDropSeal.None,
                 request.IsIllegal && seedTier == 7
             );
-            affixes.Add(affix);
+            // Illegal unique regular seals use unchecked insertion below.
+            // Do not insert their seed twice.
+            if (!(uncheckedUniqueSeal && selected.Seal == ForceDropSeal.Regular))
+                affixes.Add(affix);
             if (selected.Seal == ForceDropSeal.Regular)
                 regularSeal = affix;
             else if (primordial)
@@ -215,7 +219,7 @@ public static class ForceDropItemCreator
         byte rarity = (byte)request.Rarity;
         if (rarity < 7)
             rarity = (byte)ordinaryCount;
-        else if (ordinaryCount > 0)
+        else if (ForceDropPotentialRules.CreatesLegendary(request.Rarity, request.Affixes.Count))
             rarity = 9;
         var item = new ItemDataUnpacked
         {
@@ -237,12 +241,46 @@ public static class ForceDropItemCreator
             sockets = (byte)affixes.Count,
         };
         WriteRolls(item, request);
-        // The game owns seal ordering and flags. Do not fabricate a regular seal
-        // by assigning a boolean on a manually populated affix list.
+        // SealAffix is a crafting operation. Illegal creation uses the native
+        // unchecked path, which owns the regular seal flag and insertion order.
         if (!regularSeal.IsNullOrDestroyed())
-            item.SealAffix(regularSeal);
+        {
+            if (uncheckedUniqueSeal)
+            {
+                var statChanges = new Il2CppSystem.Collections.Generic.List<Stats.Stat>();
+                item.AddAffixNoCostOrChecks(
+                    regularSeal.affixId,
+                    true,
+                    regularSeal.affixTier,
+                    ref statChanges,
+                    new Il2CppSystem.Nullable<byte>(regularSeal.affixRoll),
+                    false
+                );
+            }
+            else
+                item.SealAffix(regularSeal);
+            if (
+                !item.hasSealedRegularAffix
+                || !item.TryGetSealedRegularAffix(out ItemAffix savedSeal)
+                || savedSeal.IsNullOrDestroyed()
+                || savedSeal.affixId != regularSeal.affixId
+            )
+                throw new InvalidOperationException(
+                    "The game did not create the selected regular seal; no item was dropped."
+                );
+        }
         if (!primordialSeal.IsNullOrDestroyed())
         {
+            // Unchecked insertion may refresh the native affix list.
+            int primordialId = primordialSeal.affixId;
+            primordialSeal = null;
+            foreach (var candidate in item.affixes)
+                if (!candidate.IsNullOrDestroyed() && candidate.affixId == primordialId)
+                    primordialSeal = candidate;
+            if (primordialSeal.IsNullOrDestroyed())
+                throw new InvalidOperationException(
+                    "The Primordial seed is missing; no item was dropped."
+                );
             item.MakeAffixSealedPrimordialAffix(primordialSeal, true);
             foreach (var selected in request.Affixes)
                 if (selected.Seal == ForceDropSeal.Primordial)

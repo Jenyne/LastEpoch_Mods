@@ -424,6 +424,13 @@ public static class ForceDropBuilder
         if (forging.mode != null)
             forging.mode.interactable = !corrupted;
         RefreshPotentialControls();
+        RefreshAffixControls();
+        RefreshPreview();
+        return true;
+    }
+
+    static void RefreshAffixControls()
+    {
         for (int slot = 0; slot < rows.Length; slot++)
         {
             var context = LegalContext(slot);
@@ -451,8 +458,6 @@ public static class ForceDropBuilder
             rows[slot].roll.input.interactable = available && !rows[slot].roll.random;
             rows[slot].roll.mode.interactable = available;
         }
-        RefreshPreview();
-        return true;
     }
 
     static void Build()
@@ -761,6 +766,7 @@ public static class ForceDropBuilder
                 n.input.interactable = !n.random;
             }
         RefreshPotentialControls();
+        RefreshAffixControls();
     }
 
     static bool CreatesLegendary()
@@ -1159,6 +1165,18 @@ public static class ForceDropBuilder
 
     static void AffixPicker(int slot)
     {
+        var slotContext = LegalContext(slot);
+        if (
+            !allowIllegal
+            && !ForceDropLegalRules.SlotAllowed(
+                slot,
+                slotContext.IsIdol,
+                slotContext.IsUnique,
+                slotContext.IsSet,
+                slotContext.IsHereticalIdol
+            )
+        )
+            return;
         choices.Clear();
         choices.Add(
             new Choice
@@ -1746,6 +1764,7 @@ public static class ForceDropBuilder
             picker.SetActive(false);
         RefreshTierLimits();
         RefreshIllegalButton();
+        RefreshAffixControls();
     }
 
     static void RefreshIllegalButton()
