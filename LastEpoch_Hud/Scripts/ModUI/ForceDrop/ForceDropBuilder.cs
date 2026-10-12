@@ -1353,13 +1353,10 @@ public static class ForceDropBuilder
 
     static int RowMaximum(int slot, AffixList.Affix definition)
     {
-        // Native storage has independent regular and Primordial seals.
-        // A regular seal stays within T1-T7; the Primordial slot is T8 only.
-        if (slot == 4)
-            return 7;
-        if (slot == 5)
-            return 8;
-        return RouteMaximum;
+        return ForceDropModeRules.MaximumSlotTier(
+            slot,
+            allowIllegal ? ForceDropMode.Illegal : ForceDropMode.Legal
+        );
     }
 
     static void RefreshTierLimits()

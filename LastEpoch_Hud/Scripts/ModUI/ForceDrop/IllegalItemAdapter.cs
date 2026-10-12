@@ -117,6 +117,80 @@ public static class IllegalItemAdapter
         }
     }
 
+    [HarmonyPatch(typeof(Il2CppLE.UI.Tooltips.ItemTooltipContentBuilder), "GetItemTooltipInfo")]
+    static class SetTooltipContent
+    {
+        [HarmonyPostfix]
+        static void Postfix(
+            ItemDataUnpacked __0,
+            TooltipItemManager.SlotType __1,
+            Il2CppLE.UI.Tooltips.ItemTooltipInfo __result
+        )
+        {
+            if (__result.IsNullOrDestroyed() || !AdditionalSetPiece(__0, out var source))
+                return;
+            Il2CppLE.UI.Tooltips.ItemTooltipContentBuilder.SetSetItemInfo(__result, __0, source);
+            Il2CppLE.UI.Tooltips.ItemTooltipContentBuilder.SetSlotTypeOnAllModifiers(__result, __1);
+        }
+    }
+
+    // The game retains the older content path for some tooltip layouts.
+    [HarmonyPatch(typeof(TooltipItemManager), "CreateTooltipDefaultContent")]
+    static class LegacySetTooltipContent
+    {
+        [HarmonyPostfix]
+        static void Postfix(
+            ItemDataUnpacked __0,
+            TooltipMode __1,
+            TooltipItemManager.SlotType __2,
+            ref UITooltipItem.ItemTooltipInfo __result
+        ) => AddLegacySetBonus(__0, __1, __2, ref __result);
+    }
+
+    [HarmonyPatch(typeof(TooltipItemManager), "CreateTooltipFullContent")]
+    static class FullSetTooltipContent
+    {
+        [HarmonyPostfix]
+        static void Postfix(
+            ItemDataUnpacked __0,
+            TooltipMode __1,
+            TooltipItemManager.SlotType __2,
+            ref UITooltipItem.ItemTooltipInfo __result
+        ) => AddLegacySetBonus(__0, __1, __2, ref __result);
+    }
+
+    static void AddLegacySetBonus(
+        ItemDataUnpacked item,
+        TooltipMode mode,
+        TooltipItemManager.SlotType slot,
+        ref UITooltipItem.ItemTooltipInfo info
+    )
+    {
+        if (!AdditionalSetPiece(item, out var source))
+            return;
+        var manager = ItemContainersManager.Instance;
+        int count = manager.IsNullOrDestroyed() ? 0 : manager.getGearCountForSetID(source.setID);
+        var bonuses = TooltipItemManager.GetSetBonus(item, source, mode, slot, count);
+        if (bonuses.IsNullOrDestroyed())
+            return;
+        var lines = new Il2CppSystem.Collections.Generic.List<Il2CppSystem.ValueTuple<
+            string,
+            bool
+        >>();
+        if (!info.uniqueAffixesText.IsNullOrDestroyed())
+            foreach (var line in info.uniqueAffixesText)
+                lines.Add(line);
+        foreach (string bonus in bonuses)
+        {
+            bool present = false;
+            foreach (var line in lines)
+                present |= line.Item1 == bonus;
+            if (!present)
+                lines.Add(new Il2CppSystem.ValueTuple<string, bool>(bonus, true));
+        }
+        info.uniqueAffixesText = lines;
+    }
+
     static HashSet<ushort> EquippedSetPieces(
         ItemContainersManager manager,
         byte setId,
@@ -208,6 +282,7 @@ public static class IllegalItemAdapter
         [HarmonyPostfix]
         static void Postfix(ItemDataUnpacked __instance)
         {
+            IllegalUniqueSealAdapter.Restore(__instance);
             // Native equipment code can read the cached field directly.
             if (AdditionalSetPiece(__instance, out var source))
                 __instance.SetId = source.setID;

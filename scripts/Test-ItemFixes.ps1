@@ -71,10 +71,10 @@ try {
     }
     Copy-Item -LiteralPath $modDll -Destination $installedDll -Force
     Write-Host "Installed item-fix test build $localHead."
-    Write-Host "Illegal On: drop a Unique with four affixes + sealed + Primordial + corrupted; pick up and reload."
+    Write-Host "Illegal On: drop a Unique with four affixes + T8 sealed + Primordial + corrupted; pick up and reload."
     Write-Host "Illegal Off: confirm Unique/Set sealed and Primordial slots stay locked, including after Fixed/Random changes."
     Write-Host "Equip distinct illegal Set pieces with Remove Set Requirements OFF; check bonuses, duplicates and reload."
-    Write-Host "Hover ground loot before/during combat; send the [Ground Tooltip] lines if the tooltip fails."
+    Write-Host "Retest the amulet Set-bonus text. Hover ground loot before/during combat; send the [Ground Tooltip] caller traces if it fails."
 } finally {
     Pop-Location
 }

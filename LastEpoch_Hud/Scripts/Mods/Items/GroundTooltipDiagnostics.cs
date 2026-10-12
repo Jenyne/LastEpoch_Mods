@@ -19,8 +19,11 @@ internal static class GroundTooltipDiagnostics
             scene = Scenes.SceneName;
             remaining = 60;
         }
-        if (remaining-- > 0)
+        if (remaining > 0)
+        {
+            remaining--;
             Main.logger_instance?.Msg("[Ground Tooltip] frame=" + Time.frameCount + " " + message);
+        }
     }
 
     [HarmonyPatch(typeof(TooltipItem), nameof(TooltipItem.OnPointerEnter))]
@@ -107,7 +110,8 @@ internal static class GroundTooltipDiagnostics
             try
             {
                 if (
-                    !__instance.activeParameters.IsNullOrDestroyed()
+                    __instance.active
+                    && !__instance.activeParameters.IsNullOrDestroyed()
                     && __instance.activeParameters.SlotType == TooltipItemManager.SlotType.GROUND
                 )
                     Trace(
@@ -115,6 +119,20 @@ internal static class GroundTooltipDiagnostics
                             + __instance.active
                             + ", stage="
                             + __instance.activeInitializationStage
+                            + ", hovered="
+                            + (
+                                !TooltipItem.highlightedTooltipItem.IsNullOrDestroyed()
+                                && TooltipItem.highlightedTooltipItem.slotType
+                                    == TooltipItemManager.SlotType.GROUND
+                            )
+                            + ", leftHeld="
+                            + Input.GetMouseButton(0)
+                            + ", rightHeld="
+                            + Input.GetMouseButton(1)
+                            + ", worldBlocked="
+                            + UIMouseListener.WorldActionsDisabled()
+                            + ", caller="
+                            + Environment.StackTrace
                     );
             }
             catch { }

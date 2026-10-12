@@ -41,14 +41,28 @@ public class UniqueSealModeTests
         var affixes = Enumerable
             .Range(1, 4)
             .Select(id => new ResolvedForceDropAffix(id, 6, 255, ForceDropSeal.None))
-            .Append(new ResolvedForceDropAffix(5, 6, 255, ForceDropSeal.Regular))
+            .Append(new ResolvedForceDropAffix(5, 7, 255, ForceDropSeal.Regular))
             .Append(new ResolvedForceDropAffix(6, 7, 255, ForceDropSeal.Primordial));
         var request = Request(rarity, ForceDropMode.Illegal, affixes);
         Assert.Equal(6, request.Affixes.Count);
         Assert.Equal(4, request.Affixes.Count(a => a.Seal == ForceDropSeal.None));
         Assert.Equal(ForceDropSeal.Corruption, request.Corruption.Seal);
+        Assert.Equal(7, Assert.Single(request.Affixes, a => a.Seal == ForceDropSeal.Regular).Tier);
         Assert.Equal(0, request.LegendaryPotential);
     }
+
+    [Theory]
+    [InlineData(4, ForceDropMode.Legal, 7)]
+    [InlineData(4, ForceDropMode.Illegal, 8)]
+    [InlineData(0, ForceDropMode.Legal, 7)]
+    [InlineData(0, ForceDropMode.Illegal, 8)]
+    [InlineData(5, ForceDropMode.Legal, 8)]
+    [InlineData(5, ForceDropMode.Illegal, 8)]
+    public void RegularSealTierLimitFollowsCreationMode(
+        int slot,
+        ForceDropMode mode,
+        int maximum
+    ) => Assert.Equal(maximum, ForceDropModeRules.MaximumSlotTier(slot, mode));
 
     static ResolvedForceDrop Request(
         int rarity,
