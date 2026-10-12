@@ -1972,7 +1972,11 @@ public static class ForceDropBuilder
             return;
 
         // Avoid per-frame event-system and component queries until typing occurs.
-        string typed = ForceDropSearchTyping.Printable(UnityEngine.Input.inputString);
+        string typed = ForceDropSearchTyping.Redirected(
+            UnityEngine.Input.inputString,
+            UnityEngine.Input.GetKeyDown(KeyCode.Return)
+                || UnityEngine.Input.GetKeyDown(KeyCode.KeypadEnter)
+        );
         if (typed.Length == 0)
             return;
 

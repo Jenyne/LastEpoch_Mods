@@ -20,6 +20,7 @@ internal static class MonolithTimelineEditor
 
     private static readonly List<Button> _timelineButtons = new();
     private static readonly List<GameObject> _timelineAccents = new();
+    private static readonly List<Text> _timelineLabels = new();
     private static readonly List<MonolithValueRow> _valueRows = new();
     private static GameObject _root;
     private static Text _selectedLabel;
@@ -45,7 +46,7 @@ internal static class MonolithTimelineEditor
         GameObject values = CreatePanel("TimelineValues", _root, 0.34f, 0.75f);
         GameObject actions = CreatePanel("TimelineActions", _root, 0.75f, 1f);
         CreateLabel(list, font, "Timelines", 8f, 32f);
-        _selectedLabel = CreateLabel(values, font, "Selected Timeline", 8f, 52f);
+        _selectedLabel = CreateLabel(values, font, string.Empty, 8f, 52f);
         CreateLabel(actions, font, "Actions", 8f, 32f);
 
         BuildTimelineButtons(list, font);
@@ -101,6 +102,7 @@ internal static class MonolithTimelineEditor
         ApplySelectedLabel();
         for (int i = 0; i < _timelineButtons.Count; i++)
         {
+            ApplyTimelineName(i);
             ApplyButtonState(i, MonolithTimelineCatalog.All[i].TimelineId == _selectedTimelineId);
         }
 
@@ -142,6 +144,7 @@ internal static class MonolithTimelineEditor
         _copyButton = null;
         _timelineButtons.Clear();
         _timelineAccents.Clear();
+        _timelineLabels.Clear();
         _valueRows.Clear();
         _selectedTimelineId = 0;
         _view = default;
@@ -181,7 +184,18 @@ internal static class MonolithTimelineEditor
             return;
         }
 
-        Prefab.ApplyLabel(_selectedLabel, option.Label);
+        _selectedLabel.text = MonolithTimelineNames.Of(option);
+    }
+
+    private static void ApplyTimelineName(int index)
+    {
+        Text label = _timelineLabels[index];
+        if (label.IsNullOrDestroyed())
+        {
+            return;
+        }
+
+        label.text = MonolithTimelineNames.Of(MonolithTimelineCatalog.All[index]);
     }
 
     private static void ApplyButtonState(int index, bool isSelected)
@@ -256,9 +270,11 @@ internal static class MonolithTimelineEditor
                 option.Label,
                 46f + (i * 44f),
                 40f,
-                () => Select(timelineId)
+                () => Select(timelineId),
+                false
             );
             _timelineButtons.Add(button);
+            _timelineLabels.Add(button.GetComponentInChildren<Text>(true));
             _timelineAccents.Add(CreateSelectionAccent(button.gameObject));
         }
     }
@@ -293,10 +309,19 @@ internal static class MonolithTimelineEditor
         Font font,
         string text,
         float top,
-        float height
+        float height,
+        bool localize = true
     )
     {
-        Text label = HudElements.Text(parent, "Label", text, font, 16, HorizontalWrapMode.Wrap);
+        Text label = HudElements.Text(
+            parent,
+            "Label",
+            text,
+            font,
+            16,
+            HorizontalWrapMode.Wrap,
+            localize
+        );
         label.alignment = TextAnchor.MiddleLeft;
         Place(label.gameObject, 0f, 1f, top, height, 12f, 12f);
         return label;
@@ -308,7 +333,8 @@ internal static class MonolithTimelineEditor
         string text,
         float top,
         float height,
-        Action onClick
+        Action onClick,
+        bool localize = true
     )
     {
         GameObject obj = HudElements.Node(parent, "Btn_" + text.Replace(' ', '_'));
@@ -320,7 +346,7 @@ internal static class MonolithTimelineEditor
         button.targetGraphic = image;
         StyleButton(button);
         Prefab.BindButton(button, onClick);
-        Text label = CreateLabel(obj, font, text, 0f, height);
+        Text label = CreateLabel(obj, font, text, 0f, height, localize);
         label.alignment = TextAnchor.MiddleCenter;
         label.resizeTextForBestFit = true;
         label.resizeTextMinSize = 11;
