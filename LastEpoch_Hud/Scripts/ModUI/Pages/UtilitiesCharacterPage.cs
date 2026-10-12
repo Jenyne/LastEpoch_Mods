@@ -27,6 +27,9 @@ internal static class UtilitiesCharacterPage
     private static float _factionReputation;
     private static Dropdown _factionDropdown;
     private static Dictionary<string, string> _factionOptionsLocale;
+    private static Dropdown _classDropdown;
+    private static Dictionary<string, string> _classOptionsLocale;
+    private static bool _classOptionsFromGame;
 
     public static void Build(HudPageId pageId, GameObject parent, GameObject hud, Font font)
     {
@@ -56,6 +59,7 @@ internal static class UtilitiesCharacterPage
     public static void Show()
     {
         RefreshFactionOptions();
+        RefreshClassOptions();
         _page?.Show();
     }
 
@@ -64,6 +68,7 @@ internal static class UtilitiesCharacterPage
     public static void Refresh()
     {
         RefreshFactionOptions();
+        RefreshClassOptions();
         _page?.RefreshValues();
     }
 
@@ -460,14 +465,16 @@ internal static class UtilitiesCharacterPage
     private static void BuildData()
     {
         HudFormPage.Card card = _page.AddCard("Data", "Data");
-        _page.AddOptionsDropdown(
+        _classDropdown = _page.AddOptionsDropdown(
             card,
             "Class",
             "Class",
-            CharacterClassSelection.OptionLabels,
+            ClassOptionTexts(),
             ReadClassOption,
             SetClass
         );
+        _classOptionsLocale = Locales.current_dictionary;
+        _classOptionsFromGame = GameClassListLoaded();
         _page.AddToggle(
             card,
             "Died",
@@ -744,6 +751,70 @@ internal static class UtilitiesCharacterPage
 
     private static bool TrySelectedKind(out FactionKind kind) =>
         FactionSelection.TryKindAt(_factionSelection, out kind);
+
+    private static bool GameClassListLoaded() =>
+        !Refs_Manager.character_class_list.IsNullOrDestroyed();
+
+    private static string[] ClassOptionTexts()
+    {
+        bool loaded = GameClassListLoaded();
+        string[] texts = new string[CharacterClassSelection.OptionLabels.Count];
+        for (int i = 0; i < texts.Length; i++)
+        {
+            string localized = null;
+            string className = null;
+            if (loaded && CharacterClassSelection.TryClassIdAt(i, out int classId))
+            {
+                ReadGameNames(classId, out localized, out className);
+            }
+
+            texts[i] = CharacterClassSelection.LabelAt(i, localized, className);
+        }
+
+        return texts;
+    }
+
+    private static void ReadGameNames(int classId, out string localized, out string className)
+    {
+        localized = null;
+        className = null;
+        try
+        {
+            localized = CharacterClassList.getLocalizedClassName(classId, 0);
+            className = CharacterClassList.getClass(classId)?.className;
+        }
+        catch (Exception ex)
+        {
+            ErrorLog.Report(ex, "Character.ClassName");
+        }
+    }
+
+    /// <summary>Rebuilds the class options after a language change or once the game names load.</summary>
+    private static void RefreshClassOptions()
+    {
+        if (_classDropdown.IsNullOrDestroyed())
+        {
+            return;
+        }
+
+        bool localeChanged = !ReferenceEquals(_classOptionsLocale, Locales.current_dictionary);
+        if (
+            !CharacterClassSelection.ShouldRebuildOptions(
+                localeChanged,
+                _classOptionsFromGame,
+                GameClassListLoaded()
+            )
+        )
+        {
+            return;
+        }
+
+        SettingsBuilder.ApplyDropdownOptions(_classDropdown, ClassOptionTexts());
+        // ClearOptions resets the shown value to 0; show the current class again.
+        _classDropdown.SetValueWithoutNotify(ReadClassOption());
+        _classOptionsLocale = Locales.current_dictionary;
+        _classOptionsFromGame = GameClassListLoaded();
+    }
 
     private static int ReadClassOption()
     {

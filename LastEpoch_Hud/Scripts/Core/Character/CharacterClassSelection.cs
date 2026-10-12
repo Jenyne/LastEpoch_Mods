@@ -33,6 +33,29 @@ public static class CharacterClassSelection
         return true;
     }
 
+    /// <summary>First non-blank of the game's localized name, the game's class name, then the enum name.</summary>
+    public static string LabelAt(int optionIndex, string localizedName, string className)
+    {
+        if (optionIndex < 0 || optionIndex >= OptionLabels.Count)
+        {
+            return string.Empty;
+        }
+
+        if (!string.IsNullOrWhiteSpace(localizedName))
+        {
+            return localizedName;
+        }
+
+        return string.IsNullOrWhiteSpace(className) ? OptionLabels[optionIndex] : className;
+    }
+
+    /// <summary>True when the options are stale: the language changed or the game names became available.</summary>
+    public static bool ShouldRebuildOptions(
+        bool localeChanged,
+        bool builtFromGame,
+        bool gameListLoaded
+    ) => localeChanged || (gameListLoaded && !builtFromGame);
+
     /// <summary>Option showing a class id; 0 when the id is unknown.</summary>
     public static int OptionIndexOf(int classId)
     {
