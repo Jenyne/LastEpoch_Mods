@@ -150,6 +150,10 @@ public sealed class ResolvedForceDrop
             )
         )
             throw new ArgumentException("Corruption must use its own distinct corruption seal.");
+        if (rarity >= 7 && Affixes.Count + VariantIds.Count + (corruption == null ? 0 : 1) > 7)
+            throw new ArgumentException(
+                "Legendary native storage allows at most seven affixes, including exclusive modifiers and sealed slots."
+            );
     }
 
     static IReadOnlyList<int> CopyRolls(IEnumerable<int> source, string name)

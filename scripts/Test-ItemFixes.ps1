@@ -1,4 +1,7 @@
-param([string]$GamePath = "D:\SteamLibrary\steamapps\common\Last Epoch")
+param(
+    [string]$GamePath = "D:\SteamLibrary\steamapps\common\Last Epoch",
+    [switch]$ExportNativeProbe
+)
 
 $ErrorActionPreference = "Stop"
 $branch = "fix/illegal-unique-set-tooltips"
@@ -70,21 +73,24 @@ try {
         Copy-Item -LiteralPath $installedDll -Destination "$installedDll.before-item-fixes-$stamp"
     }
     Copy-Item -LiteralPath $modDll -Destination $installedDll -Force
-    $nativeProbe = Join-Path $repoPath "Build\ItemNativeProbe.zip"
-    $cppOutput = Join-Path $GamePath "MelonLoader\Dependencies\Il2CppAssemblyGenerator\Cpp2IL\cpp2il_out"
-    if ((Test-Path -LiteralPath $cppOutput -PathType Container) -and
-        (Test-Path -LiteralPath (Join-Path $GamePath "GameAssembly.dll") -PathType Leaf)) {
-        dotnet run --project .\tools\NativeItemProbe\NativeItemProbe.csproj -c Release -- $GamePath $nativeProbe
-        if ($LASTEXITCODE -eq 0) {
-            Write-Host "Attach $nativeProbe to diagnose unique sealed-slot packing."
+    if ($ExportNativeProbe) {
+        $nativeProbe = Join-Path $repoPath "Build\ItemNativeProbe.zip"
+        $cppOutput = Join-Path $GamePath "MelonLoader\Dependencies\Il2CppAssemblyGenerator\Cpp2IL\cpp2il_out"
+        if ((Test-Path -LiteralPath $cppOutput -PathType Container) -and
+            (Test-Path -LiteralPath (Join-Path $GamePath "GameAssembly.dll") -PathType Leaf)) {
+            dotnet run --project .\tools\NativeItemProbe\NativeItemProbe.csproj -c Release -- $GamePath $nativeProbe
+            if ($LASTEXITCODE -eq 0) {
+                Write-Host "Attach $nativeProbe to diagnose unique sealed-slot packing."
+            } else {
+                Write-Warning "Native probe export failed. The tested DLL was installed; run scripts/Export-ItemNativeProbe.ps1 separately."
+            }
         } else {
-            Write-Warning "Native probe export failed. The tested DLL was installed; run scripts/Export-ItemNativeProbe.ps1 separately."
+            Write-Warning "Native probe needs GameAssembly.dll and cpp2il_out. Unique sealed-slot packing remains under investigation."
         }
-    } else {
-        Write-Warning "Native probe needs GameAssembly.dll and cpp2il_out. Unique sealed-slot packing remains under investigation."
     }
     Write-Host "Installed item-fix test build $localHead."
-    Write-Host "Unique sealed-slot packing is still under investigation; attach Build/ItemNativeProbe.zip. T8 controls and Set fixes are retained."
+    Write-Host "Test Unique and base items with four affixes + regular seal + Primordial + corruption, at T7/T8; pick up, equip and reload."
+    Write-Host "Illegal Unique regular seals are persisted in Mods/LastEpoch_Hud/IllegalUniqueSeals.json; keep this file with your mod data."
     Write-Host "Illegal Off: confirm Unique/Set sealed and Primordial slots stay locked, including after Fixed/Random changes."
     Write-Host "Equip distinct illegal Set pieces with Remove Set Requirements OFF; check bonuses, duplicates and reload."
     Write-Host "Retest the amulet Set-bonus text. Hover ground loot before/during combat; test pickup and Escape too; send the [Ground Tooltip] pointerOnOpener/kept/allowed lines if it fails."

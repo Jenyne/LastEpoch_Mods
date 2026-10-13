@@ -30,6 +30,7 @@ public static class ForceDropItemCreator
     {
         if (request == null)
             throw new ArgumentNullException(nameof(request));
+        using var sealScope = UniqueRegularSealExtension.Begin();
         var item = CreateBeforeCorruption(request);
         // Eligibility/slot allocation runs on the actual uncorrupted item. The
         // adapter marks corruption immediately after addition, BEFORE its first
@@ -102,6 +103,7 @@ public static class ForceDropItemCreator
                 );
             }
             IllegalItemAdapter.VerifyMembership(restored);
+            sealScope.Commit(item);
             return item;
         }
         catch
@@ -323,6 +325,7 @@ public static class ForceDropItemCreator
                     "The game did not create the selected regular seal; no item was dropped."
                 );
         }
+        UniqueRegularSealExtension.Track(item, request);
         if (request.VariantIds.Count > 0)
         {
             var ids = new int[request.VariantIds.Count];

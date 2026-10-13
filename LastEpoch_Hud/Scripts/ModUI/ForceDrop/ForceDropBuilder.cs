@@ -1478,6 +1478,12 @@ public static class ForceDropBuilder
             return "The selected item does not match its category. Choose it again.";
         var rageEntry = SelectedRageEntry();
         int variantCount = UniqueVariantAdapter.VariantCount(rageEntry);
+        int totalAffixes = variantCount + (corrupted && corruptionId >= 0 ? 1 : 0);
+        foreach (var row in rows)
+            if (row.id >= 0)
+                totalAffixes++;
+        if (FD.item_rarity >= 7 && totalAffixes > 7)
+            return "Legendary saved data supports seven affixes total, including exclusive modifiers.";
         if (variantCount > 0)
         {
             if (!UniqueVariantAdapter.HasVariants(rageEntry))

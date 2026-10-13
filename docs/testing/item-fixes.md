@@ -8,16 +8,23 @@ Run `scripts/Test-ItemFixes.ps1 -GamePath "D:\SteamLibrary\steamapps\common\Last
 
 The user confirmed the Set display/count fix and T8 seal controls work in d90b954f. Legal Unique/Set seal restrictions remain in place. Retest distinct-piece counting with Remove Set Requirements off, duplicates, item removal, and reload if changing equipment.
 
-## Unique regular seals — still blocked
+## Unique regular seals — native-based candidate
 
-The latest test failed during corruption packing: requested corruption ID 1016 decoded as Primordial, while ID 572 received FromCorruption. That is a serialized-slot ownership mismatch. The earlier repair that guessed the regular slot after fixed modifiers has been removed. Request verification and native pack/unpack checks continue to reject malformed drops.
+The native export established that Legendary corruption belongs to the last affix
+and that its saved format lacks a regular-seal flag. The current candidate orders
+corruption accordingly and persists explicitly created illegal regular seals in
+`Mods/LastEpoch_Hud/IllegalUniqueSeals.json`, tied to the full saved item ID. The
+base seven-T8 socket-count rejection is also corrected without weakening affix
+round-trip checks. See [native-unique-seals.md](native-unique-seals.md) for exact
+native evidence, storage behavior, limits and tests.
 
-Native interop DLLs expose signatures and fields, not the game's method implementations. Attach `Build/ItemNativeProbe.zip` so the current native packing logic can be inspected before choosing a replacement layout. The exporter reads GameAssembly.dll and cpp2il_out; it produces method addresses, bounded machine-code slices for item/tooltip methods, and a game-binary hash. It does not modify the game. It can also be run separately:
+Test Unique and base seven-slot setups at T7/T8, including pickup, equip, area
+change, Illegal off and a full restart. Keep the JSON file with the mod's data.
+Native item creation/persistence still need in-game confirmation.
 
-```powershell
-powershell -ExecutionPolicy Bypass -File .\scripts\Export-ItemNativeProbe.ps1 `
-    -GamePath "D:\SteamLibrary\steamapps\common\Last Epoch"
-```
+The native exporter remains available through `scripts/Export-ItemNativeProbe.ps1`
+or the optional `-ExportNativeProbe` switch on the build/install script. A normal
+test install no longer repeats this export.
 
 ## Ground tooltip test
 
