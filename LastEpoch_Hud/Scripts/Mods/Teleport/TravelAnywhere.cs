@@ -3,6 +3,7 @@ using HarmonyLib;
 using Il2Cpp;
 using LastEpoch_Hud.Scripts.Core.QualityOfLife;
 using LastEpoch_Hud.Scripts.ModUI;
+using LastEpoch_Hud.Scripts.ModUI.Shell.Host;
 using MelonLoader;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -281,7 +282,7 @@ public class TravelAnywhere : MonoBehaviour
             SceneManager.MoveGameObjectToScene(playerObject, target);
             movedPlayer = true;
         }
-        Hud_Manager.Hud_Base.Resume_Click();
+        GamePauseMenu.Resume();
         if (
             !Refs_Manager.game_uibase.IsNullOrDestroyed()
             && Refs_Manager.game_uibase.IsWorldMapPanelOpen()

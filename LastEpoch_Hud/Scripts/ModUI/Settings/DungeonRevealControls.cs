@@ -195,9 +195,6 @@ internal static class DungeonRevealControls
         )
         {
             Save_Manager.instance.data.Scenes.Dungeons.Enable_EnterWithoutKey = toggle.isOn;
-            var old = Hud_Manager.Content.Scenes.Dungeons.enter_without_key_toggle;
-            if (!old.IsNullOrDestroyed())
-                old.SetIsOnWithoutNotify(toggle.isOn);
             Save_Manager.instance.Save();
         }
     }

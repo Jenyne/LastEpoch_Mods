@@ -9,7 +9,7 @@ public class Items_Drop_LegendaryPotencial
 {
     public static bool CanRun()
     {
-        if ((Hud_Manager.IsPauseOpen()) && (Hud_Manager.Content.OdlForceDrop.enable))
+        if ((Hud_Manager.IsPauseOpen()) && (ModUI.ForceDrop.ForceDropModel.Enabled))
         {
             return false;
         }

@@ -1,5 +1,6 @@
 ﻿using Il2Cpp;
 using LastEpoch_Hud.Scripts.Mods.Items.AutoLoot;
+using LastEpoch_Hud.Scripts.ModUI.Shell.Host;
 
 namespace LastEpoch_Hud.Scripts.Mods.Character;
 
@@ -9,7 +10,7 @@ public class Character_Materials
     {
         if (!Refs_Manager.item_list.IsNullOrDestroyed())
         {
-            Hud_Manager.Hud_Base.Resume_Click(); //Close Hud
+            GamePauseMenu.Resume(); //Close Hud
             int item_type = 102;
             ItemList.BaseNonEquipmentItem items = GetItemList(item_type);
             if (!items.IsNullOrDestroyed())
@@ -26,7 +27,7 @@ public class Character_Materials
     {
         if (!Refs_Manager.item_list.IsNullOrDestroyed())
         {
-            Hud_Manager.Hud_Base.Resume_Click(); //Close Hud
+            GamePauseMenu.Resume(); //Close Hud
             int item_type = 103;
             foreach (ItemList.NonEquipmentItem item in GetItemList(item_type).subItems)
             {
@@ -37,7 +38,7 @@ public class Character_Materials
 
     public static void AddAncientBones(int amount)
     {
-        Hud_Manager.Hud_Base.Resume_Click();
+        GamePauseMenu.Resume();
         try
         {
             AncientBonesTracker tracker = PlayerFinder.getAncientBonesTracker();
@@ -66,7 +67,7 @@ public class Character_Materials
     {
         if (!Refs_Manager.item_list.IsNullOrDestroyed())
         {
-            Hud_Manager.Hud_Base.Resume_Click(); //Close Hud
+            GamePauseMenu.Resume(); //Close Hud
             int item_type = 101;
             foreach (ItemList.NonEquipmentItem item in GetItemList(item_type).subItems)
             {

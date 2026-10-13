@@ -1,6 +1,7 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
 using Il2CppLE.Factions;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Factions.TheWoven;
@@ -68,7 +69,7 @@ public class Faction_Woven_TreePoints
 
     static int Multiplier()
     {
-        return SettingRow.Clamp(Save_Manager.instance.data.Factions.TheWoven.PointMultiplier);
+        return PointMultiplier.Clamp(Save_Manager.instance.data.Factions.TheWoven.PointMultiplier);
     }
 
     static int TargetPoints()

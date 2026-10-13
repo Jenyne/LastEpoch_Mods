@@ -1,145 +1,74 @@
+using System;
+using System.Collections.Generic;
+using LastEpoch_Hud.Scripts.Core.Monoliths;
+using LastEpoch_Hud.Scripts.Mods.Monoliths;
 using LastEpoch_Hud.Scripts.ModUI.Settings;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
 using UnityEngine.UI;
-using Data = LastEpoch_Hud.Scripts.Hud_Manager.Content.Character.Data;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
 /// <summary>
-/// The bundled HUD uses manually positioned RectTransforms, not layout groups.
-/// Give every moved control new anchors instead of retaining its old viewport geometry.
-/// Build runs once per root; after the HUD (and root) is destroyed it rebuilds and clears the button and accent lists.
+/// World > Monoliths timeline editor built from its own controls.
+/// Build resets all state, once per HUD instance; the selected timeline and its view are cached
+/// here and reloaded after every select, edit, copy and page show.
 /// </summary>
 internal static class MonolithTimelineEditor
 {
-    const float EditorHeight = 500f;
-    static Color Gold => HudTheme.AccentBright;
-    static Color PanelColor => HudTheme.InputBackground;
-    static GameObject root;
-    static Text selectedLabel;
-    static Text availabilityLabel;
-    static readonly System.Collections.Generic.List<Button> timelineButtons =
-        new System.Collections.Generic.List<Button>();
-    static readonly System.Collections.Generic.List<GameObject> timelineAccents =
-        new System.Collections.Generic.List<GameObject>();
+    private const float EditorHeight = 500f;
 
-    public static void Build(GameObject content)
+    private static readonly List<Button> _timelineButtons = new();
+    private static readonly List<GameObject> _timelineAccents = new();
+    private static readonly List<Text> _timelineLabels = new();
+    private static readonly List<MonolithValueRow> _valueRows = new();
+    private static GameObject _root;
+    private static Text _selectedLabel;
+    private static Text _availabilityLabel;
+    private static Button _copyButton;
+    private static int _selectedTimelineId;
+    private static MonolithTimelineView _view;
+
+    private static Color Gold => HudTheme.AccentBright;
+
+    private static Color PanelColor => HudTheme.InputBackground;
+
+    public static void Build(HudFormPage page, GameObject parent, Font font)
     {
-        if (
-            content.IsNullOrDestroyed()
-            || Data.save_button.IsNullOrDestroyed()
-            || Data.monolith_dropdown.IsNullOrDestroyed()
-            || !root.IsNullOrDestroyed()
-        )
+        ResetState();
+        if (parent.IsNullOrDestroyed())
         {
             return;
         }
 
-        RectTransform contentRect = content.GetComponent<RectTransform>();
-        if (contentRect.IsNullOrDestroyed())
-        {
-            return;
-        }
-        Text template = Data.save_button.GetComponentInChildren<Text>(true);
-        if (template.IsNullOrDestroyed())
-        {
-            return;
-        }
+        _root = CreateRoot(parent);
+        GameObject list = CreatePanel("TimelineSelection", _root, 0f, 0.34f);
+        GameObject values = CreatePanel("TimelineValues", _root, 0.34f, 0.75f);
+        GameObject actions = CreatePanel("TimelineActions", _root, 0.75f, 1f);
+        CreateLabel(list, font, "Timelines", 8f, 32f);
+        _selectedLabel = CreateLabel(values, font, string.Empty, 8f, 52f);
+        CreateLabel(actions, font, "Actions", 8f, 32f);
 
-        // Leave the existing Monolith settings above the editor. Their children
-        // are anchored at the top, so extending the scroll content preserves them.
-        float top = contentRect.rect.height + 12f;
-        root = CreateObject("TimelineEditor", content);
-        Place(root, 0f, 1f, top, EditorHeight, 8f, 8f);
-        LayoutElement layout = root.AddComponent<LayoutElement>();
-        layout.ignoreLayout = true;
-        contentRect.SetSizeWithCurrentAnchors(
-            RectTransform.Axis.Vertical,
-            top + EditorHeight + 12f
-        );
-
-        GameObject list = CreatePanel("TimelineSelection", root, 0f, 0.34f);
-        GameObject values = CreatePanel("TimelineValues", root, 0.34f, 0.75f);
-        GameObject actions = CreatePanel("TimelineActions", root, 0.75f, 1f);
-        CreateLabel(list, template, "Timelines", 8f, 32f);
-        selectedLabel = CreateLabel(values, template, "Selected Timeline", 8f, 52f);
-        CreateLabel(actions, template, "Actions", 8f, 32f);
-
-        timelineButtons.Clear();
-        timelineAccents.Clear();
-        // The existing dropdown indices are the game's timeline IDs (1 through 10).
-        for (int id = 1; id < Data.monolith_dropdown.options.Count; id++)
-        {
-            int timelineId = id;
-            string name = Data.monolith_dropdown.options[id].text.Replace('_', ' ');
-            Button button = CreateButton(list, template, name, 46f + (id - 1) * 44f, 40f);
-            Hud_Manager.Events.Set_Button_Event(
-                button,
-                new System.Action(() => Select(timelineId))
-            );
-            timelineButtons.Add(button);
-            timelineAccents.Add(CreateSelectionAccent(button.gameObject));
-        }
-
-        MoveValue(
-            Data.monolith_stability_basic_go,
-            Data.monolith_stability_basic_input,
-            Data.monolith_stability_basic_slider,
+        BuildTimelineButtons(list, font);
+        AddValueRow(page, values, font, MonolithField.BasicStability, "Normal Stability", 76f);
+        AddValueRow(
+            page,
             values,
-            "Normal Stability",
-            76f
-        );
-        MoveValue(
-            Data.monolith_stability_empower_go,
-            Data.monolith_stability_empower_input,
-            Data.monolith_stability_empower_slider,
-            values,
+            font,
+            MonolithField.EmpoweredStability,
             "Empowered Stability",
             158f
         );
-        MoveValue(
-            Data.monolith_corruption_go,
-            Data.monolith_corruption_input,
-            Data.monolith_corruption_slider,
-            values,
-            "Corruption",
-            240f
-        );
-        MoveValue(
-            Data.monolith_gaze_go,
-            Data.monolith_gaze_input,
-            Data.monolith_gaze_slider,
-            values,
-            "Gazes",
-            322f
-        );
-        availabilityLabel = CreateLabel(values, template, "", 408f, 80f);
-        availabilityLabel.fontSize = 13;
+        AddValueRow(page, values, font, MonolithField.Corruption, "Corruption", 240f);
+        AddValueRow(page, values, font, MonolithField.Gaze, "Gazes", 322f);
+        _availabilityLabel = CreateLabel(values, font, string.Empty, 408f, 80f);
+        _availabilityLabel.fontSize = 13;
 
-        if (!Data.monolith_corruption_all_button.IsNullOrDestroyed())
-        {
-            GameObject buttonObject = Data.monolith_corruption_all_button.gameObject;
-            buttonObject.transform.SetParent(actions.transform, false);
-            StyleButton(Data.monolith_corruption_all_button);
-            Place(buttonObject, 0f, 1f, 46f, 40f, 10f, 10f);
-            Text label = buttonObject.GetComponentInChildren<Text>(true);
-            if (!label.IsNullOrDestroyed())
-            {
-                Prefab.ApplyLabel(label, "Copy to All");
-                label.resizeTextForBestFit = true;
-                label.resizeTextMinSize = 11;
-                label.resizeTextMaxSize = 16;
-            }
-        }
-        Button reload = CreateButton(actions, template, "Reload Values", 98f, 40f);
-        Hud_Manager.Events.Set_Button_Event(
-            reload,
-            new System.Action(Hud_Manager.Content.Character.Update_Monoliths_Data)
-        );
+        _copyButton = CreateButton(actions, font, "Copy to All", 46f, 40f, CopyToAll);
+        CreateButton(actions, font, "Reload Values", 98f, 40f, Reload);
         Text note = CreateLabel(
             actions,
-            template,
+            font,
             "Edits apply immediately.\n\nCopy to All applies the visible values to existing timelines of the same difficulty.",
             158f,
             190f
@@ -147,287 +76,40 @@ internal static class MonolithTimelineEditor
         note.fontSize = 13;
         note.alignment = TextAnchor.UpperLeft;
 
-        // Keep the dropdown as the existing backend's ID binding, hidden from view.
-        if (!Data.monolith_selector_go.IsNullOrDestroyed())
-        {
-            Data.monolith_selector_go.SetActive(false);
-        }
-        int selected = Data.monolith_dropdown.value;
-        if (selected <= 0 && !Refs_Manager.player_data.IsNullOrDestroyed())
-        {
-            foreach (var run in Refs_Manager.player_data.MonolithRuns)
-            {
-                if (run.TimelineID > 0 && run.TimelineID < Data.monolith_dropdown.options.Count)
-                {
-                    selected = run.TimelineID;
-                    break;
-                }
-            }
-        }
-        Select(selected > 0 ? selected : 1);
+        Select(MonolithRunEditor.InitialTimelineId());
     }
 
-    static void Select(int id)
+    /// <summary>Loads the selected timeline's view and shows it.</summary>
+    public static void Reload()
     {
-        Data.monolith_dropdown.value = id;
-        Hud_Manager.Content.Character.Update_Monoliths_Data();
+        _view = MonolithRunEditor.ViewOf(_selectedTimelineId);
+        foreach (MonolithValueRow row in _valueRows)
+        {
+            row.Show(_view);
+        }
+
+        RefreshSelection();
     }
 
+    /// <summary>Applies the cached selection and availability state to the controls.</summary>
     public static void RefreshSelection()
     {
-        if (root.IsNullOrDestroyed() || Data.monolith_dropdown.IsNullOrDestroyed())
+        if (_root.IsNullOrDestroyed())
         {
             return;
         }
-        int selected = Data.monolith_dropdown.value;
-        if (
-            !selectedLabel.IsNullOrDestroyed()
-            && selected > 0
-            && selected < Data.monolith_dropdown.options.Count
-        )
+
+        ApplySelectedLabel();
+        for (int i = 0; i < _timelineButtons.Count; i++)
         {
-            Prefab.ApplyLabel(
-                selectedLabel,
-                Data.monolith_dropdown.options[selected].text.Replace('_', ' ')
-            );
+            ApplyTimelineName(i);
+            ApplyButtonState(i, MonolithTimelineCatalog.All[i].TimelineId == _selectedTimelineId);
         }
-        for (int i = 0; i < timelineButtons.Count; i++)
-        {
-            Button button = timelineButtons[i];
-            if (button.IsNullOrDestroyed())
-            {
-                continue;
-            }
-            bool isSelected = i + 1 == selected;
-            Color normal = isSelected ? HudTheme.Selection : HudTheme.Surface;
-            button.colors = HudTheme.ActionButtonColors(
-                normal,
-                isSelected ? HudTheme.Selection : HudTheme.SurfaceHover
-            );
-            var image = button.GetComponent<Image>();
-            if (!image.IsNullOrDestroyed())
-                image.color = HudTheme.SelectableTint;
-            if (i < timelineAccents.Count && !timelineAccents[i].IsNullOrDestroyed())
-                timelineAccents[i].SetActive(isSelected);
-        }
-        bool basic = IsVisible(Data.monolith_stability_basic_go);
-        bool empowered = IsVisible(Data.monolith_stability_empower_go);
-        if (!availabilityLabel.IsNullOrDestroyed())
-        {
-            Prefab.ApplyLabel(
-                availabilityLabel,
-                basic || empowered
-                    ? "Only unlocked timeline values are shown."
-                    : "This timeline has no saved run yet."
-            );
-        }
-        if (!Data.monolith_corruption_all_button.IsNullOrDestroyed())
-        {
-            Data.monolith_corruption_all_button.interactable = basic || empowered;
-        }
+
+        ApplyAvailability();
     }
 
-    public static void AttachTo(GameObject parent)
-    {
-        if (root.IsNullOrDestroyed() || parent.IsNullOrDestroyed())
-            return;
-        root.transform.SetParent(parent.transform, false);
-        var rect = root.GetComponent<RectTransform>();
-        rect.anchorMin = new Vector2(0f, 1f);
-        rect.anchorMax = new Vector2(1f, 1f);
-        rect.pivot = new Vector2(0.5f, 1f);
-        rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta = new Vector2(0f, EditorHeight);
-        var layout = root.GetComponent<LayoutElement>();
-        if (layout.IsNullOrDestroyed())
-            layout = root.AddComponent<LayoutElement>();
-        layout.ignoreLayout = false;
-        layout.minHeight = EditorHeight;
-        layout.preferredHeight = EditorHeight;
-        layout.flexibleHeight = 0f;
-    }
-
-    static bool IsVisible(GameObject row)
-    {
-        return !row.IsNullOrDestroyed() && row.activeSelf;
-    }
-
-    static GameObject CreateObject(string name, GameObject parent)
-    {
-        GameObject obj = new GameObject(name);
-        obj.AddComponent<RectTransform>();
-        obj.layer = parent.layer;
-        obj.transform.SetParent(parent.transform, false);
-        return obj;
-    }
-
-    static GameObject CreatePanel(string name, GameObject parent, float left, float right)
-    {
-        GameObject panel = CreateObject(name, parent);
-        Place(panel, left, right, 0f, EditorHeight, 4f, 4f);
-        Image image = panel.AddComponent<Image>();
-        image.color = PanelColor;
-        image.raycastTarget = false;
-        Outline border = panel.AddComponent<Outline>();
-        border.effectColor = Gold;
-        border.effectDistance = new Vector2(1f, -1f);
-        return panel;
-    }
-
-    static Text CreateLabel(GameObject parent, Text template, string text, float top, float height)
-    {
-        GameObject obj = CreateObject("Label", parent);
-        Place(obj, 0f, 1f, top, height, 12f, 12f);
-        Text label = obj.AddComponent<Text>();
-        label.font = template.font;
-        label.fontSize = 16;
-        label.color = HudTheme.TextPrimary;
-        label.alignment = TextAnchor.MiddleLeft;
-        label.horizontalOverflow = HorizontalWrapMode.Wrap;
-        label.verticalOverflow = VerticalWrapMode.Truncate;
-        label.raycastTarget = false;
-        if (!string.IsNullOrEmpty(text))
-        {
-            Prefab.ApplyLabel(label, text);
-        }
-        return label;
-    }
-
-    static Button CreateButton(
-        GameObject parent,
-        Text template,
-        string text,
-        float top,
-        float height
-    )
-    {
-        GameObject obj = CreateObject("Btn_" + text.Replace(' ', '_'), parent);
-        Place(obj, 0f, 1f, top, height, 10f, 10f);
-        Image image = obj.AddComponent<Image>();
-        image.sprite = null;
-        image.type = Image.Type.Simple;
-        image.color = HudTheme.Surface;
-        Button button = obj.AddComponent<Button>();
-        button.targetGraphic = image;
-        StyleButton(button);
-        Text label = CreateLabel(obj, template, text, 0f, height);
-        label.alignment = TextAnchor.MiddleCenter;
-        label.resizeTextForBestFit = true;
-        label.resizeTextMinSize = 11;
-        label.resizeTextMaxSize = 16;
-        return button;
-    }
-
-    static void MoveValue(
-        GameObject row,
-        Il2CppTMPro.TMP_InputField input,
-        Slider slider,
-        GameObject parent,
-        string title,
-        float top
-    )
-    {
-        if (row.IsNullOrDestroyed())
-        {
-            return;
-        }
-        row.transform.SetParent(parent.transform, false);
-        Place(row, 0f, 1f, top, 72f, 12f, 12f);
-        GameObject labelObject = Prefab.Child(row, "Label");
-        if (!labelObject.IsNullOrDestroyed())
-        {
-            Place(labelObject, 0f, 1f, 0f, 26f);
-            Text label = labelObject.GetComponent<Text>();
-            if (!label.IsNullOrDestroyed())
-            {
-                Prefab.ApplyLabel(label, title);
-            }
-        }
-        if (!input.IsNullOrDestroyed())
-        {
-            Place(input.gameObject, 0f, 1f, 32f, 32f);
-            StyleInput(input);
-        }
-        else if (!slider.IsNullOrDestroyed())
-        {
-            Place(slider.gameObject, 0f, 1f, 32f, 32f);
-            HudStyler.ApplySlider(slider);
-        }
-    }
-
-    static void StyleButton(Button button)
-    {
-        if (button.IsNullOrDestroyed())
-            return;
-        var image = button.GetComponent<Image>();
-        if (!image.IsNullOrDestroyed())
-        {
-            image.sprite = null;
-            image.type = Image.Type.Simple;
-            image.color = HudTheme.Surface;
-        }
-        var oldOutline = button.GetComponent<Outline>();
-        if (!oldOutline.IsNullOrDestroyed())
-            oldOutline.enabled = false;
-        HudStyler.AddPrimaryBorder(button.gameObject);
-        button.targetGraphic = image;
-        button.colors = HudTheme.ActionButtonColors(HudTheme.Surface, HudTheme.Selection);
-        foreach (var text in button.GetComponentsInChildren<Text>(true))
-            text.color = HudTheme.TextPrimary;
-        foreach (var text in button.GetComponentsInChildren<Il2CppTMPro.TMP_Text>(true))
-            text.color = HudTheme.TextPrimary;
-    }
-
-    static GameObject CreateSelectionAccent(GameObject button)
-    {
-        var accent = CreateObject("SelectedAccent", button);
-        var rect = accent.GetComponent<RectTransform>();
-        rect.anchorMin = Vector2.zero;
-        rect.anchorMax = new Vector2(0f, 1f);
-        rect.pivot = new Vector2(0f, 0.5f);
-        rect.anchoredPosition = Vector2.zero;
-        rect.sizeDelta = new Vector2(4f, 0f);
-        var image = accent.AddComponent<Image>();
-        image.color = HudTheme.Accent;
-        image.raycastTarget = false;
-        accent.transform.SetAsLastSibling();
-        accent.SetActive(false);
-        return accent;
-    }
-
-    static void StyleInput(Il2CppTMPro.TMP_InputField input)
-    {
-        var background = input.GetComponent<Image>();
-        if (!background.IsNullOrDestroyed())
-        {
-            background.sprite = null;
-            background.type = Image.Type.Simple;
-            background.color = HudTheme.ControlBox;
-        }
-        var oldOutline = input.GetComponent<Outline>();
-        if (!oldOutline.IsNullOrDestroyed())
-            oldOutline.enabled = false;
-        HudStyler.AddPrimaryBorder(input.gameObject, 1f);
-        input.colors = HudTheme.ButtonColors(HudTheme.ControlBox, HudTheme.Selection);
-        if (!input.placeholder.IsNullOrDestroyed())
-            input.placeholder.gameObject.SetActive(false);
-        if (!input.textViewport.IsNullOrDestroyed())
-        {
-            input.textViewport.anchorMin = Vector2.zero;
-            input.textViewport.anchorMax = Vector2.one;
-            input.textViewport.offsetMin = new Vector2(8f, 0f);
-            input.textViewport.offsetMax = new Vector2(-10f, 0f);
-        }
-        if (!input.textComponent.IsNullOrDestroyed())
-        {
-            input.textComponent.color = HudTheme.TextPrimary;
-            input.textComponent.fontSize = HudTheme.ValueFontSize;
-            input.textComponent.horizontalAlignment = Il2CppTMPro.HorizontalAlignmentOptions.Right;
-            input.textComponent.verticalAlignment = Il2CppTMPro.VerticalAlignmentOptions.Middle;
-        }
-    }
-
-    static void Place(
+    internal static void Place(
         GameObject obj,
         float left,
         float right,
@@ -445,10 +127,253 @@ internal static class MonolithTimelineEditor
         rect.anchoredPosition = new Vector2((leftInset - rightInset) * 0.5f, -top);
         rect.localScale = Vector3.one;
         LayoutElement layout = obj.GetComponent<LayoutElement>();
-        if (!layout.IsNullOrDestroyed())
+        if (layout.IsNullOrDestroyed())
         {
-            layout.ignoreLayout = true;
-            layout.flexibleHeight = 0f;
+            return;
         }
+
+        layout.ignoreLayout = true;
+        layout.flexibleHeight = 0f;
+    }
+
+    private static void ResetState()
+    {
+        _root = null;
+        _selectedLabel = null;
+        _availabilityLabel = null;
+        _copyButton = null;
+        _timelineButtons.Clear();
+        _timelineAccents.Clear();
+        _timelineLabels.Clear();
+        _valueRows.Clear();
+        _selectedTimelineId = 0;
+        _view = default;
+    }
+
+    private static void Select(int timelineId)
+    {
+        _selectedTimelineId = timelineId;
+        Reload();
+    }
+
+    private static void Commit(MonolithField field, string text)
+    {
+        if (MonolithValueRules.TryParse(text, out int value))
+        {
+            MonolithRunEditor.SetValue(_selectedTimelineId, field, value);
+        }
+
+        Reload();
+    }
+
+    private static void CopyToAll()
+    {
+        MonolithRunEditor.CopyToAll(_selectedTimelineId);
+        Reload();
+    }
+
+    private static void ApplySelectedLabel()
+    {
+        if (_selectedLabel.IsNullOrDestroyed())
+        {
+            return;
+        }
+
+        if (!MonolithTimelineCatalog.TryGet(_selectedTimelineId, out MonolithTimelineOption option))
+        {
+            return;
+        }
+
+        _selectedLabel.text = MonolithTimelineNames.Of(option);
+    }
+
+    private static void ApplyTimelineName(int index)
+    {
+        Text label = _timelineLabels[index];
+        if (label.IsNullOrDestroyed())
+        {
+            return;
+        }
+
+        label.text = MonolithTimelineNames.Of(MonolithTimelineCatalog.All[index]);
+    }
+
+    private static void ApplyButtonState(int index, bool isSelected)
+    {
+        Button button = _timelineButtons[index];
+        if (button.IsNullOrDestroyed())
+        {
+            return;
+        }
+
+        Color normal = isSelected ? HudTheme.Selection : HudTheme.Surface;
+        button.colors = HudTheme.ActionButtonColors(
+            normal,
+            isSelected ? HudTheme.Selection : HudTheme.SurfaceHover
+        );
+        Image image = button.GetComponent<Image>();
+        if (!image.IsNullOrDestroyed())
+        {
+            image.color = HudTheme.SelectableTint;
+        }
+
+        if (!_timelineAccents[index].IsNullOrDestroyed())
+        {
+            _timelineAccents[index].SetActive(isSelected);
+        }
+    }
+
+    private static void ApplyAvailability()
+    {
+        if (!_availabilityLabel.IsNullOrDestroyed())
+        {
+            Prefab.ApplyLabel(
+                _availabilityLabel,
+                _view.HasRun
+                    ? "Only unlocked timeline values are shown."
+                    : "This timeline has no saved run yet."
+            );
+        }
+
+        if (!_copyButton.IsNullOrDestroyed())
+        {
+            _copyButton.interactable = _view.HasRun;
+        }
+    }
+
+    private static GameObject CreateRoot(GameObject parent)
+    {
+        GameObject root = HudElements.Node(parent, "TimelineEditor");
+        RectTransform rect = root.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0f, 1f);
+        rect.anchorMax = new Vector2(1f, 1f);
+        rect.pivot = new Vector2(0.5f, 1f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(0f, EditorHeight);
+        LayoutElement layout = root.AddComponent<LayoutElement>();
+        layout.ignoreLayout = false;
+        layout.minHeight = EditorHeight;
+        layout.preferredHeight = EditorHeight;
+        layout.flexibleHeight = 0f;
+        return root;
+    }
+
+    private static void BuildTimelineButtons(GameObject list, Font font)
+    {
+        for (int i = 0; i < MonolithTimelineCatalog.All.Count; i++)
+        {
+            MonolithTimelineOption option = MonolithTimelineCatalog.All[i];
+            int timelineId = option.TimelineId;
+            Button button = CreateButton(
+                list,
+                font,
+                option.Label,
+                46f + (i * 44f),
+                40f,
+                () => Select(timelineId),
+                false
+            );
+            _timelineButtons.Add(button);
+            _timelineLabels.Add(button.GetComponentInChildren<Text>(true));
+            _timelineAccents.Add(CreateSelectionAccent(button.gameObject));
+        }
+    }
+
+    private static void AddValueRow(
+        HudFormPage page,
+        GameObject parent,
+        Font font,
+        MonolithField field,
+        string title,
+        float top
+    )
+    {
+        _valueRows.Add(MonolithValueRow.Build(page, parent, font, field, title, top, Commit));
+    }
+
+    private static GameObject CreatePanel(string name, GameObject parent, float left, float right)
+    {
+        GameObject panel = HudElements.Node(parent, name);
+        Place(panel, left, right, 0f, EditorHeight, 4f, 4f);
+        Image image = panel.AddComponent<Image>();
+        image.color = PanelColor;
+        image.raycastTarget = false;
+        Outline border = panel.AddComponent<Outline>();
+        border.effectColor = Gold;
+        border.effectDistance = new Vector2(1f, -1f);
+        return panel;
+    }
+
+    private static Text CreateLabel(
+        GameObject parent,
+        Font font,
+        string text,
+        float top,
+        float height,
+        bool localize = true
+    )
+    {
+        Text label = HudElements.Text(
+            parent,
+            "Label",
+            text,
+            font,
+            16,
+            HorizontalWrapMode.Wrap,
+            localize
+        );
+        label.alignment = TextAnchor.MiddleLeft;
+        Place(label.gameObject, 0f, 1f, top, height, 12f, 12f);
+        return label;
+    }
+
+    private static Button CreateButton(
+        GameObject parent,
+        Font font,
+        string text,
+        float top,
+        float height,
+        Action onClick,
+        bool localize = true
+    )
+    {
+        GameObject obj = HudElements.Node(parent, "Btn_" + text.Replace(' ', '_'));
+        Place(obj, 0f, 1f, top, height, 10f, 10f);
+        Image image = obj.AddComponent<Image>();
+        image.type = Image.Type.Simple;
+        image.color = HudTheme.Surface;
+        Button button = obj.AddComponent<Button>();
+        button.targetGraphic = image;
+        StyleButton(button);
+        Prefab.BindButton(button, onClick);
+        Text label = CreateLabel(obj, font, text, 0f, height, localize);
+        label.alignment = TextAnchor.MiddleCenter;
+        label.resizeTextForBestFit = true;
+        label.resizeTextMinSize = 11;
+        label.resizeTextMaxSize = 16;
+        return button;
+    }
+
+    private static void StyleButton(Button button)
+    {
+        HudStyler.AddPrimaryBorder(button.gameObject);
+        button.colors = HudTheme.ActionButtonColors(HudTheme.Surface, HudTheme.Selection);
+    }
+
+    private static GameObject CreateSelectionAccent(GameObject button)
+    {
+        GameObject accent = HudElements.Node(button, "SelectedAccent");
+        RectTransform rect = accent.GetComponent<RectTransform>();
+        rect.anchorMin = Vector2.zero;
+        rect.anchorMax = new Vector2(0f, 1f);
+        rect.pivot = new Vector2(0f, 0.5f);
+        rect.anchoredPosition = Vector2.zero;
+        rect.sizeDelta = new Vector2(4f, 0f);
+        Image image = accent.AddComponent<Image>();
+        image.color = HudTheme.Accent;
+        image.raycastTarget = false;
+        accent.transform.SetAsLastSibling();
+        accent.SetActive(false);
+        return accent;
     }
 }

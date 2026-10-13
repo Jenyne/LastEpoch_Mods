@@ -16,7 +16,6 @@ public class Mods_Manager : MonoBehaviour
     GameObject character_blessings_obj = null;
     GameObject character_godmode_obj = null;
     GameObject character_lowlife_obj = null;
-    GameObject character_masteries_obj = null;
     GameObject character_bank_from_anywhere = null;
     GameObject character_permanentbuffs_obj = null;
     GameObject character_safetp_obj = null;
@@ -88,14 +87,6 @@ public class Mods_Manager : MonoBehaviour
         character_lowlife_obj.active = false;
         character_lowlife_obj.AddComponent<Mods.Character.Character_LowLife>();
         Mods_Objects.Add(character_lowlife_obj);
-
-        character_masteries_obj = Object.Instantiate(
-            new GameObject { name = "Mod_Character_Masteries" },
-            Vector3.zero,
-            Quaternion.identity
-        );
-        character_masteries_obj.AddComponent<Mods.Character.Character_Masteries>();
-        Mods_Objects.Add(character_masteries_obj);
 
         character_permanentbuffs_obj = Object.Instantiate(
             new GameObject { name = "Mod_Character_Buffs" },

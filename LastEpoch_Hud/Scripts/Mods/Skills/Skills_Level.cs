@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using HarmonyLib;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 using UnityEngine;
 
 namespace LastEpoch_Hud.Scripts.Mods.Skills;
@@ -57,7 +58,7 @@ public class Skills_Level
 
     static int Multiplier()
     {
-        return SettingRow.Clamp(Save_Manager.instance.data.Skills.SkillLevelMultiplier);
+        return PointMultiplier.Clamp(Save_Manager.instance.data.Skills.SkillLevelMultiplier);
     }
 
     static bool writing;

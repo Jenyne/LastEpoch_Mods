@@ -338,6 +338,7 @@ ModUI/
     Items*Page.cs         Drop, Force Drop bridge, and crafting slot
     World*Page.cs         Difficulty, monoliths, misc, and camera
     MonolithTimelineEditor.cs  Timeline editor used by WorldMonolithsPage
+    MonolithValueRow.cs  One value row of the timeline editor
     Skills*Page.cs        Minions, companions, summon, and QOL
   Shell/                 Window, navigation, search and reusable view components
     HudTheme.cs             Visual tokens, palettes, and saved theme preferences
@@ -358,6 +359,14 @@ ModUI/
     IHudSearchPage.cs       Contract a page implements to be searchable
     HudSearchEntry.cs       One searchable card on a page
     HudSearchMatch.cs       One search result with its breadcrumb
+    Host/                   Hosts the HUD inside the game (used by Hud_Manager)
+      HudBundleLoader.cs      Loads the mod asset bundle
+      HudPrefab.cs            Instantiates the HUD prefab and wires its sections
+      HudMenuToggle.cs        F3, Esc and scene rules for the menu flag
+      HudInputLock.cs         Takes and releases the game input lock
+      HudEscapeResume.cs      Esc release clicks the game's Resume
+      GamePauseMenu.cs        Finds the game pause menu, hides its buttons, Resume
+      HudScale.cs             Keeps the HUD canvas scale equal to the game's
   Settings/              Prefab binding, persistence and setting types
     SettingTypes.cs         Setting types + ActionBinding + display formatting
     SettingsGroup.cs        Fluent API, factory methods, serialization, UI binding
@@ -372,8 +381,8 @@ ModUI/
     RootKind.cs             Kind of a binding root (generic or Hud with tabs)
     LocaleRegistry.cs       Tracks (Text, English label) pairs for clean language round-trip
     NumericSliderInputs.cs  Typed-value inputs for sliders
-    CharacterActionControls.cs, DungeonRevealControls.cs, InfiniteForgingPotentialControls.cs,
-    SafeTeleportControls.cs, ScenesSectionControls.cs   Binders for specific legacy-prefab controls
+    DungeonRevealControls.cs, SafeTeleportControls.cs,
+    ScenesSectionControls.cs   Binders for specific legacy-prefab controls
   ForceDrop/             Force Drop page logic and item adapters
     ForceDropBuilder.cs, ForceDropCatalog.cs, ForceDropCorruptionPool.cs,
     ForceDropItemCreator.cs, ForceDropLegalAffixes.cs   Catalog, rules and item creation

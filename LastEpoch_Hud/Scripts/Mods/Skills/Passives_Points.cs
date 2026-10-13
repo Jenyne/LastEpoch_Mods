@@ -1,5 +1,6 @@
 ﻿using HarmonyLib;
 using Il2Cpp;
+using LastEpoch_Hud.Scripts.Core.ModUI;
 
 namespace LastEpoch_Hud.Scripts.Mods.Skills;
 
@@ -45,7 +46,9 @@ public class Passives_Points
         }
         if (Save_Manager.instance.data.Skills.Enable_PassivePointMultiplier)
         {
-            points *= SettingRow.Clamp(Save_Manager.instance.data.Skills.PassivePointMultiplier);
+            points *= PointMultiplier.Clamp(
+                Save_Manager.instance.data.Skills.PassivePointMultiplier
+            );
         }
         if (points > ushort.MaxValue)
         {

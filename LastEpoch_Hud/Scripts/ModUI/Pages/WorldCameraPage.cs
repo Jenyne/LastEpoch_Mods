@@ -1,8 +1,8 @@
 using System;
 using LastEpoch_Hud.Scripts.Core.ModUI;
+using LastEpoch_Hud.Scripts.Core.ModUI.Sliders;
 using LastEpoch_Hud.Scripts.ModUI.Shell;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace LastEpoch_Hud.Scripts.ModUI.Pages;
 
@@ -17,8 +17,8 @@ internal static class WorldCameraPage
         if (page == null)
             return;
         var card = page.AddCard("Camera", "Camera");
-        page.AddButton(card, "Set", "Set", Hud_Manager.Content.Scenes.Camera.Set);
-        page.AddButton(card, "Reset", "Reset", Hud_Manager.Content.Scenes.Camera.Reset);
+        page.AddButton(card, "Set", "Set", Mods.Camera.Camera_Override.Set);
+        page.AddButton(card, "Reset", "Reset", Mods.Camera.Camera_Override.ResetToDefault);
         AddToggle(
             card,
             "Enable",
@@ -30,7 +30,7 @@ internal static class WorldCameraPage
             card,
             "ZoomMinimum",
             "Zoom Minimum",
-            Hud_Manager.Content.Scenes.Camera.zoom_minimum_slider,
+            SceneSliderLimits.CameraZoomMinimum,
             () => Save_Manager.instance.data.Scenes.Camera.Enable_ZoomMinimum,
             v => Save_Manager.instance.data.Scenes.Camera.Enable_ZoomMinimum = v,
             () => Save_Manager.instance.data.Scenes.Camera.ZoomMinimum,
@@ -40,7 +40,7 @@ internal static class WorldCameraPage
             card,
             "ZoomPerScroll",
             "Zoom Per Scroll",
-            Hud_Manager.Content.Scenes.Camera.zoom_per_scroll_slider,
+            SceneSliderLimits.CameraZoomPerScroll,
             () => Save_Manager.instance.data.Scenes.Camera.Enable_ZoomPerScroll,
             v => Save_Manager.instance.data.Scenes.Camera.Enable_ZoomPerScroll = v,
             () => Save_Manager.instance.data.Scenes.Camera.ZoomPerScroll,
@@ -50,7 +50,7 @@ internal static class WorldCameraPage
             card,
             "ZoomSpeed",
             "Zoom Speed",
-            Hud_Manager.Content.Scenes.Camera.zoom_speed_slider,
+            SceneSliderLimits.CameraZoomSpeed,
             () => Save_Manager.instance.data.Scenes.Camera.Enable_ZoomSpeed,
             v => Save_Manager.instance.data.Scenes.Camera.Enable_ZoomSpeed = v,
             () => Save_Manager.instance.data.Scenes.Camera.ZoomSpeed,
@@ -60,7 +60,7 @@ internal static class WorldCameraPage
             card,
             "DefaultRotation",
             "Default Rotation",
-            Hud_Manager.Content.Scenes.Camera.default_rotation_slider,
+            SceneSliderLimits.CameraDefaultRotation,
             () => Save_Manager.instance.data.Scenes.Camera.Enable_DefaultRotation,
             v => Save_Manager.instance.data.Scenes.Camera.Enable_DefaultRotation = v,
             () => Save_Manager.instance.data.Scenes.Camera.DefaultRotation,
@@ -70,7 +70,7 @@ internal static class WorldCameraPage
             card,
             "OffsetMinimum",
             "Offset Minimum",
-            Hud_Manager.Content.Scenes.Camera.offset_minimum_slider,
+            SceneSliderLimits.CameraOffsetMinimum,
             () => Save_Manager.instance.data.Scenes.Camera.Enable_OffsetMinimum,
             v => Save_Manager.instance.data.Scenes.Camera.Enable_OffsetMinimum = v,
             () => Save_Manager.instance.data.Scenes.Camera.OffsetMinimum,
@@ -80,7 +80,7 @@ internal static class WorldCameraPage
             card,
             "OffsetMaximum",
             "Offset Maximum",
-            Hud_Manager.Content.Scenes.Camera.offset_maximum_slider,
+            SceneSliderLimits.CameraOffsetMaximum,
             () => Save_Manager.instance.data.Scenes.Camera.Enable_OffsetMaximum,
             v => Save_Manager.instance.data.Scenes.Camera.Enable_OffsetMaximum = v,
             () => Save_Manager.instance.data.Scenes.Camera.OffsetMaximum,
@@ -90,7 +90,7 @@ internal static class WorldCameraPage
             card,
             "AngleMinimum",
             "Angle Minimum",
-            Hud_Manager.Content.Scenes.Camera.angle_minimum_slider,
+            SceneSliderLimits.CameraAngleMinimum,
             () => Save_Manager.instance.data.Scenes.Camera.Enable_AngleMinimum,
             v => Save_Manager.instance.data.Scenes.Camera.Enable_AngleMinimum = v,
             () => Save_Manager.instance.data.Scenes.Camera.AngleMinimum,
@@ -100,7 +100,7 @@ internal static class WorldCameraPage
             card,
             "AngleMaximum",
             "Angle Maximum",
-            Hud_Manager.Content.Scenes.Camera.angle_maximum_slider,
+            SceneSliderLimits.CameraAngleMaximum,
             () => Save_Manager.instance.data.Scenes.Camera.Enable_AngleMaximum,
             v => Save_Manager.instance.data.Scenes.Camera.Enable_AngleMaximum = v,
             () => Save_Manager.instance.data.Scenes.Camera.AngleMaximum,
@@ -144,31 +144,28 @@ internal static class WorldCameraPage
         HudFormPage.Card card,
         string id,
         string label,
-        Slider source,
+        SliderRange range,
         Func<bool> readEnabled,
         Action<bool> writeEnabled,
         Func<float> read,
         Action<float> write
     )
     {
-        float min = source.IsNullOrDestroyed() ? 0f : source.minValue;
-        float max = source.IsNullOrDestroyed() ? 100f : source.maxValue;
-        bool whole = source.IsNullOrDestroyed() || source.wholeNumbers;
         page.AddToggleSlider(
             card,
             id,
             label,
             string.Empty,
-            min,
-            max,
-            whole,
+            range.Min,
+            range.Max,
+            range.WholeNumbers,
             () => HasSave() && readEnabled(),
             v =>
             {
                 if (HasSave())
                     writeEnabled(v);
             },
-            () => HasSave() ? read() : min,
+            () => HasSave() ? read() : range.Min,
             v =>
             {
                 if (HasSave())

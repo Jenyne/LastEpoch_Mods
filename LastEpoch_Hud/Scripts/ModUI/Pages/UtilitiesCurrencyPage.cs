@@ -22,22 +22,22 @@ internal static class UtilitiesCurrencyPage
                 Action(
                     "Runes",
                     "Add All Runes x99",
-                    Hud_Manager.Content.Character.Cheats.AddRunes_Click
+                    Mods.Character.Character_Materials.GetAllRunesX99
                 ),
                 Action(
                     "Glyphs",
                     "Add All Glyphs x99",
-                    Hud_Manager.Content.Character.Cheats.AddGlyphs_Click
+                    Mods.Character.Character_Materials.GetAllGlyphsX99
                 ),
                 Action(
                     "Affixes",
                     "Add All Affixes x10",
-                    Hud_Manager.Content.Character.Cheats.AddAffixs_Click
+                    Mods.Character.Character_Materials.GetAllShardsX10
                 ),
                 Action(
                     "AncientBones",
                     "Add Ancient Bones x10,000",
-                    Hud_Manager.Content.Character.Cheats.AddAncientBones_Click
+                    () => Mods.Character.Character_Materials.AddAncientBones(10000)
                 ),
                 Action(
                     "MemoryAmber",
@@ -52,7 +52,7 @@ internal static class UtilitiesCurrencyPage
                 Action(
                     "SoulEmbers",
                     "Add 1,000 Soul Embers",
-                    Hud_Manager.Content.Character.Data.AddSoulEmbers
+                    () => Mods.Character.Character_SoulEmbers.Add(1000)
                 ),
             }
         );

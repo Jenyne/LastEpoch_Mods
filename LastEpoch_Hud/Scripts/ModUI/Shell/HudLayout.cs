@@ -1,6 +1,7 @@
 using System;
 using LastEpoch_Hud.Scripts.ModUI.Pages;
 using LastEpoch_Hud.Scripts.ModUI.Settings;
+using LastEpoch_Hud.Scripts.ModUI.Shell.Host;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -26,7 +27,7 @@ public static class HudLayout
         activePage = null;
         HudTheme.LoadPreferences();
         HudStyler.ResetFontBaselines();
-        font = FindFont(hud);
+        font = HudElements.FindFont(hud);
 
         var content = Prefab.Child(hud, "Content");
         var menu = Prefab.Child(hud, "Menu");
@@ -45,6 +46,7 @@ public static class HudLayout
         HudSidebar.Build(menu, font, page => ActivateNavigationOnly(page));
         Main.logger_instance?.Msg("[Startup] HudLayout building pages.");
         PlaceLegacyContent(content);
+        HideLegacyPanels(content);
         foreach (var page in HudNavigation.Pages)
             page.Build(window, hud, font);
 
@@ -181,7 +183,6 @@ public static class HudLayout
         }
         foreach (var candidate in HudNavigation.Pages)
             candidate.Hide();
-        HideLegacyContent();
         page.Show();
         HudSidebar.SetSelected(page.Id);
         activePage = page;
@@ -215,15 +216,13 @@ public static class HudLayout
         activePage?.Refresh();
     }
 
-    private static void HideLegacyContent()
+    /// <summary>Hides every prefab panel under the legacy Content root once.</summary>
+    private static void HideLegacyPanels(GameObject content)
     {
-        Hud_Manager.Content.Character.Set_Active(false);
-        Hud_Manager.Content.Items.Set_Active(false);
-        Hud_Manager.Content.Scenes.Set_Active(false);
-        Hud_Manager.Content.Skills.Set_Active(false);
-        Hud_Manager.Content.OdlForceDrop.Set_Active(false);
-        Hud_Manager.Content.Headhunter.Set_Active(false);
-        Hud_Manager.Content.Set_Active();
+        foreach (GameObject child in Functions.GetAllChild(content))
+        {
+            child.SetActive(false);
+        }
     }
 
     private static void Close()
@@ -231,15 +230,7 @@ public static class HudLayout
         if (Hud_Manager.mod_menu_open)
             Hud_Manager.mod_menu_open = false;
         else
-            Hud_Manager.Hud_Base.Resume_Click();
-    }
-
-    private static Font FindFont(GameObject hud)
-    {
-        foreach (var text in hud.GetComponentsInChildren<Text>(true))
-            if (!text.font.IsNullOrDestroyed())
-                return text.font;
-        return null;
+            GamePauseMenu.Resume();
     }
 
     private static GameObject Node(GameObject parent, string name) =>
