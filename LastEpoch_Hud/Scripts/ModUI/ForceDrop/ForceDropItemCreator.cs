@@ -328,10 +328,23 @@ public static class ForceDropItemCreator
         UniqueRegularSealExtension.Track(item, request);
         if (request.VariantIds.Count > 0)
         {
+            if (
+                UniqueVariantAdapter.HasTieredCorruptionPool(UniqueList.getUnique(item.uniqueID))
+                && !request.Corrupted
+            )
+                throw new InvalidOperationException(
+                    "This unique's native corruption modifiers require a corrupted item."
+                );
             var ids = new int[request.VariantIds.Count];
             for (int i = 0; i < ids.Length; i++)
                 ids[i] = request.VariantIds[i];
-            UniqueVariantAdapter.Apply(item, request.IsIllegal, ids);
+            UniqueVariantAdapter.Apply(
+                item,
+                request.IsIllegal,
+                request.VariantTiers,
+                request.VariantRolls,
+                ids
+            );
         }
         // Native level-dependent corruption checks must see the real item level.
         foreach (var selected in request.Affixes)
@@ -339,6 +352,18 @@ public static class ForceDropItemCreator
                 item.LvlReq,
                 item.CalculateLevelRequirementWithAffixAtTier(selected.Id, selected.Tier)
             );
+        if (
+            request.VariantIds.Count > 0
+            && UniqueVariantAdapter.HasTieredCorruptionPool(UniqueList.getUnique(item.uniqueID))
+        )
+            for (int i = 0; i < request.VariantIds.Count; i++)
+                item.LvlReq = Math.Max(
+                    item.LvlReq,
+                    item.CalculateLevelRequirementWithAffixAtTier(
+                        request.VariantIds[i],
+                        request.VariantTiers[i]
+                    )
+                );
         return item;
     }
 
@@ -523,7 +548,13 @@ public static class ForceDropItemCreator
             var ids = new int[request.VariantIds.Count];
             for (int i = 0; i < ids.Length; i++)
                 ids[i] = request.VariantIds[i];
-            UniqueVariantAdapter.VerifySelection(item, request.IsIllegal, ids);
+            UniqueVariantAdapter.VerifySelection(
+                item,
+                request.IsIllegal,
+                request.VariantTiers,
+                request.VariantRolls,
+                ids
+            );
         }
         for (int i = 0; i < request.ImplicitRolls.Count; i++)
             if (item.implicitRolls[i] != request.ImplicitRolls[i])

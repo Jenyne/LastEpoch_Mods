@@ -58,6 +58,8 @@ public sealed class ResolvedForceDrop
     public IReadOnlyList<int> UniqueRolls { get; }
     public IReadOnlyList<ResolvedForceDropAffix> Affixes { get; }
     public IReadOnlyList<int> VariantIds { get; }
+    public IReadOnlyList<int> VariantTiers { get; }
+    public IReadOnlyList<int> VariantRolls { get; }
     public ResolvedForceDropAffix Corruption { get; }
     public ForceDropMode Mode { get; }
     public bool IsIllegal => Mode == ForceDropMode.Illegal;
@@ -76,7 +78,9 @@ public sealed class ResolvedForceDrop
         IEnumerable<ResolvedForceDropAffix> affixes,
         IEnumerable<int> variantIds,
         ResolvedForceDropAffix corruption,
-        ForceDropMode mode = ForceDropMode.Legal
+        ForceDropMode mode = ForceDropMode.Legal,
+        IEnumerable<int> variantTiers = null,
+        IEnumerable<int> variantRolls = null
     )
     {
         CheckRange(itemType, byte.MaxValue, nameof(itemType));
@@ -113,6 +117,18 @@ public sealed class ResolvedForceDrop
         VariantIds = Array.AsReadOnly(
             (variantIds ?? throw new ArgumentNullException(nameof(variantIds))).ToArray()
         );
+        VariantTiers = Array.AsReadOnly(
+            (variantTiers ?? Enumerable.Repeat(0, VariantIds.Count)).ToArray()
+        );
+        VariantRolls = Array.AsReadOnly(
+            (variantRolls ?? Enumerable.Repeat(255, VariantIds.Count)).ToArray()
+        );
+        if (VariantTiers.Count != VariantIds.Count || VariantRolls.Count != VariantIds.Count)
+            throw new ArgumentException("Every unique modifier needs a resolved tier and roll.");
+        foreach (int tier in VariantTiers)
+            CheckRange(tier, 6, nameof(variantTiers));
+        foreach (int roll in VariantRolls)
+            CheckRange(roll, byte.MaxValue, nameof(variantRolls));
         Corruption = corruption;
         var ids = new HashSet<int>();
         int regularSeals = 0,

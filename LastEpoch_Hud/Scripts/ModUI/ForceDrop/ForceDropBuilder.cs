@@ -68,6 +68,9 @@ public static class ForceDropBuilder
     static readonly int[] variantIds = { -1, -1 };
     static readonly string[] variantNames = { "Choose modifier 1", "Choose modifier 2" };
     static readonly Button[] variantSelect = new Button[2];
+    static readonly Number[] variantTier = new Number[2],
+        variantRoll = new Number[2];
+    static readonly GameObject[] variantValues = new GameObject[2];
     static Text variantHeader,
         variantDescription;
     static ushort rageUniqueId;
@@ -178,6 +181,7 @@ public static class ForceDropBuilder
         var rageEntry = SelectedRageEntry();
         int variantCount = UniqueVariantAdapter.VariantCount(rageEntry);
         bool showRage = variantCount > 0;
+        bool tieredPool = UniqueVariantAdapter.HasTieredCorruptionPool(rageEntry);
         if (rageUniqueId != FD.ItemUniqueId)
         {
             ResetRage();
@@ -187,7 +191,10 @@ public static class ForceDropBuilder
         // Keep the exclusive modifier next to the item preview and outside the affix grid.
         bool twoVariants = variantCount == 2;
         Rect(ragePage, .04f, .28f, .96f, twoVariants ? .54f : .45f);
-        LocaleRegistry.Apply(variantHeader, "Exclusive unique modifiers");
+        LocaleRegistry.Apply(
+            variantHeader,
+            tieredPool ? "Unique corruption modifiers" : "Exclusive unique modifiers"
+        );
         LocaleRegistry.Apply(
             variantDescription,
             "Native modifiers · separate from ordinary affixes"
@@ -212,6 +219,30 @@ public static class ForceDropBuilder
             .97f,
             twoVariants ? .75f : .69f
         );
+        for (int slot = 0; slot < 2; slot++)
+        {
+            variantValues[slot].SetActive(tieredPool && slot < variantCount);
+            if (!tieredPool)
+                continue;
+            var definition = FindAffix(variantIds[slot]);
+            SetTierLimit(
+                variantTier[slot],
+                variantIds[slot] < 0 ? 7 : ForceDropCatalog.MaximumTier(definition, 7)
+            );
+            Rect(
+                variantSelect[slot].gameObject,
+                .03f,
+                slot == 0 ? .51f : .25f,
+                .60f,
+                slot == 0 ? .75f : .49f
+            );
+        }
+        corruptButton.interactable = !tieredPool;
+        if (tieredPool)
+        {
+            corrupted = true;
+            Caption(corruptButton, "Corrupted: Yes");
+        }
         Rect(preview.gameObject, .04f, showRage ? (twoVariants ? .56f : .47f) : .28f, .96f, .90f);
         if (Time.unscaledTime >= nextCorruptionCheck)
         {
@@ -219,6 +250,11 @@ public static class ForceDropBuilder
             corruptionSelect.interactable = CorruptedAffixAdapter.IsSupported;
             if (corruptionSelect.interactable && corruptionId < 0)
                 Caption(corruptionSelect, "Corrupted affix: None");
+        }
+        if (tieredPool)
+        {
+            corruptionSelect.interactable = false;
+            Caption(corruptionSelect, "Use unique modifier selectors");
         }
         forging.input.interactable = !corrupted && !forging.random;
         if (forging.mode != null)
@@ -697,6 +733,24 @@ public static class ForceDropBuilder
             () => RagePicker(1)
         );
         variantSelect[1].gameObject.SetActive(false);
+        for (int slot = 0; slot < 2; slot++)
+        {
+            var values = Panel(
+                ragePage,
+                "Modifier values " + slot,
+                .62f,
+                slot == 0 ? .51f : .25f,
+                .97f,
+                slot == 0 ? .75f : .49f
+            );
+            variantValues[slot] = values;
+            variantTier[slot] = NumericCompact(values, .02f, .02f, .46f, .70f, 1, 7, 7);
+            variantRoll[slot] = NumericCompact(values, .53f, .02f, .98f, .70f, 0, 100, 100);
+            Label(values, "Tier", .02f, .72f, .46f, .99f, 11);
+            Label(values, "Roll %", .53f, .72f, .98f, .99f, 11);
+            values.SetActive(false);
+        }
+
         variantDescription = Label(
             ragePage,
             "Exclusive ring modifier · separate from LP",
@@ -949,9 +1003,16 @@ public static class ForceDropBuilder
     static void ResetRage()
     {
         bool ring = UniqueVariantAdapter.IsUnsated(SelectedRageEntry());
+        if (UniqueVariantAdapter.HasTieredCorruptionPool(SelectedRageEntry()))
+            corruptionId = -1;
         for (int slot = 0; slot < variantIds.Length; slot++)
         {
             variantIds[slot] = -1;
+            if (variantTier[slot] != null)
+            {
+                variantTier[slot].value = 7;
+                variantRoll[slot].value = 100;
+            }
             variantNames[slot] =
                 ring && slot == 0 ? "Choose Rage"
                 : slot == 0 ? "Choose modifier 1"
@@ -993,8 +1054,13 @@ public static class ForceDropBuilder
         OpenPicker(
             UniqueVariantAdapter.IsUnsated(SelectedRageEntry())
                 ? "Unsated Rage — exclusive ring modifier"
-            : slot == 0 ? "Withstand the Elements — modifier 1"
-            : "Withstand the Elements — modifier 2"
+                : (
+                    SelectedRageEntry().IsNullOrDestroyed()
+                        ? "Unique"
+                        : SelectedRageEntry().displayName
+                )
+                    + " — modifier "
+                    + (slot + 1)
         );
     }
 
@@ -1680,27 +1746,29 @@ public static class ForceDropBuilder
         if (unique)
             for (int i = 0; i < uniqueValues.Length; i++)
                 uniqueValues[i] = ResolvedRoll(uniqueRolls[i]);
+        bool tieredPool = UniqueVariantAdapter.HasTieredCorruptionPool(SelectedRageEntry());
+        bool effectiveCorrupted = corrupted || tieredPool;
         bool usesLP = unique && FD.ItemLegendaryType == UniqueList.LegendaryType.LegendaryPotential;
         return new ResolvedForceDrop(
             FD.ItemType,
             FD.ItemSubtype,
             unique ? FD.ItemUniqueId : 0,
             FD.ItemRarity,
-            equipment && !unique && !corrupted ? ResolvedNumber(forging) : 0,
+            equipment && !unique && !effectiveCorrupted ? ResolvedNumber(forging) : 0,
             usesLP
-            && !corrupted
+            && !effectiveCorrupted
             && !ForceDropPotentialRules.CreatesLegendary(FD.ItemRarity, selected.Count)
                 ? ResolvedNumber(lp)
                 : 0,
-            unique && !usesLP && !corrupted ? ResolvedNumber(ww) : 0,
-            corrupted,
+            unique && !usesLP && !effectiveCorrupted ? ResolvedNumber(ww) : 0,
+            effectiveCorrupted,
             implicitValues,
             uniqueValues,
             selected,
             UniqueVariantAdapter.VariantCount(SelectedRageEntry()) > 0
                 ? SelectedVariantIds()
                 : Array.Empty<int>(),
-            includeCorruption && corrupted && corruptionId >= 0
+            includeCorruption && !tieredPool && effectiveCorrupted && corruptionId >= 0
                 ? new ResolvedForceDropAffix(
                     corruptionId,
                     corruptionTier.value - 1,
@@ -1708,7 +1776,9 @@ public static class ForceDropBuilder
                     ForceDropSeal.Corruption
                 )
                 : null,
-            allowIllegal ? ForceDropMode.Illegal : ForceDropMode.Legal
+            allowIllegal ? ForceDropMode.Illegal : ForceDropMode.Legal,
+            tieredPool ? new[] { variantTier[0].value - 1, variantTier[1].value - 1 } : null,
+            tieredPool ? new[] { ResolvedRoll(variantRoll[0]), ResolvedRoll(variantRoll[1]) } : null
         );
     }
 
