@@ -39,3 +39,9 @@ Hover ground loot in combat, then test leaving the label, left/right click, pick
 Full mod source compiled against .NET 6, Harmony 2.3.1.1, MelonLoader 0.7.3 and supplied game interop assemblies. Available unit/interop/patch checks pass; native Cpp2IL checks are skipped locally. The native exporter also passes a synthetic fixture check of the binary hash, addresses, and exact code slices. In-game tooltip behavior and the remaining unique-seal repair still require verification.
 
 The b642173b runtime trace reaches Completed while the user reports most tooltips never appear. Blocking the legacy manager close does not establish visible output. The native exporter now includes TooltipSystem, ItemTooltip, UITooltipItem, their nested helpers, and ground-label update code to trace the opening/visibility path. Run scripts/Export-ItemNativeProbe.ps1 and attach Build/ItemNativeProbe.zip; this exporter reads game files and does not replace the installed mod.
+
+## Native visible-view close repair
+
+The expanded export (game hash D5F9FB458F0E9878E697A92B590A586A52FD77E645F8BF87BB4F2B74C6C56567) proves CloseAllTooltips calls TooltipItemManager.CloseTooltip at RVA 0x20191ED, then directly calls UITooltipItem.CloseTooltip at 0x2019457. The latter clears text/content and renews the cancellation token even if the manager prefix skipped its close. The candidate now scopes a protected view to that exact CloseAllTooltips invocation after its manager close is rejected. Only the matching view clear is skipped; node/simple/Morditas cleanup continues, and ordinary initialization clears outside this native operation remain allowed. Scope restoration uses a finalizer, including exception and nested-call paths.
+
+Retest fresh ground hovers during combat, already-open tooltips, item switching, pointer exit, pickup, inventory/HUD, Escape, Alt comparison and area changes. Look for `visible close kept after rejected manager close` alongside the manager trace.

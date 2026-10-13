@@ -1,6 +1,7 @@
 using System;
 using HarmonyLib;
 using Il2Cpp;
+using Il2CppLE.UI.Tooltips;
 using LastEpoch_Hud.Scripts.Core.Items;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -16,6 +17,16 @@ internal static class GroundTooltipDiagnostics
 
     [ThreadStatic]
     static string closeSource;
+
+    [ThreadStatic]
+    static CloseAllScope closeAllScope;
+
+    sealed class CloseAllScope
+    {
+        internal CloseAllScope Parent;
+        internal UITooltipItem ProtectedItem;
+    }
+
     static string scene;
     static int remaining;
 
@@ -232,6 +243,50 @@ internal static class GroundTooltipDiagnostics
         }
     }
 
+    // CloseAllTooltips independently clears the legacy view after closing its manager.
+    // Protect only that exact view when the manager rejected this same close operation.
+    [HarmonyPatch(typeof(TooltipSystem), nameof(TooltipSystem.CloseAllTooltips))]
+    static class CloseAll
+    {
+        [HarmonyPrefix]
+        static void Prefix(out CloseAllScope __state)
+        {
+            __state = new CloseAllScope { Parent = closeAllScope };
+            closeAllScope = __state;
+        }
+
+        [HarmonyFinalizer]
+        static Exception Finalizer(CloseAllScope __state, Exception __exception)
+        {
+            closeAllScope = __state.Parent;
+            return __exception;
+        }
+    }
+
+    [HarmonyPatch(typeof(UITooltipItem), nameof(UITooltipItem.CloseTooltip))]
+    static class CloseVisibleItem
+    {
+        [HarmonyPrefix]
+        static bool Prefix(UITooltipItem __instance)
+        {
+            try
+            {
+                var protectedItem = closeAllScope?.ProtectedItem;
+                if (protectedItem.IsNullOrDestroyed() || protectedItem != __instance)
+                    return true;
+                Trace(
+                    "visible close kept after rejected manager close, view="
+                        + ObjectPath(__instance.gameObject)
+                );
+                return false;
+            }
+            catch
+            {
+                return true;
+            }
+        }
+    }
+
     [HarmonyPatch(typeof(TooltipItemManager), nameof(TooltipItemManager.CloseTooltip))]
     static class Close
     {
@@ -259,6 +314,8 @@ internal static class GroundTooltipDiagnostics
                     Input.GetKey(KeyCode.Escape),
                     blocked
                 );
+                if (closeAllScope != null)
+                    closeAllScope.ProtectedItem = keep ? __instance.itemTooltip : null;
                 Trace(
                     "close "
                         + (keep ? "kept" : "allowed")
