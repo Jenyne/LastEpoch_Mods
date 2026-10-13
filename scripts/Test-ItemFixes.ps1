@@ -80,12 +80,12 @@ try {
             (Test-Path -LiteralPath (Join-Path $GamePath "GameAssembly.dll") -PathType Leaf)) {
             dotnet run --project .\tools\NativeItemProbe\NativeItemProbe.csproj -c Release -- $GamePath $nativeProbe
             if ($LASTEXITCODE -eq 0) {
-                Write-Host "Attach $nativeProbe to diagnose unique sealed-slot packing."
+                Write-Host "Attach $nativeProbe to diagnose item packing and tooltip visibility."
             } else {
                 Write-Warning "Native probe export failed. The tested DLL was installed; run scripts/Export-ItemNativeProbe.ps1 separately."
             }
         } else {
-            Write-Warning "Native probe needs GameAssembly.dll and cpp2il_out. Unique sealed-slot packing remains under investigation."
+            Write-Warning "Native probe needs GameAssembly.dll and cpp2il_out. Native item and tooltip investigation needs these files."
         }
     }
     Write-Host "Installed item-fix test build $localHead."

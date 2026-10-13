@@ -37,3 +37,5 @@ Hover ground loot in combat, then test leaving the label, left/right click, pick
 ## Validation
 
 Full mod source compiled against .NET 6, Harmony 2.3.1.1, MelonLoader 0.7.3 and supplied game interop assemblies. Available unit/interop/patch checks pass; native Cpp2IL checks are skipped locally. The native exporter also passes a synthetic fixture check of the binary hash, addresses, and exact code slices. In-game tooltip behavior and the remaining unique-seal repair still require verification.
+
+The b642173b runtime trace reaches Completed while the user reports most tooltips never appear. Blocking the legacy manager close does not establish visible output. The native exporter now includes TooltipSystem, ItemTooltip, UITooltipItem, their nested helpers, and ground-label update code to trace the opening/visibility path. Run scripts/Export-ItemNativeProbe.ps1 and attach Build/ItemNativeProbe.zip; this exporter reads game files and does not replace the installed mod.

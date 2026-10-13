@@ -53,8 +53,17 @@ var wanted = new HashSet<string>
     "TooltipItemManager",
     "GroundItemLabelButton",
     "UIMouseListener",
+    "TooltipSystem",
+    "ItemTooltip",
+    "UITooltipItem",
+    "Tooltip",
+    "GroundItemLabel",
 };
-var targets = addresses.Where(a => wanted.Contains(a.Type.Split('.').Last())).ToList();
+
+// Include nested update helpers on these exact types as well as their direct methods.
+var targets = addresses
+    .Where(a => wanted.Contains(a.Type.Split('/')[0].Split('.').Last()))
+    .ToList();
 if (!targets.Any(a => a.Type.Split('.').Last() == "ItemData"))
     throw new IOException("ItemData native addresses were not found. Check cpp2il_out.");
 var offsets = addresses.Select(a => a.Offset).Distinct().Order().ToArray();
