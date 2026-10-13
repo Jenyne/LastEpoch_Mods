@@ -93,7 +93,7 @@ try {
     Write-Host "Illegal Unique regular seals are persisted in Mods/LastEpoch_Hud/IllegalUniqueSeals.json; keep this file with your mod data."
     Write-Host "Illegal Off: confirm Unique/Set sealed and Primordial slots stay locked, including after Fixed/Random changes."
     Write-Host "Equip distinct illegal Set pieces with Remove Set Requirements OFF; check bonuses, duplicates and reload."
-    Write-Host "Retest the amulet Set-bonus text. Hover fresh ground loot during combat; test switching items, pickup, Escape and inventory. Send [Ground Tooltip] lines, including visible close kept, if it fails."
+    Write-Host "Check Set-bonus text on gloves and amulets in normal, expanded and comparison tooltips. Retest fresh combat hovers, switching items, pickup, Escape and inventory."
 } finally {
     Pop-Location
 }

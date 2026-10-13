@@ -134,6 +134,22 @@ public static class IllegalItemAdapter
         }
     }
 
+    // The native dispatcher inlines default content for ordinary display mode.
+    // Patch its final result too, so every legacy layout receives set bonus text.
+    [HarmonyPatch(typeof(TooltipItemManager), nameof(TooltipItemManager.CreateTooltipContent))]
+    static class DispatchedSetTooltipContent
+    {
+        [HarmonyPostfix]
+        static void Postfix(
+            TooltipItemManager.ItemTooltipParameters __0,
+            ref UITooltipItem.ItemTooltipInfo __result
+        )
+        {
+            if (!__0.IsNullOrDestroyed())
+                AddLegacySetBonus(__0.Item, __0.TooltipMode, __0.SlotType, ref __result);
+        }
+    }
+
     // The game retains the older content path for some tooltip layouts.
     [HarmonyPatch(typeof(TooltipItemManager), "CreateTooltipDefaultContent")]
     static class LegacySetTooltipContent

@@ -26,22 +26,18 @@ The native exporter remains available through `scripts/Export-ItemNativeProbe.ps
 or the optional `-ExportNativeProbe` switch on the build/install script. A normal
 test install no longer repeats this export.
 
+## Set tooltip layouts
+
+The legacy CreateTooltipContent dispatcher inlines default content in ordinary display mode, so a CreateTooltipDefaultContent hook alone cannot cover it. The final dispatcher result now receives the same native set bonus formatting as the default/full paths, with exact-string deduplication. Recognition and equipment counting are unchanged. Check gloves and amulets in ordinary, expanded, comparison, ground and inventory tooltips, then equip/relog.
+
 ## Ground tooltip test
 
-The trace showed ground tooltips opening successfully and closing during initialization with neither mouse button held. A highlighted TooltipItem alone is insufficient proof that the pointer remains over it.
+The native CloseAllTooltips operation closes the manager and then independently clears the legacy visible view. The guard protects only the matching view when that same operation's manager close was rejected for a valid hovered ground item. Normal pointer exit, pickup, Escape, menus, item replacement and unrelated tooltip cleanup remain native.
 
-This candidate guard keeps an active ground tooltip only when a fresh UI raycast places its opener/highlighted label at the front, the item and label are valid, the application is focused, no mouse button or Escape is held, no blocking UI is present, and no replacement tooltip is opening. It allows native closes for everything else. It neither forces a tooltip open nor suppresses native exceptions.
+Nyk confirmed combat hovers, zone changes, inventory drops and re-pickup without stuck tooltips. Temporary hover/close traces and Force Drop pool/metadata diagnostics have been removed; real action and persistence errors remain visible.
 
-Hover ground loot in combat, then test leaving the label, left/right click, pickup, Escape, opening inventory/the HUD, switching to another item, and changing areas. Send `[Ground Tooltip]` entries if a failure remains. Active-close entries report `kept` or `allowed`, the native pointer-exit source, the opener/highlight instance paths, cursor and label positions, and the first three UI raycast hits. Pointer-exit entries also include Unity's event hit. These diagnostics distinguish label movement, an intercepting UI element, and a cleared/inactive highlight without changing the guard. Output is bounded to 120 entries per scene; inactive close spam is omitted.
+Retest fresh combat hovers, leaving labels, switching items, pickup, Escape, inventory/HUD, Alt comparison and area changes after this cleanup.
 
 ## Validation
 
-Full mod source compiled against .NET 6, Harmony 2.3.1.1, MelonLoader 0.7.3 and supplied game interop assemblies. Available unit/interop/patch checks pass; native Cpp2IL checks are skipped locally. The native exporter also passes a synthetic fixture check of the binary hash, addresses, and exact code slices. In-game tooltip behavior and the remaining unique-seal repair still require verification.
-
-The b642173b runtime trace reaches Completed while the user reports most tooltips never appear. Blocking the legacy manager close does not establish visible output. The native exporter now includes TooltipSystem, ItemTooltip, UITooltipItem, their nested helpers, and ground-label update code to trace the opening/visibility path. Run scripts/Export-ItemNativeProbe.ps1 and attach Build/ItemNativeProbe.zip; this exporter reads game files and does not replace the installed mod.
-
-## Native visible-view close repair
-
-The expanded export (game hash D5F9FB458F0E9878E697A92B590A586A52FD77E645F8BF87BB4F2B74C6C56567) proves CloseAllTooltips calls TooltipItemManager.CloseTooltip at RVA 0x20191ED, then directly calls UITooltipItem.CloseTooltip at 0x2019457. The latter clears text/content and renews the cancellation token even if the manager prefix skipped its close. The candidate now scopes a protected view to that exact CloseAllTooltips invocation after its manager close is rejected. Only the matching view clear is skipped; node/simple/Morditas cleanup continues, and ordinary initialization clears outside this native operation remain allowed. Scope restoration uses a finalizer, including exception and nested-call paths.
-
-Retest fresh ground hovers during combat, already-open tooltips, item switching, pointer exit, pickup, inventory/HUD, Escape, Alt comparison and area changes. Look for `visible close kept after rejected manager close` alongside the manager trace.
+Previous combined build c8328c22 passed all 2,716 tests on the user's Windows installation, including native checks. This follow-up needs an in-game check of the gloves' bonus text in each layout. Run scripts/Test-ItemFixes.ps1 to build, test, back up and transfer the DLL.
