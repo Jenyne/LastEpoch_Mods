@@ -28,7 +28,7 @@ test install no longer repeats this export.
 
 ## Set tooltip layouts
 
-The legacy CreateTooltipContent dispatcher inlines default content in ordinary display mode, so a CreateTooltipDefaultContent hook alone cannot cover it. The final dispatcher result now receives the same native set bonus formatting as the default/full paths, with exact-string deduplication. Recognition and equipment counting are unchanged. Check gloves and amulets in ordinary, expanded, comparison, ground and inventory tooltips, then equip/relog.
+The legacy CreateTooltipContent dispatcher inlines default content in ordinary display mode, so a CreateTooltipDefaultContent hook alone cannot cover it. The final dispatcher result now receives the same native set bonus formatting as the default/full paths, with exact-string deduplication. Native UpdateAffixesText iterates only the prefab row pool. For recognized illegal set items, that pool now grows to fit the complete unique/set text list, preventing trailing set-bonus text from being omitted when T8 combinations produce more entries. Extra rows are reused and hidden by the native renderer when unused. Recognition and equipment counting are unchanged. Check gloves and amulets in ordinary, expanded, comparison, ground and inventory tooltips, then equip/relog.
 
 ## Ground tooltip test
 

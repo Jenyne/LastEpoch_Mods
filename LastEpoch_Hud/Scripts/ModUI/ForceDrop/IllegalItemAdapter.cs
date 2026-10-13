@@ -175,6 +175,49 @@ public static class IllegalItemAdapter
         ) => AddLegacySetBonus(__0, __1, __2, ref __result);
     }
 
+    // Native UpdateAffixesText iterates the prefab's fixed row pool, silently
+    // omitting trailing content when illegal combinations exceed its capacity.
+    [HarmonyPatch(typeof(UITooltipItem), nameof(UITooltipItem.UpdateAffixesText))]
+    static class SetTooltipRows
+    {
+        [HarmonyPrefix]
+        static void Prefix(
+            UITooltipItem __instance,
+            ItemData __0,
+            UITooltipItem.ItemTooltipInfo __1
+        )
+        {
+            if (
+                !AdditionalSetPiece(__0, out _)
+                || __1.uniqueAffixesText.IsNullOrDestroyed()
+                || __instance.uniqueAffixesText.IsNullOrDestroyed()
+                || __instance.uniqueAffixesText.Count == 0
+            )
+                return;
+            var rows = __instance.uniqueAffixesText;
+            var template = rows[rows.Count - 1];
+            if (template.IsNullOrDestroyed())
+                return;
+            while (rows.Count < __1.uniqueAffixesText.Count)
+            {
+                var clone = UnityEngine.Object.Instantiate(
+                    template.gameObject,
+                    template.transform.parent,
+                    false
+                );
+                var row = clone.GetComponent<UITooltipItemAffix>();
+                if (row.IsNullOrDestroyed())
+                {
+                    UnityEngine.Object.Destroy(clone);
+                    return;
+                }
+                clone.transform.SetSiblingIndex(template.transform.GetSiblingIndex() + 1);
+                rows.Add(row);
+                template = row;
+            }
+        }
+    }
+
     static void AddLegacySetBonus(
         ItemDataUnpacked item,
         TooltipMode mode,
