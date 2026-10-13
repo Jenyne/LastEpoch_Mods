@@ -41,3 +41,7 @@ Retest fresh combat hovers, leaving labels, switching items, pickup, Escape, inv
 ## Validation
 
 Previous combined build c8328c22 passed all 2,716 tests on the user's Windows installation, including native checks. This follow-up needs an in-game check of the gloves' bonus text in each layout. Run scripts/Test-ItemFixes.ps1 to build, test, back up and transfer the DLL.
+
+## Item/base search
+
+The all-item search excludes base types identified by ItemList.isShard. Those catalog entries are real shard items with affix-description names, not affix-picker records. Equipment bases, uniques and sets remain searchable; underlying category indices and shard creation are unchanged. Search `yo` and confirm no `Affix Shard / Base Item` results appear.

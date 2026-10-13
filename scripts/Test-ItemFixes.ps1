@@ -89,6 +89,7 @@ try {
         }
     }
     Write-Host "Installed item-fix test build $localHead."
+    Write-Host "Search yo in Choose item: Affix Shard results must be absent; equipment bases, uniques and sets must still resolve."
     Write-Host "Test Unique and base items with four affixes + regular seal + Primordial + corruption, at T7/T8; pick up, equip and reload."
     Write-Host "Illegal Unique regular seals are persisted in Mods/LastEpoch_Hud/IllegalUniqueSeals.json; keep this file with your mod data."
     Write-Host "Illegal Off: confirm Unique/Set sealed and Primordial slots stay locked, including after Fixed/Random changes."
