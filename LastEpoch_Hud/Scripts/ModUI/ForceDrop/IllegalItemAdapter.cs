@@ -175,8 +175,8 @@ public static class IllegalItemAdapter
         ) => AddLegacySetBonus(__0, __1, __2, ref __result);
     }
 
-    // Native UpdateAffixesText iterates the prefab's fixed row pool, silently
-    // omitting trailing content when illegal combinations exceed its capacity.
+    // Native text rendering and SimpleLayoutGroup have separate row lists.
+    // Grow both together, preserving the template's layout flags and order.
     [HarmonyPatch(typeof(UITooltipItem), nameof(UITooltipItem.UpdateAffixesText))]
     static class SetTooltipRows
     {
@@ -184,19 +184,42 @@ public static class IllegalItemAdapter
         static void Prefix(
             UITooltipItem __instance,
             ItemData __0,
-            UITooltipItem.ItemTooltipInfo __1
+            UITooltipItem.ItemTooltipInfo __1,
+            out SimpleLayoutGroup __state
         )
         {
+            __state = null;
             if (
                 !AdditionalSetPiece(__0, out _)
                 || __1.uniqueAffixesText.IsNullOrDestroyed()
                 || __instance.uniqueAffixesText.IsNullOrDestroyed()
                 || __instance.uniqueAffixesText.Count == 0
+                || __instance.uniqueAffixesText.Count >= __1.uniqueAffixesText.Count
             )
                 return;
             var rows = __instance.uniqueAffixesText;
             var template = rows[rows.Count - 1];
-            if (template.IsNullOrDestroyed())
+            var layout = __instance._layoutGroup;
+            if (
+                template.IsNullOrDestroyed()
+                || layout.IsNullOrDestroyed()
+                || layout.Elements.IsNullOrDestroyed()
+            )
+                return;
+            SimpleLayoutGroup.SimpleLayoutElement source = null;
+            int layoutIndex = -1;
+            for (int i = 0; i < layout.Elements.Count; i++)
+            {
+                var element = layout.Elements[i];
+                if (!element.IsNullOrDestroyed() && element.GameObject == template.gameObject)
+                {
+                    source = element;
+                    layoutIndex = i;
+                    break;
+                }
+            }
+            // Never add an unregistered row that would overlap other sections.
+            if (source.IsNullOrDestroyed())
                 return;
             while (rows.Count < __1.uniqueAffixesText.Count)
             {
@@ -211,10 +234,31 @@ public static class IllegalItemAdapter
                     UnityEngine.Object.Destroy(clone);
                     return;
                 }
+                clone.SetActive(false);
                 clone.transform.SetSiblingIndex(template.transform.GetSiblingIndex() + 1);
+                layout.AddElement(clone);
+                foreach (var element in layout.Elements)
+                    if (!element.IsNullOrDestroyed() && element.GameObject == clone)
+                    {
+                        element._parentControlsSize = source.ParentControlsSize;
+                        element._excludeIfInactive = source.ExcludeIfInactive;
+                        element._expandAcrossAxis = source.ExpandAcrossAxis;
+                        element.Ignored = source.Ignored;
+                        break;
+                    }
+                layout.SetItemOrder(clone, ++layoutIndex);
                 rows.Add(row);
                 template = row;
+                __state = layout;
             }
+        }
+
+        [HarmonyPostfix]
+        static void Postfix(SimpleLayoutGroup __state)
+        {
+            // Init has now populated/activated each row, so measure the real text.
+            if (!__state.IsNullOrDestroyed())
+                __state.UpdateLayout();
         }
     }
 
