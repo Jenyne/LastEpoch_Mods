@@ -175,8 +175,8 @@ public static class IllegalItemAdapter
         ) => AddLegacySetBonus(__0, __1, __2, ref __result);
     }
 
-    // Native text rendering and SimpleLayoutGroup have separate row lists.
-    // Grow both together, preserving the template's layout flags and order.
+    // Keep the registered native row pool. Dense illegal set combinations can
+    // exceed it, so retain overflow text in the final existing row.
     [HarmonyPatch(typeof(UITooltipItem), nameof(UITooltipItem.UpdateAffixesText))]
     static class SetTooltipRows
     {
@@ -184,81 +184,34 @@ public static class IllegalItemAdapter
         static void Prefix(
             UITooltipItem __instance,
             ItemData __0,
-            UITooltipItem.ItemTooltipInfo __1,
-            out SimpleLayoutGroup __state
+            ref UITooltipItem.ItemTooltipInfo __1
         )
         {
-            __state = null;
             if (
                 !AdditionalSetPiece(__0, out _)
                 || __1.uniqueAffixesText.IsNullOrDestroyed()
                 || __instance.uniqueAffixesText.IsNullOrDestroyed()
-                || __instance.uniqueAffixesText.Count == 0
-                || __instance.uniqueAffixesText.Count >= __1.uniqueAffixesText.Count
             )
                 return;
-            var rows = __instance.uniqueAffixesText;
-            var template = rows[rows.Count - 1];
-            var layout = __instance._layoutGroup;
-            if (
-                template.IsNullOrDestroyed()
-                || layout.IsNullOrDestroyed()
-                || layout.Elements.IsNullOrDestroyed()
-            )
+            int capacity = __instance.uniqueAffixesText.Count;
+            if (capacity <= 0 || __1.uniqueAffixesText.Count <= capacity)
                 return;
-            SimpleLayoutGroup.SimpleLayoutElement source = null;
-            int layoutIndex = -1;
-            for (int i = 0; i < layout.Elements.Count; i++)
+            var lines = new Il2CppSystem.Collections.Generic.List<Il2CppSystem.ValueTuple<
+                string,
+                bool
+            >>();
+            for (int i = 0; i < capacity - 1; i++)
+                lines.Add(__1.uniqueAffixesText[i]);
+            var overflow = new System.Text.StringBuilder();
+            var final = __1.uniqueAffixesText[capacity - 1];
+            for (int i = capacity - 1; i < __1.uniqueAffixesText.Count; i++)
             {
-                var element = layout.Elements[i];
-                if (!element.IsNullOrDestroyed() && element.GameObject == template.gameObject)
-                {
-                    source = element;
-                    layoutIndex = i;
-                    break;
-                }
+                if (overflow.Length > 0)
+                    overflow.Append("\n\n");
+                overflow.Append(__1.uniqueAffixesText[i].Item1);
             }
-            // Never add an unregistered row that would overlap other sections.
-            if (source.IsNullOrDestroyed())
-                return;
-            while (rows.Count < __1.uniqueAffixesText.Count)
-            {
-                var clone = UnityEngine.Object.Instantiate(
-                    template.gameObject,
-                    template.transform.parent,
-                    false
-                );
-                var row = clone.GetComponent<UITooltipItemAffix>();
-                if (row.IsNullOrDestroyed())
-                {
-                    UnityEngine.Object.Destroy(clone);
-                    return;
-                }
-                clone.SetActive(false);
-                clone.transform.SetSiblingIndex(template.transform.GetSiblingIndex() + 1);
-                layout.AddElement(clone);
-                foreach (var element in layout.Elements)
-                    if (!element.IsNullOrDestroyed() && element.GameObject == clone)
-                    {
-                        element._parentControlsSize = source.ParentControlsSize;
-                        element._excludeIfInactive = source.ExcludeIfInactive;
-                        element._expandAcrossAxis = source.ExpandAcrossAxis;
-                        element.Ignored = source.Ignored;
-                        break;
-                    }
-                layout.SetItemOrder(clone, ++layoutIndex);
-                rows.Add(row);
-                template = row;
-                __state = layout;
-            }
-        }
-
-        [HarmonyPostfix]
-        static void Postfix(SimpleLayoutGroup __state)
-        {
-            // Init has now populated/activated each row, so measure the real text.
-            if (!__state.IsNullOrDestroyed())
-                __state.UpdateLayout();
+            lines.Add(new Il2CppSystem.ValueTuple<string, bool>(overflow.ToString(), final.Item2));
+            __1.uniqueAffixesText = lines;
         }
     }
 
