@@ -32,7 +32,7 @@ The trace showed ground tooltips opening successfully and closing during initial
 
 This candidate guard keeps an active ground tooltip only when a fresh UI raycast places its opener/highlighted label at the front, the item and label are valid, the application is focused, no mouse button or Escape is held, no blocking UI is present, and no replacement tooltip is opening. It allows native closes for everything else. It neither forces a tooltip open nor suppresses native exceptions.
 
-Hover ground loot in combat, then test leaving the label, left/right click, pickup, Escape, opening inventory/the HUD, switching to another item, and changing areas. Send `[Ground Tooltip]` entries if a failure remains. Active-close entries report `kept` or `allowed` and `pointerOnOpener`; inactive close spam is omitted.
+Hover ground loot in combat, then test leaving the label, left/right click, pickup, Escape, opening inventory/the HUD, switching to another item, and changing areas. Send `[Ground Tooltip]` entries if a failure remains. Active-close entries report `kept` or `allowed`, the native pointer-exit source, the opener/highlight instance paths, cursor and label positions, and the first three UI raycast hits. Pointer-exit entries also include Unity's event hit. These diagnostics distinguish label movement, an intercepting UI element, and a cleared/inactive highlight without changing the guard. Output is bounded to 120 entries per scene; inactive close spam is omitted.
 
 ## Validation
 

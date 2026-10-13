@@ -13,6 +13,9 @@ internal static class GroundTooltipDiagnostics
 {
     [ThreadStatic]
     static int openingDepth;
+
+    [ThreadStatic]
+    static string closeSource;
     static string scene;
     static int remaining;
 
@@ -21,7 +24,7 @@ internal static class GroundTooltipDiagnostics
         if (scene != Scenes.SceneName)
         {
             scene = Scenes.SceneName;
-            remaining = 60;
+            remaining = 120;
         }
         if (remaining > 0)
         {
@@ -30,32 +33,118 @@ internal static class GroundTooltipDiagnostics
         }
     }
 
-    static bool PointerOnOpener(TooltipItemManager manager)
+    static string ObjectPath(GameObject obj)
     {
-        var parameters = manager.activeParameters;
-        var opener = parameters.Opener;
+        if (obj.IsNullOrDestroyed())
+            return "missing";
+        string path = obj.name + "#" + obj.GetInstanceID();
+        var parent = obj.transform.parent;
+        for (int depth = 0; depth < 4 && !parent.IsNullOrDestroyed(); depth++)
+        {
+            path = parent.name + "/" + path;
+            parent = parent.parent;
+        }
+        return path;
+    }
+
+    static bool PointerOnOpener(TooltipItemManager manager, out string detail)
+    {
+        var opener = manager.activeParameters.Opener;
         var highlighted = TooltipItem.highlightedTooltipItem;
+        detail =
+            "opener="
+            + ObjectPath(opener)
+            + ", highlighted="
+            + (highlighted.IsNullOrDestroyed() ? "missing" : ObjectPath(highlighted.gameObject));
+        if (opener.IsNullOrDestroyed() || !opener.activeInHierarchy)
+        {
+            detail += ", reason=opener inactive";
+            return false;
+        }
         if (
-            opener.IsNullOrDestroyed()
-            || !opener.activeInHierarchy
-            || highlighted.IsNullOrDestroyed()
+            highlighted.IsNullOrDestroyed()
             || !highlighted.isActiveAndEnabled
             || highlighted.slotType != TooltipItemManager.SlotType.GROUND
-            || highlighted.button.IsNullOrDestroyed()
-            || !highlighted.button.interactable
         )
+        {
+            detail += ", reason=no active ground highlight";
             return false;
+        }
+        if (highlighted.button.IsNullOrDestroyed() || !highlighted.button.interactable)
+        {
+            detail += ", reason=label button unavailable";
+            return false;
+        }
         var events = EventSystem.current;
         if (events.IsNullOrDestroyed())
+        {
+            detail += ", reason=no event system";
             return false;
+        }
         var pointer = new PointerEventData(events) { position = Input.mousePosition };
         var hits = new Il2CppSystem.Collections.Generic.List<RaycastResult>();
         events.RaycastAll(pointer, hits);
+        detail +=
+            ", mouse="
+            + pointer.position
+            + ", labelPosition="
+            + opener.transform.position
+            + ", hits="
+            + hits.Count;
+        for (int i = 0; i < Math.Min(3, hits.Count); i++)
+            detail += ", hit" + i + "=" + ObjectPath(hits[i].gameObject);
         if (hits.Count == 0 || hits[0].gameObject.IsNullOrDestroyed())
+        {
+            detail += ", reason=no top hit";
             return false;
+        }
         var hit = hits[0].gameObject;
-        return (hit == opener || hit.transform.IsChildOf(opener.transform))
-            && (hit == highlighted.gameObject || hit.transform.IsChildOf(highlighted.transform));
+        bool onOpener = hit == opener || hit.transform.IsChildOf(opener.transform);
+        bool onHighlight =
+            hit == highlighted.gameObject || hit.transform.IsChildOf(highlighted.transform);
+        detail += ", onOpener=" + onOpener + ", onHighlight=" + onHighlight;
+        return onOpener && onHighlight;
+    }
+
+    // The native implementation closes all tooltips before clearing the highlight.
+    // Record that source without changing pointer-exit behavior.
+    [HarmonyPatch(typeof(TooltipItem), nameof(TooltipItem.OnPointerExit))]
+    static class Exit
+    {
+        [HarmonyPrefix]
+        static void Prefix(TooltipItem __instance, PointerEventData __0, out string __state)
+        {
+            __state = closeSource;
+            if (
+                __instance.IsNullOrDestroyed()
+                || __instance.slotType != TooltipItemManager.SlotType.GROUND
+            )
+                return;
+            closeSource = "ground pointer exit";
+            try
+            {
+                Trace(
+                    "exit label="
+                        + ObjectPath(__instance.gameObject)
+                        + ", eventHit="
+                        + (
+                            __0.IsNullOrDestroyed()
+                                ? "missing event"
+                                : ObjectPath(__0.pointerCurrentRaycast.gameObject)
+                        )
+                        + ", highlighted="
+                        + (TooltipItem.highlightedTooltipItem == __instance)
+                );
+            }
+            catch { }
+        }
+
+        [HarmonyFinalizer]
+        static Exception Finalizer(string __state, Exception __exception)
+        {
+            closeSource = __state;
+            return __exception;
+        }
     }
 
     [HarmonyPatch(typeof(TooltipItem), nameof(TooltipItem.OnPointerEnter))]
@@ -157,7 +246,7 @@ internal static class GroundTooltipDiagnostics
                     && __instance.activeParameters.SlotType == TooltipItemManager.SlotType.GROUND;
                 if (!ground)
                     return true;
-                bool pointer = PointerOnOpener(__instance);
+                bool pointer = PointerOnOpener(__instance, out string pointerDetail);
                 bool mouseHeld = Input.GetMouseButton(0) || Input.GetMouseButton(1);
                 bool blocked = UIMouseListener.WorldActionsDisabled();
                 bool keep = GroundTooltipRules.KeepHoveredGroundTooltip(
@@ -181,8 +270,10 @@ internal static class GroundTooltipDiagnostics
                         + mouseHeld
                         + ", worldBlocked="
                         + blocked
-                        + ", caller="
-                        + Environment.StackTrace
+                        + ", source="
+                        + (closeSource ?? "other native close")
+                        + ", "
+                        + pointerDetail
                 );
                 return !keep;
             }
