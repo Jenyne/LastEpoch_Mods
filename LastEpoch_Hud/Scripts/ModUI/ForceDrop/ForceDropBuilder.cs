@@ -765,9 +765,12 @@ public static class ForceDropBuilder
         Divider(right, .04f, .915f, .96f);
         preview = Label(right, "Choose an item", .04f, .28f, .96f, .90f, 15);
         quantity = Numeric(right, "Quantity", .20f, 1, 99, 1, false, false);
-        dropButton = Button(right, "Drop Item", .04f, .105f, .96f, .18f, Drop);
-        Button(right, "Reset", .04f, .03f, .96f, .09f, Reset);
-        status = Label(root, "", .30f, .01f, .99f, .045f, 12);
+        dropButton = Button(right, "Drop Item", .04f, .105f, .70f, .18f, Drop);
+        Button(right, "Reset", .72f, .105f, .96f, .18f, Reset);
+        status = Label(right, "", .04f, .005f, .96f, .095f, 12);
+        status.resizeTextForBestFit = true;
+        status.resizeTextMinSize = 9;
+        status.resizeTextMaxSize = 12;
         BuildPicker();
         HudStyler.NormalizeSelectableGraphics(root);
         HudStyler.ApplyFontScale(root);
@@ -1505,12 +1508,15 @@ public static class ForceDropBuilder
             return "The selected item does not match its category. Choose it again.";
         var rageEntry = SelectedRageEntry();
         int variantCount = UniqueVariantAdapter.VariantCount(rageEntry);
-        int totalAffixes = variantCount + (corrupted && corruptionId >= 0 ? 1 : 0);
+        bool tieredPool = UniqueVariantAdapter.HasTieredCorruptionPool(rageEntry);
+        int totalAffixes = variantCount + (corrupted && !tieredPool && corruptionId >= 0 ? 1 : 0);
         foreach (var row in rows)
             if (row.id >= 0)
                 totalAffixes++;
         if (FD.ItemRarity >= 7 && totalAffixes > 7)
-            return "Legendary saved data supports seven affixes total, including exclusive modifiers.";
+            return "Too many affixes: "
+                + totalAffixes
+                + "/7. Native unique modifiers, Sealed and Primordial each count. Remove one selected affix.";
         if (variantCount > 0)
         {
             if (!UniqueVariantAdapter.HasVariants(rageEntry))
@@ -1709,6 +1715,8 @@ public static class ForceDropBuilder
             : "Drops at your character."
         );
         dropButton.interactable = problem.Length == 0;
+        Caption(dropButton, problem.Length == 0 ? "Drop Item" : "Cannot drop — see below");
+        status.color = problem.Length == 0 ? foreground : gold;
     }
 
     static int Sample(Number n) => n.random ? UnityEngine.Random.Range(n.min, n.max + 1) : n.value;

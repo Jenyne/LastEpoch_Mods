@@ -4,7 +4,12 @@ namespace LastEpoch_Hud.Tests.Core.ForceDrop;
 
 public sealed class UniqueModifierValuesTests
 {
-    static ResolvedForceDrop Request(int[] tiers = null, int[] rolls = null) =>
+    static ResolvedForceDrop Request(
+        int[] tiers = null,
+        int[] rolls = null,
+        ResolvedForceDropAffix[] affixes = null,
+        ForceDropMode mode = ForceDropMode.Legal
+    ) =>
         new(
             14,
             0,
@@ -16,10 +21,10 @@ public sealed class UniqueModifierValuesTests
             true,
             Array.Empty<int>(),
             Array.Empty<int>(),
-            Array.Empty<ResolvedForceDropAffix>(),
+            affixes ?? Array.Empty<ResolvedForceDropAffix>(),
             new[] { 100, 101 },
             null,
-            ForceDropMode.Legal,
+            mode,
             tiers,
             rolls
         );
@@ -44,6 +49,38 @@ public sealed class UniqueModifierValuesTests
         Assert.Equal(new[] { 255, 38 }, request.VariantRolls);
         Assert.Equal(0, request.LegendaryPotential);
         Assert.Equal(0, request.WeaversWill);
+    }
+
+    [Theory]
+    [InlineData(0)]
+    [InlineData(4)]
+    public void IllegalTieredPoolAllowsRegularSealWithinSavedCapacity(int ordinaryCount)
+    {
+        var affixes = Enumerable
+            .Range(1, ordinaryCount)
+            .Select(id => new ResolvedForceDropAffix(id, 6, 255, ForceDropSeal.None))
+            .Append(new ResolvedForceDropAffix(20, 7, 255, ForceDropSeal.Regular))
+            .ToArray();
+        var request = Request(new[] { 6, 2 }, new[] { 255, 38 }, affixes, ForceDropMode.Illegal);
+        Assert.Equal(ordinaryCount + 3, request.Affixes.Count + request.VariantIds.Count);
+        Assert.Contains(request.Affixes, a => a.Seal == ForceDropSeal.Regular && a.Tier == 7);
+        Assert.Null(request.Corruption);
+        Assert.True(request.Corrupted);
+    }
+
+    [Fact]
+    public void TwoNativeModifiersPlusFourOrdinaryAndBothSealsExceedSavedCapacity()
+    {
+        var affixes = Enumerable
+            .Range(1, 4)
+            .Select(id => new ResolvedForceDropAffix(id, 6, 255, ForceDropSeal.None))
+            .Append(new ResolvedForceDropAffix(20, 7, 255, ForceDropSeal.Regular))
+            .Append(new ResolvedForceDropAffix(21, 7, 255, ForceDropSeal.Primordial))
+            .ToArray();
+        var error = Assert.Throws<ArgumentException>(() =>
+            Request(new[] { 6, 2 }, new[] { 255, 38 }, affixes, ForceDropMode.Illegal)
+        );
+        Assert.Contains("at most seven affixes", error.Message);
     }
 
     [Fact]

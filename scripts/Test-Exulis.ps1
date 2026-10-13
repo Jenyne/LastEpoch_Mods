@@ -92,6 +92,7 @@ try {
     Write-Host "Select Exulis: choose two distinct modifiers from its native pool, with independent tier/roll values."
     Write-Host "Confirm Corrupted stays on and LP/Weaver's Will stay disabled. Pick up, equip, change zones and relog; verify both modifiers and values."
     Write-Host "Test no added ordinary affixes, then add ordinary affixes in Legal/Illegal modes within the seven-affix saved limit."
+    Write-Host "Illegal mode: test both native modifiers + four ordinary affixes + Sealed (seven total), including a T8 regular seal. Add Primordial too: Drop should disable with an 8/7 warning directly beneath it; remove one ordinary affix to return to seven."
     Write-Host "Regression: Unsated Rage and Withstand the Elements must retain their fixed T1/max-roll selectors; ordinary corruption on other items is unchanged."
 } finally {
     Pop-Location
